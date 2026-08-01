@@ -1,0 +1,186 @@
+# ---------------------------------------------------------------------------
+# Secrets & local environment
+# ---------------------------------------------------------------------------
+.env
+.env.*
+!.env.example
+!.env.*.example
+*.pem
+*.key
+*.p12
+*.pfx
+*.jks
+secrets/
+.secrets/
+credentials.json
+service-account*.json
+
+# ---------------------------------------------------------------------------
+# Python / backend
+# ---------------------------------------------------------------------------
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+sdist/
+wheels/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# Virtual environments
+.venv/
+venv/
+ENV/
+env/
+.python-version
+
+# Testing / coverage / type checking
+.pytest_cache/
+.tox/
+.nox/
+.coverage
+.coverage.*
+coverage.xml
+htmlcov/
+*.cover
+.hypothesis/
+.mypy_cache/
+.dmypy.json
+dmypy.json
+.pyre/
+.pytype/
+.ruff_cache/
+
+# Celery
+celerybeat-schedule
+celerybeat.pid
+
+# Jupyter / IPython
+.ipynb_checkpoints/
+profile_default/
+ipython_config.py
+
+# ---------------------------------------------------------------------------
+# Node / frontend
+# ---------------------------------------------------------------------------
+node_modules/
+.pnpm-store/
+.npm/
+.yarn/
+*.tsbuildinfo
+
+# SvelteKit / Vite build output
+.svelte-kit/
+frontend/build/
+frontend/.vercel/
+frontend/.netlify/
+.vite/
+vite.config.*.timestamp-*
+
+# Test runners
+frontend/test-results/
+frontend/playwright-report/
+frontend/blob-report/
+frontend/playwright/.cache/
+.vitest/
+
+# Logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+# ---------------------------------------------------------------------------
+# Generated artifacts (regenerated from contracts — do not commit)
+# ---------------------------------------------------------------------------
+frontend/src/lib/shared/api/generated/**
+!frontend/src/lib/shared/api/generated/.gitkeep
+
+# ---------------------------------------------------------------------------
+# Terraform
+# ---------------------------------------------------------------------------
+.terraform/
+*.tfstate
+*.tfstate.*
+*.tfvars
+!*.tfvars.example
+crash.log
+crash.*.log
+override.tf
+override.tf.json
+*_override.tf
+*_override.tf.json
+.terraformrc
+terraform.rc
+
+# ---------------------------------------------------------------------------
+# Helm / Kubernetes
+# ---------------------------------------------------------------------------
+deploy/helm/**/charts/
+deploy/helm/**/Chart.lock
+*.tgz
+kubeconfig
+kubeconfig.*
+
+# ---------------------------------------------------------------------------
+# Docker / local data volumes
+# ---------------------------------------------------------------------------
+docker-compose.override.yml
+compose.override.yml
+.docker/
+data/
+pgdata/
+redisdata/
+
+# ---------------------------------------------------------------------------
+# Editors & IDEs
+# ---------------------------------------------------------------------------
+.vscode/
+.idea/
+*.iml
+*.swp
+*.swo
+*~
+.history/
+
+# ---------------------------------------------------------------------------
+# OS
+# ---------------------------------------------------------------------------
+.DS_Store
+._*
+.Spotlight-V100
+.Trashes
+Thumbs.db
+Thumbs.db:encryptable
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+
+# ---------------------------------------------------------------------------
+# Logs, temp & scratch
+# ---------------------------------------------------------------------------
+*.log
+logs/
+tmp/
+.tmp/
+.cache/
+scratch/
+*.bak
+*.orig
+*.rej
+
+# ---------------------------------------------------------------------------
+# Agent / tooling local state
+# ---------------------------------------------------------------------------
+.claude
