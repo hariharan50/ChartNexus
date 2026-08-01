@@ -1,0 +1,98 @@
+# Application services for local development, layered over compose.yml.
+#
+#   docker compose -f deploy/compose/compose.yml -f deploy/compose/compose.dev.yml up
+#
+# Source is bind-mounted and both servers hot-reload, so a code change does not
+# require an image rebuild.
+
+name: marketcompass
+
+services:
+  api:
+    build:
+      context: ../..
+      dockerfile: deploy/docker/backend.Dockerfile
+      target: development
+    command: >
+      uv run uvicorn marketcompass.entrypoints.main_api:create_app
+      --factory --host 0.0.0.0 --port 8000 --reload --reload-dir /app/src
+    environment: &backend-env
+      MC_ENVIRONMENT: local
+      MC_DEBUG: "true"
+      MC_DB_URL: postgresql+asyncpg://marketcompass:marketcompass@postgres:5432/marketcompass
+      MC_REDIS_URL: redis://redis:6379/0
+      MC_OTEL_LOG_FORMAT: console
+      MC_SECURITY_COOKIE_SECURE: "false"
+      MC_BROKER_PROVIDER: ${MC_BROKER_PROVIDER:-mock}
+      MC_LLM_PROVIDER: ${MC_LLM_PROVIDER:-rule_based}
+      MC_LLM_ANTHROPIC_API_KEY: ${MC_LLM_ANTHROPIC_API_KEY:-}
+    volumes:
+      - ../../backend/src:/app/src:ro
+      - ../../backend/migrations:/app/migrations:ro
+    ports:
+      - "8000:8000"
+    depends_on:
+      postgres: { condition: service_healthy }
+      redis: { condition: service_healthy }
+
+  ingest:
+    build:
+      context: ../..
+      dockerfile: deploy/docker/backend.Dockerfile
+      target: development
+    command: uv run python -m marketcompass.entrypoints.main_ingest
+    environment: *backend-env
+    volumes:
+      - ../../backend/src:/app/src:ro
+    depends_on:
+      postgres: { condition: service_healthy }
+      redis: { condition: service_healthy }
+    profiles: ["full"]
+
+  score:
+    build:
+      context: ../..
+      dockerfile: deploy/docker/backend.Dockerfile
+      target: development
+    command: uv run python -m marketcompass.entrypoints.main_score
+    environment: *backend-env
+    volumes:
+      - ../../backend/src:/app/src:ro
+    depends_on:
+      postgres: { condition: service_healthy }
+      redis: { condition: service_healthy }
+    profiles: ["full"]
+
+  realtime:
+    build:
+      context: ../..
+      dockerfile: deploy/docker/backend.Dockerfile
+      target: development
+    command: uv run python -m marketcompass.entrypoints.main_realtime
+    environment: *backend-env
+    volumes:
+      - ../../backend/src:/app/src:ro
+    ports:
+      - "8001:8001"
+    depends_on:
+      redis: { condition: service_healthy }
+    profiles: ["full"]
+
+  web:
+    build:
+      context: ../..
+      dockerfile: deploy/docker/frontend.Dockerfile
+      target: development
+    command: pnpm dev --host 0.0.0.0 --port 5173
+    environment:
+      PUBLIC_API_BASE_URL: http://localhost:8000/api/v1
+      PUBLIC_WS_URL: ws://localhost:8001/ws
+    volumes:
+      - ../../frontend:/app
+      # Keep the container's own node_modules — the host tree is built for
+      # Windows and its native binaries will not run on Linux.
+      - /app/node_modules
+    ports:
+      - "5173:5173"
+    depends_on:
+      - api

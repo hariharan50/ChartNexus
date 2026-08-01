@@ -1,0 +1,171 @@
+# Developer commands. Requires go-task: https://taskle.dev/installation
+#   winget install Task.Task     (or: scoop install task)
+#
+# Every task below is a thin wrapper — each underlying command is short enough
+# to run by hand if you would rather not install go-task.
+
+version: "3"
+
+vars:
+  BACKEND: backend
+  FRONTEND: frontend
+  COMPOSE: docker compose
+
+tasks:
+  default:
+    desc: List available tasks
+    cmds:
+      - task --list
+    silent: true
+
+  # --- environment ---------------------------------------------------------
+  setup:
+    desc: Install all dependencies and create .env files from the examples
+    cmds:
+      - task: setup:env
+      - cd {{.BACKEND}} && uv sync
+      - cd {{.FRONTEND}} && pnpm install
+
+  setup:env:
+    desc: Create .env files from .env.example where they do not exist
+    cmds:
+      - cmd: test -f backend/.env || cp backend/.env.example backend/.env
+        ignore_error: true
+      - cmd: test -f frontend/.env || cp frontend/.env.example frontend/.env
+        ignore_error: true
+
+  up:
+    desc: Start Postgres and Redis
+    cmds:
+      - "{{.COMPOSE}} -f deploy/compose/compose.yml up -d"
+
+  up:full:
+    desc: Start the whole stack in containers, including ingest/score/realtime
+    cmds:
+      - "{{.COMPOSE}} --profile full up -d --build"
+
+  down:
+    desc: Stop all containers
+    cmds:
+      - "{{.COMPOSE}} down"
+
+  reset:
+    desc: Stop everything and delete the database and cache volumes
+    prompt: This deletes all local data. Continue?
+    cmds:
+      - "{{.COMPOSE}} down -v"
+
+  logs:
+    desc: Tail container logs
+    cmds:
+      - "{{.COMPOSE}} logs -f {{.CLI_ARGS}}"
+
+  # --- run -----------------------------------------------------------------
+  dev:
+    desc: Run the API and the web app locally against containerised dependencies
+    deps: [up]
+    cmds:
+      - task: dev:api
+
+  dev:api:
+    desc: Run the API with hot reload
+    dir: "{{.BACKEND}}"
+    cmds:
+      - uv run uvicorn marketcompass.entrypoints.main_api:create_app --factory --reload --port 8000
+
+  dev:web:
+    desc: Run the SvelteKit dev server
+    dir: "{{.FRONTEND}}"
+    cmds:
+      - pnpm dev
+
+  # --- database ------------------------------------------------------------
+  db:migrate:
+    desc: Apply all pending migrations
+    dir: "{{.BACKEND}}"
+    cmds:
+      - uv run alembic upgrade head
+
+  db:rollback:
+    desc: Roll back the most recent migration
+    dir: "{{.BACKEND}}"
+    cmds:
+      - uv run alembic downgrade -1
+
+  db:revision:
+    desc: 'Autogenerate a migration: task db:revision -- "add users" identity'
+    dir: "{{.BACKEND}}"
+    cmds:
+      - uv run alembic revision --autogenerate -m {{.CLI_ARGS}}
+
+  db:current:
+    desc: Show the applied revision
+    dir: "{{.BACKEND}}"
+    cmds:
+      - uv run alembic current --verbose
+
+  # --- quality -------------------------------------------------------------
+  check:
+    desc: Run every check CI runs
+    cmds:
+      - task: lint
+      - task: types
+      - task: test
+
+  lint:
+    desc: Lint and format-check both sides
+    cmds:
+      - cd {{.BACKEND}} && uv run ruff check . && uv run ruff format --check .
+      - cd {{.FRONTEND}} && pnpm lint
+
+  format:
+    desc: Apply formatting to both sides
+    cmds:
+      - cd {{.BACKEND}} && uv run ruff check --fix . && uv run ruff format .
+      - cd {{.FRONTEND}} && pnpm format
+
+  types:
+    desc: Type-check both sides
+    cmds:
+      - cd {{.BACKEND}} && uv run mypy
+      - cd {{.FRONTEND}} && pnpm check
+
+  test:
+    desc: Run unit and architecture tests (no containers needed)
+    cmds:
+      - cd {{.BACKEND}} && uv run pytest tests/unit tests/architecture
+      - cd {{.FRONTEND}} && pnpm test
+
+  test:integration:
+    desc: Run integration tests against the containerised dependencies
+    deps: [up]
+    dir: "{{.BACKEND}}"
+    cmds:
+      - uv run pytest tests/integration -m integration
+
+  test:e2e:
+    desc: Run Playwright end-to-end tests
+    dir: "{{.FRONTEND}}"
+    cmds:
+      - pnpm test:e2e
+
+  arch:
+    desc: Enforce the layering and bounded-context import rules
+    dir: "{{.BACKEND}}"
+    cmds:
+      - uv run lint-imports
+      - uv run pytest tests/architecture
+
+  # --- contracts -----------------------------------------------------------
+  contracts:generate:
+    desc: Regenerate the typed API client from contracts/openapi
+    dir: "{{.FRONTEND}}"
+    cmds:
+      - pnpm api:generate
+
+  contracts:verify:
+    desc: Fail if the generated client is out of date with the contract
+    dir: "{{.FRONTEND}}"
+    cmds:
+      - pnpm api:generate
+      - git diff --exit-code src/lib/shared/api/generated

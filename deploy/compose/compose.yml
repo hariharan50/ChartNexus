@@ -1,0 +1,70 @@
+# Base stack: the dependencies every process needs.
+#
+# Run it from the repository root through the thin wrapper:
+#   docker compose up -d
+#
+# Application services live in compose.dev.yml so that `docker compose up
+# postgres redis` stays a fast, dependency-only start.
+
+name: marketcompass
+
+services:
+  postgres:
+    image: postgres:18-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-marketcompass}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-marketcompass}
+      POSTGRES_DB: ${POSTGRES_DB:-marketcompass}
+      # Deterministic collation so ORDER BY matches between dev and production.
+      POSTGRES_INITDB_ARGS: "--locale-provider=icu --icu-locale=en-US --encoding=UTF8"
+    command:
+      - postgres
+      - -c
+      - max_connections=200
+      - -c
+      - shared_buffers=256MB
+      - -c
+      - track_io_timing=on
+      - -c
+      - log_min_duration_statement=500
+    ports:
+      # 5433 on the host: 5432 is often taken by a local Postgres install.
+      - "${POSTGRES_PORT:-5433}:5432"
+    volumes:
+      # Postgres 18 images keep data in a major-version subdirectory, so the
+      # mount goes one level up from the pre-18 /var/lib/postgresql/data.
+      - postgres-data:/var/lib/postgresql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-marketcompass} -d ${POSTGRES_DB:-marketcompass}"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+      start_period: 10s
+
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    command:
+      - redis-server
+      - --appendonly
+      - "yes"
+      - --maxmemory
+      - 512mb
+      # Market snapshots are the bulk of the keyspace and are all TTL-bearing,
+      # so evict by TTL rather than refusing writes when memory fills.
+      - --maxmemory-policy
+      - volatile-ttl
+    ports:
+      - "${REDIS_PORT:-6381}:6379"
+    volumes:
+      - redis-data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+volumes:
+  postgres-data:
+  redis-data:

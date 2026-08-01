@@ -1,0 +1,212 @@
+/* ---------------------------------------------------------------------------
+   Design tokens.
+
+   Dark is the default: this is a trading terminal that runs all day. Light is
+   supported through [data-theme='light'] and the OS preference. Every colour
+   used anywhere in the app comes from this file — no literal hex values in
+   components.
+   --------------------------------------------------------------------------- */
+
+:root {
+  /* Neutrals — dark theme */
+  --mc-bg: #0b0e14;
+  --mc-surface: #131722;
+  --mc-surface-raised: #1a1f2e;
+  --mc-border: #262b3a;
+  --mc-border-strong: #363d52;
+
+  --mc-text: #e6e9f0;
+  --mc-text-muted: #9aa3b8;
+  --mc-text-subtle: #6b7488;
+
+  /* Market semantics. Not red/green alone: colour-blind users need the
+     luminance difference and the arrow glyphs that accompany these. */
+  --mc-bullish: #17b877;
+  --mc-bullish-weak: #0f3d2c;
+  --mc-bearish: #f2495c;
+  --mc-bearish-weak: #47202a;
+  --mc-neutral: #7b8194;
+
+  /* Brand — the amber used for primary actions and the marketing panel. */
+  --mc-brand: #e2542a;
+  --mc-brand-hover: #f0623a;
+  --mc-brand-active: #c8471f;
+  --mc-brand-weak: #2a1409;
+  --mc-brand-deep: #8c3212;
+  --mc-on-brand: #ffffff;
+
+  /* Auth surfaces. Deliberately darker than the terminal chrome so the sign-in
+     screen reads as a separate place from the app. */
+  --mc-auth-bg: #08080a;
+  --mc-auth-field: #17171a;
+  --mc-auth-field-hover: #1d1d21;
+  --mc-auth-border: #2a2a30;
+
+  /* Status */
+  --mc-accent: #4c8dff;
+  --mc-accent-weak: #16233d;
+  --mc-warning: #f2a93b;
+  --mc-danger: #f2495c;
+  --mc-live: #17b877;
+  --mc-stale: #f2a93b;
+
+  /* Typography */
+  --mc-font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+  --mc-font-mono: 'JetBrains Mono', 'SF Mono', 'Cascadia Mono', Consolas, monospace;
+
+  --mc-text-xs: 0.6875rem;
+  --mc-text-sm: 0.8125rem;
+  --mc-text-base: 0.875rem;
+  --mc-text-lg: 1rem;
+  --mc-text-xl: 1.25rem;
+  --mc-text-2xl: 1.5rem;
+
+  /* Spacing — 4px scale, dense by design */
+  --mc-space-1: 0.25rem;
+  --mc-space-2: 0.5rem;
+  --mc-space-3: 0.75rem;
+  --mc-space-4: 1rem;
+  --mc-space-6: 1.5rem;
+  --mc-space-8: 2rem;
+
+  /* One height for every input, select and button, so a row of controls lines
+     up without per-component nudging. */
+  --mc-control-h: 2.5rem;
+  --mc-control-h-sm: 2.125rem;
+  --mc-control-px: 0.875rem;
+
+  --mc-radius-sm: 3px;
+  --mc-radius: 6px;
+  --mc-radius-lg: 10px;
+
+  --mc-shadow: 0 1px 2px rgb(0 0 0 / 0.3), 0 4px 12px rgb(0 0 0 / 0.2);
+
+  --mc-z-dropdown: 100;
+  --mc-z-sticky: 200;
+  --mc-z-modal: 400;
+  --mc-z-toast: 500;
+
+  --mc-duration-fast: 120ms;
+  --mc-duration: 200ms;
+
+  color-scheme: dark;
+}
+
+:root[data-theme='light'] {
+  --mc-bg: #f7f8fa;
+  --mc-surface: #ffffff;
+  --mc-surface-raised: #ffffff;
+  --mc-border: #dfe3eb;
+  --mc-border-strong: #c3cad8;
+
+  --mc-text: #131722;
+  --mc-text-muted: #5a6478;
+  --mc-text-subtle: #858da0;
+
+  --mc-bullish: #0e9f63;
+  --mc-bullish-weak: #dcf5eb;
+  --mc-bearish: #d92b45;
+  --mc-bearish-weak: #fde5e9;
+
+  --mc-accent: #2f6fe4;
+  --mc-accent-weak: #e6efff;
+
+  /* The auth screen keeps its dark treatment in both themes — it is a
+     full-bleed branded surface, not app chrome. */
+  --mc-brand: #d1451f;
+  --mc-brand-hover: #e2542a;
+  --mc-brand-active: #b03a19;
+
+  --mc-shadow: 0 1px 2px rgb(16 24 40 / 0.06), 0 4px 12px rgb(16 24 40 / 0.08);
+
+  color-scheme: light;
+}
+
+/* --------------------------------------------------------------------------- */
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  background: var(--mc-bg);
+  color: var(--mc-text);
+  font-family: var(--mc-font-sans);
+  font-size: var(--mc-text-base);
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+/* Prices, strikes, and greeks must align vertically down a column. */
+.mc-numeric {
+  font-family: var(--mc-font-mono);
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: 'tnum' 1;
+}
+
+:where(a) {
+  color: var(--mc-accent);
+  text-decoration: none;
+}
+
+:where(a):hover {
+  text-decoration: underline;
+}
+
+:where(button, input, select, textarea) {
+  font: inherit;
+  color: inherit;
+}
+
+:where(:focus-visible) {
+  outline: 2px solid var(--mc-accent);
+  outline-offset: 2px;
+  border-radius: var(--mc-radius-sm);
+}
+
+/* Keyboard users must be able to jump past the nav on every page. */
+.mc-skip-link {
+  position: absolute;
+  left: -9999px;
+  z-index: var(--mc-z-toast);
+  padding: var(--mc-space-2) var(--mc-space-4);
+  background: var(--mc-surface-raised);
+  border: 1px solid var(--mc-border-strong);
+  border-radius: var(--mc-radius);
+}
+
+.mc-skip-link:focus {
+  left: var(--mc-space-4);
+  top: var(--mc-space-4);
+}
+
+.mc-visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

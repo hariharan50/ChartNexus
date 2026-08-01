@@ -1,0 +1,58 @@
+target-version = "py313"
+line-length = 100
+# Only "src" — listing "tests" too made isort treat any top-level name that
+# matches a local directory (cache/redis, transport/http) as first-party.
+src = ["src"]
+
+exclude = [
+    ".venv",
+    "migrations/versions",
+]
+
+[lint]
+select = [
+    "E", "W",      # pycodestyle
+    "F",           # pyflakes
+    "I",           # isort
+    "N",           # pep8-naming
+    "UP",          # pyupgrade
+    "B",           # bugbear
+    "C4",          # comprehensions
+    "DTZ",         # flake8-datetimez — naive datetimes are a real bug class here
+    "T20",         # no print()
+    "SIM",         # simplify
+    "TID",         # tidy imports
+    "PTH",         # use pathlib
+    "RUF",
+    "ASYNC",       # async correctness
+    "S",           # bandit
+    "ARG",         # unused arguments
+    "PL",          # pylint subset
+]
+ignore = [
+    "E501",        # line length is handled by the formatter
+    "PLR0913",     # many arguments — common in handler constructors
+    "B008",        # FastAPI Depends() in defaults is idiomatic
+]
+
+[lint.per-file-ignores]
+# ARG002/PLR0917: doubles must mirror a port's signature even when they
+# ignore an argument, and pytest fixtures are positional by nature.
+"tests/**" = ["S101", "S105", "S106", "ARG001", "ARG002", "PLR2004", "PLR0917"]
+"src/marketcompass/entrypoints/*" = ["T20"]
+
+[lint.isort]
+known-first-party = ["marketcompass", "tests"]
+combine-as-imports = true
+
+[lint.flake8-tidy-imports]
+ban-relative-imports = "all"
+
+[lint.pydocstyle]
+convention = "google"
+
+[format]
+quote-style = "double"
+indent-style = "space"
+skip-magic-trailing-comma = false
+line-ending = "lf"

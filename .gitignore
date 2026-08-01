@@ -94,6 +94,10 @@ frontend/blob-report/
 frontend/playwright/.cache/
 .vitest/
 
+# Playwright storage state holds real session cookies once e2e auth tests exist.
+.auth/
+storage-state*.json
+
 # Logs
 npm-debug.log*
 yarn-debug.log*
@@ -179,8 +183,21 @@ scratch/
 *.bak
 *.orig
 *.rej
+*.pid
+
+# Local database dumps and scratch SQLite files
+*.sqlite
+*.sqlite3
+*.db
+*.dump
+*.sql.gz
 
 # ---------------------------------------------------------------------------
 # Agent / tooling local state
 # ---------------------------------------------------------------------------
 .claude
+
+# ---------------------------------------------------------------------------
+# Documentation updates implementation reference
+# ---------------------------------------------------------------------------
+docupdateimp
