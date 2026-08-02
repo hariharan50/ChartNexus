@@ -28,11 +28,17 @@ class BrokerConnectionRepository(Protocol):
 
 @runtime_checkable
 class TokenCipher(Protocol):
-    """Encrypts credentials at rest. Implemented by the Fernet adapter."""
+    """Authenticated encryption for credentials at rest.
 
-    def encrypt(self, plaintext: str) -> str: ...
+    ``aad`` is authenticated but not encrypted. Callers pass the location a
+    value belongs to — tenant, broker, column — so a ciphertext copied into a
+    different row or column fails to decrypt instead of being accepted. It must
+    match between encrypt and decrypt.
+    """
 
-    def decrypt(self, ciphertext: str) -> str: ...
+    def encrypt(self, plaintext: str, *, aad: str | None = None) -> str: ...
+
+    def decrypt(self, ciphertext: str, *, aad: str | None = None) -> str: ...
 
 
 @dataclass(frozen=True, slots=True)

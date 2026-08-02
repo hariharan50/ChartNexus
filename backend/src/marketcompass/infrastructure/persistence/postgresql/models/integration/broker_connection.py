@@ -2,7 +2,8 @@
 
 One row per tenant per broker. Holds the tenant's own API application
 credentials and the OAuth token obtained with them — every secret column is
-Fernet ciphertext, never plaintext.
+AES-256-GCM ciphertext, never plaintext, and each one is bound to its tenant,
+broker, and column name so it cannot be replayed into a different slot.
 """
 
 from __future__ import annotations
@@ -40,8 +41,9 @@ class BrokerConnectionRecord(UUIDPrimaryKeyMixin, TimestampMixin, Base):
     app_id: Mapped[str | None] = mapped_column(String(64), nullable=True)
     app_secret_enc: Mapped[str | None] = mapped_column(Text, nullable=True)
 
-    # Text, not String(n): Fernet ciphertext is ~1.4x the plaintext and a token
-    # length change must not need a migration.
+    # Text, not String(n): the AES-GCM envelope adds a nonce, tag, and key id
+    # on top of base64 expansion, and a token length change must not need a
+    # migration.
     access_token_enc: Mapped[str | None] = mapped_column(Text, nullable=True)
     refresh_token_enc: Mapped[str | None] = mapped_column(Text, nullable=True)
 

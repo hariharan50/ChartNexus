@@ -106,10 +106,27 @@ rejected identically, so the endpoint reveals nothing.
 
 ## Consequences
 
-- Secrets and tokens are Fernet ciphertext at rest, with the key derived from
-  `MC_SECURITY_ENCRYPTION_KEY` via HKDF. Changing that key makes existing
-  connections unreadable; they degrade to "expired" and can be reconnected,
-  rather than raising on every request.
+- Secrets and tokens are AES-256-GCM ciphertext at rest, with the key derived
+  from `MC_SECURITY_ENCRYPTION_KEY` via HKDF. The envelope is
+  `mcv1.<kid>.<base64url(nonce‖ciphertext‖tag)>`; the key id lets a rotated
+  deployment pick the right key instead of trial-decrypting, and is derived
+  under its own HKDF label so publishing it does not hand out a verifier for the
+  configured secret.
+- Every ciphertext is bound to `broker_connections:<tenant>:<broker>:<column>`
+  as GCM associated data. Write access to the table is therefore not enough to
+  move a token between tenants, or to slide a refresh token into the
+  access-token column: the tag stops verifying. This is the property Fernet
+  could not express, and the reason for the change.
+- Changing the encryption key makes existing connections unreadable; they
+  degrade to "expired" and can be reconnected, rather than raising on every
+  request. To rotate without that, list the old key in
+  `MC_SECURITY_PREVIOUS_ENCRYPTION_KEYS` — values decrypt under any listed key
+  and are re-encrypted under the current one on their next write.
+  `AesGcmCipher.needs_rotation` identifies rows still on an old key, for an
+  operator-run sweep.
+- `mcv1` is the only format read. Anything else — including the Fernet
+  ciphertext this replaced — fails to decrypt, is reported as an absent
+  credential, and is fixed by reconnecting through **Settings → Broker**.
 - `market_data` never imports `broker_connections`. It depends on its own
   `MarketDataProvider` port; `infrastructure/brokers/provider_resolver.py`
   bridges the two. See

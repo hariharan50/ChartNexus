@@ -115,8 +115,10 @@ async def test_secret_is_stored_as_ciphertext(client: TestClient) -> None:
 
     assert row.app_secret_enc is not None
     assert SECRET_ID not in row.app_secret_enc
-    # Fernet ciphertext is urlsafe-base64 beginning with a version byte.
-    assert row.app_secret_enc.startswith("gAAAAA")
+    # The AES-256-GCM envelope: scheme, key id, then nonce+ciphertext+tag.
+    scheme, kid, body = row.app_secret_enc.split(".")
+    assert scheme == "mcv1"
+    assert kid and body
 
 
 def test_the_secret_is_never_returned(client: TestClient) -> None:

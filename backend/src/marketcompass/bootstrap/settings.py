@@ -88,8 +88,16 @@ class SecuritySettings(_Section):
     )
     encryption_key: SecretStr = Field(
         default=SecretStr("dev-only-insecure-encryption-key-change"),
-        description="Encrypts broker credentials at rest.",
+        description="AES-256-GCM key material for broker credentials at rest. "
+        "At least 32 bytes; derived through HKDF, so any long string works.",
     )
+    previous_encryption_keys: SecretStr = Field(
+        default=SecretStr(""),
+        description="Comma-separated retired encryption keys. Values still "
+        "decrypt under these, but are re-encrypted under the current key on "
+        "the next write. Drop a key once nothing decrypts with it.",
+    )
+
     session_ttl_seconds: int = Field(default=60 * 60 * 12, gt=0)
     session_idle_timeout_seconds: int = Field(default=60 * 60 * 2, gt=0)
     websocket_ticket_ttl_seconds: int = Field(default=60, gt=0)
@@ -100,6 +108,12 @@ class SecuritySettings(_Section):
     argon2_time_cost: int = Field(default=3, ge=1)
     argon2_memory_cost_kib: int = Field(default=65_536, ge=8192)
     argon2_parallelism: int = Field(default=4, ge=1)
+
+    @property
+    def retired_encryption_keys(self) -> tuple[str, ...]:
+        """Retired keys, newest first, as the cipher wants them."""
+        raw = self.previous_encryption_keys.get_secret_value()
+        return tuple(part.strip() for part in raw.split(",") if part.strip())
 
 
 class AuthSettings(_Section):

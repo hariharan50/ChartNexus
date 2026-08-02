@@ -16,7 +16,7 @@ import httpx
 from marketcompass.bootstrap.settings import Settings, get_settings
 from marketcompass.infrastructure.cache.redis.client import RedisClient
 from marketcompass.infrastructure.persistence.postgresql.session import Database
-from marketcompass.infrastructure.security.encryption import FernetCipher
+from marketcompass.infrastructure.security.encryption import AesGcmCipher
 from marketcompass.infrastructure.security.google_oauth import GoogleOAuthClient
 from marketcompass.infrastructure.security.password_hasher import Argon2Hasher
 from marketcompass.infrastructure.security.token_signer import JwtAccessTokenIssuer
@@ -34,9 +34,9 @@ class Container:
     # startup, JWT parses its key), so both are built once per process.
     password_hasher: Argon2Hasher
     access_tokens: JwtAccessTokenIssuer
-    # Encrypts broker credentials at rest. Key derivation runs once here rather
-    # than on every repository construction.
-    token_cipher: FernetCipher
+    # Encrypts broker credentials at rest with AES-256-GCM. Key derivation runs
+    # once here rather than on every repository construction.
+    token_cipher: AesGcmCipher
     # None when no Google credentials are configured; only the two Google
     # routes care, and they fail with a clear message.
     google_oauth: GoogleOAuthClient | None
@@ -56,7 +56,10 @@ class Container:
             http=http,
             password_hasher=Argon2Hasher(resolved.security),
             access_tokens=JwtAccessTokenIssuer(resolved.auth, resolved.security),
-            token_cipher=FernetCipher.derive(resolved.security.encryption_key.get_secret_value()),
+            token_cipher=AesGcmCipher.derive(
+                resolved.security.encryption_key.get_secret_value(),
+                previous_secrets=resolved.security.retired_encryption_keys,
+            ),
             google_oauth=(
                 GoogleOAuthClient(resolved.google, http) if resolved.google.enabled else None
             ),

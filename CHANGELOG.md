@@ -14,9 +14,14 @@ pre-release and does not yet version its API.
   broker API application; there is no shared system-wide account.
 - Six endpoints under `/api/v1/broker/fyers`: save credentials, status, connect,
   callback, disconnect, revoke.
-- Credentials and access tokens are Fernet-encrypted at rest, with the key
-  derived from `MC_SECURITY_ENCRYPTION_KEY` through HKDF and separated by
+- Credentials and access tokens are encrypted at rest with AES-256-GCM, with the
+  key derived from `MC_SECURITY_ENCRYPTION_KEY` through HKDF and separated by
   purpose. Secrets are never returned to a client and never logged.
+- Each ciphertext is bound to its tenant, broker, and column as GCM associated
+  data, so a value copied into another row or column fails to decrypt rather
+  than being accepted.
+- `MC_SECURITY_PREVIOUS_ENCRYPTION_KEYS` accepts retired keys, so the encryption
+  key can be rotated without stranding existing connections.
 - OAuth `state` is single-use, TTL-bounded, and bound to the tenant and user
   that began the flow. Unknown, expired, replayed and mismatched states are
   rejected identically.

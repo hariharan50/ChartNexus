@@ -237,8 +237,9 @@ provider is failing and requests are short-circuiting to cached or mock data.
 **Broker connection disappears after changing `MC_SECURITY_ENCRYPTION_KEY`**
 Expected. That key encrypts stored credentials; changing it makes existing rows
 undecryptable. They are reported as *expired* rather than raising, so reconnect
-through **Settings → Broker**. Keep the key stable, or set
-`previous_secrets` when rotating.
+through **Settings → Broker**. Keep the key stable, or put the old value in
+`MC_SECURITY_PREVIOUS_ENCRYPTION_KEYS` when rotating — rows then keep decrypting
+and are re-encrypted under the new key the next time they are saved.
 
 **`This connection link expired. Start again.`**
 The OAuth `state` was unknown, already used, or older than its ten-minute TTL.

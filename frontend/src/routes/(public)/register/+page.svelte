@@ -1,5 +1,4 @@
 <script lang="ts">
-  import { goto } from '$app/navigation';
   import * as auth from '$contexts/identity/api';
   import { describePasswordPolicy, presentAuthError } from '$contexts/identity/messages';
   import { session } from '$contexts/identity/session.svelte';
@@ -16,6 +15,7 @@
   let displayName = $state('');
   let email = $state('');
   let password = $state('');
+  let confirmPassword = $state('');
 
   let submitting = $state(false);
   let googlePending = $state(false);
@@ -23,8 +23,14 @@
 
   // Checked as the user types so the server never has to reject length alone.
   const tooShort = $derived(password.length > 0 && password.length < MIN_PASSWORD_LENGTH);
+  // Only complain once the second field has been typed into, so the mismatch
+  // does not flash while the user is still on their first keystroke.
+  const mismatch = $derived(confirmPassword.length > 0 && confirmPassword !== password);
   const canSubmit = $derived(
-    email.trim().length > 0 && password.length >= MIN_PASSWORD_LENGTH && !submitting
+    email.trim().length > 0 &&
+      password.length >= MIN_PASSWORD_LENGTH &&
+      confirmPassword === password &&
+      !submitting
   );
 
   const fieldError = (name: string) => (error?.field === name ? error.message : undefined);
@@ -36,13 +42,16 @@
     submitting = true;
     error = null;
     try {
-      const result = await auth.register({
+      await auth.register({
         email: email.trim(),
         password,
         displayName: displayName.trim()
       });
-      session.hydrate(result.user);
-      await goto('/dashboard?welcome=1', { invalidateAll: true });
+      // Registering signs the account in, but the flow deliberately ends at the
+      // sign-in page — so drop that session rather than leaving the new user
+      // authenticated on a form asking them to authenticate. signOut clears
+      // locally even if the network call fails, then redirects.
+      await session.signOut('/login?registered=1');
     } catch (caught) {
       error = presentAuthError(caught);
     } finally {
@@ -125,6 +134,15 @@
     />
     <p class="hint" class:warn={tooShort}>{describePasswordPolicy(MIN_PASSWORD_LENGTH)}</p>
   </div>
+
+  <PasswordField
+    bind:value={confirmPassword}
+    label="Confirm password"
+    placeholder="Re-enter your password"
+    autocomplete="new-password"
+    error={mismatch ? 'Both passwords must match.' : undefined}
+    required
+  />
 
   <Button type="submit" full loading={submitting} disabled={!canSubmit}>
     {submitting ? 'Creating account…' : 'Create account'}

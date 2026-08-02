@@ -8,6 +8,7 @@
   import PasswordField from '$shared/ui/PasswordField.svelte';
   import TextField from '$shared/ui/TextField.svelte';
   import IconAlert from '$shared/ui/icons/IconAlert.svelte';
+  import IconCheck from '$shared/ui/icons/IconCheck.svelte';
   import IconAt from '$shared/ui/icons/IconAt.svelte';
   import IconGoogle from '$shared/ui/icons/IconGoogle.svelte';
 
@@ -25,6 +26,9 @@
     const target = page.url.searchParams.get('next');
     return target?.startsWith('/') && !target.startsWith('//') ? target : '/dashboard';
   });
+
+  // Set by the register flow, which ends here rather than at the dashboard.
+  const justRegistered = $derived(page.url.searchParams.get('registered') === '1');
 
   const fieldError = (name: string) => (error?.field === name ? error.message : undefined);
 
@@ -71,6 +75,15 @@
   <h1>Welcome back</h1>
   <p>Sign in to your MarketCompass account to continue.</p>
 </header>
+
+{#if justRegistered && !error}
+  <div class="banner success" role="status">
+    <span class="banner-icon" aria-hidden="true"><IconCheck /></span>
+    <div>
+      <p>Account created. Sign in to continue.</p>
+    </div>
+  </div>
+{/if}
 
 {#if error && !error.field}
   <div class="banner" role="alert">
@@ -197,6 +210,18 @@
     color: var(--mc-danger);
     flex-shrink: 0;
     padding-top: 0.1rem;
+  }
+
+  /* Same shape as the error banner, recoloured — this one is good news.
+     --mc-live is the palette's green; the auth surface is dark in both themes,
+     so it needs no light-theme counterpart. */
+  .banner.success {
+    border-color: color-mix(in srgb, var(--mc-live) 40%, transparent);
+    background: color-mix(in srgb, var(--mc-live) 12%, transparent);
+  }
+
+  .banner.success .banner-icon {
+    color: var(--mc-live);
   }
 
   .banner p {

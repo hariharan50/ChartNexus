@@ -1,4 +1,7 @@
-"""Credential validation, encryption, and the connect/disconnect/revoke rules."""
+"""Credential validation and the connect/disconnect/revoke rules.
+
+Encryption itself lives in ``tests/unit/infrastructure/security/test_encryption.py``.
+"""
 
 from __future__ import annotations
 
@@ -18,11 +21,6 @@ from marketcompass.contexts.broker_connections.domain.value_objects import (
     BrokerProfile,
     ConnectionStatus,
 )
-from marketcompass.infrastructure.security.encryption import (
-    DecryptionError,
-    FernetCipher,
-    mask,
-)
 from marketcompass.shared_kernel.domain.errors import ValidationError
 from marketcompass.shared_kernel.types.identifiers import TenantId, new_id
 
@@ -30,7 +28,6 @@ pytestmark = pytest.mark.unit
 
 NOW = datetime(2026, 8, 1, 9, 30, tzinfo=UTC)
 LATER = datetime(2026, 8, 1, 10, 0, tzinfo=UTC)
-SECRET = "a-secret-long-enough-to-derive-a-key-from"
 
 
 def _connection() -> BrokerConnection:
@@ -79,67 +76,6 @@ def test_app_id_is_masked_for_display() -> None:
     assert masked is not None
     assert masked.endswith("-100")
     assert masked != "ABCDE123XY-100"
-
-
-# --- encryption ------------------------------------------------------------
-
-
-def test_cipher_round_trips() -> None:
-    cipher = FernetCipher.derive(SECRET)
-    assert cipher.decrypt(cipher.encrypt("token-value")) == "token-value"
-
-
-def test_ciphertext_does_not_contain_the_plaintext() -> None:
-    cipher = FernetCipher.derive(SECRET)
-    assert "token-value" not in cipher.encrypt("token-value")
-
-
-def test_encryption_is_non_deterministic() -> None:
-    """Identical plaintexts must not produce identical ciphertexts."""
-    cipher = FernetCipher.derive(SECRET)
-    assert cipher.encrypt("same") != cipher.encrypt("same")
-
-
-def test_a_different_key_cannot_decrypt() -> None:
-    ciphertext = FernetCipher.derive(SECRET).encrypt("token-value")
-    other = FernetCipher.derive("a-completely-different-secret-of-length")
-
-    with pytest.raises(DecryptionError):
-        other.decrypt(ciphertext)
-
-
-def test_a_different_purpose_cannot_decrypt() -> None:
-    """Key separation: one configured secret, distinct keys per use."""
-    ciphertext = FernetCipher.derive(SECRET, purpose="broker-credentials").encrypt("v")
-    other = FernetCipher.derive(SECRET, purpose="webhook-secrets")
-
-    with pytest.raises(DecryptionError):
-        other.decrypt(ciphertext)
-
-
-def test_rotation_decrypts_with_the_previous_key() -> None:
-    old = FernetCipher.derive(SECRET)
-    ciphertext = old.encrypt("token-value")
-    rotated = FernetCipher.derive(
-        "a-brand-new-secret-of-sufficient-length", previous_secrets=(SECRET,)
-    )
-
-    assert rotated.decrypt(ciphertext) == "token-value"
-
-
-def test_a_short_secret_is_refused() -> None:
-    with pytest.raises(ValueError, match="at least 32 bytes"):
-        FernetCipher.derive("too-short")
-
-
-def test_garbage_ciphertext_fails_cleanly() -> None:
-    with pytest.raises(DecryptionError):
-        FernetCipher.derive(SECRET).decrypt("not-ciphertext")
-
-
-def test_mask_keeps_only_the_edges() -> None:
-    assert mask("ABCDEFGHIJKL") == "ABCD******IJKL"
-    assert "SECRET" not in mask("SECRET")
 
 
 # --- lifecycle -------------------------------------------------------------
