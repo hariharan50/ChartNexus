@@ -1,0 +1,163 @@
+"""Canonical market-data shapes.
+
+Every provider — live broker or mock — returns exactly these types, so nothing
+downstream can tell them apart by structure. What it *can* tell apart is
+``source`` and ``age_seconds``, and it must: a chart drawn from an hour-old
+cached snapshot looks identical to a live one, and acting on that difference is
+the user's decision to make.
+"""
+
+from __future__ import annotations
+
+from dataclasses import dataclass, field
+from datetime import datetime
+from decimal import Decimal
+from enum import StrEnum
+
+from marketcompass.contexts.market_data.domain.instruments import InstrumentSymbol
+
+
+class DataSource(StrEnum):
+    """Where a payload actually came from."""
+
+    LIVE = "live"
+    """Fetched from the broker just now."""
+
+    CACHED = "cached"
+    """A previous broker response, reused because the broker is unreachable or
+    the value is still inside its freshness window."""
+
+    MOCK = "mock"
+    """Synthetic. No broker was involved. Never safe for a trading decision."""
+
+    @property
+    def is_real(self) -> bool:
+        return self is not DataSource.MOCK
+
+
+class OptionType(StrEnum):
+    CALL = "CE"
+    PUT = "PE"
+
+
+@dataclass(frozen=True, slots=True)
+class Provenance:
+    """Attached to every payload so consumers can judge how much to trust it."""
+
+    source: DataSource
+    fetched_at: datetime
+    age_seconds: float = 0.0
+
+    @property
+    def is_stale(self) -> bool:
+        return self.source is not DataSource.LIVE
+
+
+@dataclass(frozen=True, slots=True)
+class Quote:
+    """An index spot price."""
+
+    instrument: InstrumentSymbol
+    price: Decimal
+    change: Decimal | None
+    change_percent: Decimal | None
+    provenance: Provenance
+
+
+@dataclass(frozen=True, slots=True)
+class OptionQuote:
+    """One side of a strike."""
+
+    last_price: Decimal
+    open_interest: int
+    open_interest_change: int
+    volume: int
+    implied_volatility: Decimal | None = None
+    bid: Decimal | None = None
+    ask: Decimal | None = None
+    delta: Decimal | None = None
+
+
+@dataclass(frozen=True, slots=True)
+class StrikeRow:
+    """A strike with its call and put legs.
+
+    Either side may be missing: illiquid far strikes are not always quoted, and
+    inventing a zero there would corrupt PCR and max-pain.
+    """
+
+    strike: Decimal
+    call: OptionQuote | None = None
+    put: OptionQuote | None = None
+
+
+@dataclass(frozen=True, slots=True)
+class OptionChain:
+    instrument: InstrumentSymbol
+    expiry: str
+    """ISO ``YYYY-MM-DD``. Always normalised, never a broker-specific format."""
+
+    spot_price: Decimal
+    strikes: tuple[StrikeRow, ...]
+    provenance: Provenance
+    expiries: tuple[str, ...] = ()
+    lot_size: int | None = None
+    change_percent: Decimal | None = None
+    future_price: Decimal | None = None
+    _atm: Decimal | None = field(default=None, repr=False)
+
+    @property
+    def put_call_ratio(self) -> Decimal | None:
+        """ΣPE open interest / ΣCE open interest.
+
+        None rather than zero when there is no call interest — a ratio with an
+        empty denominator is undefined, and returning 0 would read as
+        "extremely bullish".
+        """
+        call_oi = sum(row.call.open_interest for row in self.strikes if row.call)
+        put_oi = sum(row.put.open_interest for row in self.strikes if row.put)
+        if call_oi <= 0:
+            return None
+        return (Decimal(put_oi) / Decimal(call_oi)).quantize(Decimal("0.0001"))
+
+    @property
+    def atm_strike(self) -> Decimal | None:
+        """The listed strike nearest spot.
+
+        Nearest *listed*, not a rounded spot: the chain decides which strikes
+        exist, and a computed one may not be tradeable.
+        """
+        if self._atm is not None:
+            return self._atm
+        if not self.strikes:
+            return None
+        return min(self.strikes, key=lambda row: abs(row.strike - self.spot_price)).strike
+
+    @property
+    def total_call_open_interest(self) -> int:
+        return sum(row.call.open_interest for row in self.strikes if row.call)
+
+    @property
+    def total_put_open_interest(self) -> int:
+        return sum(row.put.open_interest for row in self.strikes if row.put)
+
+
+@dataclass(frozen=True, slots=True)
+class ExpiryList:
+    instrument: InstrumentSymbol
+    expiries: tuple[str, ...]
+    provenance: Provenance
+
+
+@dataclass(frozen=True, slots=True)
+class MarketStatus:
+    """Whether the exchange is open, and what is feeding us."""
+
+    is_open: bool
+    session_date: str
+    time_ist: str
+    provider: str
+    connected: bool
+    source: DataSource
+    market_open: str
+    market_close: str

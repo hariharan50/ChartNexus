@@ -75,9 +75,10 @@ Host ports are deliberately shifted so other projects on this machine keep worki
 Change the database and cache ports in the root `.env` (`POSTGRES_PORT`,
 `REDIS_PORT`), and keep `backend/.env` (`MC_DB_URL`, `MC_REDIS_URL`) in step.
 
-**If you run the web app on a port other than 5173**, also update
-`MC_GOOGLE_REDIRECT_URI` in `backend/.env` and the authorized redirect URI in
-the Google console — the OAuth callback URL must match exactly.
+**If you run the web app on a port other than 5173**, update both OAuth
+redirect URIs — `MC_GOOGLE_REDIRECT_URI` and `MC_BROKER_FYERS_REDIRECT_URI` in
+`backend/.env` — and the matching entries in the Google console and the FYERS
+dashboard. Both providers require an exact string match.
 
 ## 5. Confirm it works
 
@@ -115,7 +116,50 @@ MC_GOOGLE_REDIRECT_URI=http://localhost:5173/auth/google/callback
 
 5. Restart the API.
 
-## 7. Everything in containers
+## 7. Optional: connect a FYERS broker account
+
+Also optional. Without it the app serves a deterministic mock feed, labelled
+`source: "mock"` in every response and shown as **Simulated** in the UI.
+
+Each tenant connects their own broker application — there is no shared
+system-wide account.
+
+1. Create an app at <https://myapi.fyers.in/dashboard>.
+2. Set its redirect URI to **exactly**
+   `http://localhost:5173/settings/broker/callback`. Scheme, host, port and path
+   must match; `localhost` and `127.0.0.1` are different values to the broker.
+3. In MarketCompass, go to **Settings → Broker**, paste the App ID and Secret ID,
+   and save.
+4. Click **Connect with FYERS** and authorise.
+
+Confirm it worked:
+
+```bash
+curl -s http://localhost:8000/api/v1/market/status          # needs a session cookie
+```
+
+You want `"connected": true` and `"source": "live"`. If `/market/option-chain`
+still returns `"source": "mock"`, the connection is not live — check
+**Settings → Broker**, which validates the token against the broker rather than
+merely reporting that one exists.
+
+Notes:
+
+- The App ID must match `ABCDE123XY-100` in shape. The server upper-cases it.
+- The Secret ID is stored encrypted and is never returned; the form is
+  write-only.
+- **Disconnect** drops the token and keeps your API keys, so reconnecting is one
+  click. **Remove credentials** drops both.
+- Changing the App ID invalidates any existing token, so the connection returns
+  to *pending*.
+- If the redirect URI in `backend/.env` (`MC_BROKER_FYERS_REDIRECT_URI`) does not
+  match what you registered with FYERS, the consent screen will reject the
+  request before it reaches us.
+
+The design decisions behind this flow are recorded in
+[ADR 0001](../adr/0001-fyers-broker-integration.md).
+
+## 8. Everything in containers
 
 An alternative to terminals 2 and 3, at the cost of slower reloads:
 
@@ -124,7 +168,7 @@ docker compose up --build          # postgres, redis, api, web
 docker compose --profile full up   # also ingest, score, realtime
 ```
 
-## 8. Common commands
+## 9. Common commands
 
 ```bash
 # Tests
@@ -151,7 +195,7 @@ With [go-task](https://taskfile.dev) installed (`winget install Task.Task`), the
 `Taskfile.yml` wraps these: `task setup`, `task up`, `task dev`, `task check`,
 `task db:migrate`.
 
-## 9. Troubleshooting
+## 10. Troubleshooting
 
 **`Port 5173 is already in use`**
 Another dev server has it. `pnpm dev --port 5174`, and see the port note above
@@ -183,11 +227,29 @@ Usually a missing migration. Check `uv run alembic current` against
 `python -c "import secrets; print(secrets.token_urlsafe(48))"`, or leave it
 empty locally to inherit `MC_SECURITY_SECRET_KEY`.
 
+**Broker says connected but data is still `source: "mock"`**
+The token is present but the broker is rejecting it. **Settings → Broker**
+validates against the broker's profile endpoint rather than trusting that a
+token exists, so it will show *expired* — reconnect. If it shows *active*,
+check the API log for a `broker_circuit_opened` warning, which means the
+provider is failing and requests are short-circuiting to cached or mock data.
+
+**Broker connection disappears after changing `MC_SECURITY_ENCRYPTION_KEY`**
+Expected. That key encrypts stored credentials; changing it makes existing rows
+undecryptable. They are reported as *expired* rather than raising, so reconnect
+through **Settings → Broker**. Keep the key stable, or set
+`previous_secrets` when rotating.
+
+**`This connection link expired. Start again.`**
+The OAuth `state` was unknown, already used, or older than its ten-minute TTL.
+States are single-use by design. Start the connection again from
+**Settings → Broker**.
+
 **Frontend loads but every API call is 401**
 The Vite proxy targets `http://localhost:8000`. If the API is on another port,
 set `API_PROXY_TARGET` in `frontend/.env`.
 
-## 10. Resetting
+## 11. Resetting
 
 ```bash
 docker compose down          # stop, keep data

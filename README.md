@@ -4,10 +4,14 @@ Options and futures market intelligence terminal for NSE instruments — option
 chain analytics, futures positioning, signal synthesis, and an explainable
 copilot over the resulting data.
 
-> **Status:** early construction. The runtime skeleton is in place — both
-> processes boot, health checks pass against real dependencies, migrations run.
-> The bounded contexts under `backend/src/marketcompass/contexts/` are still
-> empty.
+> **Status:** early construction. Three bounded contexts are implemented —
+> `identity` (email/password + Google sign-in), `broker_connections` (FYERS
+> OAuth), and `market_data` (spot prices and option chains). The application
+> runs end to end against a mock feed with no broker account; connecting FYERS
+> swaps in live NSE data. The remaining contexts under
+> `backend/src/marketcompass/contexts/` are still empty.
+>
+> Market data is read-only. No order placement, positions, or funds.
 
 ## Prerequisites
 
@@ -78,8 +82,9 @@ occupy an API worker:
 Enforced by CI, not by convention:
 
 - The domain layer imports no framework, driver, or vendor SDK.
-- Bounded contexts never import each other — they integrate through domain
-  events and published ports.
+- Bounded contexts never import each other — they integrate through ports and
+  domain events. Shared HTTP plumbing lives in
+  `infrastructure/transport/http/dependencies.py`, never in another context.
 - Vendor SDKs (Fyers, Anthropic, OpenAI) may only be imported inside their own
   adapter directory.
 - Infrastructure never imports the container or the entrypoints.
@@ -87,6 +92,11 @@ Enforced by CI, not by convention:
 ```bash
 cd backend && uv run lint-imports && uv run pytest tests/architecture
 ```
+
+Run **both**. A green `lint-imports` has been observed to pass while
+`tests/architecture` caught real cross-context imports; the test suite is the
+stricter check. See
+[docs/architecture/bounded-contexts.md](docs/architecture/bounded-contexts.md).
 
 ## Everyday commands
 
@@ -102,11 +112,35 @@ cd backend && uv run lint-imports && uv run pytest tests/architecture
 | New migration       | `cd backend && uv run alembic revision --autogenerate -m "msg" --version-path migrations/versions/<area>` |
 | Regenerate API client | `cd frontend && pnpm api:generate`                      |
 
+## Market data
+
+The API serves spot prices and option chains for NIFTY, BANKNIFTY and SENSEX:
+
+```
+GET /api/v1/market/status         session state and the active data source
+GET /api/v1/market/spot           index spot price
+GET /api/v1/market/option-chain   strikes with PCR and ATM
+GET /api/v1/market/expiries       available expiry dates
+```
+
+**Every response states where its numbers came from** — `provenance.source` is
+`live`, `cached`, or `mock`, with an `age_seconds`. Nothing downstream may treat
+these as interchangeable: a chart drawn from a stale snapshot looks identical to
+a live one, and only that field distinguishes them.
+
 ## Working without a broker account
 
-`MC_BROKER_PROVIDER=mock` (the default) serves generated quotes and option
-chains, and `MC_LLM_PROVIDER=rule_based` makes the copilot deterministic. The
-whole application runs with no external credentials.
+The whole application runs with no external credentials. A deterministic mock
+provider serves generated quotes and option chains, and
+`MC_LLM_PROVIDER=rule_based` makes the copilot deterministic. Everything is
+labelled `source: "mock"`.
+
+To use live NSE data, connect a FYERS account under **Settings → Broker**. Each
+tenant connects their own broker application; credentials and tokens are stored
+encrypted per tenant and never returned to the browser. Setup steps are in the
+[runbook](docs/runbooks/local-development.md#7-optional-connect-a-fyers-broker-account),
+and the design decisions are recorded in
+[ADR 0001](docs/adr/0001-fyers-broker-integration.md).
 
 ## Disclaimer
 

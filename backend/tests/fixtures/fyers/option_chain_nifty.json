@@ -1,0 +1,96 @@
+{
+  "_comment": "Sanitised shape of a FYERS v3 options-chain-v3 response. Field names are the ones the parser depends on; values are illustrative. The first entry is the underlying leg (strike_price -1, no option_type).",
+  "s": "ok",
+  "code": 200,
+  "message": "",
+  "data": {
+    "callOi": 195000,
+    "putOi": 232000,
+    "indiavixData": {
+      "ltp": 13.42,
+      "ltpchp": -1.2
+    },
+    "expiryData": [
+      { "date": "30-07-2026", "expiry": "1785340800" },
+      { "date": "06-08-2026", "expiry": "1785945600" },
+      { "date": "27-08-2026", "expiry": "1787760000" }
+    ],
+    "lotSize": 75,
+    "optionsChain": [
+      {
+        "symbol": "NSE:NIFTY50-INDEX",
+        "strike_price": -1,
+        "ltp": 24123.45,
+        "ltpch": -18.2,
+        "ltpchp": -0.42,
+        "fp": 24145.0,
+        "description": "NIFTY 50"
+      },
+      {
+        "symbol": "NSE:NIFTY2673024100CE",
+        "strike_price": 24100,
+        "option_type": "CE",
+        "ltp": 150.25,
+        "oi": 123456,
+        "oich": 6400,
+        "volume": 32100,
+        "iv": 13.2,
+        "bid": 150.1,
+        "ask": 150.4,
+        "delta": 0.52
+      },
+      {
+        "symbol": "NSE:NIFTY2673024100PE",
+        "strike_price": 24100,
+        "option_type": "PE",
+        "ltp": 132.8,
+        "oi": 115000,
+        "oich": -2100,
+        "volume": 28000,
+        "iv": 14.1,
+        "bid": 132.6,
+        "ask": 133.0,
+        "delta": -0.48
+      },
+      {
+        "symbol": "NSE:NIFTY2673024150CE",
+        "strike_price": 24150,
+        "option_type": "CE",
+        "ltp": 121.05,
+        "oi": 71544,
+        "oich": 3100,
+        "volume": 21050,
+        "iv": 13.0,
+        "bid": 120.9,
+        "ask": 121.2,
+        "delta": 0.44
+      },
+      {
+        "symbol": "NSE:NIFTY2673024150PE",
+        "strike_price": 24150,
+        "option_type": "PE",
+        "ltp": 158.4,
+        "oi": 117000,
+        "oich": 900,
+        "volume": 19800,
+        "iv": 14.4,
+        "bid": 158.2,
+        "ask": 158.7,
+        "delta": -0.56
+      },
+      {
+        "symbol": "NSE:NIFTY2673024050CE",
+        "strike_price": 24050,
+        "option_type": "CE",
+        "ltp": 182.6,
+        "oi": 60000,
+        "oich": -400,
+        "volume": 15400,
+        "iv": 13.5,
+        "bid": 182.4,
+        "ask": 182.9,
+        "delta": 0.6
+      }
+    ]
+  }
+}

@@ -16,6 +16,7 @@ TenantId = NewType("TenantId", uuid.UUID)
 SessionId = NewType("SessionId", uuid.UUID)
 OrganizationId = NewType("OrganizationId", uuid.UUID)
 InstrumentId = NewType("InstrumentId", uuid.UUID)
+BrokerConnectionId = NewType("BrokerConnectionId", uuid.UUID)
 SignalId = NewType("SignalId", uuid.UUID)
 AuditEntryId = NewType("AuditEntryId", uuid.UUID)
 

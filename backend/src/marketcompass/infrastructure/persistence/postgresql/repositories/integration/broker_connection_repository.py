@@ -1,0 +1,158 @@
+"""Broker connection repository.
+
+The encryption boundary: the aggregate holds plaintext secrets in memory, the
+row holds only ciphertext, and this class is the only place that converts
+between them.
+"""
+
+from __future__ import annotations
+
+from datetime import UTC, datetime
+
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
+
+from marketcompass.contexts.broker_connections.application.ports import TokenCipher
+from marketcompass.contexts.broker_connections.domain.connection import BrokerConnection
+from marketcompass.contexts.broker_connections.domain.value_objects import (
+    BrokerCredentials,
+    BrokerName,
+    BrokerProfile,
+    ConnectionStatus,
+)
+from marketcompass.infrastructure.persistence.postgresql.models.integration.broker_connection import (
+    BrokerConnectionRecord,
+)
+from marketcompass.infrastructure.security.encryption import DecryptionError
+from marketcompass.shared_kernel.types.identifiers import BrokerConnectionId, TenantId
+
+
+class SqlAlchemyBrokerConnectionRepository:
+    """Implements the ``BrokerConnectionRepository`` port."""
+
+    def __init__(self, session: AsyncSession, cipher: TokenCipher) -> None:
+        self._session = session
+        self._cipher = cipher
+
+    async def find(self, tenant_id: TenantId, broker: BrokerName) -> BrokerConnection | None:
+        result = await self._session.execute(
+            select(BrokerConnectionRecord).where(
+                BrokerConnectionRecord.tenant_id == tenant_id,
+                BrokerConnectionRecord.broker == broker.value,
+            )
+        )
+        record = result.scalar_one_or_none()
+        return self._to_domain(record) if record else None
+
+    async def add(self, connection: BrokerConnection) -> None:
+        self._session.add(
+            BrokerConnectionRecord(
+                id=connection.id,
+                tenant_id=connection.tenant_id,
+                broker=connection.broker.value,
+                app_id=connection.credentials.app_id if connection.credentials else None,
+                app_secret_enc=self._encrypt(
+                    connection.credentials.secret if connection.credentials else None
+                ),
+                access_token_enc=self._encrypt(connection.access_token),
+                refresh_token_enc=self._encrypt(connection.refresh_token),
+                status=connection.status.value,
+                profile=connection.profile.as_dict() if connection.profile else None,
+                connected_at=connection.connected_at,
+                revoked_at=connection.revoked_at,
+                expires_at=connection.expires_at,
+                last_validated_at=connection.last_validated_at,
+                last_error=connection.last_error,
+            )
+        )
+        await self._session.flush()
+
+    async def update(self, connection: BrokerConnection) -> None:
+        record = await self._session.get(BrokerConnectionRecord, connection.id)
+        if record is None:
+            msg = f"broker connection {connection.id} disappeared between load and save"
+            raise LookupError(msg)
+
+        record.app_id = connection.credentials.app_id if connection.credentials else None
+        record.app_secret_enc = self._encrypt(
+            connection.credentials.secret if connection.credentials else None
+        )
+        record.access_token_enc = self._encrypt(connection.access_token)
+        record.refresh_token_enc = self._encrypt(connection.refresh_token)
+        record.status = connection.status.value
+        record.profile = connection.profile.as_dict() if connection.profile else None
+        record.connected_at = connection.connected_at
+        record.revoked_at = connection.revoked_at
+        record.expires_at = connection.expires_at
+        record.last_validated_at = connection.last_validated_at
+        record.last_error = connection.last_error
+        await self._session.flush()
+
+    # -- mapping ------------------------------------------------------------
+
+    def _encrypt(self, plaintext: str | None) -> str | None:
+        return self._cipher.encrypt(plaintext) if plaintext else None
+
+    def _decrypt(self, ciphertext: str | None) -> str | None:
+        """Decrypt, treating an undecryptable value as absent.
+
+        A rotated encryption key must not make the whole connection unreadable —
+        the user should see "not connected" and be able to reconnect, rather
+        than a 500 on every market data request.
+        """
+        if not ciphertext:
+            return None
+        try:
+            return self._cipher.decrypt(ciphertext)
+        except DecryptionError:
+            return None
+
+    def _to_domain(self, record: BrokerConnectionRecord) -> BrokerConnection:
+        secret = self._decrypt(record.app_secret_enc)
+        credentials = (
+            BrokerCredentials(app_id=record.app_id, secret=secret)
+            if record.app_id and secret
+            else None
+        )
+
+        access_token = self._decrypt(record.access_token_enc)
+        status = ConnectionStatus(record.status)
+        if status is ConnectionStatus.ACTIVE and access_token is None:
+            # The row says active but the token cannot be read — an encryption
+            # key change. Present it as expired so the UI offers a reconnect.
+            status = ConnectionStatus.EXPIRED
+
+        profile = None
+        if record.profile:
+            profile = BrokerProfile(
+                broker_user_id=str(record.profile.get("broker_user_id", "")),
+                display_name=str(record.profile.get("display_name", "")),
+                email=record.profile.get("email"),
+            )
+
+        return BrokerConnection(
+            id=BrokerConnectionId(record.id),
+            tenant_id=TenantId(record.tenant_id),
+            broker=BrokerName(record.broker),
+            status=status,
+            credentials=credentials,
+            access_token=access_token,
+            refresh_token=self._decrypt(record.refresh_token_enc),
+            profile=profile,
+            connected_at=_aware(record.connected_at),
+            revoked_at=_aware(record.revoked_at),
+            expires_at=_aware(record.expires_at),
+            last_validated_at=_aware(record.last_validated_at),
+            last_error=record.last_error,
+            # Not persisted: who clicked connect is an audit fact and belongs
+            # in the audit context, not on this row.
+            connected_by=None,
+            created_at=_aware(record.created_at),
+            updated_at=_aware(record.updated_at),
+        )
+
+
+def _aware(moment: datetime | None) -> datetime | None:
+    if moment is None:
+        return None
+    return moment if moment.tzinfo else moment.replace(tzinfo=UTC)

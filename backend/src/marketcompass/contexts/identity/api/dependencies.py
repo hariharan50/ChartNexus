@@ -7,7 +7,6 @@ context will import to protect its routes.
 
 from __future__ import annotations
 
-from collections.abc import AsyncIterator
 from dataclasses import dataclass
 from typing import Annotated
 
@@ -25,7 +24,6 @@ from marketcompass.contexts.identity.application.google_sso import (
     StartGoogleLogin,
 )
 from marketcompass.contexts.identity.application.ports import (
-    AccessTokenClaims,
     AuthorizationRequest,
     GoogleIdentityProvider,
     GoogleProfile,
@@ -48,50 +46,25 @@ from marketcompass.infrastructure.cache.redis.rate_limiter import (
     RedisLoginRateLimiter,
 )
 from marketcompass.infrastructure.cache.redis.session_store import RedisOAuthStateStore
-from marketcompass.infrastructure.observability.request_context import bind_principal
 from marketcompass.infrastructure.persistence.postgresql.repositories.identity.refresh_session_repository import (
     SqlAlchemyRefreshSessionRepository,
 )
 from marketcompass.infrastructure.persistence.postgresql.repositories.identity.user_repository import (
     SqlAlchemyUserRepository,
 )
-from marketcompass.infrastructure.security.cookie_manager import CSRF_HEADER, CookieManager
+from marketcompass.infrastructure.security.cookie_manager import CookieManager
 from marketcompass.infrastructure.time.clock import SystemClock
-from marketcompass.shared_kernel.domain.errors import AuthenticationError, AuthorizationError
-
-# Methods that cannot change state do not need CSRF protection, and requiring it
-# on them would break ordinary navigation.
-_SAFE_METHODS = frozenset({"GET", "HEAD", "OPTIONS"})
+from marketcompass.infrastructure.transport.http.dependencies import (
+    CurrentPrincipal,
+    Principal,
+    SessionUnitOfWork,
+    get_container,
+    get_optional_principal,
+    get_principal,
+    get_session,
+)
 
 _UNCONFIGURED = "Google sign-in is not configured on this server."
-
-
-def get_container(request: Request):  # type: ignore[no-untyped-def]
-    return request.app.state.container
-
-
-async def get_session(request: Request) -> AsyncIterator[AsyncSession]:
-    """One database session per request, committed by the use case's UoW."""
-    container = get_container(request)
-    async with container.database.session_factory() as session:
-        try:
-            yield session
-        except Exception:
-            await session.rollback()
-            raise
-
-
-class _SessionUnitOfWork:
-    """Adapts an ``AsyncSession`` to the ``UnitOfWork`` port."""
-
-    def __init__(self, session: AsyncSession) -> None:
-        self._session = session
-
-    async def commit(self) -> None:
-        await self._session.commit()
-
-    async def rollback(self) -> None:
-        await self._session.rollback()
 
 
 @dataclass(slots=True)
@@ -120,7 +93,7 @@ def build_identity_services(
 
     users = SqlAlchemyUserRepository(session)
     refresh_sessions = SqlAlchemyRefreshSessionRepository(session)
-    uow = _SessionUnitOfWork(session)
+    uow = SessionUnitOfWork(session)
 
     session_service = SessionService(
         sessions=refresh_sessions,
@@ -227,77 +200,16 @@ class _UnconfiguredGoogleProvider:
 Services = Annotated[IdentityServices, Depends(build_identity_services)]
 
 
-# --- authentication --------------------------------------------------------
-
-
-@dataclass(frozen=True, slots=True)
-class Principal:
-    """The authenticated caller, as proven by the access token."""
-
-    claims: AccessTokenClaims
-
-    @property
-    def user_id(self):  # type: ignore[no-untyped-def]
-        return self.claims.subject
-
-    @property
-    def tenant_id(self):  # type: ignore[no-untyped-def]
-        return self.claims.tenant_id
-
-    @property
-    def session_id(self):  # type: ignore[no-untyped-def]
-        return self.claims.session_id
-
-    def require_role(self, *roles: str) -> None:
-        if not self.claims.roles.intersection(roles):
-            raise AuthorizationError("You do not have permission to perform this action.")
-
-
-def _extract_bearer(request: Request) -> str | None:
-    header = request.headers.get("Authorization")
-    if not header:
-        return None
-    scheme, _, token = header.partition(" ")
-    if scheme.lower() != "bearer" or not token:
-        return None
-    return token.strip()
-
-
-async def get_principal(request: Request) -> Principal:
-    """Authenticate from either transport.
-
-    The Bearer header wins: a client that sends one is explicitly not relying on
-    ambient cookie authority, so it is exempt from the CSRF check.
-    """
-    container = get_container(request)
-    cookies = CookieManager(auth=container.settings.auth, security=container.settings.security)
-
-    token = _extract_bearer(request)
-    from_cookie = False
-    if token is None:
-        token = cookies.read_access_token(request)
-        from_cookie = token is not None
-
-    if not token:
-        raise AuthenticationError("Authentication is required.")
-
-    if from_cookie and request.method not in _SAFE_METHODS and not cookies.verify_csrf(request):
-        raise AuthorizationError(
-            f"Missing or invalid {CSRF_HEADER} header.",
-            header=CSRF_HEADER,
-        )
-
-    claims = container.access_tokens.decode(token)
-    bind_principal(tenant_id=str(claims.tenant_id), user_id=str(claims.subject))
-    return Principal(claims=claims)
-
-
-CurrentPrincipal = Annotated[Principal, Depends(get_principal)]
-
-
-async def get_optional_principal(request: Request) -> Principal | None:
-    """For endpoints that behave differently when signed in but do not require it."""
-    try:
-        return await get_principal(request)
-    except (AuthenticationError, AuthorizationError):
-        return None
+# Re-exported so existing identity imports keep working; the definitions live in
+# transport infrastructure because every context needs them.
+__all__ = [
+    "CurrentPrincipal",
+    "IdentityServices",
+    "Principal",
+    "Services",
+    "SessionUnitOfWork",
+    "get_container",
+    "get_optional_principal",
+    "get_principal",
+    "get_session",
+]

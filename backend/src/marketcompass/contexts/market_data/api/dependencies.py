@@ -1,0 +1,75 @@
+"""Per-request assembly for market data routes."""
+
+from __future__ import annotations
+
+from dataclasses import dataclass
+from typing import Annotated
+
+from fastapi import Depends, Request
+from sqlalchemy.ext.asyncio import AsyncSession
+
+from marketcompass.contexts.market_data.application.queries import (
+    GetExpiries,
+    GetMarketStatus,
+    GetOptionChain,
+    GetSpotPrice,
+)
+from marketcompass.infrastructure.brokers.fyers.quota_manager import QuotaPolicy
+from marketcompass.infrastructure.brokers.mock.provider import MockMarketDataProvider
+from marketcompass.infrastructure.brokers.provider_resolver import TenantProviderResolver
+from marketcompass.infrastructure.persistence.postgresql.repositories.integration.broker_connection_repository import (
+    SqlAlchemyBrokerConnectionRepository,
+)
+from marketcompass.infrastructure.time.clock import SystemClock
+from marketcompass.infrastructure.time.market_calendar import ExchangeCalendar
+from marketcompass.infrastructure.transport.http.dependencies import (
+    get_container,
+    get_session,
+)
+
+
+@dataclass(slots=True)
+class MarketServices:
+    spot: GetSpotPrice
+    option_chain: GetOptionChain
+    expiries: GetExpiries
+    status: GetMarketStatus
+
+
+def build_market_services(
+    request: Request,
+    session: Annotated[AsyncSession, Depends(get_session)],
+) -> MarketServices:
+    container = get_container(request)
+    settings = container.settings
+    clock = SystemClock()
+
+    resolver = TenantProviderResolver(
+        connections=SqlAlchemyBrokerConnectionRepository(session, container.token_cipher),
+        http=container.http,
+        redis=container.redis,
+        rest_base_url=settings.broker.rest_base_url,
+        quota=QuotaPolicy(
+            requests_per_second=settings.broker.quota_requests_per_second,
+            requests_per_day=settings.broker.quota_requests_per_day,
+        ),
+        request_timeout_seconds=settings.broker.request_timeout_seconds,
+        circuit_breaker_failure_threshold=settings.broker.circuit_breaker_failure_threshold,
+        circuit_breaker_reset_seconds=settings.broker.circuit_breaker_reset_seconds,
+    )
+    fallback = MockMarketDataProvider(clock)
+    calendar = ExchangeCalendar(
+        timezone=settings.market.timezone,
+        session_open=settings.market.session_open,
+        session_close=settings.market.session_close,
+    )
+
+    return MarketServices(
+        spot=GetSpotPrice(resolver=resolver, fallback=fallback, clock=clock),
+        option_chain=GetOptionChain(resolver=resolver, fallback=fallback, clock=clock),
+        expiries=GetExpiries(resolver=resolver, fallback=fallback, clock=clock),
+        status=GetMarketStatus(resolver=resolver, clock=clock, calendar=calendar),
+    )
+
+
+Services = Annotated[MarketServices, Depends(build_market_services)]
