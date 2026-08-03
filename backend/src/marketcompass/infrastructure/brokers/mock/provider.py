@@ -11,15 +11,20 @@ from marketcompass.contexts.market_data.domain.instruments import InstrumentSymb
 from marketcompass.contexts.market_data.domain.market_data import (
     DataSource,
     ExpiryList,
+    FuturesQuote,
     OptionChain,
     Provenance,
     Quote,
+)
+from marketcompass.infrastructure.brokers.futures_contract import (
+    local_front_month,
+    to_futures_symbol,
 )
 from marketcompass.infrastructure.brokers.mock.option_chain_factory import (
     build_option_chain,
     upcoming_expiries,
 )
-from marketcompass.infrastructure.brokers.mock.quote_factory import build_quote
+from marketcompass.infrastructure.brokers.mock.quote_factory import build_futures_quote, build_quote
 from marketcompass.infrastructure.time.clock import SystemClock
 
 PROVIDER_NAME = "mock"
@@ -37,6 +42,13 @@ class MockMarketDataProvider:
 
     async def get_quote(self, instrument: InstrumentSymbol) -> Quote:
         return build_quote(instrument, self._clock.now())
+
+    async def get_futures_quote(self, instrument: InstrumentSymbol) -> FuturesQuote:
+        now = self._clock.now()
+        contract = local_front_month(now.date())
+        return build_futures_quote(
+            instrument, now, contract=to_futures_symbol(instrument, contract), expiry=contract
+        )
 
     async def get_option_chain(
         self, instrument: InstrumentSymbol, expiry: str | None = None

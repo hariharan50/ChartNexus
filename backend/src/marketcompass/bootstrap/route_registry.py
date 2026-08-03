@@ -11,10 +11,16 @@ from fastapi import APIRouter, FastAPI
 from marketcompass.contexts.broker_connections.api.router import router as broker_router
 from marketcompass.contexts.identity.api.router import router as identity_router
 from marketcompass.contexts.market_data.api.router import router as market_router
+from marketcompass.contexts.options_analytics.api.router import router as options_lab_router
 
 API_PREFIX = "/api/v1"
 
-_ROUTERS: tuple[APIRouter, ...] = (identity_router, broker_router, market_router)
+_ROUTERS: tuple[APIRouter, ...] = (
+    identity_router,
+    broker_router,
+    market_router,
+    options_lab_router,
+)
 
 
 def register_routes(app: FastAPI, *, prefix: str = API_PREFIX) -> None:

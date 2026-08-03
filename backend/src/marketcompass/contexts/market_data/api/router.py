@@ -14,6 +14,7 @@ from fastapi import APIRouter, Query
 from marketcompass.contexts.market_data.api.dependencies import Services
 from marketcompass.contexts.market_data.api.schemas import (
     ExpiriesResponse,
+    FuturesQuoteResponse,
     MarketStatusResponse,
     OptionChainResponse,
     QuoteResponse,
@@ -56,6 +57,27 @@ async def spot(
         QuoteQuery(tenant_id=principal.tenant_id, instrument=InstrumentSymbol.parse(instrument))
     )
     return QuoteResponse.of(quote)
+
+
+@router.get(
+    "/futures",
+    response_model=FuturesQuoteResponse,
+    summary="Front-month futures quote",
+    description=(
+        "The underlying's near-month futures contract. Rolls to the next month "
+        "automatically once the current contract's expiry passes."
+    ),
+    responses={422: {"description": "Unknown instrument"}},
+)
+async def futures(
+    principal: CurrentPrincipal,
+    services: Services,
+    instrument: InstrumentParam = "NIFTY",
+) -> FuturesQuoteResponse:
+    quote = await services.futures(
+        QuoteQuery(tenant_id=principal.tenant_id, instrument=InstrumentSymbol.parse(instrument))
+    )
+    return FuturesQuoteResponse.of(quote)
 
 
 @router.get(

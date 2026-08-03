@@ -14,6 +14,7 @@ from pydantic import BaseModel, ConfigDict
 
 from marketcompass.contexts.market_data.domain.market_data import (
     ExpiryList,
+    FuturesQuote,
     MarketStatus,
     OptionChain,
     OptionQuote,
@@ -59,6 +60,34 @@ class QuoteResponse(_Schema):
             price=quote.price,
             change=quote.change,
             change_percent=quote.change_percent,
+            provenance=ProvenanceResponse.of(quote.provenance),
+        )
+
+
+class FuturesQuoteResponse(_Schema):
+    instrument: str
+    contract: str
+    expiry: str
+    price: Decimal
+    change: Decimal | None
+    change_percent: Decimal | None
+    volume: int
+    day_high: Decimal | None
+    day_low: Decimal | None
+    provenance: ProvenanceResponse
+
+    @classmethod
+    def of(cls, quote: FuturesQuote) -> FuturesQuoteResponse:
+        return cls(
+            instrument=quote.instrument.value,
+            contract=quote.contract,
+            expiry=quote.expiry,
+            price=quote.price,
+            change=quote.change,
+            change_percent=quote.change_percent,
+            volume=quote.volume,
+            day_high=quote.day_high,
+            day_low=quote.day_low,
             provenance=ProvenanceResponse.of(quote.provenance),
         )
 

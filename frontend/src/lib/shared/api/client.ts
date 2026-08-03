@@ -50,11 +50,16 @@ export async function apiFetch<T>({ url, params, fetcher, ...init }: ApiFetchOpt
     throw new ApiError(await parseProblem(response), response.status);
   }
 
-  if (response.status === 204 || response.headers.get('content-length') === '0') {
+  // Detect an empty body from the payload itself rather than the
+  // `content-length` header: during SSR that header is not exposed unless it is
+  // whitelisted in `filterSerializedResponseHeaders`, and reading it there
+  // throws. A 204 or an empty string both mean "no content".
+  if (response.status === 204) {
     return undefined as T;
   }
 
-  return (await response.json()) as T;
+  const text = await response.text();
+  return (text ? JSON.parse(text) : undefined) as T;
 }
 
 function readCookie(name: string): string | null {

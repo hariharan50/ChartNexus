@@ -34,6 +34,8 @@ export function createQueryClient(): QueryClient {
 export const queryKeys = {
   session: () => ['session'] as const,
   instruments: (search?: string) => ['instruments', search ?? ''] as const,
+  marketStatus: () => ['market-status'] as const,
+  spot: (symbol: string) => ['spot', symbol] as const,
   optionChain: (symbol: string, expiry: string) => ['option-chain', symbol, expiry] as const,
   optionMetrics: (symbol: string, expiry: string, metric: string) =>
     ['option-metrics', symbol, expiry, metric] as const,

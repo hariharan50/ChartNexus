@@ -2,6 +2,7 @@ import { apiFetch } from '$shared/api/client';
 import type {
   BrokerAuthorization,
   BrokerConnection,
+  FuturesQuote,
   MarketStatus,
   OptionChain,
   Quote
@@ -53,6 +54,10 @@ export function getMarketStatus(fetcher?: typeof fetch): Promise<MarketStatus> {
 
 export function getSpot(instrument: string, fetcher?: typeof fetch): Promise<Quote> {
   return apiFetch<Quote>({ url: '/market/spot', params: { instrument }, fetcher });
+}
+
+export function getFutures(instrument: string, fetcher?: typeof fetch): Promise<FuturesQuote> {
+  return apiFetch<FuturesQuote>({ url: '/market/futures', params: { instrument }, fetcher });
 }
 
 export function getOptionChain(

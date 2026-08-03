@@ -24,6 +24,7 @@ from marketcompass.contexts.market_data.domain.instruments import InstrumentSymb
 from marketcompass.contexts.market_data.domain.market_data import (
     DataSource,
     ExpiryList,
+    FuturesQuote,
     MarketStatus,
     OptionChain,
     Provenance,
@@ -101,6 +102,49 @@ class GetSpotPrice(_FallbackMixin):
             # No real data has ever been seen for this instrument. Serving mock
             # is better than a blank screen, but it is labelled as mock.
             return await self._fallback.get_quote(query.instrument)
+
+        if live:
+            self._last_good[key] = quote
+        return quote
+
+
+class GetFuturesQuote(_FallbackMixin):
+    """Front-month futures quote, on the same degrade ladder as the spot."""
+
+    def __init__(
+        self,
+        *,
+        resolver: ProviderResolver,
+        fallback: MarketDataProvider,
+        clock: Clock,
+    ) -> None:
+        self._resolver = resolver
+        self._fallback = fallback
+        self._clock = clock
+        self._last_good: dict[str, FuturesQuote] = {}
+
+    async def __call__(self, query: QuoteQuery) -> FuturesQuote:
+        provider, live = await self._providers(query.tenant_id)
+        key = f"{query.tenant_id}:{query.instrument.value}"
+
+        try:
+            quote = await provider.get_futures_quote(query.instrument)
+        except UpstreamError:
+            previous = self._last_good.get(key)
+            if previous is not None:
+                return FuturesQuote(
+                    instrument=previous.instrument,
+                    contract=previous.contract,
+                    expiry=previous.expiry,
+                    price=previous.price,
+                    change=previous.change,
+                    change_percent=previous.change_percent,
+                    volume=previous.volume,
+                    day_high=previous.day_high,
+                    day_low=previous.day_low,
+                    provenance=_degrade(previous.provenance, self._clock.now()),
+                )
+            return await self._fallback.get_futures_quote(query.instrument)
 
         if live:
             self._last_good[key] = quote

@@ -56,6 +56,21 @@ export interface Quote {
   provenance: Provenance;
 }
 
+export interface FuturesQuote {
+  instrument: string;
+  /** Broker symbol of the active monthly contract, e.g. `NSE:NIFTY25AUGFUT`. */
+  contract: string;
+  /** ISO expiry date of that contract. */
+  expiry: string;
+  price: string;
+  change: string | null;
+  change_percent: string | null;
+  volume: number;
+  day_high: string | null;
+  day_low: string | null;
+  provenance: Provenance;
+}
+
 export interface OptionQuote {
   ltp: string;
   oi: number;

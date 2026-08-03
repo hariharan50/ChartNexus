@@ -53,6 +53,7 @@
     "@tanstack/svelte-query": "^5.62.0",
     "d3-scale": "^4.0.2",
     "d3-shape": "^3.2.0",
+    "echarts": "^6.1.0",
     "layerchart": "^0.60.0",
     "zod": "^3.24.0"
   },

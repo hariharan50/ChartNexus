@@ -10,6 +10,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from marketcompass.contexts.market_data.application.queries import (
     GetExpiries,
+    GetFuturesQuote,
     GetMarketStatus,
     GetOptionChain,
     GetSpotPrice,
@@ -31,6 +32,7 @@ from marketcompass.infrastructure.transport.http.dependencies import (
 @dataclass(slots=True)
 class MarketServices:
     spot: GetSpotPrice
+    futures: GetFuturesQuote
     option_chain: GetOptionChain
     expiries: GetExpiries
     status: GetMarketStatus
@@ -66,6 +68,7 @@ def build_market_services(
 
     return MarketServices(
         spot=GetSpotPrice(resolver=resolver, fallback=fallback, clock=clock),
+        futures=GetFuturesQuote(resolver=resolver, fallback=fallback, clock=clock),
         option_chain=GetOptionChain(resolver=resolver, fallback=fallback, clock=clock),
         expiries=GetExpiries(resolver=resolver, fallback=fallback, clock=clock),
         status=GetMarketStatus(resolver=resolver, clock=clock, calendar=calendar),

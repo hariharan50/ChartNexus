@@ -65,6 +65,29 @@ class Quote:
 
 
 @dataclass(frozen=True, slots=True)
+class FuturesQuote:
+    """The underlying's front-month futures contract.
+
+    ``contract`` is the broker symbol of the currently-active monthly contract
+    (e.g. ``NSE:NIFTY25AUGFUT``); ``expiry`` is that contract's ISO expiry date.
+    The active contract rolls forward the moment the current month's expiry
+    passes, so this always tracks the near-month future without any hard-coded
+    series.
+    """
+
+    instrument: InstrumentSymbol
+    contract: str
+    expiry: str
+    price: Decimal
+    change: Decimal | None
+    change_percent: Decimal | None
+    volume: int
+    day_high: Decimal | None
+    day_low: Decimal | None
+    provenance: Provenance
+
+
+@dataclass(frozen=True, slots=True)
 class OptionQuote:
     """One side of a strike."""
 

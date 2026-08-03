@@ -9,12 +9,13 @@ be realistic beyond plausible magnitudes.
 from __future__ import annotations
 
 import math
-from datetime import datetime
+from datetime import date, datetime
 from decimal import Decimal
 
 from marketcompass.contexts.market_data.domain.instruments import InstrumentSymbol
 from marketcompass.contexts.market_data.domain.market_data import (
     DataSource,
+    FuturesQuote,
     Provenance,
     Quote,
 )
@@ -72,5 +73,37 @@ def build_quote(instrument: InstrumentSymbol, moment: datetime) -> Quote:
         price=price,
         change=change,
         change_percent=change_percent,
+        provenance=Provenance(source=DataSource.MOCK, fetched_at=moment),
+    )
+
+
+# Futures trade at a small cost-of-carry premium to spot; a flat 7 bps keeps the
+# synthetic number visibly a future without pretending to model the basis.
+_FUTURES_BASIS = Decimal("0.0007")
+
+
+def build_futures_quote(
+    instrument: InstrumentSymbol, moment: datetime, *, contract: str, expiry: date
+) -> FuturesQuote:
+    spot = spot_price(instrument, moment)
+    price = (spot * (Decimal(1) + _FUTURES_BASIS)).quantize(Decimal("0.01"))
+    base = base_level(instrument)
+    change = (price - base).quantize(Decimal("0.01"))
+    change_percent = ((change / base) * Decimal(100)).quantize(Decimal("0.01"))
+
+    # Deterministic day range and volume, keyed to the minute like the spot.
+    swing = (price * _SWING_PERCENT).quantize(Decimal("0.01"))
+    volume = 100_000 + (moment.hour * 60 + moment.minute) * 137
+
+    return FuturesQuote(
+        instrument=instrument,
+        contract=contract,
+        expiry=expiry.isoformat(),
+        price=price,
+        change=change,
+        change_percent=change_percent,
+        volume=volume,
+        day_high=(price + swing).quantize(Decimal("0.01")),
+        day_low=(price - swing).quantize(Decimal("0.01")),
         provenance=Provenance(source=DataSource.MOCK, fetched_at=moment),
     )
