@@ -14,6 +14,7 @@ from marketcompass.contexts.identity.domain.errors import (
 from marketcompass.contexts.identity.domain.value_objects import (
     AuthProvider,
     EmailAddress,
+    PhoneNumber,
     Role,
     UserStatus,
 )
@@ -55,7 +56,14 @@ class User:
     status: UserStatus
     roles: frozenset[Role]
     password_hash: str | None
+    # Optional on the aggregate even though signup now demands one: accounts
+    # created before this field existed, and Google sign-ups, legitimately have
+    # none. Only sign-in-by-phone depends on it being set.
+    phone: PhoneNumber | None = None
     email_verified_at: datetime | None = None
+    # Reserved for the SMS/OTP flow. Nothing sets it yet; having the field means
+    # adding verification later does not need another migration of this shape.
+    phone_verified_at: datetime | None = None
     last_login_at: datetime | None = None
     failed_login_count: int = 0
     federated_identities: list[FederatedIdentity] = field(default_factory=list)
@@ -74,6 +82,7 @@ class User:
         password_hash: str,
         now: datetime,
         requires_verification: bool,
+        phone: PhoneNumber | None = None,
         roles: frozenset[Role] = frozenset({Role.OWNER}),
     ) -> User:
         return cls(
@@ -86,6 +95,7 @@ class User:
             ),
             roles=roles,
             password_hash=password_hash,
+            phone=phone,
             created_at=now,
             updated_at=now,
         )

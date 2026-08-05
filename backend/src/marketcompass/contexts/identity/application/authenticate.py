@@ -22,6 +22,7 @@ from marketcompass.contexts.identity.domain.errors import (
     EmailNotVerifiedError,
     InvalidCredentialsError,
     PasswordLoginUnavailableError,
+    PhoneAlreadyRegisteredError,
     RegistrationDisabledError,
 )
 from marketcompass.contexts.identity.domain.password_policy import PasswordPolicy
@@ -29,8 +30,10 @@ from marketcompass.contexts.identity.domain.user import User
 from marketcompass.contexts.identity.domain.value_objects import (
     AuthProvider,
     EmailAddress,
+    PhoneNumber,
     RawPassword,
 )
+from marketcompass.shared_kernel.domain.errors import ValidationError
 from marketcompass.shared_kernel.types.identifiers import TenantId, new_id
 
 
@@ -38,15 +41,30 @@ from marketcompass.shared_kernel.types.identifiers import TenantId, new_id
 class RegisterUserCommand:
     email: str
     password: str
+    phone: str
     display_name: str = ""
     context: RequestContextInput = field(default_factory=RequestContextInput)
 
 
 @dataclass(frozen=True, slots=True)
 class LoginCommand:
-    email: str
+    """``identifier`` is an email address or a phone number — see
+    :func:`_parse_identifier` for how the two are told apart."""
+
+    identifier: str
     password: str
     context: RequestContextInput = field(default_factory=RequestContextInput)
+
+
+def _parse_identifier(raw: str) -> EmailAddress | PhoneNumber:
+    """Decide whether the sign-in identifier is an email or a phone number.
+
+    An ``@`` is the discriminator: no Indian mobile number contains one, and no
+    email address is valid without one. Raises :class:`ValidationError` when
+    neither form parses — the caller turns that into invalid credentials rather
+    than surfacing it, so a malformed identifier reveals nothing.
+    """
+    return EmailAddress.parse(raw) if "@" in raw else PhoneNumber.parse(raw)
 
 
 @dataclass(frozen=True, slots=True)
@@ -82,13 +100,20 @@ class RegisterUser:
             raise RegistrationDisabledError
 
         email = EmailAddress.parse(command.email)
+        phone = PhoneNumber.parse(command.phone)
         password = RawPassword(command.password)
-        self._password_policy.validate(password, email=email)
+        self._password_policy.validate(password, email=email, phone=phone)
 
         if await self._users.email_exists(email):
             # Registration cannot hide that an address is taken — the account
             # would collide. The mitigation is rate limiting, not vagueness.
             raise EmailAlreadyRegisteredError
+
+        if await self._users.phone_exists(phone):
+            # Same reasoning as the email check: a phone number identifies an
+            # account at sign-in, so it has to be unique and the clash has to
+            # be reported.
+            raise PhoneAlreadyRegisteredError
 
         now = self._clock.now()
         user = User.register_with_password(
@@ -100,6 +125,7 @@ class RegisterUser:
             password_hash=self._hasher.hash(password.value),
             now=now,
             requires_verification=self._registration_policy.require_email_verification,
+            phone=phone,
         )
         await self._users.add(user)
 
@@ -133,11 +159,28 @@ class LoginWithPassword:
         self._rate_limiter = rate_limiter
 
     async def __call__(self, command: LoginCommand) -> AuthenticationResult:
-        email = EmailAddress.parse(command.email)
-        rate_key = f"login:{email.value}"
+        try:
+            credential = _parse_identifier(command.identifier)
+        except ValidationError:
+            # An identifier that is neither a valid email nor a valid phone
+            # cannot match an account. Answering "invalid credentials" rather
+            # than "malformed input" keeps the response — and its timing —
+            # indistinguishable from a wrong password.
+            self._hasher.dummy_verify()
+            raise InvalidCredentialsError from None
+
+        # Both identifiers normalise into their own namespace, so an account
+        # reachable two ways carries two lockout budgets. Accepted for now:
+        # each key still throttles, and tightening it means keying on user id,
+        # which is not known until after the lookup this key guards.
+        rate_key = f"login:{credential.value}"
         await self._rate_limiter.check(rate_key)
 
-        user = await self._users.find_by_email(email)
+        user = (
+            await self._users.find_by_email(credential)
+            if isinstance(credential, EmailAddress)
+            else await self._users.find_by_phone(credential)
+        )
 
         if user is None:
             # Hash anyway. Returning early here makes "unknown address" measurably

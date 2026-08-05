@@ -15,16 +15,17 @@ from marketcompass.shared_kernel.domain.errors import (
 
 
 class InvalidCredentialsError(AuthenticationError):
-    """Wrong email or wrong password.
+    """Unknown identifier, or wrong password.
 
-    One error for both cases on purpose: distinguishing them turns the login
-    endpoint into an account-existence oracle.
+    One error for every case on purpose: distinguishing them turns the login
+    endpoint into an account-existence oracle. The message names no particular
+    identifier because sign-in accepts an email address or a phone number.
     """
 
     code = "invalid_credentials"
 
     def __init__(self) -> None:
-        super().__init__("The email address or password is incorrect.")
+        super().__init__("Those sign-in details do not match an account.")
 
 
 class AccountSuspendedError(AuthenticationError):
@@ -53,6 +54,13 @@ class EmailAlreadyRegisteredError(ConflictError):
 
     def __init__(self) -> None:
         super().__init__("An account with this email address already exists.")
+
+
+class PhoneAlreadyRegisteredError(ConflictError):
+    code = "phone_taken"
+
+    def __init__(self) -> None:
+        super().__init__("An account with this phone number already exists.")
 
 
 class PasswordLoginUnavailableError(AuthenticationError):

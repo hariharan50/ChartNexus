@@ -1,11 +1,22 @@
-import { svelte } from '@sveltejs/vite-plugin-svelte';
+import { svelte, vitePreprocess } from '@sveltejs/vite-plugin-svelte';
 import { fileURLToPath } from 'node:url';
 import { defineConfig } from 'vitest/config';
 
 const resolve = (path: string) => fileURLToPath(new URL(path, import.meta.url));
 
 export default defineConfig({
-  plugins: [svelte({ hot: false })],
+  plugins: [
+    svelte({
+      hot: false,
+      // Ignore svelte.config.js here. Its `vitePreprocess()` runs Vite's CSS
+      // pipeline over every <style> block, which throws under Vitest ("Cannot
+      // create proxy with a non-object as target"). Nothing in that config is
+      // needed for component tests — the kit aliases are redeclared below, and
+      // `lang="ts"` is handled by esbuild.
+      configFile: false,
+      preprocess: vitePreprocess({ style: false })
+    })
+  ],
   resolve: {
     // Vitest runs without the SvelteKit plugin, so the kit aliases from
     // svelte.config.js have to be repeated here.

@@ -15,6 +15,7 @@
   import IconChart from '$shared/ui/icons/IconChart.svelte';
   import IconTarget from '$shared/ui/icons/IconTarget.svelte';
   import OptionsLabPanel from './components/OptionsLabPanel.svelte';
+  import FutureLabPanel from './components/FutureLabPanel.svelte';
 
   let { data, children } = $props();
 
@@ -58,6 +59,7 @@
     menuTitle?: string;
     menuSub?: string;
     mega?: boolean;
+    futureMega?: boolean;
   };
 
   const nav: NavItem[] = [
@@ -83,7 +85,7 @@
       ]
     },
     { label: 'Options Lab', href: '/options/open-interest', mega: true },
-    { label: 'Future Lab', href: '/future-lab' },
+    { label: 'Future Lab', href: '/future-lab', futureMega: true },
     { label: 'Analyse', href: '/analyse' },
     { label: 'Smart Insights', href: '/smart-insights' },
     { label: 'Option Chain', href: '/option-chain' }
@@ -160,6 +162,17 @@
                       <span class="caret" aria-hidden="true"><IconChevronDown /></span>
                     </summary>
                     <OptionsLabPanel />
+                  </details>
+                {:else if item.futureMega}
+                  <details class="nav-menu">
+                    <summary
+                      class="nav-link"
+                      class:active={page.url.pathname.startsWith('/future-lab')}
+                    >
+                      {item.label}
+                      <span class="caret" aria-hidden="true"><IconChevronDown /></span>
+                    </summary>
+                    <FutureLabPanel />
                   </details>
                 {:else if item.children}
                   <details class="nav-menu">

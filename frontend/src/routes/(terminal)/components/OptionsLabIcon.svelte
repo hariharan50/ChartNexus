@@ -53,6 +53,10 @@
     <path d="M6 16h12l-1.5-2.5V10a4.5 4.5 0 0 0-9 0v3.5Z" /><path d="M10.5 19a1.5 1.5 0 0 0 3 0" />
   {:else if name === 'eye'}
     <path d="M2 12s3.5-6 10-6 10 6 10 6-3.5 6-10 6S2 12 2 12Z" /><circle cx="12" cy="12" r="2.5" />
+  {:else if name === 'gauge'}
+    <path d="M4 15a8 8 0 1 1 16 0" /><path d="M12 15l4-5" /><path d="M12 15v.01" />
+  {:else if name === 'cycle'}
+    <path d="M12 3a9 9 0 1 0 9 9" /><path d="M12 3v6l5-2.5Z" />
   {:else}
     <circle cx="12" cy="12" r="8" />
   {/if}

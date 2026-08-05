@@ -16,6 +16,15 @@ _EMAIL_PATTERN = re.compile(r"^[^@\s]+@[^@\s.]+(\.[^@\s.]+)+$")
 _MAX_EMAIL_LENGTH = 254
 _MAX_PASSWORD_LENGTH = 1024
 
+# India only, for now. Mobile numbers are ten digits opening 6-9; landlines and
+# service codes are deliberately excluded because this number is what a future
+# OTP will be sent to.
+_INDIA_DIALLING_CODE = "+91"
+_NATIONAL_NUMBER_LENGTH = 10
+_PHONE_PATTERN = re.compile(r"^\+91[6-9]\d{9}$")
+# Everything a person might type between the digits.
+_PHONE_SEPARATORS = re.compile(r"[\s\-().]")
+
 
 @dataclass(frozen=True, slots=True)
 class EmailAddress:
@@ -44,6 +53,52 @@ class EmailAddress:
     @property
     def domain(self) -> str:
         return self.value.rsplit("@", 1)[1]
+
+    def __str__(self) -> str:
+        return self.value
+
+
+@dataclass(frozen=True, slots=True)
+class PhoneNumber:
+    """A normalised Indian mobile number, stored E.164 (``+919876543210``).
+
+    Same reason as :class:`EmailAddress` for normalising rather than storing
+    what was typed: ``9876543210``, ``+91 98765 43210`` and ``09876543210`` are
+    one phone, and one phone must mean one account — otherwise the same number
+    can be registered several ways and sign-in-by-phone becomes ambiguous.
+    """
+
+    value: str
+
+    def __post_init__(self) -> None:
+        if not self.value:
+            raise ValidationError("phone number is required", field="phone")
+        if not _PHONE_PATTERN.match(self.value):
+            raise ValidationError(
+                "enter a valid 10-digit Indian mobile number",
+                field="phone",
+            )
+
+    @classmethod
+    def parse(cls, raw: str) -> PhoneNumber:
+        """Normalise a typed number to E.164, then validate it."""
+        digits = _PHONE_SEPARATORS.sub("", unicodedata.normalize("NFKC", (raw or "").strip()))
+
+        # Strip whichever prefix was used to express the country/trunk code, so
+        # all three spellings converge before validation.
+        if digits.startswith(_INDIA_DIALLING_CODE):
+            digits = digits[len(_INDIA_DIALLING_CODE) :]
+        elif digits.startswith("91") and len(digits) == _NATIONAL_NUMBER_LENGTH + 2:
+            digits = digits[2:]
+        elif digits.startswith("0") and len(digits) == _NATIONAL_NUMBER_LENGTH + 1:
+            digits = digits[1:]
+
+        return cls(f"{_INDIA_DIALLING_CODE}{digits}")
+
+    @property
+    def national(self) -> str:
+        """The ten digits, without the country code — what people recognise."""
+        return self.value[len(_INDIA_DIALLING_CODE) :]
 
     def __str__(self) -> str:
         return self.value

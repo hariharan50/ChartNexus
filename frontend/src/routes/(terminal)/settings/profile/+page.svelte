@@ -53,6 +53,14 @@
 
 <div class="row">
   <div class="copy">
+    <p class="label">Phone number</p>
+    <p class="hint">Also usable to sign in, alongside your email address.</p>
+  </div>
+  <span class="value mono">{user?.phone || '—'}</span>
+</div>
+
+<div class="row">
+  <div class="copy">
     <p class="label">Sign-in method</p>
     <p class="hint">How you authenticate into MarketCompass.</p>
   </div>

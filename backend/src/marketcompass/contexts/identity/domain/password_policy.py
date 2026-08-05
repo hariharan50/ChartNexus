@@ -9,7 +9,11 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-from marketcompass.contexts.identity.domain.value_objects import EmailAddress, RawPassword
+from marketcompass.contexts.identity.domain.value_objects import (
+    EmailAddress,
+    PhoneNumber,
+    RawPassword,
+)
 from marketcompass.shared_kernel.domain.errors import ValidationError
 
 # The passwords that show up first in every credential-stuffing list. A full
@@ -49,7 +53,13 @@ class PasswordPolicy:
     min_length: int = 12
     max_repeated_characters: int = 4
 
-    def validate(self, password: RawPassword, *, email: EmailAddress | None = None) -> None:
+    def validate(
+        self,
+        password: RawPassword,
+        *,
+        email: EmailAddress | None = None,
+        phone: PhoneNumber | None = None,
+    ) -> None:
         """Raise :class:`ValidationError` if the password is unacceptable."""
         value = password.value
 
@@ -72,6 +82,9 @@ class PasswordPolicy:
 
         if email is not None and self._resembles_email(folded, email):
             raise ValidationError("password must not contain your email address", field="password")
+
+        if phone is not None and phone.national in folded:
+            raise ValidationError("password must not contain your phone number", field="password")
 
     @staticmethod
     def _resembles_email(folded_password: str, email: EmailAddress) -> bool:

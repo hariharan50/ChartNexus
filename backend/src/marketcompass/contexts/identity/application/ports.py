@@ -15,7 +15,7 @@ from marketcompass.contexts.identity.domain.refresh_session import (
     SessionRevocationReason,
 )
 from marketcompass.contexts.identity.domain.user import User
-from marketcompass.contexts.identity.domain.value_objects import EmailAddress
+from marketcompass.contexts.identity.domain.value_objects import EmailAddress, PhoneNumber
 from marketcompass.shared_kernel.types.identifiers import SessionId, TenantId, UserId
 
 
@@ -25,6 +25,8 @@ class UserRepository(Protocol):
 
     async def find_by_email(self, email: EmailAddress) -> User | None: ...
 
+    async def find_by_phone(self, phone: PhoneNumber) -> User | None: ...
+
     async def find_by_google_subject(self, subject: str) -> User | None: ...
 
     async def add(self, user: User) -> None: ...
@@ -32,6 +34,8 @@ class UserRepository(Protocol):
     async def update(self, user: User) -> None: ...
 
     async def email_exists(self, email: EmailAddress) -> bool: ...
+
+    async def phone_exists(self, phone: PhoneNumber) -> bool: ...
 
 
 @runtime_checkable

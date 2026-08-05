@@ -4,16 +4,19 @@
   import { session } from '$contexts/identity/session.svelte';
   import Button from '$shared/ui/Button.svelte';
   import PasswordField from '$shared/ui/PasswordField.svelte';
+  import PhoneField from '$shared/ui/PhoneField.svelte';
   import TextField from '$shared/ui/TextField.svelte';
   import IconAlert from '$shared/ui/icons/IconAlert.svelte';
   import IconAt from '$shared/ui/icons/IconAt.svelte';
   import IconGoogle from '$shared/ui/icons/IconGoogle.svelte';
   import IconUser from '$shared/ui/icons/IconUser.svelte';
+  import { isValidIndianMobile, toE164 } from '$shared/validation/phone';
 
   const MIN_PASSWORD_LENGTH = 12;
 
   let displayName = $state('');
   let email = $state('');
+  let phone = $state('');
   let password = $state('');
   let confirmPassword = $state('');
 
@@ -26,8 +29,11 @@
   // Only complain once the second field has been typed into, so the mismatch
   // does not flash while the user is still on their first keystroke.
   const mismatch = $derived(confirmPassword.length > 0 && confirmPassword !== password);
+  // Same "wait until they have typed something" rule as the password mismatch.
+  const phoneIncomplete = $derived(phone.length > 0 && !isValidIndianMobile(phone));
   const canSubmit = $derived(
     email.trim().length > 0 &&
+      isValidIndianMobile(phone) &&
       password.length >= MIN_PASSWORD_LENGTH &&
       confirmPassword === password &&
       !submitting
@@ -45,6 +51,7 @@
       await auth.register({
         email: email.trim(),
         password,
+        phone: toE164(phone),
         displayName: displayName.trim()
       });
       // Registering signs the account in, but the flow deliberately ends at the
@@ -122,6 +129,13 @@
       <IconAt />
     {/snippet}
   </TextField>
+
+  <PhoneField
+    bind:value={phone}
+    error={fieldError('phone') ??
+      (phoneIncomplete ? 'Enter a 10-digit Indian mobile number.' : undefined)}
+    required
+  />
 
   <div>
     <PasswordField

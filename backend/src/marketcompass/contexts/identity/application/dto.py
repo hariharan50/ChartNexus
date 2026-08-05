@@ -27,6 +27,7 @@ class UserView:
     id: UserId
     tenant_id: TenantId
     email: str
+    phone: str | None
     display_name: str
     status: str
     roles: tuple[str, ...]
@@ -42,6 +43,7 @@ class UserView:
             id=user.id,
             tenant_id=user.tenant_id,
             email=user.email.value,
+            phone=user.phone.value if user.phone else None,
             display_name=user.display_name,
             status=user.status.value,
             roles=tuple(sorted(role.value for role in user.roles)),

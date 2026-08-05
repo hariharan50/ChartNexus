@@ -22,7 +22,11 @@ from marketcompass.contexts.identity.domain.refresh_session import (
     SessionRevocationReason,
 )
 from marketcompass.contexts.identity.domain.user import User
-from marketcompass.contexts.identity.domain.value_objects import AuthProvider, EmailAddress
+from marketcompass.contexts.identity.domain.value_objects import (
+    AuthProvider,
+    EmailAddress,
+    PhoneNumber,
+)
 from marketcompass.infrastructure.time.clock import FixedClock
 from marketcompass.shared_kernel.domain.errors import RateLimitError
 from marketcompass.shared_kernel.types.identifiers import SessionId, UserId
@@ -40,6 +44,9 @@ class FakeUserRepository:
     async def find_by_email(self, email: EmailAddress) -> User | None:
         return next((u for u in self.users.values() if u.email == email), None)
 
+    async def find_by_phone(self, phone: PhoneNumber) -> User | None:
+        return next((u for u in self.users.values() if u.phone == phone), None)
+
     async def find_by_google_subject(self, subject: str) -> User | None:
         for user in self.users.values():
             identity = user.identity_for(AuthProvider.GOOGLE)
@@ -50,9 +57,15 @@ class FakeUserRepository:
     async def email_exists(self, email: EmailAddress) -> bool:
         return await self.find_by_email(email) is not None
 
+    async def phone_exists(self, phone: PhoneNumber) -> bool:
+        return await self.find_by_phone(phone) is not None
+
     async def add(self, user: User) -> None:
         if await self.email_exists(user.email):
             msg = "unique violation on users.email"
+            raise ValueError(msg)
+        if user.phone is not None and await self.phone_exists(user.phone):
+            msg = "unique violation on users.phone"
             raise ValueError(msg)
         self.users[user.id] = user
 

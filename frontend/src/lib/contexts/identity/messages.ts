@@ -18,11 +18,19 @@ interface Presented {
 
 const OVERRIDES: Record<string, Presented> = {
   invalid_credentials: {
-    message: 'That email address and password do not match an account.'
+    // Names no identifier in particular: sign-in accepts either an email
+    // address or a phone number, and saying which one was wrong would confirm
+    // whether an account exists.
+    message: 'Those sign-in details do not match an account.'
   },
   email_taken: {
     message: 'An account with this email already exists.',
     field: 'email',
+    action: { label: 'Sign in instead', href: '/login' }
+  },
+  phone_taken: {
+    message: 'An account with this phone number already exists.',
+    field: 'phone',
     action: { label: 'Sign in instead', href: '/login' }
   },
   email_unverified: {

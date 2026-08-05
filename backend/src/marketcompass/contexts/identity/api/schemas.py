@@ -30,11 +30,25 @@ class RegisterRequest(_Schema):
     # Bounded here as well as in the domain so an oversized body is rejected
     # before it ever reaches Argon2.
     password: str = Field(min_length=8, max_length=256, examples=["correct-horse-battery"])
+    # Loosely bounded on purpose: the domain's PhoneNumber owns the real rules,
+    # and it accepts several spellings ("+91 98765 43210") that a tight length
+    # here would reject before normalisation.
+    phone: str = Field(min_length=10, max_length=20, examples=["9876543210"])
     display_name: str = Field(default="", max_length=120)
 
 
 class LoginRequest(_Schema):
-    email: EmailStr
+    """``identifier`` is an email address or a phone number.
+
+    Deliberately not ``EmailStr``: that type cannot represent a phone number,
+    and validating the format here would reject phone sign-in outright.
+    """
+
+    identifier: str = Field(
+        min_length=3,
+        max_length=254,
+        examples=["analyst@example.com", "9876543210"],
+    )
     password: str = Field(min_length=1, max_length=256)
 
 
@@ -67,6 +81,9 @@ class GoogleCallbackRequest(_Schema):
 class UserResponse(_Schema):
     id: str
     email: str
+    # Only ever the requester's own number: these endpoints return the caller's
+    # profile, never another account's, so there is nothing to mask.
+    phone: str | None
     display_name: str
     status: str
     roles: tuple[str, ...]
@@ -81,6 +98,7 @@ class UserResponse(_Schema):
         return cls(
             id=str(user.id),
             email=user.email,
+            phone=user.phone,
             display_name=user.display_name,
             status=user.status,
             roles=user.roles,

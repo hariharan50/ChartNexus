@@ -9,6 +9,7 @@ Requires the compose stack:  docker compose -f deploy/compose/compose.yml up -d
 
 from __future__ import annotations
 
+import secrets
 import uuid
 from collections.abc import Iterator
 
@@ -54,7 +55,13 @@ def _sign_up(client: TestClient) -> dict[str, str]:
     """Register a fresh tenant and return the CSRF header for it."""
     response = client.post(
         "/api/v1/auth/register",
-        json={"email": f"br-{uuid.uuid4().hex[:12]}@example.com", "password": PASSWORD},
+        json={
+            "email": f"br-{uuid.uuid4().hex[:12]}@example.com",
+            "password": PASSWORD,
+            # Unique per call: `uq_users_phone` would otherwise reject the
+            # second tenant these tests sign up.
+            "phone": f"9{secrets.randbelow(1_000_000_000):09d}",
+        },
     )
     assert response.status_code == 201, response.text
     return {"X-CSRF-Token": response.json()["tokens"]["csrf_token"]}

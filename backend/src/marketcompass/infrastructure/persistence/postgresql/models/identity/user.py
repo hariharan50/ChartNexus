@@ -33,6 +33,13 @@ class UserRecord(UUIDPrimaryKeyMixin, TimestampMixin, Base):
     # Stored already normalised (lowercased, NFKC) by the EmailAddress value
     # object; the unique index then makes case-variant duplicates impossible.
     email: Mapped[str] = mapped_column(String(254), nullable=False)
+
+    # E.164, normalised by the PhoneNumber value object. Nullable because
+    # accounts that predate the field, and Google sign-ups, have none — SQL
+    # treats NULLs as distinct, so the unique constraint below still permits
+    # any number of phone-less users while forbidding a shared number.
+    phone: Mapped[str | None] = mapped_column(String(16), nullable=True)
+
     display_name: Mapped[str] = mapped_column(String(120), nullable=False)
     status: Mapped[str] = mapped_column(String(32), nullable=False, server_default=text("'active'"))
 
@@ -45,6 +52,8 @@ class UserRecord(UUIDPrimaryKeyMixin, TimestampMixin, Base):
     )
 
     email_verified_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    # Reserved for the SMS/OTP flow; nothing writes it yet.
+    phone_verified_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     last_login_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     failed_login_count: Mapped[int] = mapped_column(
         Integer, nullable=False, server_default=text("0")
@@ -58,11 +67,19 @@ class UserRecord(UUIDPrimaryKeyMixin, TimestampMixin, Base):
 
     __table_args__ = (
         UniqueConstraint("email", name="uq_users_email"),
+        UniqueConstraint("phone", name="uq_users_phone"),
         CheckConstraint(
             "status in ('active', 'pending_verification', 'suspended', 'deactivated')",
             name="status_known",
         ),
         CheckConstraint("failed_login_count >= 0", name="failed_login_count_non_negative"),
+        # Defence in depth: the value object already guarantees this shape, but
+        # the constraint stops a bad backfill or a hand-written INSERT from
+        # storing a number sign-in could never match.
+        CheckConstraint(
+            r"phone is null or phone ~ '^\+91[6-9][0-9]{9}$'",
+            name="phone_e164_india",
+        ),
     )
 
 

@@ -51,7 +51,9 @@ def _snapshot(symbol: str, captured_at: datetime) -> SnapshotToWrite:
         spot=Decimal("104.00"),
         source="live",
         rows=(
-            ChainRowToWrite(Decimal("100"), "CE", oi=200, oi_change=10, volume=5, iv=Decimal("13.2")),
+            ChainRowToWrite(
+                Decimal("100"), "CE", oi=200, oi_change=10, volume=5, iv=Decimal("13.2")
+            ),
             ChainRowToWrite(Decimal("100"), "PE", oi=400, oi_change=20, volume=7, iv=None),
         ),
         expiry="2026-08-07",

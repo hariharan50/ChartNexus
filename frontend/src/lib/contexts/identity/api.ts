@@ -9,17 +9,19 @@ import type { AuthenticationResult, GoogleAuthorization, SessionSummary, User } 
  * non-browser clients. Nothing here writes a token to storage.
  */
 
-export function login(email: string, password: string): Promise<AuthenticationResult> {
+/** `identifier` is an email address or a phone number — the API tells them apart. */
+export function login(identifier: string, password: string): Promise<AuthenticationResult> {
   return apiFetch<AuthenticationResult>({
     url: '/auth/login',
     method: 'POST',
-    body: JSON.stringify({ email, password })
+    body: JSON.stringify({ identifier, password })
   });
 }
 
 export function register(input: {
   email: string;
   password: string;
+  phone: string;
   displayName?: string;
 }): Promise<AuthenticationResult> {
   return apiFetch<AuthenticationResult>({
@@ -28,6 +30,7 @@ export function register(input: {
     body: JSON.stringify({
       email: input.email,
       password: input.password,
+      phone: input.phone,
       display_name: input.displayName ?? ''
     })
   });

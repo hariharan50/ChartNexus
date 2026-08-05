@@ -63,6 +63,7 @@ async def register(
         RegisterUserCommand(
             email=str(payload.email),
             password=payload.password,
+            phone=payload.phone,
             display_name=payload.display_name,
             context=_context_of(request),
         )
@@ -87,7 +88,7 @@ async def login(
 ) -> AuthenticationResponse:
     result = await services.login(
         LoginCommand(
-            email=str(payload.email),
+            identifier=payload.identifier,
             password=payload.password,
             context=_context_of(request),
         )

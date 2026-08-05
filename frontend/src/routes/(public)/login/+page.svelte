@@ -12,7 +12,7 @@
   import IconAt from '$shared/ui/icons/IconAt.svelte';
   import IconGoogle from '$shared/ui/icons/IconGoogle.svelte';
 
-  let email = $state('');
+  let identifier = $state('');
   let password = $state('');
   let rememberMe = $state(true);
 
@@ -39,7 +39,7 @@
     submitting = true;
     error = null;
     try {
-      const result = await auth.login(email.trim(), password);
+      const result = await auth.login(identifier.trim(), password);
       session.hydrate(result.user);
       await goto(next, { invalidateAll: true });
     } catch (caught) {
@@ -99,13 +99,12 @@
 
 <form onsubmit={submit} novalidate>
   <TextField
-    label="Email"
-    bind:value={email}
-    type="email"
-    inputmode="email"
+    label="Email or phone"
+    bind:value={identifier}
+    type="text"
     autocomplete="username"
-    placeholder="you@example.com"
-    error={fieldError('email')}
+    placeholder="you@example.com or 9876543210"
+    error={fieldError('identifier') ?? fieldError('email')}
     required
     autofocus
   >

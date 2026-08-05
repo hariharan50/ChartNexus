@@ -35,12 +35,16 @@ async def redis() -> AsyncIterator[RedisClient]:
 async def test_a_single_reading_ranks_at_the_top(redis: RedisClient) -> None:
     recorder = RedisIvHistoryRecorder(redis)
 
-    rank = await recorder.record_and_rank(symbol="NIFTY", session_date=TODAY, atm_iv=Decimal("12.5"))
+    rank = await recorder.record_and_rank(
+        symbol="NIFTY", session_date=TODAY, atm_iv=Decimal("12.5")
+    )
 
     assert rank == Decimal("100.0")
 
 
-async def test_rank_reflects_where_todays_reading_sits_among_earlier_ones(redis: RedisClient) -> None:
+async def test_rank_reflects_where_todays_reading_sits_among_earlier_ones(
+    redis: RedisClient,
+) -> None:
     recorder = RedisIvHistoryRecorder(redis)
 
     for value in ("10.0", "12.0", "14.0", "16.0"):

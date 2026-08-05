@@ -34,7 +34,9 @@ NOW = datetime(2026, 7, 24, 6, 0, tzinfo=UTC)  # ~11:30 IST
 FAR_EXPIRY = "2026-08-27"
 
 
-def _chain(strikes: tuple[StrikeRow, ...], *, expiry: str = FAR_EXPIRY, spot: str = "24600") -> OptionChain:
+def _chain(
+    strikes: tuple[StrikeRow, ...], *, expiry: str = FAR_EXPIRY, spot: str = "24600"
+) -> OptionChain:
     return OptionChain(
         instrument=InstrumentSymbol.NIFTY,
         expiry=expiry,
@@ -143,7 +145,13 @@ def test_backfill_returns_chain_unchanged_when_expiry_is_unparseable() -> None:
 
 
 def test_atm_iv_averages_both_sides_when_both_are_quoted() -> None:
-    chain = _chain((StrikeRow(strike=Decimal("24600"), call=_quote("250", iv="12"), put=_quote("240", iv="14")),))
+    chain = _chain(
+        (
+            StrikeRow(
+                strike=Decimal("24600"), call=_quote("250", iv="12"), put=_quote("240", iv="14")
+            ),
+        )
+    )
 
     assert atm_implied_volatility(chain) == Decimal("13")
 

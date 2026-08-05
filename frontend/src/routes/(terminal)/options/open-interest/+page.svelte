@@ -22,6 +22,7 @@
   import SentimentDonut from './components/SentimentDonut.svelte';
   import PcrDonut from './components/PcrDonut.svelte';
   import BarPair from './components/BarPair.svelte';
+  import TimeRangeSlider from './components/TimeRangeSlider.svelte';
 
   const MODES: { key: OiMode; label: string }[] = [
     { key: 'change_total', label: 'OI Change+Total' },
@@ -51,17 +52,21 @@
   let mode = $state<OiMode>('change_total');
   let showLot = $state(false);
   let strikeFilter = $state<'all' | number>(10);
-  let quickRange = $state<number | 'all'>('all');
-  /** Slider position, or -1 to follow live (far right). */
-  let frameIdx = $state(-1);
+  /** Which quick-range pill (if any) matches the current window, for highlighting. */
+  let activePreset = $state<number | 'all' | null>('all');
+  /** Left (window-start) handle position, or -1 for "start of session". */
+  let openFrameIdx = $state(-1);
+  /** Right (window-end) handle position, or -1 to follow live (far right). */
+  let nowFrameIdx = $state(-1);
 
   const instrument = $derived(OI_INSTRUMENTS[instIdx] ?? OI_INSTRUMENTS[0]!);
   const isDark = $derived(theme.value === 'dark');
 
   function cycle(delta: number) {
     instIdx = (instIdx + delta + OI_INSTRUMENTS.length) % OI_INSTRUMENTS.length;
-    frameIdx = -1;
-    quickRange = 'all';
+    openFrameIdx = -1;
+    nowFrameIdx = -1;
+    activePreset = 'all';
   }
 
   const query = createQuery<OiView>(
@@ -86,9 +91,17 @@
 
   const series = $derived(view?.series ?? []);
   const hasSeries = $derived(series.length >= 2);
+  // Two frames is enough to drag — the window still collapses and the chart
+  // still redraws. Below that there is genuinely nothing to move between.
+  const canScrub = $derived(series.length >= 2);
+  // Until intraday snapshots accumulate the API sends only the two endpoints,
+  // so the timeline is coarse rather than broken. Worth saying, not disabling.
+  const thinHistory = $derived(series.length < 3);
   const lastIdx = $derived(Math.max(0, series.length - 1));
-  const nowIdx = $derived(frameIdx < 0 ? lastIdx : Math.min(frameIdx, lastIdx));
-  const openIdx = $derived(hasSeries ? baselineIndex(series, nowIdx, quickRange) : 0);
+  const nowIdx = $derived(nowFrameIdx < 0 ? lastIdx : Math.min(nowFrameIdx, lastIdx));
+  const openIdx = $derived(
+    Math.min(openFrameIdx < 0 ? 0 : Math.min(openFrameIdx, lastIdx), nowIdx)
+  );
 
   const nowFrame = $derived(hasSeries ? series[nowIdx] : undefined);
   const openFrame = $derived(hasSeries ? series[openIdx] : undefined);
@@ -114,8 +127,27 @@
   });
 
   function resetSlider() {
-    frameIdx = -1;
-    quickRange = 'all';
+    openFrameIdx = -1;
+    nowFrameIdx = -1;
+    activePreset = 'all';
+  }
+
+  /** A quick-range pill sets the start handle relative to *now*, live. */
+  function applyPreset(value: number | 'all') {
+    activePreset = value;
+    nowFrameIdx = -1;
+    if (!hasSeries) return;
+    openFrameIdx = value === 'all' ? -1 : baselineIndex(series, lastIdx, value);
+  }
+
+  function onOpenHandleChange(idx: number) {
+    activePreset = null;
+    openFrameIdx = idx;
+  }
+
+  function onNowHandleChange(idx: number) {
+    activePreset = null;
+    nowFrameIdx = idx === lastIdx ? -1 : idx;
   }
 
   // -- live clock -----------------------------------------------------------
@@ -273,21 +305,18 @@
 
           <!-- time slider -->
           <div class="slider-row">
-            {#if hasSeries}
+            {#if canScrub}
               <button type="button" class="reset" onclick={resetSlider}>Reset</button>
             {/if}
             <span class="end">{openLabel}</span>
-            <input
-              class="scrub"
-              type="range"
-              min="0"
+            <TimeRangeSlider
+              min={0}
               max={lastIdx}
-              value={nowIdx}
-              disabled={!hasSeries}
-              oninput={(e) => {
-                const v = Number(e.currentTarget.value);
-                frameIdx = v >= lastIdx ? -1 : v;
-              }}
+              openIndex={openIdx}
+              nowIndex={nowIdx}
+              disabled={!canScrub}
+              onOpenChange={onOpenHandleChange}
+              onNowChange={onNowHandleChange}
             />
             <span class="end">{nowLabel}</span>
           </div>
@@ -297,9 +326,9 @@
               <button
                 type="button"
                 class="pill sm"
-                class:active={quickRange === q.value}
-                disabled={!hasSeries}
-                onclick={() => (quickRange = q.value)}
+                class:active={activePreset === q.value}
+                disabled={!canScrub}
+                onclick={() => applyPreset(q.value)}
               >
                 {q.label}
               </button>
@@ -307,9 +336,14 @@
           </div>
 
           <p class="caption">
-            Showing OI build-up from {openLabel} to {nowLabel}. Drag the slider to scrub through the
-            session.{view.data_quality === 'live_proxy'
-              ? ' (open estimated from day-over-day OI change)'
+            Showing OI build-up from {openLabel} to {nowLabel}. Drag either handle to set the
+            window.
+            {#if thinHistory}
+              Only the session's two end points have been recorded so far, so the timeline is coarse
+              — it fills in as snapshots accumulate through market hours.
+            {/if}
+            {view.data_quality === 'live_proxy'
+              ? '(open estimated from day-over-day OI change)'
               : ''}
           </p>
         </section>
@@ -793,11 +827,6 @@
     font-size: var(--mc-text-xs);
     color: var(--mc-text-subtle);
     white-space: nowrap;
-  }
-
-  .scrub {
-    flex: 1;
-    accent-color: var(--mc-bearish);
   }
 
   .quick {

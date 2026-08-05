@@ -8,6 +8,12 @@
     error?: string | undefined;
     /** Leading glyph, rendered decoratively inside the field. */
     icon?: Snippet;
+    /**
+     * Leading content that carries meaning — a country code, a currency
+     * symbol. Unlike `icon` it is not `aria-hidden`, because a screen reader
+     * has to announce it to make sense of what is typed.
+     */
+    leading?: Snippet;
     /** Trailing control, e.g. a password reveal toggle. */
     trailing?: Snippet;
   }
@@ -17,6 +23,7 @@
     value = $bindable(''),
     error = undefined,
     icon,
+    leading,
     trailing,
     id,
     ...rest
@@ -35,6 +42,10 @@
   <div class="shell" class:invalid={!!error}>
     {#if icon}
       <span class="icon" aria-hidden="true">{@render icon()}</span>
+    {/if}
+
+    {#if leading}
+      <span class="leading">{@render leading()}</span>
     {/if}
 
     <input
@@ -96,11 +107,21 @@
   }
 
   .icon,
+  .leading,
   .trailing {
     display: inline-flex;
     align-items: center;
     color: var(--mc-text-subtle);
     flex-shrink: 0;
+  }
+
+  /* Sits against the input, separated by a rule, so it reads as part of the
+     value rather than as another piece of chrome. */
+  .leading {
+    padding-right: var(--mc-space-2);
+    border-right: 1px solid var(--mc-field-border);
+    color: var(--mc-text-muted);
+    font-size: var(--mc-text-base);
   }
 
   input {

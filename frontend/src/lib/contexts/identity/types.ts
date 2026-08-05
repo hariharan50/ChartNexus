@@ -9,6 +9,8 @@
 export interface User {
   id: string;
   email: string;
+  /** E.164 (`+919876543210`). Null for accounts created before it was collected. */
+  phone: string | null;
   display_name: string;
   status: 'active' | 'pending_verification' | 'suspended' | 'deactivated';
   roles: readonly string[];
@@ -57,6 +59,7 @@ export type AuthErrorCode =
   | 'account_disabled'
   | 'email_unverified'
   | 'email_taken'
+  | 'phone_taken'
   | 'use_sso'
   | 'session_expired'
   | 'session_revoked'
