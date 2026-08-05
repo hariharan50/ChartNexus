@@ -1,11 +1,12 @@
 <script lang="ts">
-  // Empty placeholder — content to be built out.
+  import ComingSoon from '$shared/ui/ComingSoon.svelte';
 </script>
 
-<section class="page"></section>
+<svelte:head>
+  <title>Put-Call Ratio · MarketCompass</title>
+</svelte:head>
 
-<style>
-  .page {
-    min-height: 60vh;
-  }
-</style>
+<ComingSoon
+  title="Put-Call Ratio"
+  description="Track the put/call ratio by OI and volume through the session."
+/>

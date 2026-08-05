@@ -2,7 +2,8 @@
 
 from __future__ import annotations
 
-from datetime import datetime
+from datetime import date, datetime
+from decimal import Decimal
 from typing import Protocol, runtime_checkable
 
 from marketcompass.contexts.market_data.domain.instruments import InstrumentSymbol
@@ -89,3 +90,18 @@ class MarketCalendar(Protocol):
 
     @property
     def closes_at(self) -> str: ...
+
+
+@runtime_checkable
+class IvHistoryRecorder(Protocol):
+    """Tracks today's ATM IV readings so a percentile can be ranked against them.
+
+    Intraday only — there is no cross-day IV history yet (FYERS never quoted
+    IV until it was back-solved locally, so the archive has none to draw on).
+    The store resets every session.
+    """
+
+    async def record_and_rank(self, *, symbol: str, session_date: date, atm_iv: Decimal) -> Decimal:
+        """Store ``atm_iv`` and return its percentile rank (0-100) among every
+        reading recorded for ``symbol`` so far today, this one included."""
+        ...

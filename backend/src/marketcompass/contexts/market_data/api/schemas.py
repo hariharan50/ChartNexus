@@ -140,6 +140,9 @@ class OptionChainResponse(_Schema):
     lot_size: int | None
     change_percent: Decimal | None
     future_price: Decimal | None
+    india_vix: Decimal | None
+    india_vix_change_percent: Decimal | None
+    iv_percentile: Decimal | None
     total_call_oi: int
     total_put_oi: int
     strikes: tuple[StrikeResponse, ...]
@@ -157,6 +160,9 @@ class OptionChainResponse(_Schema):
             lot_size=chain.lot_size,
             change_percent=chain.change_percent,
             future_price=chain.future_price,
+            india_vix=chain.india_vix,
+            india_vix_change_percent=chain.india_vix_change_percent,
+            iv_percentile=chain.iv_percentile,
             total_call_oi=chain.total_call_open_interest,
             total_put_oi=chain.total_put_open_interest,
             strikes=tuple(StrikeResponse.of(row) for row in chain.strikes),

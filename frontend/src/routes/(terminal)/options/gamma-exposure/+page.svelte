@@ -1,11 +1,12 @@
 <script lang="ts">
-  // Empty placeholder — content to be built out.
+  import ComingSoon from '$shared/ui/ComingSoon.svelte';
 </script>
 
-<section class="page"></section>
+<svelte:head>
+  <title>Gamma Exposure · MarketCompass</title>
+</svelte:head>
 
-<style>
-  .page {
-    min-height: 60vh;
-  }
-</style>
+<ComingSoon
+  title="Gamma Exposure"
+  description="Dealer gamma positioning and its pin and repel zones."
+/>

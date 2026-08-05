@@ -88,7 +88,7 @@ def to_option_chain(
     if not by_strike:
         raise UpstreamError("fyers", "The option chain contained no tradeable strikes.")
 
-    spot = _decimal(underlying.get("ltp")) or _decimal(data.get("indiavixData", {}).get("ltp"))
+    spot = _decimal(underlying.get("ltp"))
     if spot is None:
         raise UpstreamError("fyers", "The option chain did not include a spot price.")
 
@@ -100,6 +100,11 @@ def to_option_chain(
     expiries = _parse_expiries(data.get("expiryData"))
     resolved_expiry = expiry or (expiries[0] if expiries else _fallback_expiry(fetched_at))
 
+    # FYERS attaches India VIX to every options-chain response (not just NIFTY's) —
+    # a free ride, since a dedicated VIX fetch would cost its own quota slot.
+    vix = data.get("indiavixData")
+    vix = vix if isinstance(vix, dict) else {}
+
     return OptionChain(
         instrument=instrument,
         expiry=resolved_expiry,
@@ -110,6 +115,8 @@ def to_option_chain(
         lot_size=_int(data.get("lotSize")) or None,
         change_percent=_decimal(underlying.get("ltpchp")),
         future_price=_decimal(underlying.get("fp")),
+        india_vix=_decimal(vix.get("ltp")),
+        india_vix_change_percent=_decimal(vix.get("ltpchp")),
     )
 
 

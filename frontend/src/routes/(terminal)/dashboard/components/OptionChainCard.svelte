@@ -17,10 +17,55 @@
   }
 
   let { rows, loading = false }: Props = $props();
+
+  /** Strike-count choices for the header toggle; 6 keeps the default compact. */
+  const STRIKE_CHOICES = [6, 10, 20] as const;
+  let visibleStrikes = $state<number>(STRIKE_CHOICES[0]);
+
+  /**
+   * Rows arrive sorted by strike (PE then CE per strike). Show only a window of
+   * `visibleStrikes` strikes centred on the ATM strike, so the default view is
+   * tight and the toggle expands it symmetrically around spot.
+   */
+  const visibleRows = $derived.by(() => {
+    // Group rows into strikes, preserving order.
+    const strikes: OptionRow[][] = [];
+    let currentStrike: number | null = null;
+    for (const row of rows) {
+      if (row.strike !== currentStrike) {
+        currentStrike = row.strike;
+        strikes.push([]);
+      }
+      strikes[strikes.length - 1]!.push(row);
+    }
+
+    if (strikes.length <= visibleStrikes) return rows;
+
+    const atmIndex = strikes.findIndex((group) => group.some((r) => r.atm));
+    const centre = atmIndex === -1 ? Math.floor(strikes.length / 2) : atmIndex;
+    let start = centre - Math.floor(visibleStrikes / 2);
+    start = Math.max(0, Math.min(start, strikes.length - visibleStrikes));
+
+    return strikes.slice(start, start + visibleStrikes).flat();
+  });
 </script>
 
 <Panel title="Option Chain" subtitle="Top strikes around spot">
   {#snippet icon()}<IconChart />{/snippet}
+  {#snippet actions()}
+    <div class="strike-toggle" role="group" aria-label="Strikes to show">
+      {#each STRIKE_CHOICES as choice (choice)}
+        <button
+          type="button"
+          class:active={visibleStrikes === choice}
+          aria-pressed={visibleStrikes === choice}
+          onclick={() => (visibleStrikes = choice)}
+        >
+          {choice}
+        </button>
+      {/each}
+    </div>
+  {/snippet}
   {#snippet children()}
     <div class="scroll">
       <table>
@@ -36,7 +81,7 @@
           </tr>
         </thead>
         <tbody>
-          {#each rows as row (row.strike + row.type)}
+          {#each visibleRows as row (row.strike + row.type)}
             {@const dir = direction(row.oiChange)}
             <tr class:atm={row.atm}>
               <td class="strike">
@@ -69,6 +114,40 @@
 <style>
   .scroll {
     overflow-x: auto;
+  }
+
+  .strike-toggle {
+    display: inline-flex;
+    padding: 2px;
+    gap: 2px;
+    border: 1px solid var(--mc-border);
+    border-radius: var(--mc-radius);
+    background: var(--mc-surface-raised);
+  }
+
+  .strike-toggle button {
+    min-width: 2rem;
+    padding: 0.25rem 0.5rem;
+    border: none;
+    border-radius: calc(var(--mc-radius) - 2px);
+    background: transparent;
+    color: var(--mc-text-subtle);
+    font-size: var(--mc-text-xs);
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+    cursor: pointer;
+    transition:
+      background 0.12s ease,
+      color 0.12s ease;
+  }
+
+  .strike-toggle button:hover {
+    color: var(--mc-text);
+  }
+
+  .strike-toggle button.active {
+    background: var(--mc-accent);
+    color: var(--mc-accent-contrast, #fff);
   }
 
   .empty {

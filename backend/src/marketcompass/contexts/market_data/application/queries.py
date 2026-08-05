@@ -11,14 +11,19 @@ the failure mode that matters, so degradation is recorded rather than hidden.
 
 from __future__ import annotations
 
-from dataclasses import dataclass
-from datetime import datetime
+from dataclasses import dataclass, replace
+from datetime import datetime, timedelta, timezone
 
 from marketcompass.contexts.market_data.application.ports import (
     Clock,
+    IvHistoryRecorder,
     MarketCalendar,
     MarketDataProvider,
     ProviderResolver,
+)
+from marketcompass.contexts.market_data.domain.implied_volatility import (
+    atm_implied_volatility,
+    backfill_implied_volatility,
 )
 from marketcompass.contexts.market_data.domain.instruments import InstrumentSymbol
 from marketcompass.contexts.market_data.domain.market_data import (
@@ -34,6 +39,10 @@ from marketcompass.shared_kernel.domain.errors import UpstreamError
 from marketcompass.shared_kernel.types.identifiers import TenantId
 
 MOCK_PROVIDER_NAME = "mock"
+
+# India observes no DST; a fixed +05:30 offset matches how ingest capture and
+# the OI service both reason about the trading session.
+_IST = timezone(timedelta(hours=5, minutes=30))
 
 
 @dataclass(frozen=True, slots=True)
@@ -158,10 +167,14 @@ class GetOptionChain(_FallbackMixin):
         resolver: ProviderResolver,
         fallback: MarketDataProvider,
         clock: Clock,
+        risk_free_rate: float = 0.07,
+        iv_history: IvHistoryRecorder | None = None,
     ) -> None:
         self._resolver = resolver
         self._fallback = fallback
         self._clock = clock
+        self._risk_free_rate = risk_free_rate
+        self._iv_history = iv_history
         self._last_good: dict[str, OptionChain] = {}
 
     async def __call__(self, query: OptionChainQuery) -> OptionChain:
@@ -176,9 +189,26 @@ class GetOptionChain(_FallbackMixin):
                 return _with_provenance(previous, _degrade(previous.provenance, self._clock.now()))
             return await self._fallback.get_option_chain(query.instrument, query.expiry)
 
+        now = self._clock.now()
+        # Backfilling is a no-op wherever a provider (mock, or a future broker)
+        # already supplied IV — it only fills legs the broker left blank.
+        chain = backfill_implied_volatility(chain, valuation_time=now, risk_free_rate=self._risk_free_rate)
+        chain = await self._with_iv_percentile(chain, query.instrument.value, now)
+
         if live:
             self._last_good[key] = chain
         return chain
+
+    async def _with_iv_percentile(self, chain: OptionChain, symbol: str, now: datetime) -> OptionChain:
+        if self._iv_history is None:
+            return chain
+        atm_iv = atm_implied_volatility(chain)
+        if atm_iv is None:
+            return chain
+        rank = await self._iv_history.record_and_rank(
+            symbol=symbol, session_date=now.astimezone(_IST).date(), atm_iv=atm_iv
+        )
+        return replace(chain, iv_percentile=rank)
 
 
 class GetExpiries(_FallbackMixin):

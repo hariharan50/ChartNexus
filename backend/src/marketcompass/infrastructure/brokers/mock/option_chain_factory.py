@@ -58,6 +58,8 @@ def build_option_chain(
         lot_size=lot_size(instrument),
         change_percent=Decimal("0.15"),
         future_price=(spot * Decimal("1.0008")).quantize(_CENTS),
+        india_vix=Decimal(str(round(13.0 + 2.0 * math.sin(moment.minute / 10), 2))),
+        india_vix_change_percent=Decimal("-0.45"),
     )
 
 

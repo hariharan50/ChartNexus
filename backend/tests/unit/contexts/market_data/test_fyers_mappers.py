@@ -178,6 +178,26 @@ def test_chain_without_a_spot_price_is_rejected() -> None:
         to_option_chain(payload, instrument=InstrumentSymbol.NIFTY, fetched_at=NOW)
 
 
+def test_missing_underlying_ltp_is_rejected_rather_than_reading_india_vix() -> None:
+    """Regression: a missing underlying ``ltp`` must never fall back to
+    ``indiavixData.ltp`` — VIX (~10-20) is not a stand-in for an index's spot
+    price (~20,000+), and silently swapping one in corrupts the derived ATM
+    strike (and, downstream, ATM IV) rather than surfacing a clear error."""
+    payload = {
+        "s": "ok",
+        "data": {
+            "indiavixData": {"ltp": 13.42, "ltpchp": -1.2},
+            "optionsChain": [
+                {"strike_price": -1},
+                {"strike_price": 100, "option_type": "CE", "ltp": 5, "oi": 1},
+            ],
+        },
+    }
+
+    with pytest.raises(UpstreamError):
+        to_option_chain(payload, instrument=InstrumentSymbol.NIFTY, fetched_at=NOW)
+
+
 # --- expiry normalisation --------------------------------------------------
 
 

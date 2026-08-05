@@ -1,11 +1,12 @@
 <script lang="ts">
-  // Empty placeholder — content to be built out.
+  import ComingSoon from '$shared/ui/ComingSoon.svelte';
 </script>
 
-<section class="page"></section>
+<svelte:head>
+  <title>Multi OI & Volume · MarketCompass</title>
+</svelte:head>
 
-<style>
-  .page {
-    min-height: 60vh;
-  }
-</style>
+<ComingSoon
+  title="Multi OI & Volume"
+  description="Compare open interest and volume across strikes and expiries."
+/>

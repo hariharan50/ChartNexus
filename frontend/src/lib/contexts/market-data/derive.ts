@@ -44,9 +44,25 @@ export function indexCard(key: IndexKey, label: string, quote: Quote | undefined
   return card;
 }
 
-/** INDIA VIX has no feed yet — a placeholder card that reads as "awaiting". */
-export function vixCard(): IndexQuote {
-  return { key: 'INDIAVIX', label: 'INDIA VIX', value: NaN, pending: true };
+/**
+ * INDIA VIX rides along on the option chain response (the broker attaches it
+ * to every chain, live or mock) — a pending card until a chain has loaded.
+ */
+export function vixCard(chain: OptionChain | undefined): IndexQuote {
+  if (!chain?.india_vix) return { key: 'INDIAVIX', label: 'INDIA VIX', value: NaN, pending: true };
+  const card: IndexQuote = { key: 'INDIAVIX', label: 'INDIA VIX', value: num(chain.india_vix) };
+  if (chain.india_vix_change_percent != null) {
+    card.changePercent = num(chain.india_vix_change_percent);
+  }
+  return card;
+}
+
+/**
+ * Where today's ATM IV ranks (0-100) among readings taken so far this
+ * session. `undefined` until the chain has loaded or too few readings exist.
+ */
+export function ivPercentile(chain: OptionChain | undefined): number | undefined {
+  return chain?.iv_percentile != null ? num(chain.iv_percentile) : undefined;
 }
 
 /**

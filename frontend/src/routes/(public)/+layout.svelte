@@ -69,6 +69,12 @@
 
 <style>
   .auth-layout {
+    /* The sign-in surface stays dark in every theme, so pin the generic field
+       tokens back to the fixed --mc-auth-* values for this subtree. */
+    --mc-field-bg: var(--mc-auth-field);
+    --mc-field-bg-hover: var(--mc-auth-field-hover);
+    --mc-field-border: var(--mc-auth-border);
+
     display: grid;
     grid-template-columns: 1fr 1fr;
     min-height: 100vh;

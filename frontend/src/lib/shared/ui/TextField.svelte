@@ -74,8 +74,8 @@
     gap: var(--mc-space-2);
     min-height: var(--mc-control-h);
     padding: 0 var(--mc-control-px);
-    background: var(--mc-auth-field);
-    border: 1px solid var(--mc-auth-border);
+    background: var(--mc-field-bg);
+    border: 1px solid var(--mc-field-border);
     border-radius: var(--mc-radius);
     transition:
       border-color var(--mc-duration-fast) ease,
@@ -83,12 +83,12 @@
   }
 
   .shell:hover {
-    background: var(--mc-auth-field-hover);
+    background: var(--mc-field-bg-hover);
   }
 
   .shell:focus-within {
     border-color: var(--mc-brand);
-    background: var(--mc-auth-field-hover);
+    background: var(--mc-field-bg-hover);
   }
 
   .shell.invalid {
@@ -123,7 +123,7 @@
   input:-webkit-autofill:hover,
   input:-webkit-autofill:focus {
     -webkit-text-fill-color: var(--mc-text);
-    box-shadow: 0 0 0 1000px var(--mc-auth-field-hover) inset;
+    box-shadow: 0 0 0 1000px var(--mc-field-bg-hover) inset;
     transition: background-color 100000s ease-in-out 0s;
   }
 

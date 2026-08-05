@@ -21,6 +21,16 @@ class BrokerConnectionRepository(Protocol):
         """The tenant's connection for a broker, in any status."""
         ...
 
+    async def find_any_active(self, broker: BrokerName) -> BrokerConnection | None:
+        """Any one tenant's active connection for a broker.
+
+        For background jobs that capture market-wide data (option-chain
+        snapshots): the open interest on an index is the same fact for every
+        tenant, so a single working credential is enough. Returns ``None`` when
+        no tenant has an active connection, letting the caller fall back to mock.
+        """
+        ...
+
     async def add(self, connection: BrokerConnection) -> None: ...
 
     async def update(self, connection: BrokerConnection) -> None: ...

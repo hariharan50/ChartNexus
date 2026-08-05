@@ -1,5 +1,12 @@
 <script lang="ts">
-  import { toBackendSymbol, indexCard, vixCard, optionRows, metrics, aiSummary } from '$contexts/market-data/derive';
+  import {
+    toBackendSymbol,
+    indexCard,
+    vixCard,
+    optionRows,
+    metrics,
+    aiSummary
+  } from '$contexts/market-data/derive';
   import {
     marketStatusQuery,
     spotQuery,
@@ -26,14 +33,15 @@
   const bankNiftyQ = spotQuery('BANKNIFTY');
   const chainQ = optionChainQuery(() => toBackendSymbol(focused));
 
+  const chain = $derived($chainQ.data);
+
   const indices = $derived([
     indexCard('NIFTY50', 'NIFTY 50', $niftyQ.data),
     indexCard('SENSEX', 'SENSEX', $sensexQ.data),
     indexCard('BANKNIFTY', 'BANK NIFTY', $bankNiftyQ.data),
-    vixCard()
+    vixCard(chain)
   ]);
 
-  const chain = $derived($chainQ.data);
   const rows = $derived(chain ? optionRows(chain) : []);
   const chainMetrics = $derived(chain ? metrics(chain) : undefined);
   const ai = $derived(chainMetrics ? aiSummary(indices, chainMetrics) : undefined);

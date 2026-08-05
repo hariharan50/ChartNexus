@@ -79,13 +79,13 @@
   }
 
   .secondary {
-    background: var(--mc-auth-field);
-    border-color: var(--mc-auth-border);
+    background: var(--mc-field-bg);
+    border-color: var(--mc-field-border);
     color: var(--mc-text);
   }
 
   .secondary:not(:disabled):hover {
-    background: var(--mc-auth-field-hover);
+    background: var(--mc-field-bg-hover);
   }
 
   .ghost {

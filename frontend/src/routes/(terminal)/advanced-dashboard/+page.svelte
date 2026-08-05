@@ -1,5 +1,11 @@
 <script lang="ts">
-  import { toBackendSymbol, indexCard, vixCard, metrics } from '$contexts/market-data/derive';
+  import {
+    toBackendSymbol,
+    indexCard,
+    vixCard,
+    ivPercentile,
+    metrics
+  } from '$contexts/market-data/derive';
   import {
     marketStatusQuery,
     spotQuery,
@@ -74,7 +80,8 @@
   const maxPain = $derived(chainMetrics?.maxPain);
 
   const focusedLabel = $derived(indices.find((q) => q.key === focused)?.label ?? 'NIFTY 50');
-  const vix = $derived(vixCard());
+  const vix = $derived(vixCard(chain));
+  const ivPct = $derived(ivPercentile(chain));
   const clock = $derived($statusQ.data?.time_ist ?? '—');
   const isLive = $derived($statusQ.data?.is_open ?? false);
 </script>
@@ -131,7 +138,7 @@
         tone="warning"
       />
       <MetricTile label="ATM IV" value={atmIv != null ? atmIv.toFixed(2) : '—'} />
-      <MetricTile label="IV Percentile" value="—" />
+      <MetricTile label="IV Percentile" value={ivPct != null ? ivPct.toFixed(1) : '—'} />
     </div>
   </section>
 </div>

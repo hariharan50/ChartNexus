@@ -98,6 +98,9 @@ export interface OptionChain {
   lot_size: number | null;
   change_percent: string | null;
   future_price: string | null;
+  india_vix: string | null;
+  india_vix_change_percent: string | null;
+  iv_percentile: string | null;
   total_call_oi: number;
   total_put_oi: number;
   strikes: StrikeRow[];

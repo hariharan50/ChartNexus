@@ -33,7 +33,8 @@
           ? ' '
           : ''}
       {/each}
-      {#if summary.vix !== undefined}India VIX at {summary.vix.toFixed(1)} — {vixNote}. {/if}PCR at
+      {#if summary.vix !== undefined}India VIX at {summary.vix.toFixed(1)} — {vixNote}.
+      {/if}PCR at
       {summary.pcr.toFixed(2)}. Support {formatPrice(summary.support, 1)} | Resistance
       {formatPrice(summary.resistance, 1)}.
     </p>

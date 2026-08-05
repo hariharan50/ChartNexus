@@ -12,6 +12,41 @@ const API_PREFIX = '/api/v1';
 const CSRF_COOKIE = 'mc_csrf';
 const CSRF_HEADER = 'X-CSRF-Token';
 const UNSAFE_METHODS = new Set(['POST', 'PUT', 'PATCH', 'DELETE']);
+const REFRESH_PATH = '/api/v1/auth/refresh';
+
+// Endpoints that establish or re-establish a session themselves. A 401 from
+// one of these is the real answer (bad credentials, an already-invalid
+// refresh token, an expired OAuth code) — retrying it after another refresh
+// attempt would just recurse or paper over a genuine auth failure.
+const AUTH_FLOW_PATHS = new Set([
+  '/api/v1/auth/login',
+  '/api/v1/auth/register',
+  '/api/v1/auth/refresh',
+  '/api/v1/auth/google/authorize',
+  '/api/v1/auth/google/callback'
+]);
+
+// The access-token cookie lives 15 minutes (see backend Settings.auth); the
+// refresh-token cookie lives 30 days. Every other endpoint's 401 most likely
+// just means the access token aged out under a still-open session, so a
+// silent refresh-and-retry keeps the user working instead of bouncing them to
+// `/login` every 15 minutes. Concurrent 401s share one refresh call.
+let refreshInFlight: Promise<boolean> | null = null;
+
+async function refreshSession(fetcher: typeof fetch): Promise<boolean> {
+  refreshInFlight ??= fetcher(REFRESH_PATH, {
+    method: 'POST',
+    headers: { 'content-type': 'application/json', accept: 'application/json' },
+    body: '{}',
+    credentials: 'include'
+  })
+    .then((res) => res.ok)
+    .catch(() => false)
+    .finally(() => {
+      refreshInFlight = null;
+    });
+  return refreshInFlight;
+}
 
 export interface ApiFetchOptions extends RequestInit {
   url: string;
@@ -23,6 +58,7 @@ export interface ApiFetchOptions extends RequestInit {
 export async function apiFetch<T>({ url, params, fetcher, ...init }: ApiFetchOptions): Promise<T> {
   const target = buildUrl(url, params);
   const method = (init.method ?? 'GET').toUpperCase();
+  const doFetch = fetcher ?? fetch;
 
   const headers = new Headers(init.headers);
   if (init.body !== undefined && !headers.has('content-type')) {
@@ -38,13 +74,26 @@ export async function apiFetch<T>({ url, params, fetcher, ...init }: ApiFetchOpt
     if (token) headers.set(CSRF_HEADER, token);
   }
 
-  const response = await (fetcher ?? fetch)(target, {
+  let response = await doFetch(target, {
     ...init,
     headers,
     // Required for the session cookie; the API rejects cross-origin credentials
     // it did not issue.
     credentials: 'include'
   });
+
+  if (response.status === 401 && !AUTH_FLOW_PATHS.has(target)) {
+    const refreshed = await refreshSession(doFetch);
+    if (refreshed) {
+      // The refresh rotates the CSRF cookie along with the session, so a
+      // retried mutation must read it again rather than reuse the stale header.
+      if (UNSAFE_METHODS.has(method)) {
+        const token = readCookie(CSRF_COOKIE);
+        if (token) headers.set(CSRF_HEADER, token);
+      }
+      response = await doFetch(target, { ...init, headers, credentials: 'include' });
+    }
+  }
 
   if (!response.ok) {
     throw new ApiError(await parseProblem(response), response.status);

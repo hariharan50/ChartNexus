@@ -49,6 +49,19 @@ class SqlAlchemyBrokerConnectionRepository:
         record = result.scalar_one_or_none()
         return self._to_domain(record) if record else None
 
+    async def find_any_active(self, broker: BrokerName) -> BrokerConnection | None:
+        result = await self._session.execute(
+            select(BrokerConnectionRecord)
+            .where(
+                BrokerConnectionRecord.broker == broker.value,
+                BrokerConnectionRecord.status == ConnectionStatus.ACTIVE.value,
+            )
+            .order_by(BrokerConnectionRecord.connected_at.desc().nulls_last())
+            .limit(1)
+        )
+        record = result.scalar_one_or_none()
+        return self._to_domain(record) if record else None
+
     async def add(self, connection: BrokerConnection) -> None:
         self._session.add(
             BrokerConnectionRecord(

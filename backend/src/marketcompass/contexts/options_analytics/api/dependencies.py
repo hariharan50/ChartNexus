@@ -9,10 +9,8 @@ from fastapi import Depends, Request
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from marketcompass.contexts.options_analytics.application.oi_service import GetOiView
-from marketcompass.infrastructure.analytics.oi_chain_source import (
-    NullSnapshotReader,
-    build_oi_chain_provider,
-)
+from marketcompass.infrastructure.analytics.oi_chain_source import SqlAlchemySnapshotReader
+from marketcompass.infrastructure.brokers.oi_chain_provider import build_oi_chain_provider
 from marketcompass.infrastructure.transport.http.dependencies import (
     get_container,
     get_session,
@@ -31,7 +29,7 @@ def build_options_analytics_services(
     container = get_container(request)
     provider = build_oi_chain_provider(session=session, container=container)
     return OptionsAnalyticsServices(
-        oi_view=GetOiView(provider=provider, snapshots=NullSnapshotReader()),
+        oi_view=GetOiView(provider=provider, snapshots=SqlAlchemySnapshotReader(session)),
     )
 
 

@@ -127,6 +127,13 @@ class OptionChain:
     lot_size: int | None = None
     change_percent: Decimal | None = None
     future_price: Decimal | None = None
+    india_vix: Decimal | None = None
+    """India VIX's own LTP — the broker's options-chain response happens to
+    include it alongside the chain, so no separate fetch is needed."""
+    india_vix_change_percent: Decimal | None = None
+    iv_percentile: Decimal | None = None
+    """Where today's ATM IV ranks (0-100) among readings taken so far this
+    session. Intraday only — there is no cross-day IV history yet."""
     _atm: Decimal | None = field(default=None, repr=False)
 
     @property

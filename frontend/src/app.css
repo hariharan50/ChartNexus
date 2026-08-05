@@ -36,11 +36,20 @@
   --mc-on-brand: #ffffff;
 
   /* Auth surfaces. Deliberately darker than the terminal chrome so the sign-in
-     screen reads as a separate place from the app. */
+     screen reads as a separate place from the app — scoped to `.auth-layout`
+     only (see (public)/+layout.svelte), never read directly by app chrome. */
   --mc-auth-bg: #08080a;
   --mc-auth-field: #17171a;
   --mc-auth-field-hover: #1d1d21;
   --mc-auth-border: #2a2a30;
+
+  /* Generic input/control surface used everywhere outside the auth screen.
+     Derived from theme-aware tokens so it repaints correctly per theme
+     without a per-theme override; the auth layout overrides these three back
+     to the fixed --mc-auth-* values above. */
+  --mc-field-bg: var(--mc-surface-raised);
+  --mc-field-bg-hover: color-mix(in srgb, var(--mc-surface-raised) 90%, var(--mc-text) 10%);
+  --mc-field-border: var(--mc-border-strong);
 
   /* Status */
   --mc-accent: #4c8dff;
@@ -66,8 +75,11 @@
   --mc-space-2: 0.5rem;
   --mc-space-3: 0.75rem;
   --mc-space-4: 1rem;
+  --mc-space-5: 1.25rem;
   --mc-space-6: 1.5rem;
+  --mc-space-7: 1.75rem;
   --mc-space-8: 2rem;
+  --mc-space-10: 2.5rem;
 
   /* One height for every input, select and button, so a row of controls lines
      up without per-component nudging. */
@@ -120,6 +132,57 @@
   --mc-shadow: 0 1px 2px rgb(16 24 40 / 0.06), 0 4px 12px rgb(16 24 40 / 0.08);
 
   color-scheme: light;
+}
+
+/* Warm Cream — a light theme with a paper-cream ground and terracotta accent. */
+:root[data-theme='warm'] {
+  --mc-bg: #f4ede1;
+  --mc-surface: #fffdf8;
+  --mc-surface-raised: #f9f2e6;
+  --mc-border: #e6dccb;
+  --mc-border-strong: #d3c5ac;
+
+  --mc-text: #2b2620;
+  --mc-text-muted: #6d6152;
+  --mc-text-subtle: #998e7c;
+
+  --mc-bullish: #2f855a;
+  --mc-bullish-weak: #dcefe1;
+  --mc-bearish: #c0392b;
+  --mc-bearish-weak: #f6e2df;
+
+  --mc-accent: #c8551f;
+  --mc-accent-weak: #f6e4d8;
+  --mc-warning: #c98a1e;
+
+  --mc-shadow: 0 1px 2px rgb(80 60 30 / 0.07), 0 4px 12px rgb(80 60 30 / 0.09);
+
+  color-scheme: light;
+}
+
+/* Classic Dark — pure black chrome with a terracotta accent. */
+:root[data-theme='terminal'] {
+  --mc-bg: #000000;
+  --mc-surface: #0c0c0e;
+  --mc-surface-raised: #16161a;
+  --mc-border: #24242a;
+  --mc-border-strong: #35353d;
+
+  --mc-text: #ededf0;
+  --mc-text-muted: #9a9aa4;
+  --mc-text-subtle: #6a6a74;
+
+  --mc-bullish: #17b877;
+  --mc-bullish-weak: #0f3d2c;
+  --mc-bearish: #f2495c;
+  --mc-bearish-weak: #47202a;
+
+  --mc-accent: #e2542a;
+  --mc-accent-weak: #2a1409;
+
+  --mc-shadow: 0 1px 2px rgb(0 0 0 / 0.5), 0 4px 14px rgb(0 0 0 / 0.4);
+
+  color-scheme: dark;
 }
 
 /* --------------------------------------------------------------------------- */

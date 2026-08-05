@@ -210,7 +210,6 @@
 <style>
   section {
     max-width: 44rem;
-    padding: var(--mc-space-6) var(--mc-space-4);
     display: flex;
     flex-direction: column;
     gap: var(--mc-space-4);
@@ -314,7 +313,7 @@
   code {
     padding: 0.0625rem 0.3125rem;
     border-radius: var(--mc-radius-sm);
-    background: var(--mc-auth-field);
+    background: var(--mc-field-bg);
     font-size: var(--mc-text-xs);
   }
 

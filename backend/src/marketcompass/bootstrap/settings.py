@@ -236,6 +236,17 @@ class MarketSettings(_Section):
     session_close: str = "15:30"
     snapshot_interval_seconds: int = Field(default=180, ge=1)
     quote_staleness_seconds: int = Field(default=15, ge=1)
+    # FYERS' option chain never includes IV/greeks, so ATM IV is back-solved
+    # from price via Black-Scholes. This is the annualised risk-free rate that
+    # solve uses — a ballpark short-term G-Sec yield, not precise enough to
+    # trade on, only to display.
+    risk_free_rate: float = Field(default=0.07, ge=0.0, le=1.0)
+
+    # Ingestion (the option-chain snapshot writer).
+    ingest_symbols: tuple[str, ...] = ("NIFTY", "BANKNIFTY", "SENSEX")
+    # Off by default: a mock-fallback day writes nothing, leaving an honest gap.
+    # Turn on locally to generate test history without a live broker connection.
+    ingest_allow_mock: bool = False
 
 
 class Settings(BaseSettings):
