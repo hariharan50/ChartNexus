@@ -38,6 +38,7 @@ from marketcompass.contexts.market_ingestion.domain.chain_metrics import (
 # dependency (matching how options_analytics reasons about the session).
 _IST = timezone(timedelta(hours=5, minutes=30))
 _MOCK = "mock"
+_LIVE = "live"
 
 
 @dataclass(frozen=True, slots=True)
@@ -48,6 +49,7 @@ class CaptureResult:
     skipped_closed: bool = False
     skipped_mock: tuple[str, ...] = ()
     skipped_empty: tuple[str, ...] = ()
+    skipped_unchanged: tuple[str, ...] = ()
     failed: tuple[tuple[str, str], ...] = ()
 
 
@@ -56,6 +58,7 @@ class _Acc:
     written: list[str] = field(default_factory=list)
     skipped_mock: list[str] = field(default_factory=list)
     skipped_empty: list[str] = field(default_factory=list)
+    skipped_unchanged: list[str] = field(default_factory=list)
     failed: list[tuple[str, str]] = field(default_factory=list)
 
 
@@ -92,6 +95,7 @@ class CaptureChainSnapshots:
             written=tuple(acc.written),
             skipped_mock=tuple(acc.skipped_mock),
             skipped_empty=tuple(acc.skipped_empty),
+            skipped_unchanged=tuple(acc.skipped_unchanged),
             failed=tuple(acc.failed),
         )
 
@@ -101,24 +105,61 @@ class CaptureChainSnapshots:
         except Exception as exc:
             acc.failed.append((symbol, repr(exc)))
             return
-
         if observation is None:
             return
+
+        try:
+            stored = await self._store(symbol, observation, acc)
+        except Exception as exc:
+            acc.failed.append((symbol, repr(exc)))
+            return
+        if stored:
+            acc.written.append(symbol)
+
+    async def _store(self, symbol: str, observation: ChainObservation, acc: _Acc) -> bool:
+        """Decide whether this observation belongs in the archive, and write it.
+
+        Every ``False`` here records *why* on ``acc``, because "the timeline has
+        a gap" and "the timeline is wrong" look identical on the chart and only
+        the log can tell them apart.
+        """
         if observation.source == _MOCK and not self._allow_mock:
             # A mock-fallback day writes nothing: the honest gap in the archive
             # that later reads render as "no history for this session".
             acc.skipped_mock.append(symbol)
-            return
+            return False
         if not observation.rows:
             acc.skipped_empty.append(symbol)
-            return
+            return False
 
-        try:
-            await self._writer.save(self._to_snapshot(observation))
-        except Exception as exc:
-            acc.failed.append((symbol, repr(exc)))
-            return
-        acc.written.append(symbol)
+        snapshot = self._to_snapshot(observation)
+
+        if observation.source == _MOCK and await self._writer.has_source(
+            snapshot.symbol, snapshot.session_date, _LIVE
+        ):
+            # The broker answered earlier today and has since dropped out.
+            # Filling the gap with simulated interest would splice a fabricated
+            # afternoon onto a real morning — the chart draws one continuous
+            # line, so nothing on screen says where the real data stopped. An
+            # honest gap is recoverable; a seam is not.
+            acc.skipped_mock.append(symbol)
+            return False
+
+        if await self._is_unchanged(snapshot):
+            # The tape is frozen — a holiday the calendar does not know about,
+            # or a provider repeating its last answer. Storing it would fill the
+            # archive with identical frames, leaving the OI tool's timeline
+            # fully populated and completely inert, which is a far more
+            # confusing failure than an honest gap.
+            acc.skipped_unchanged.append(symbol)
+            return False
+
+        await self._writer.save(snapshot)
+        return True
+
+    async def _is_unchanged(self, snapshot: SnapshotToWrite) -> bool:
+        previous = await self._writer.latest_rows(snapshot.symbol, snapshot.session_date)
+        return previous is not None and previous == snapshot.rows
 
     def _to_snapshot(self, observation: ChainObservation) -> SnapshotToWrite:
         metric_rows = [

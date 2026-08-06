@@ -82,6 +82,30 @@ class ChainSource(Protocol):
 class SnapshotWriter(Protocol):
     async def save(self, snapshot: SnapshotToWrite) -> None: ...
 
+    async def latest_rows(
+        self, symbol: str, session_date: date
+    ) -> tuple[ChainRowToWrite, ...] | None:
+        """The legs of the most recent capture, for duplicate detection.
+
+        ``None`` when nothing is stored for that symbol-day yet.
+        """
+        ...
+
+    async def has_source(self, symbol: str, session_date: date, source: str) -> bool:
+        """Whether any capture of that provenance exists for the symbol-day."""
+        ...
+
+
+@runtime_checkable
+class SnapshotPruner(Protocol):
+    """Deletes archived snapshots whose session predates ``cutoff``.
+
+    Returns the number of *snapshots* removed; per-strike rows go with them by
+    the database's cascade, which is why this is one call and not two.
+    """
+
+    async def delete_sessions_before(self, cutoff: date) -> int: ...
+
 
 @runtime_checkable
 class Clock(Protocol):

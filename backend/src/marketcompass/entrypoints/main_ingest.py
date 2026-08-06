@@ -17,14 +17,26 @@ from __future__ import annotations
 import asyncio
 import contextlib
 import signal
+from datetime import UTC, date, datetime, timedelta, timezone
 
 from marketcompass.bootstrap.container import Container
 from marketcompass.bootstrap.logging import configure_logging
 from marketcompass.bootstrap.settings import Settings, get_settings
+from marketcompass.contexts.market_ingestion.application.retention import PruneSnapshots
 from marketcompass.infrastructure.ingestion.chain_source import build_ingest_service
 from marketcompass.infrastructure.observability.structured_logging import get_logger
+from marketcompass.infrastructure.persistence.postgresql.repositories.market_data.option_chain_snapshot_repository import (
+    SqlAlchemyOptionChainSnapshotRepository,
+)
 
 log = get_logger(__name__)
+
+_IST = timezone(timedelta(hours=5, minutes=30))
+
+
+class _SystemClock:
+    def now(self) -> datetime:
+        return datetime.now(UTC)
 
 
 async def _tick(container: Container, settings: Settings) -> None:
@@ -50,8 +62,30 @@ async def _tick(container: Container, settings: Settings) -> None:
         written=list(result.written),
         skipped_mock=list(result.skipped_mock),
         skipped_empty=list(result.skipped_empty),
+        skipped_unchanged=list(result.skipped_unchanged),
         failed=[symbol for symbol, _ in result.failed],
     )
+
+
+async def _prune(container: Container, settings: Settings) -> None:
+    """Apply the retention window. Never propagates — pruning is not the job.
+
+    Deliberately called from the loop rather than from ``CaptureChainSnapshots``:
+    that use case returns early when the market is closed, which is exactly when
+    this should run.
+    """
+    try:
+        async with container.database.session() as session:
+            use_case = PruneSnapshots(
+                pruner=SqlAlchemyOptionChainSnapshotRepository(session),
+                clock=_SystemClock(),
+                retention_days=settings.market.snapshot_retention_days,
+            )
+            result = await use_case()
+    except Exception as exc:
+        log.error("ingest_prune_failed", error=repr(exc))
+        return
+    log.info("ingest_prune", cutoff=result.cutoff.isoformat(), deleted=result.deleted)
 
 
 async def _run(settings: Settings) -> None:
@@ -73,8 +107,16 @@ async def _run(settings: Settings) -> None:
         symbols=list(settings.market.ingest_symbols),
         allow_mock=settings.market.ingest_allow_mock,
     )
+    pruned_on: date | None = None
     try:
         while not stop.is_set():
+            # Once per IST trading date, before the tick, so a restarted worker
+            # still prunes and a long-running one does not prune every 3 minutes.
+            today = datetime.now(_IST).date()
+            if pruned_on != today:
+                pruned_on = today
+                await _prune(container, settings)
+
             await _tick(container, settings)
             # Sleep the interval, but wake immediately on a shutdown signal.
             with contextlib.suppress(TimeoutError):

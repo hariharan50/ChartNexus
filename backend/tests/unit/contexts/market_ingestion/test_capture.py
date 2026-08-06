@@ -7,7 +7,8 @@ isolation, header-metric derivation — are asserted without a database or broke
 
 from __future__ import annotations
 
-from datetime import UTC, datetime
+from dataclasses import replace
+from datetime import UTC, date, datetime
 from decimal import Decimal
 
 import pytest
@@ -53,6 +54,10 @@ class FakeSource:
             raise result
         return result
 
+    def set(self, symbol: str, result: ChainObservation) -> None:
+        """Change what the next fetch answers, for multi-tick tests."""
+        self._results[symbol] = result
+
 
 class FakeWriter:
     def __init__(self) -> None:
@@ -61,12 +66,28 @@ class FakeWriter:
     async def save(self, snapshot: SnapshotToWrite) -> None:
         self.saved.append(snapshot)
 
+    async def latest_rows(
+        self, symbol: str, session_date: date
+    ) -> tuple[ChainRowToWrite, ...] | None:
+        for snapshot in reversed(self.saved):
+            if snapshot.symbol == symbol and snapshot.session_date == session_date:
+                return snapshot.rows
+        return None
 
-def _observation(symbol: str, *, source: str = "live", rows: bool = True) -> ChainObservation:
+    async def has_source(self, symbol: str, session_date: date, source: str) -> bool:
+        return any(
+            s.symbol == symbol and s.session_date == session_date and s.source == source
+            for s in self.saved
+        )
+
+
+def _observation(
+    symbol: str, *, source: str = "live", rows: bool = True, oi: int = 200
+) -> ChainObservation:
     legs: tuple[ChainRowToWrite, ...] = ()
     if rows:
         legs = (
-            ChainRowToWrite(Decimal("100"), "CE", oi=200, oi_change=10, volume=5),
+            ChainRowToWrite(Decimal("100"), "CE", oi=oi, oi_change=10, volume=5),
             ChainRowToWrite(Decimal("100"), "PE", oi=400, oi_change=20, volume=7),
             ChainRowToWrite(Decimal("110"), "CE", oi=100, oi_change=-5, volume=3),
             ChainRowToWrite(Decimal("110"), "PE", oi=600, oi_change=30, volume=9),
@@ -175,3 +196,80 @@ async def test_one_symbol_failure_does_not_sink_the_tick(allow_mock: bool) -> No
     assert [s for s, _ in result.failed] == ["NIFTY"]
     assert result.written == ("BANKNIFTY",)
     assert [s.symbol for s in writer.saved] == ["BANKNIFTY"]
+
+
+# -- a frozen tape ----------------------------------------------------------
+
+
+async def test_an_identical_capture_is_not_stored_twice() -> None:
+    """A repeated tape must leave a gap, not a wall of identical frames.
+
+    `ExchangeCalendar.holidays` is empty, so on an NSE holiday the calendar
+    reports the market open and the provider keeps answering with the same
+    chain. Storing every one of those would leave the Open Interest tool's
+    timeline fully populated and completely inert — a far more confusing
+    failure than an honest gap.
+    """
+    writer = FakeWriter()
+    capture = _capture(FakeSource({"NIFTY": _observation("NIFTY")}), writer, open_=True)
+
+    first = await capture()
+    second = await capture()
+
+    assert first.written == ("NIFTY",)
+    assert second.written == ()
+    assert second.skipped_unchanged == ("NIFTY",)
+    assert len(writer.saved) == 1
+
+
+async def test_a_changed_capture_is_still_stored() -> None:
+    writer = FakeWriter()
+    original = _observation("NIFTY")
+    source = FakeSource({"NIFTY": original})
+    capture = _capture(source, writer, open_=True)
+    await capture()
+
+    # One leg moves — that is a real tick and must be archived.
+    source.set(
+        "NIFTY", replace(original, rows=(replace(original.rows[0], oi=999_999), *original.rows[1:]))
+    )
+    result = await capture()
+
+    assert result.written == ("NIFTY",)
+    assert len(writer.saved) == 2
+
+
+async def test_mock_never_follows_live_within_a_session() -> None:
+    """A broker that drops out mid-session must leave a gap, not a seam.
+
+    Splicing a fabricated afternoon onto a real morning draws one continuous
+    line with nothing on screen marking where the real data stopped. An honest
+    gap is recoverable; a seam quietly misleads.
+    """
+    writer = FakeWriter()
+    source = FakeSource({"NIFTY": _observation("NIFTY", source="live")})
+    capture = _capture(source, writer, open_=True, allow_mock=True)
+    await capture()
+
+    # The connection drops; the resolver falls back to the simulator.
+    source.set("NIFTY", _observation("NIFTY", source="mock", oi=555_555))
+    result = await capture()
+
+    assert result.skipped_mock == ("NIFTY",)
+    assert [s.source for s in writer.saved] == ["live"]
+
+
+async def test_mock_is_still_written_on_a_day_with_no_live_capture() -> None:
+    # The guard is about mixing, not about mock itself — a machine with no
+    # broker connected must still accumulate a scrubbable timeline.
+    writer = FakeWriter()
+    source = FakeSource({"NIFTY": _observation("NIFTY", source="mock")})
+    capture = _capture(source, writer, open_=True, allow_mock=True)
+
+    first = await capture()
+    source.set("NIFTY", _observation("NIFTY", source="mock", oi=777_777))
+    second = await capture()
+
+    assert first.written == ("NIFTY",)
+    assert second.written == ("NIFTY",)
+    assert [s.source for s in writer.saved] == ["mock", "mock"]

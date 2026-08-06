@@ -358,6 +358,22 @@
   font-size: var(--mc-text-sm);
   color: var(--mc-text-muted);
   white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Past three missed polls the feed is not merely quiet. Saying so is the whole
+   reason the readout exists — a stalled pipeline and a still market look
+   identical otherwise. */
+.live.stale {
+  color: var(--mc-bearish);
+}
+
+.live.stale .dot {
+  background: var(--mc-bearish);
+}
+
+.sep {
+  opacity: 0.45;
 }
 
 .dot {
@@ -443,10 +459,27 @@
   cursor: pointer;
 }
 
+.reset:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
 .end {
+  display: flex;
+  flex-direction: column;
   font-size: var(--mc-text-xs);
   color: var(--mc-text-subtle);
   white-space: nowrap;
+}
+
+/* Names what each end of the window is. Without it the two times read as an
+   arbitrary range rather than "compare this moment against that one". */
+.endCaption {
+  font-size: 0.625rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--mc-text-subtle);
+  opacity: 0.75;
 }
 
 .quick {

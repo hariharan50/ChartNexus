@@ -32,6 +32,12 @@ class SeriesFrameResponse(_Schema):
     strikes: list[float]
     call: list[int | None]
     put: list[int | None]
+    # Optional because the live tier synthesises its two frames from one chain
+    # and has no stored header to read them from; the client falls back to the
+    # payload-level values there.
+    spot: float | None = None
+    atm: float | None = None
+    max_pain: float | None = None
 
 
 class SentimentResponse(_Schema):
@@ -54,6 +60,10 @@ class OiViewResponse(_Schema):
     open_ts: str
     now_ts: str
     data_quality: str
+    # True when the 09:15 baseline was derived from the broker's day-change
+    # field rather than read from a stored capture — which is what happens
+    # whenever the ingest worker started after the bell.
+    open_is_estimated: bool = False
     total_call_oi: int
     total_put_oi: int
     total_call_oi_chg: int

@@ -136,8 +136,20 @@ function TerminalShell({ user }: { user: User }) {
 
   const shortName = (user.display_name || user.email || 'Account').split(/[\s@]/)[0];
 
+  /** For the top-level tabs, where a section owns everything beneath it. */
   const isActive = (href: string): boolean =>
     location.pathname === href || location.pathname.startsWith(href + '/');
+
+  /**
+   * For the submenu entries, which are leaf destinations.
+   *
+   * A prefix match is wrong here: `/options/*` belongs to the Options Lab
+   * mega-menu, not to the Dashboards → Options entry, so on
+   * `/options/open-interest` both lit up at once. The Options Lab and Future Lab
+   * panels have always matched exactly; this brings the one remaining submenu
+   * into line.
+   */
+  const isCurrent = (href: string): boolean => location.pathname === href;
 
   // Native <details> menus do not close one another or dismiss on an outside
   // click. We keep the whole header in `headerEl` and close every open menu on
@@ -188,7 +200,10 @@ function TerminalShell({ user }: { user: User }) {
     <div className={s.terminal}>
       <header className={s.nav} ref={headerEl}>
         <div className={s.navLeft}>
-          <Link className={s.brand} to="/dashboard">
+          {/* Labelled explicitly because below 72rem the wordmark is
+              `display: none` and the bolt is decorative, which left the link
+              with no accessible name at all on a phone. */}
+          <Link className={s.brand} to="/dashboard" aria-label="MarketCompass">
             <span className={s.mark} aria-hidden="true">
               <IconBolt />
             </span>
@@ -249,7 +264,7 @@ function TerminalShell({ user }: { user: User }) {
                           return (
                             <Link
                               key={child.href}
-                              className={cx(s.submenuItem, isActive(child.href) && s.active)}
+                              className={cx(s.submenuItem, isCurrent(child.href) && s.active)}
                               to={child.href}
                               prefetch="intent"
                             >

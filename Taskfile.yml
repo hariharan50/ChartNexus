@@ -62,16 +62,38 @@ tasks:
 
   # --- run -----------------------------------------------------------------
   dev:
-    desc: Run the API and the web app locally against containerised dependencies
+    desc: Run the API and the snapshot ingest worker against containerised dependencies
     deps: [up]
     cmds:
-      - task: dev:api
+      - task: dev:processes
+
+  # Both children are long-running, and go-task runs `deps` in parallel — so this
+  # task never "finishes", which is the point. Ctrl+C stops both.
+  #
+  # Ingest belongs here rather than behind a compose profile: it is the only
+  # writer of the option-chain archive, and without it the Open Interest page
+  # polls every 15s forever and receives identical bytes, which reads as a frozen
+  # page rather than as missing data.
+  dev:processes:
+    internal: true
+    deps: [dev:api, dev:ingest]
 
   dev:api:
     desc: Run the API with hot reload
     dir: "{{.BACKEND}}"
     cmds:
       - uv run uvicorn marketcompass.entrypoints.main_api:create_app --factory --reload --port 8000
+
+  dev:ingest:
+    desc: Run the option-chain snapshot worker
+    dir: "{{.BACKEND}}"
+    # Set here rather than in .env so they cannot leak anywhere else. Storing
+    # simulated open interest must stay off by default — see main_oi_data.py.
+    env:
+      MC_MARKET_INGEST_ALLOW_MOCK: "true"
+      MC_MARKET_SNAPSHOT_INTERVAL_SECONDS: "60"
+    cmds:
+      - uv run marketcompass-ingest
 
   dev:web:
     desc: Run the React Router dev server
@@ -103,6 +125,19 @@ tasks:
     dir: "{{.BACKEND}}"
     cmds:
       - uv run alembic current --verbose
+
+  # --- option-chain archive ------------------------------------------------
+  oi:seed:
+    desc: 'Fabricate a trading session of OI snapshots so the timeline can be scrubbed: task oi:seed -- --replace'
+    dir: "{{.BACKEND}}"
+    cmds:
+      - uv run marketcompass-oi seed {{.CLI_ARGS}}
+
+  oi:prune:
+    desc: Apply the OI snapshot retention window
+    dir: "{{.BACKEND}}"
+    cmds:
+      - uv run marketcompass-oi prune {{.CLI_ARGS}}
 
   # --- quality -------------------------------------------------------------
   check:

@@ -7,9 +7,8 @@ the best tier and labelling which one it used:
     LIVE_PROXY (1 stored snapshot)          — open ≈ now - oi_change
     LIVE       (no snapshots)               — one live chain, same proxy
 
-There is no snapshot writer yet, so the shipped ``SnapshotReader`` returns
-nothing and every request lands on the LIVE tier. The tier branching is kept so
-the intraday path activates unchanged once ingestion exists.
+Which tier a request lands on depends entirely on how much the ingest worker has
+archived for the day so far. A machine that has never run it stays on LIVE.
 
 Time rules that have bitten before, stated once:
 
@@ -26,6 +25,7 @@ payload so the page always renders.
 from __future__ import annotations
 
 from collections import OrderedDict
+from dataclasses import replace
 from datetime import UTC, datetime, time, timedelta, timezone
 from itertools import pairwise
 from typing import Any
@@ -49,6 +49,13 @@ SESSION_OPEN = time(9, 15)
 SESSION_CLOSE = time(15, 30)
 _DEFAULT_STEP = 50.0
 _MIN_INTRADAY_SNAPSHOTS = 2
+# How late the first stored snapshot may be before the session open is
+# reconstructed rather than taken from it. One capture interval's grace.
+_OPEN_TOLERANCE = timedelta(minutes=5)
+# Strikes either side of ATM kept in the intraday series. The widest filter the
+# UI offers is ±20, so this is a superset — it exists to stop a day with a
+# shifting ladder growing the payload without bound.
+_SERIES_STRIKE_SPAN = 25
 _BULLISH_AT = 60
 _BEARISH_AT = 40
 
@@ -62,11 +69,14 @@ class GetOiView:
         provider: ChainProvider,
         snapshots: SnapshotReader,
         now_utc: Any = None,
+        strike_span: int = _SERIES_STRIKE_SPAN,
     ) -> None:
         self._provider = provider
         self._snapshots = snapshots
         # Injectable clock for tests; defaults to real UTC now.
         self._now = now_utc or (lambda: datetime.now(UTC))
+        # The main lever on payload size — see `_series_axis`.
+        self._strike_span = strike_span
 
     async def __call__(self, tenant_id: TenantId, symbol: str) -> dict[str, Any]:
         now = self._now()
@@ -74,6 +84,12 @@ class GetOiView:
 
         # Snapshot tiers first; the null reader falls straight through to live.
         snaps = await self._snapshots.day_snapshots(tenant_id, symbol, trade_date_utc=now)
+        # Never serve a capture that has not happened yet. Real ingest cannot
+        # produce one, but a seeded or restored day can, and the effect is that
+        # the tool's "as of" handle sits on 3:30 pm all morning and the newest
+        # frame reports a market that does not exist. Dropping them here covers
+        # every tier and every way such a row might arrive.
+        snaps = [snap for snap in snaps if _attach_utc(snap.captured_at) <= now]
         if len(snaps) >= _MIN_INTRADAY_SNAPSHOTS:
             return self._intraday(symbol, chain, snaps)
         if len(snaps) == 1:
@@ -99,15 +115,51 @@ class GetOiView:
             series=series,
         )
 
+    def _session_open_frame(self, ordered: list[ChainSnapshot]) -> ChainSnapshot | None:
+        """A 09:15 frame reconstructed from the broker's day-change field.
+
+        The archive only holds what was captured, so a worker that started at
+        13:01 leaves the tool with no morning: the baseline handle sits at
+        13:01, and "OI change" silently means "change since lunchtime" — the
+        single most-read number on the page, quietly wrong.
+
+        It does not need to have been captured. ``oi_change`` is the change
+        *since the session open* as the broker reports it, so ``oi - oi_change``
+        is the 09:15 book, and reading it off the newest snapshot gives the most
+        current version of it. This is the same inversion the ``live_proxy``
+        tier already relies on.
+
+        Returns ``None`` when the archive already reaches back to the open.
+        """
+        newest = ordered[-1]
+        open_ts = self._session_open_utc(_attach_utc(newest.captured_at))
+        if _attach_utc(ordered[0].captured_at) <= open_ts + _OPEN_TOLERANCE:
+            return None
+
+        rows = tuple(
+            replace(row, oi=max(0, row.oi - row.oi_change), oi_change=0) for row in newest.rows
+        )
+        return ChainSnapshot(
+            captured_at=open_ts,
+            rows=rows,
+            # Deliberately no spot/ATM: nobody recorded where the index was at
+            # 09:15, and inventing one would move the spot line to a price that
+            # never traded. The client falls back to the payload's own values.
+            max_pain=max_pain(rows, sorted({row.strike for row in rows})),
+        )
+
     def _intraday(
         self, symbol: str, chain: ProviderChain, snaps: list[ChainSnapshot]
     ) -> dict[str, Any]:
         """INTRADAY: earliest in-session snapshot is the real open."""
         ordered = sorted(snaps, key=lambda s: s.captured_at)
+        reconstructed = self._session_open_frame(ordered)
+        if reconstructed is not None:
+            ordered = [reconstructed, *ordered]
         open_snap = ordered[0]
         now_snap = ordered[-1]
-        strike_axis = self._strike_axis(now_snap.rows)
-        series = [self._frame(s.captured_at, s.rows, strike_axis) for s in ordered]
+        strike_axis = self._series_axis(ordered)
+        series = self._series(ordered, strike_axis)
         return self._build(
             symbol,
             chain,
@@ -117,6 +169,17 @@ class GetOiView:
             now_ts=_attach_utc(now_snap.captured_at),
             quality="intraday",
             series=series,
+            open_is_estimated=reconstructed is not None,
+            # The archive's own spot, not the live chain's.
+            #
+            # These two are different observations of the market and can be far
+            # apart — the newest snapshot may be minutes old, and on a machine
+            # running the mock provider they are separate simulations entirely.
+            # Taking spot from the live chain while the bars come from the
+            # archive puts the spot line and the ATM-centred strike window on a
+            # price that no bar on the chart was drawn from: the chart ends up
+            # showing a monotonic decay off the side of the real OI peak.
+            spot=now_snap.spot,
         )
 
     # -- payload assembly ---------------------------------------------------
@@ -132,6 +195,8 @@ class GetOiView:
         now_ts: datetime,
         quality: str,
         series: list[dict[str, Any]],
+        spot: float | None = None,
+        open_is_estimated: bool = False,
     ) -> dict[str, Any]:
         now_by = _index(now_rows)
         open_by = _index(open_rows) if open_rows is not None else {}
@@ -176,7 +241,10 @@ class GetOiView:
             )
 
         step = _infer_step(strikes)
-        spot = chain.spot if chain.spot is not None else strikes[len(strikes) // 2]
+        # Caller's spot first (the tier that has one that matches `now_rows`),
+        # then the live chain, then the middle of the ladder.
+        resolved = spot if spot is not None else chain.spot
+        spot = resolved if resolved is not None else strikes[len(strikes) // 2]
         atm = atm_strike(spot, strikes, step)
         mp = max_pain(now_rows, strikes)
         pcr_now = pcr_oi(now_rows)
@@ -198,6 +266,7 @@ class GetOiView:
             "open_ts": _iso(open_ts),
             "now_ts": _iso(now_ts),
             "data_quality": quality,
+            "open_is_estimated": open_is_estimated,
             "total_call_oi": total_call_now,
             "total_put_oi": total_put_now,
             "total_call_oi_chg": call_chg,
@@ -223,6 +292,7 @@ class GetOiView:
             "open_ts": _iso(open_ts),
             "now_ts": _iso(now_ts),
             "data_quality": "empty",
+            "open_is_estimated": False,
             "total_call_oi": 0,
             "total_put_oi": 0,
             "total_call_oi_chg": 0,
@@ -237,7 +307,7 @@ class GetOiView:
     def _two_point_series(
         self, now_rows: tuple[ChainRow, ...], open_ts: datetime, now_ts: datetime
     ) -> list[dict[str, Any]]:
-        strike_axis = self._strike_axis(now_rows)
+        strike_axis = sorted({row.strike for row in now_rows})
         if not strike_axis:
             return []
         now_by = _index(now_rows)
@@ -256,19 +326,74 @@ class GetOiView:
             {"t": _iso(now_ts), "strikes": strike_axis, "call": now_call, "put": now_put},
         ]
 
-    def _frame(
-        self, captured_at: datetime, rows: tuple[ChainRow, ...], strike_axis: list[float]
-    ) -> dict[str, Any]:
-        by = _index(rows)
-        return {
-            "t": _iso(_attach_utc(captured_at)),
-            "strikes": strike_axis,
-            "call": [_opt_oi(by.get((s, "CE"))) for s in strike_axis],
-            "put": [_opt_oi(by.get((s, "PE"))) for s in strike_axis],
-        }
+    def _series_axis(self, ordered: list[ChainSnapshot]) -> list[float]:
+        """One strike axis for every frame, spanning the whole session.
 
-    def _strike_axis(self, rows: tuple[ChainRow, ...]) -> list[float]:
-        return sorted({row.strike for row in rows})
+        Taking it from the newest snapshot alone loses any strike that was
+        quoted at the open and had rolled off by the close — and because the
+        client sums the frame arrays, that silently understates the baseline
+        totals behind PCR change and the summary bars.
+
+        Bounded to a window around ATM so a wild day cannot inflate the payload:
+        the widest filter the UI offers is ±20 strikes, so ±25 is a superset.
+        The newest snapshot's strikes are always kept regardless of that bound —
+        they are what the per-strike table renders, and a table row with no
+        matching frame column would draw a bar of zero.
+        """
+        union = sorted({row.strike for snap in ordered for row in snap.rows})
+        if not union:
+            return []
+
+        newest = ordered[-1]
+        current = {row.strike for row in newest.rows}
+        anchor = newest.atm_strike
+        if anchor is None:
+            anchor = newest.spot if newest.spot is not None else union[len(union) // 2]
+
+        reach = _infer_step(union) * self._strike_span
+        return [s for s in union if s in current or abs(s - anchor) <= reach]
+
+    def _series(
+        self, ordered: list[ChainSnapshot], strike_axis: list[float]
+    ) -> list[dict[str, Any]]:
+        """Frames over a shared axis, carrying a leg forward once it stops quoting.
+
+        Three cases per (strike, side): quoted now, quoted earlier but not now,
+        never quoted. Only the last is genuinely absent — a leg that rolled off
+        kept whatever OI it had, so emitting ``None`` there (which the client
+        reads as zero) would invent a collapse that never happened.
+        """
+        last_known: dict[tuple[float, str], int] = {}
+        frames: list[dict[str, Any]] = []
+
+        for snap in ordered:
+            by = _index(snap.rows)
+            call: list[int | None] = []
+            put: list[int | None] = []
+            for strike in strike_axis:
+                for side, column in (("CE", call), ("PE", put)):
+                    row = by.get((strike, side))
+                    if row is not None:
+                        last_known[(strike, side)] = row.oi
+                        column.append(row.oi)
+                    else:
+                        column.append(last_known.get((strike, side)))
+
+            frames.append(
+                {
+                    "t": _iso(_attach_utc(snap.captured_at)),
+                    "strikes": strike_axis,
+                    "call": call,
+                    "put": put,
+                    # What the market looked like at *this* instant, so scrubbing
+                    # moves the spot line and max-pain marker with the bars.
+                    "spot": snap.spot,
+                    "atm": snap.atm_strike,
+                    "max_pain": snap.max_pain,
+                }
+            )
+
+        return frames
 
     # -- session time -------------------------------------------------------
 

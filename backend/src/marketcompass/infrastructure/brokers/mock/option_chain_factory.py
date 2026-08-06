@@ -1,11 +1,13 @@
 """Synthetic option chains.
 
-Enough structure to exercise the analytics: intrinsic value plus a time-value
-curve, open interest peaking near round strikes, and a put/call skew. Every
-number is deterministic given the instrument and minute.
+Open interest, the ladder and spot all come from :mod:`session_model`, so this
+chain is the same book the snapshot archive holds for the same instant — the
+Option Chain page, the Open Interest page and the ingest worker cannot disagree.
+What is added here is the option-quote dressing the model has no opinion about:
+bid/ask around the last price, and a delta curve.
 
-Not a pricing model. Anything computed from this is illustrative, which is why
-the chain is stamped ``DataSource.MOCK`` and the UI shows it as simulated.
+Not a pricing model. Anything computed from it is illustrative, which is why the
+chain is stamped ``DataSource.MOCK`` and the UI shows it as simulated.
 """
 
 from __future__ import annotations
@@ -22,30 +24,32 @@ from marketcompass.contexts.market_data.domain.market_data import (
     Provenance,
     StrikeRow,
 )
-from marketcompass.infrastructure.brokers.mock.quote_factory import (
+from marketcompass.infrastructure.brokers.mock.session_model import (
+    LADDER_REACH,
+    Leg,
+    frame_at,
     lot_size,
-    spot_price,
     strike_step,
 )
 
-STRIKES_EITHER_SIDE = 20
+STRIKES_EITHER_SIDE = LADDER_REACH
 _CENTS = Decimal("0.01")
+_SPREAD = Decimal("0.5")
 
 
 def build_option_chain(
     instrument: InstrumentSymbol, moment: datetime, expiry: str | None = None
 ) -> OptionChain:
-    spot = spot_price(instrument, moment)
+    frame = frame_at(instrument.value, moment)
+    spot = _money(frame.spot)
     step = strike_step(instrument)
-    atm = (spot / step).to_integral_value() * step
 
     expiries = upcoming_expiries(moment.date())
     resolved = expiry if expiry in expiries else expiries[0]
-    days_left = max(1, (date.fromisoformat(resolved) - moment.date()).days)
 
     strikes = tuple(
-        _build_row(strike=atm + step * offset, spot=spot, days_left=days_left, step=step)
-        for offset in range(-STRIKES_EITHER_SIDE, STRIKES_EITHER_SIDE + 1)
+        _build_row(strike=_money(strike), call=call, put=put, spot=spot, step=step)
+        for strike, call, put in frame.pairs()
     )
 
     return OptionChain(
@@ -75,45 +79,37 @@ def upcoming_expiries(today: date, count: int = 6) -> tuple[str, ...]:
     return tuple((first + timedelta(weeks=week)).isoformat() for week in range(count))
 
 
-def _build_row(*, strike: Decimal, spot: Decimal, days_left: int, step: Decimal) -> StrikeRow:
-    distance = abs(strike - spot)
-    # Time value decays with distance from spot and with days remaining.
-    time_value = Decimal(str(round(math.exp(-float(distance / (step * 12))) * 90, 2)))
-    time_value *= Decimal(str(round(math.sqrt(days_left / 7), 3)))
-
-    call_intrinsic = max(Decimal(0), spot - strike)
-    put_intrinsic = max(Decimal(0), strike - spot)
-
+def _build_row(*, strike: Decimal, call: Leg, put: Leg, spot: Decimal, step: Decimal) -> StrikeRow:
     moneyness = float((strike - spot) / (step * 10))
-    call_oi = int(90_000 * math.exp(-(moneyness**2)) + 5_000)
-    # Puts carry more open interest below spot: index hedging is one-sided.
-    put_oi = int(110_000 * math.exp(-((moneyness + 0.4) ** 2)) + 5_000)
-
     return StrikeRow(
         strike=strike,
-        call=OptionQuote(
-            last_price=(call_intrinsic + time_value).quantize(_CENTS),
-            open_interest=call_oi,
-            open_interest_change=int(call_oi * 0.04) - 1_500,
-            volume=int(call_oi * 0.3),
-            implied_volatility=Decimal("12.50"),
-            bid=(call_intrinsic + time_value - Decimal("0.5")).quantize(_CENTS),
-            ask=(call_intrinsic + time_value + Decimal("0.5")).quantize(_CENTS),
-            delta=Decimal(str(round(_delta(moneyness), 4))),
-        ),
-        put=OptionQuote(
-            last_price=(put_intrinsic + time_value).quantize(_CENTS),
-            open_interest=put_oi,
-            open_interest_change=int(put_oi * 0.03) - 900,
-            volume=int(put_oi * 0.28),
-            implied_volatility=Decimal("13.20"),
-            bid=(put_intrinsic + time_value - Decimal("0.5")).quantize(_CENTS),
-            ask=(put_intrinsic + time_value + Decimal("0.5")).quantize(_CENTS),
-            delta=Decimal(str(round(_delta(moneyness) - 1, 4))),
-        ),
+        call=_quote(call, delta=_delta(moneyness)),
+        put=_quote(put, delta=_delta(moneyness) - 1),
+    )
+
+
+def _quote(leg: Leg, *, delta: float) -> OptionQuote:
+    last = _money(leg.ltp)
+    return OptionQuote(
+        last_price=last,
+        open_interest=leg.oi,
+        # The day change a broker actually reports. This used to be a made-up
+        # fraction of the current OI, which the Open Interest service's
+        # single-snapshot tier then inverted to "reconstruct" a session open —
+        # producing an open that never existed.
+        open_interest_change=leg.oi_change,
+        volume=leg.volume,
+        implied_volatility=Decimal(str(leg.iv)),
+        bid=(last - _SPREAD).quantize(_CENTS),
+        ask=(last + _SPREAD).quantize(_CENTS),
+        delta=Decimal(str(round(delta, 4))),
     )
 
 
 def _delta(moneyness: float) -> float:
     """A logistic curve standing in for N(d1): 0.5 at the money, asymptotic."""
     return 1.0 / (1.0 + math.exp(2.5 * moneyness))
+
+
+def _money(value: float | Decimal) -> Decimal:
+    return Decimal(str(value)).quantize(_CENTS)

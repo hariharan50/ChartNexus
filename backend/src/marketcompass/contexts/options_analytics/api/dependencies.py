@@ -29,7 +29,11 @@ def build_options_analytics_services(
     container = get_container(request)
     provider = build_oi_chain_provider(session=session, container=container)
     return OptionsAnalyticsServices(
-        oi_view=GetOiView(provider=provider, snapshots=SqlAlchemySnapshotReader(session)),
+        oi_view=GetOiView(
+            provider=provider,
+            snapshots=SqlAlchemySnapshotReader(session),
+            strike_span=container.settings.market.snapshot_max_series_strikes,
+        ),
     )
 
 

@@ -1,7 +1,8 @@
 """Snapshot storage adapters that feed the Open Interest use case.
 
-``NullSnapshotReader`` is the placeholder snapshot source: there is no intraday
-snapshot writer yet, so it reports none and the service serves the live tier.
+``SqlAlchemySnapshotReader`` reads the archive the ingest worker writes;
+``NullSnapshotReader`` reports none, forcing the service onto its live tier, and
+is what a caller wires when it deliberately wants no history.
 
 The live-chain bridge (``BrokerChainProvider`` / ``build_oi_chain_provider``,
 which must reach into ``market_data``) lives in
@@ -108,4 +109,13 @@ def _to_chain_snapshot(record: OptionChainSnapshotRecord) -> ChainSnapshot:
         )
         for row in record.rows
     )
-    return ChainSnapshot(captured_at=record.captured_at, rows=rows)
+    # The header metrics are already denormalised onto the snapshot row, so
+    # carrying them costs no extra query — and without them a scrubbed frame has
+    # no spot or max pain of its own to draw.
+    return ChainSnapshot(
+        captured_at=record.captured_at,
+        rows=rows,
+        spot=float(record.spot) if record.spot is not None else None,
+        atm_strike=float(record.atm_strike) if record.atm_strike is not None else None,
+        max_pain=float(record.max_pain_strike) if record.max_pain_strike is not None else None,
+    )

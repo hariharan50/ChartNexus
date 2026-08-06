@@ -12,9 +12,20 @@ import { apiFetch } from '$shared/api/client';
 export interface OiSeriesFrame {
   t: string;
   strikes: number[];
-  /** OI aligned to `strikes`; `null` marks a leg that was not listed. */
+  /** OI aligned to `strikes`; `null` marks a leg that was never listed. */
   call: (number | null)[];
   put: (number | null)[];
+  /**
+   * What the market looked like at this instant.
+   *
+   * Absent on the live tier, whose two frames are synthesised from a single
+   * chain — callers fall back to the payload-level values. Without these,
+   * scrubbing would move the bars while the spot line and max-pain marker
+   * stayed pinned to the newest snapshot.
+   */
+  spot?: number | null;
+  atm?: number | null;
+  max_pain?: number | null;
 }
 
 export interface OiStrike {
@@ -49,6 +60,13 @@ export interface OiView {
   open_ts: string;
   now_ts: string;
   data_quality: 'intraday' | 'live_proxy' | 'empty';
+  /**
+   * The 09:15 frame was derived from the broker's day-change field rather than
+   * read from a stored capture — which is what happens whenever ingest started
+   * after the bell. The values are real; only the intervening frames are
+   * missing.
+   */
+  open_is_estimated: boolean;
   total_call_oi: number;
   total_put_oi: number;
   total_call_oi_chg: number;
@@ -131,6 +149,54 @@ export function baselineIndex(
   return idx;
 }
 
+/** How often the page re-fetches. Also rendered, so the two cannot drift apart. */
+export const REFETCH_MS = 15_000;
+
+/** Past this the feed is treated as stalled rather than merely between polls. */
+export const STALE_AFTER_MS = REFETCH_MS * 3;
+
+/**
+ * How long ago the data on screen arrived, e.g. `just now` / `12s ago`.
+ *
+ * The reason this is on screen at all: when nothing is writing snapshots the
+ * page polls faithfully and receives identical bytes every time, so it looks
+ * frozen with no way to tell a quiet market from a broken pipeline. This makes
+ * the difference legible.
+ */
+export function freshnessLabel(updatedAt: number, now: number): string {
+  if (!updatedAt) return 'never';
+  const seconds = Math.max(0, Math.round((now - updatedAt) / 1000));
+  if (seconds < 5) return 'just now';
+  if (seconds < 60) return `${seconds}s ago`;
+  const minutes = Math.floor(seconds / 60);
+  if (minutes < 60) return `${minutes}m ago`;
+  return `${Math.floor(minutes / 60)}h ago`;
+}
+
+/** `6 Aug` in IST — the trading date, not the viewer's. */
+export function dateLabel(at: number): string {
+  return new Intl.DateTimeFormat('en-IN', {
+    timeZone: 'Asia/Kolkata',
+    day: 'numeric',
+    month: 'short'
+  }).format(new Date(at));
+}
+
+/** `1:12:01 pm` in IST, seconds included so it visibly ticks. */
+export function clockLabel(at: number): string {
+  return new Intl.DateTimeFormat('en-GB', {
+    timeZone: 'Asia/Kolkata',
+    // `numeric`, not `2-digit`: a 12-hour clock does not pad the hour, and
+    // `01:12 pm` reads as a mistake.
+    hour: 'numeric',
+    minute: '2-digit',
+    second: '2-digit',
+    hour12: true
+  })
+    .format(new Date(at))
+    .toLowerCase();
+}
+
 /** A short IST clock label like `10:03 am`. */
 export function timeLabel(iso: string): string {
   return new Intl.DateTimeFormat('en-US', {
@@ -141,6 +207,63 @@ export function timeLabel(iso: string): string {
   })
     .format(new Date(iso))
     .toLowerCase();
+}
+
+/** One mark under the time slider. */
+export interface SliderTick {
+  /** Frame this tick sits on. */
+  index: number;
+  /** Position along the track, 0–100. */
+  pct: number;
+  /** `null` for the unlabelled half-hour marks. */
+  label: string | null;
+}
+
+const HOUR_LABEL = new Intl.DateTimeFormat('en-US', {
+  timeZone: 'Asia/Kolkata',
+  hour: 'numeric',
+  hour12: true
+});
+
+/** IST half-hour bucket for an instant — `hour * 2`, plus one past the half. */
+function halfHour(iso: string): number {
+  const parts = new Date(iso);
+  const ist = new Date(parts.getTime() + (330 + parts.getTimezoneOffset()) * 60_000);
+  return ist.getHours() * 2 + (ist.getMinutes() >= 30 ? 1 : 0);
+}
+
+/**
+ * Hour and half-hour marks for the timeline, one per frame that opens a new
+ * bucket.
+ *
+ * Positions are **frame-index fractions, never clock fractions**, because the
+ * handle also moves by index: one step of the slider is one snapshot, not one
+ * unit of time. With an even ingest cadence the two coincide; after a gap they
+ * diverge, and index-positioning is the one that keeps a tick under the frame
+ * it names. Each label is formatted from its own frame's timestamp — nothing is
+ * interpolated, so a gap shows up as a wider spacing rather than a wrong time.
+ */
+export function axisTicks(series: OiSeriesFrame[]): SliderTick[] {
+  if (series.length < 2) return [];
+
+  const span = series.length - 1;
+  const ticks: SliderTick[] = [];
+  let previous = -1;
+
+  for (let i = 0; i < series.length; i++) {
+    const bucket = halfHour(series[i]!.t);
+    if (bucket === previous) continue;
+    previous = bucket;
+    ticks.push({
+      index: i,
+      pct: (i / span) * 100,
+      // Only the top of each hour is labelled; the half-hours are bare marks,
+      // which is as much text as fits at 375px.
+      label: bucket % 2 === 0 ? HOUR_LABEL.format(new Date(series[i]!.t)).toLowerCase() : null
+    });
+  }
+
+  return ticks;
 }
 
 /** A per-strike bar row the chart and table both render. */
@@ -195,6 +318,11 @@ export function deriveBars(
   const byStrike = new Map(view.strikes.map((r) => [r.strike, r]));
   const useSeries = Boolean(openFrame && nowFrame);
 
+  // Anchored to the frame being shown, not to the payload — scrubbing back to
+  // 10:30 must highlight 10:30's ATM strike, not the latest one.
+  const atmStrike = nowFrame?.atm ?? view.atm_strike;
+  const maxPainStrike = nowFrame?.max_pain ?? view.max_pain;
+
   return visible.map((strike) => {
     const row = byStrike.get(strike);
     const callNow = useSeries ? frameOi(nowFrame, strike, 'call') : (row?.call_oi_now ?? 0);
@@ -209,8 +337,8 @@ export function deriveBars(
       putOpen,
       callChg: callNow - callOpen,
       putChg: putNow - putOpen,
-      atm: strike === view.atm_strike,
-      maxPain: strike === view.max_pain
+      atm: strike === atmStrike,
+      maxPain: strike === maxPainStrike
     };
   });
 }

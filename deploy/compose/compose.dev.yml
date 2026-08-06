@@ -41,13 +41,25 @@ services:
       dockerfile: deploy/docker/backend.Dockerfile
       target: development
     command: uv run python -m marketcompass.entrypoints.main_ingest
-    environment: *backend-env
+    environment:
+      <<: *backend-env
+      # Dev only. Without it a developer with no FYERS connection gets
+      # `skipped_mock` on every tick forever, the archive stays empty, and the
+      # Open Interest timeline has nothing to scrub over.
+      MC_MARKET_INGEST_ALLOW_MOCK: "true"
+      # Matches `task dev:ingest`. Faster than the 180s default so the page
+      # visibly gains a bar while you are looking at it.
+      MC_MARKET_SNAPSHOT_INTERVAL_SECONDS: "60"
     volumes:
       - ../../backend/src:/app/src:ro
     depends_on:
       postgres: { condition: service_healthy }
       redis: { condition: service_healthy }
-    profiles: ["full"]
+    # No `profiles` key on purpose: this is the only writer of the option-chain
+    # archive, so a plain `up` that never starts it leaves the OI tool
+    # permanently on its two-point live estimate. A service with no profile
+    # starts under every profile, so `up --profile full` is unaffected.
+    restart: unless-stopped
 
   score:
     build:

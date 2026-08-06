@@ -35,10 +35,19 @@ class ChainSnapshot:
 
     ``captured_at`` is naive-UTC as stored in the database; the service attaches
     the timezone on read.
+
+    ``spot``/``atm_strike``/``max_pain`` are what the market looked like *at this
+    instant*, not now. Scrubbing the timeline is meaningless without them: the
+    bars would redraw for 10:30 while the spot line and max-pain marker stayed
+    pinned to the latest snapshot. They are optional because the live tier
+    synthesises frames that have no stored header to read them from.
     """
 
     captured_at: datetime
     rows: tuple[ChainRow, ...] = field(default_factory=tuple)
+    spot: float | None = None
+    atm_strike: float | None = None
+    max_pain: float | None = None
 
 
 @runtime_checkable

@@ -41,6 +41,7 @@ dependencies = [
 [project.scripts]
 marketcompass-api = "marketcompass.entrypoints.main_api:run"
 marketcompass-ingest = "marketcompass.entrypoints.main_ingest:run"
+marketcompass-oi = "marketcompass.entrypoints.main_oi_data:run"
 
 [dependency-groups]
 dev = [

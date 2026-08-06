@@ -247,6 +247,13 @@ class MarketSettings(_Section):
     # Off by default: a mock-fallback day writes nothing, leaving an honest gap.
     # Turn on locally to generate test history without a live broker connection.
     ingest_allow_mock: bool = False
+    # How long the option-chain archive is kept. Its only consumer reads today,
+    # so a month is generous; a year of unpruned ingest is ~8M rows.
+    snapshot_retention_days: int = Field(default=30, ge=1)
+    # Strikes either side of ATM kept in the intraday series the OI tool reads.
+    # Tunable because it is the main lever on payload size: the widest filter
+    # the UI offers is +-20, so anything at or above that is a superset.
+    snapshot_max_series_strikes: int = Field(default=25, ge=1)
 
 
 class Settings(BaseSettings):

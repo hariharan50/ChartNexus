@@ -9,13 +9,19 @@ import PcrDonut from './components/PcrDonut';
 import SentimentDonut from './components/SentimentDonut';
 import TimeRangeSlider from './components/TimeRangeSlider';
 import {
+  axisTicks,
   baselineIndex,
+  clockLabel,
+  dateLabel,
   deriveBars,
   fmtOi,
   fmtSigned,
+  freshnessLabel,
   getOpenInterest,
   inferStep,
   OI_INSTRUMENTS,
+  REFETCH_MS,
+  STALE_AFTER_MS,
   timeLabel,
   windowTotals,
   withinWindow,
@@ -75,7 +81,7 @@ export default function OpenInterest() {
   const query = useQuery<OiView>({
     queryKey: ['options-lab', 'oi', instrument.symbol],
     queryFn: () => getOpenInterest(instrument.symbol),
-    refetchInterval: 15_000
+    refetchInterval: REFETCH_MS
   });
 
   const view = query.data;
@@ -84,28 +90,39 @@ export default function OpenInterest() {
   // -- client re-derivation -------------------------------------------------
   const strikes = useMemo(() => (view ? view.strikes.map((r) => r.strike) : []), [view]);
   const step = useMemo(() => inferStep(strikes), [strikes]);
-  const visible = useMemo(
-    () =>
-      view
-        ? withinWindow(strikes, view.atm_strike, step, strikeFilter === 'all' ? 0 : strikeFilter)
-        : [],
-    [view, strikes, step, strikeFilter]
-  );
 
   const series = useMemo(() => view?.series ?? [], [view]);
   const hasSeries = series.length >= 2;
   // Two frames is enough to drag — the window still collapses and the chart
   // still redraws. Below that there is genuinely nothing to move between.
   const canScrub = series.length >= 2;
-  // Until intraday snapshots accumulate the API sends only the two endpoints,
-  // so the timeline is coarse rather than broken. Worth saying, not disabling.
-  const thinHistory = series.length < 3;
   const lastIdx = Math.max(0, series.length - 1);
+  const ticks = useMemo(() => axisTicks(series), [series]);
   const nowIdx = nowFrameIdx < 0 ? lastIdx : Math.min(nowFrameIdx, lastIdx);
   const openIdx = Math.min(openFrameIdx < 0 ? 0 : Math.min(openFrameIdx, lastIdx), nowIdx);
 
   const nowFrame = hasSeries ? series[nowIdx] : undefined;
   const openFrame = hasSeries ? series[openIdx] : undefined;
+
+  // Anchors for everything the chart draws. All three follow the frame being
+  // shown so that scrubbing back to 10:30 recentres the strike window, the spot
+  // line and the max-pain marker on 10:30's market — not on the newest one.
+  const spotNow = nowFrame?.spot ?? view?.spot ?? 0;
+  const atmNow = nowFrame?.atm ?? view?.atm_strike ?? 0;
+  const maxPainNow = nowFrame?.max_pain ?? view?.max_pain ?? 0;
+
+  /**
+   * The strikes the chart draws, centred on the shown frame's ATM.
+   *
+   * Centring on the payload's ATM instead was the bug behind "the chart looks
+   * wrong": spot had moved during the session, so the window sat off to one
+   * side of the OI peak and the profile read as a monotonic decay with the spot
+   * line pinned to the far edge.
+   */
+  const visible = useMemo(
+    () => withinWindow(strikes, atmNow, step, strikeFilter === 'all' ? 0 : strikeFilter),
+    [strikes, atmNow, step, strikeFilter]
+  );
 
   const bars = useMemo(
     () => (view ? deriveBars(view, visible, openFrame, nowFrame) : []),
@@ -119,6 +136,23 @@ export default function OpenInterest() {
   const openLabel =
     nowFrame && openFrame ? timeLabel(openFrame.t) : view ? timeLabel(view.open_ts) : '—';
   const nowLabel = nowFrame ? timeLabel(nowFrame.t) : view ? timeLabel(view.now_ts) : '—';
+
+  /**
+   * What, if anything, to say about the data behind the timeline.
+   *
+   * Says nothing once a real session has accumulated — a caption that qualifies
+   * every reading trains people to ignore it. On `live_proxy` there is no
+   * recorded open at all: the previous copy claimed both end points "have been
+   * recorded", which was never true on that tier.
+   */
+  const qualityNote =
+    view?.data_quality === 'live_proxy'
+      ? 'Live estimate — the open is inferred from day-over-day OI change, not from a recorded snapshot.'
+      : view?.open_is_estimated && series.length > 1
+        ? `The ${timeLabel(series[0]!.t)} baseline is derived from the day’s OI change; recorded history starts at ${timeLabel(series[1]!.t)}.`
+        : series.length > 0 && series.length < 3
+          ? `Only ${series.length} snapshot${series.length === 1 ? '' : 's'} recorded so far today, so the timeline is coarse — it fills in through market hours.`
+          : '';
 
   const expiryLabel = useMemo(() => {
     if (!view?.expiry_date) return 'Nearest expiry';
@@ -157,18 +191,16 @@ export default function OpenInterest() {
   }
 
   // -- live clock -----------------------------------------------------------
-  const [now, setNow] = useState(() => new Date());
+  // Ticks once a second, which also re-renders the freshness label below for
+  // free — it needs no state of its own.
+  const [now, setNow] = useState(() => Date.now());
   useEffect(() => {
-    const t = setInterval(() => setNow(new Date()), 1000);
+    const t = setInterval(() => setNow(Date.now()), 1000);
     return () => clearInterval(t);
   }, []);
-  const clock = new Intl.DateTimeFormat('en-GB', {
-    timeZone: 'Asia/Kolkata',
-    hour: '2-digit',
-    minute: '2-digit',
-    second: '2-digit',
-    hour12: false
-  }).format(now);
+
+  const updatedAt = query.dataUpdatedAt;
+  const isStale = Boolean(updatedAt) && now - updatedAt > STALE_AFTER_MS;
 
   return (
     <div className={s.page}>
@@ -298,9 +330,23 @@ export default function OpenInterest() {
                       <span className={s.knob} />
                     </span>
                   </label>
-                  <span className={s.live}>
+                  <span className={cx(s.live, isStale && s.stale)}>
                     <span className={cx(s.dot, query.isFetching && s.pulse)} />
-                    Live — {clock} IST
+                    <span>
+                      {dateLabel(now)}, {clockLabel(now)} IST
+                    </span>
+                    <span className={s.sep} aria-hidden="true">
+                      ·
+                    </span>
+                    <span>{REFETCH_MS / 1000}s</span>
+                    <span className={s.sep} aria-hidden="true">
+                      ·
+                    </span>
+                    {/* Not decoration: with nothing writing snapshots the page
+                        polls happily and gets identical bytes forever, so this
+                        is the only thing that tells a quiet feed from a dead
+                        one. */}
+                    <span>updated {freshnessLabel(updatedAt, now)}</span>
                   </span>
                 </div>
               </div>
@@ -308,8 +354,10 @@ export default function OpenInterest() {
               <OpenInterestChart
                 bars={bars}
                 mode={mode}
-                spot={view.spot}
-                maxPain={view.max_pain}
+                // From the frame being shown, so the spot line and max-pain
+                // marker travel with the bars when the timeline is scrubbed.
+                spot={spotNow}
+                maxPain={maxPainNow}
                 showLot={showLot}
                 lotSize={lotSize}
                 showTooltip={true}
@@ -340,22 +388,37 @@ export default function OpenInterest() {
 
               {/* time slider */}
               <div className={s.sliderRow}>
-                {canScrub ? (
-                  <button type="button" className={s.reset} onClick={resetSlider}>
-                    Reset
-                  </button>
-                ) : null}
-                <span className={s.end}>{openLabel}</span>
+                {/* Rendered unconditionally: moving only the right handle is the
+                    literal "show me 10:30" gesture, and getting back to live has
+                    to be one obvious click away from wherever you left it. */}
+                <button
+                  type="button"
+                  className={s.reset}
+                  onClick={resetSlider}
+                  disabled={!canScrub}
+                >
+                  Reset
+                </button>
+                <span className={s.end}>
+                  <span className={s.endCaption}>Baseline</span>
+                  {openLabel}
+                </span>
                 <TimeRangeSlider
                   min={0}
                   max={lastIdx}
                   openIndex={openIdx}
                   nowIndex={nowIdx}
                   disabled={!canScrub}
+                  openLabel={openLabel}
+                  nowLabel={nowLabel}
+                  ticks={ticks}
                   onOpenChange={onOpenHandleChange}
                   onNowChange={onNowHandleChange}
                 />
-                <span className={s.end}>{nowLabel}</span>
+                <span className={s.end}>
+                  <span className={s.endCaption}>As of</span>
+                  {nowLabel}
+                </span>
               </div>
 
               <div className={s.quick}>
@@ -374,13 +437,7 @@ export default function OpenInterest() {
 
               <p className={s.caption}>
                 Showing OI build-up from {openLabel} to {nowLabel}. Drag either handle to set the
-                window.{' '}
-                {thinHistory
-                  ? "Only the session's two end points have been recorded so far, so the timeline is coarse — it fills in as snapshots accumulate through market hours. "
-                  : ''}
-                {view.data_quality === 'live_proxy'
-                  ? '(open estimated from day-over-day OI change)'
-                  : ''}
+                window. {qualityNote}
               </p>
             </section>
 

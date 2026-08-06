@@ -43,13 +43,19 @@ async def session() -> AsyncIterator[AsyncSession]:
     await engine.dispose()
 
 
-def _snapshot(symbol: str, captured_at: datetime) -> SnapshotToWrite:
+def _snapshot(
+    symbol: str,
+    captured_at: datetime,
+    *,
+    source: str = "live",
+    session_date: date = SESSION_DATE,
+) -> SnapshotToWrite:
     return SnapshotToWrite(
         symbol=symbol,
-        session_date=SESSION_DATE,
+        session_date=session_date,
         captured_at=captured_at,
         spot=Decimal("104.00"),
-        source="live",
+        source=source,
         rows=(
             ChainRowToWrite(
                 Decimal("100"), "CE", oi=200, oi_change=10, volume=5, iv=Decimal("13.2")
@@ -102,5 +108,89 @@ async def test_delete_cascades_to_rows(session: AsyncSession) -> None:
     orphans = await session.execute(
         sa.text("select count(*) from option_chain_rows where snapshot_id = :sid"),
         {"sid": snap.id},
+    )
+    assert orphans.scalar_one() == 0
+
+
+async def test_has_source_distinguishes_provenance(session: AsyncSession) -> None:
+    # The seeder's guard against overwriting a real capture rests entirely on
+    # this: if it cannot tell mock from live, the guard is decorative.
+    symbol = f"NIFTY-{uuid.uuid4().hex[:6]}"
+    repo = SqlAlchemyOptionChainSnapshotRepository(session)
+    await repo.save(_snapshot(symbol, datetime(2026, 8, 4, 4, 0, tzinfo=UTC), source="mock"))
+    await session.commit()
+
+    assert await repo.has_source(symbol, SESSION_DATE, "mock") is True
+    assert await repo.has_source(symbol, SESSION_DATE, "live") is False
+    assert await repo.has_source(symbol, date(2026, 8, 3), "mock") is False
+
+
+async def test_delete_session_only_touches_its_own_provenance(session: AsyncSession) -> None:
+    # What makes `--replace` idempotent *and* safe: re-seeding a day that also
+    # holds a real capture must leave the real one standing.
+    symbol = f"NIFTY-{uuid.uuid4().hex[:6]}"
+    repo = SqlAlchemyOptionChainSnapshotRepository(session)
+    await repo.save(_snapshot(symbol, datetime(2026, 8, 4, 4, 0, tzinfo=UTC), source="mock"))
+    await repo.save(_snapshot(symbol, datetime(2026, 8, 4, 4, 30, tzinfo=UTC), source="live"))
+    await session.commit()
+
+    removed = await repo.delete_session(symbol, SESSION_DATE, "mock")
+    await session.commit()
+
+    assert removed == 1
+    survivors = await repo.snapshots_for(symbol, SESSION_DATE)
+    assert [snap.source for snap in survivors] == ["live"]
+
+
+async def test_prune_deletes_only_before_the_cutoff(session: AsyncSession) -> None:
+    symbol = f"NIFTY-{uuid.uuid4().hex[:6]}"
+    repo = SqlAlchemyOptionChainSnapshotRepository(session)
+    for day in (date(2026, 8, 2), date(2026, 8, 3), date(2026, 8, 4)):
+        await repo.save(
+            _snapshot(
+                symbol,
+                datetime(day.year, day.month, day.day, 4, 0, tzinfo=UTC),
+                session_date=day,
+            )
+        )
+    await session.commit()
+
+    deleted = await repo.delete_sessions_before(date(2026, 8, 3))
+    await session.commit()
+
+    # Strictly before: the cutoff date itself is kept.
+    assert deleted >= 1
+    assert await repo.snapshots_for(symbol, date(2026, 8, 2)) == []
+    assert len(await repo.snapshots_for(symbol, date(2026, 8, 3))) == 1
+    assert len(await repo.snapshots_for(symbol, SESSION_DATE)) == 1
+
+
+async def test_prune_cascades_to_rows_and_terminates_past_one_batch(
+    session: AsyncSession,
+) -> None:
+    # Two things at once, because they need the same expensive fixture: the
+    # batch loop must terminate when there is more than one batch to delete,
+    # and the child rows must go with their headers rather than being orphaned.
+    symbol = f"NIFTY-{uuid.uuid4().hex[:6]}"
+    old = date(2026, 7, 1)
+    repo = SqlAlchemyOptionChainSnapshotRepository(session)
+    for minute in range(12):
+        await repo.save(
+            _snapshot(symbol, datetime(2026, 7, 1, 4, minute, tzinfo=UTC), session_date=old)
+        )
+    await session.commit()
+
+    ids = [snap.id for snap in await repo.snapshots_for(symbol, old)]
+    assert len(ids) == 12
+
+    # A batch size below the row count forces at least three passes.
+    deleted = await repo.delete_sessions_before(date(2026, 7, 2), batch_size=5)
+    await session.commit()
+
+    assert deleted >= 12
+    assert await repo.snapshots_for(symbol, old) == []
+    orphans = await session.execute(
+        sa.text("select count(*) from option_chain_rows where snapshot_id = any(:ids)"),
+        {"ids": ids},
     )
     assert orphans.scalar_one() == 0

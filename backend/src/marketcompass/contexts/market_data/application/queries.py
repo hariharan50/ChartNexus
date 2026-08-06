@@ -192,14 +192,18 @@ class GetOptionChain(_FallbackMixin):
         now = self._clock.now()
         # Backfilling is a no-op wherever a provider (mock, or a future broker)
         # already supplied IV — it only fills legs the broker left blank.
-        chain = backfill_implied_volatility(chain, valuation_time=now, risk_free_rate=self._risk_free_rate)
+        chain = backfill_implied_volatility(
+            chain, valuation_time=now, risk_free_rate=self._risk_free_rate
+        )
         chain = await self._with_iv_percentile(chain, query.instrument.value, now)
 
         if live:
             self._last_good[key] = chain
         return chain
 
-    async def _with_iv_percentile(self, chain: OptionChain, symbol: str, now: datetime) -> OptionChain:
+    async def _with_iv_percentile(
+        self, chain: OptionChain, symbol: str, now: datetime
+    ) -> OptionChain:
         if self._iv_history is None:
             return chain
         atm_iv = atm_implied_volatility(chain)

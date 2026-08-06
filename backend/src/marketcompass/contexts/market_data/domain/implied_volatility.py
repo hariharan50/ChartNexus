@@ -69,7 +69,9 @@ def backfill_implied_volatility(
     if spot <= 0:
         return chain
 
-    def enriched(strike: Decimal, quote: OptionQuote | None, option_type: OptionType) -> OptionQuote | None:
+    def enriched(
+        strike: Decimal, quote: OptionQuote | None, option_type: OptionType
+    ) -> OptionQuote | None:
         if quote is None or quote.implied_volatility is not None:
             return quote
         price = float(quote.last_price)
@@ -110,13 +112,17 @@ def _parse_iso_date(value: str) -> date | None:
 def _years_to_expiry(valuation_time: datetime, expiry_date: date) -> float:
     expiry_instant = datetime.combine(expiry_date, _EXCHANGE_CLOSE, tzinfo=_EXCHANGE_TZ)
     aware_valuation = (
-        valuation_time if valuation_time.tzinfo is not None else valuation_time.astimezone(_EXCHANGE_TZ)
+        valuation_time
+        if valuation_time.tzinfo is not None
+        else valuation_time.astimezone(_EXCHANGE_TZ)
     )
     remaining: timedelta = expiry_instant - aware_valuation
     return remaining.total_seconds() / (365.0 * 24.0 * 3600.0)
 
 
-def _black_scholes_price(*, spot: float, strike: float, years: float, rate: float, vol: float, is_call: bool) -> float:
+def _black_scholes_price(
+    *, spot: float, strike: float, years: float, rate: float, vol: float, is_call: bool
+) -> float:
     if vol <= 0 or years <= 0:
         return max(0.0, (spot - strike) if is_call else (strike - spot))
     sqrt_t = math.sqrt(years)
@@ -161,8 +167,12 @@ def _solve_implied_volatility(
         if vol <= _MIN_VOL or vol >= _MAX_VOL:
             break
     else:
-        return vol if _MIN_VOL < vol < _MAX_VOL else _bisect_implied_volatility(
-            price=price, spot=spot, strike=strike, years=years, rate=rate, is_call=is_call
+        return (
+            vol
+            if _MIN_VOL < vol < _MAX_VOL
+            else _bisect_implied_volatility(
+                price=price, spot=spot, strike=strike, years=years, rate=rate, is_call=is_call
+            )
         )
 
     return _bisect_implied_volatility(
@@ -174,14 +184,20 @@ def _bisect_implied_volatility(
     *, price: float, spot: float, strike: float, years: float, rate: float, is_call: bool
 ) -> float | None:
     low, high = _MIN_VOL, _MAX_VOL
-    price_at_low = _black_scholes_price(spot=spot, strike=strike, years=years, rate=rate, vol=low, is_call=is_call)
-    price_at_high = _black_scholes_price(spot=spot, strike=strike, years=years, rate=rate, vol=high, is_call=is_call)
+    price_at_low = _black_scholes_price(
+        spot=spot, strike=strike, years=years, rate=rate, vol=low, is_call=is_call
+    )
+    price_at_high = _black_scholes_price(
+        spot=spot, strike=strike, years=years, rate=rate, vol=high, is_call=is_call
+    )
     if not (price_at_low <= price <= price_at_high):
         return None  # Not bracketed — no volatility in range reproduces this price.
 
     for _ in range(_BISECTION_ITERATIONS):
         mid = (low + high) / 2
-        model_price = _black_scholes_price(spot=spot, strike=strike, years=years, rate=rate, vol=mid, is_call=is_call)
+        model_price = _black_scholes_price(
+            spot=spot, strike=strike, years=years, rate=rate, vol=mid, is_call=is_call
+        )
         if abs(model_price - price) < _NEWTON_TOLERANCE:
             return mid
         if model_price < price:

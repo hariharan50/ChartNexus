@@ -2,13 +2,16 @@
 
 Deterministic by design: the same instrument at the same minute always produces
 the same price, so tests are stable and a developer's screen does not flicker
-with meaningless noise. It is not a market simulation and makes no attempt to
-be realistic beyond plausible magnitudes.
+with meaningless noise.
+
+The price itself comes from :mod:`session_model`, which is the single simulation
+behind every mock number in the app. This module used to run its own sine wave;
+the option-chain factory and the snapshot seeder ran two more, and the three
+disagreed. Everything price-shaped now reads the one walk.
 """
 
 from __future__ import annotations
 
-import math
 from datetime import date, datetime
 from decimal import Decimal
 
@@ -19,47 +22,33 @@ from marketcompass.contexts.market_data.domain.market_data import (
     Provenance,
     Quote,
 )
+from marketcompass.infrastructure.brokers.mock.session_model import (
+    base_level,
+    lot_size,
+    spot_at,
+    strike_step,
+)
 
-# Rough index levels, only so the numbers look like the right instrument.
-_BASE_LEVEL: dict[InstrumentSymbol, Decimal] = {
-    InstrumentSymbol.NIFTY: Decimal(24000),
-    InstrumentSymbol.BANKNIFTY: Decimal(51000),
-    InstrumentSymbol.SENSEX: Decimal(79000),
-}
-
-_STRIKE_STEP: dict[InstrumentSymbol, Decimal] = {
-    InstrumentSymbol.NIFTY: Decimal(50),
-    InstrumentSymbol.BANKNIFTY: Decimal(100),
-    InstrumentSymbol.SENSEX: Decimal(100),
-}
-
-_LOT_SIZE: dict[InstrumentSymbol, int] = {
-    InstrumentSymbol.NIFTY: 75,
-    InstrumentSymbol.BANKNIFTY: 30,
-    InstrumentSymbol.SENSEX: 20,
-}
+__all__ = [
+    "base_level",
+    "build_futures_quote",
+    "build_quote",
+    "lot_size",
+    "spot_price",
+    "strike_step",
+]
 
 _SWING_PERCENT = Decimal("0.006")
 
 
-def base_level(instrument: InstrumentSymbol) -> Decimal:
-    return _BASE_LEVEL[instrument]
-
-
-def strike_step(instrument: InstrumentSymbol) -> Decimal:
-    return _STRIKE_STEP[instrument]
-
-
-def lot_size(instrument: InstrumentSymbol) -> int:
-    return _LOT_SIZE[instrument]
-
-
 def spot_price(instrument: InstrumentSymbol, moment: datetime) -> Decimal:
-    """A slow sine wave around the base level, keyed to the minute."""
-    base = base_level(instrument)
-    phase = (moment.hour * 60 + moment.minute) / 240.0
-    swing = Decimal(str(round(math.sin(phase + len(instrument.value)), 6)))
-    return (base * (Decimal(1) + swing * _SWING_PERCENT)).quantize(Decimal("0.01"))
+    """The simulated index level at ``moment``.
+
+    Thin by design — it is the seam every existing caller already imports, so
+    pointing it at the shared walk is what makes the dashboard, the futures
+    strip, the option chain and the Open Interest page agree on one number.
+    """
+    return spot_at(instrument.value, moment)
 
 
 def build_quote(instrument: InstrumentSymbol, moment: datetime) -> Quote:

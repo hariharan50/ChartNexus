@@ -1,6 +1,12 @@
+/* Owns the row's flex share so the track keeps its own height and the axis can
+   sit under it without being a slider descendant. */
+.root {
+  flex: 1;
+  min-width: 0;
+}
+
 .track {
   position: relative;
-  flex: 1;
   height: 1.75rem;
   display: flex;
   align-items: center;
@@ -48,4 +54,61 @@
 .track:not(.disabled) .thumb:focus-visible {
   outline: 2px solid var(--mc-bearish);
   outline-offset: 2px;
+}
+
+/* The handle's own clock reading, floating above it.
+   It is wider than the 22px thumb and sits exactly where you reach to grab, so
+   it must never take a hit-test. It inherits `pointer-events: none` from the
+   thumb; the declaration is repeated here because that inheritance is the whole
+   reason this element is safe, and a later refactor that moves the bubble out
+   of the thumb would silently break the drag. */
+.bubble {
+  position: absolute;
+  bottom: calc(100% + 0.375rem);
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 0.0625rem 0.375rem;
+  border-radius: 0.25rem;
+  border: 1px solid var(--mc-border-strong);
+  background: var(--mc-surface);
+  color: var(--mc-text-subtle);
+  font-size: 0.6875rem;
+  line-height: 1.4;
+  white-space: nowrap;
+  pointer-events: none;
+}
+
+/* The handle under the finger reads as the one being set. */
+.bubble.active {
+  border-color: var(--mc-bearish);
+  color: var(--mc-text);
+}
+
+.axis {
+  position: relative;
+  height: 1.125rem;
+  margin-top: 0.125rem;
+}
+
+.tick {
+  position: absolute;
+  top: 0;
+  width: 1px;
+  height: 0.25rem;
+  background: var(--mc-border-strong);
+}
+
+.tick.major {
+  height: 0.375rem;
+}
+
+.tickLabel {
+  position: absolute;
+  top: 0.5rem;
+  left: 50%;
+  transform: translateX(-50%);
+  color: var(--mc-text-subtle);
+  font-size: 0.625rem;
+  line-height: 1;
+  white-space: nowrap;
 }

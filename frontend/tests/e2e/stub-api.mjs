@@ -105,7 +105,14 @@ function optionChain(instrument) {
   };
 }
 
-/** The Options Lab OI payload, with a fixed six-frame intraday series. */
+/** 09:15 IST on the fixed stub date, as UTC ms. */
+const SESSION_OPEN_MS = Date.parse('2026-01-15T03:45:00Z');
+/** The ingest cadence, so the series looks like a real archived session. */
+const FRAME_MS = 180_000;
+/** 09:15 to 15:30 inclusive. */
+const FRAME_COUNT = 126;
+
+/** The Options Lab OI payload, with a full archived session to scrub over. */
 function openInterestView(symbol) {
   const chain = optionChain(symbol in SPOTS ? symbol : 'NIFTY');
   const spot = Number.parseFloat(chain.spot_price);
@@ -131,23 +138,27 @@ function openInterestView(symbol) {
   });
 
   const strikeList = strikes.map((s) => s.strike);
-  const frameTimes = [
-    '2026-01-15T03:45:00Z',
-    '2026-01-15T04:00:00Z',
-    '2026-01-15T04:15:00Z',
-    '2026-01-15T04:30:00Z',
-    '2026-01-15T04:45:00Z',
-    '2026-01-15T05:16:46Z'
-  ];
-  const series = frameTimes.map((t, frame) => {
-    const ratio = frame / (frameTimes.length - 1);
+  const step = symbol === 'SENSEX' ? 100 : 50;
+
+  // A full session, so the time slider has something real to scrub over. Every
+  // value is a pure function of the frame number — no clock, no randomness —
+  // because the parity suite pixel-compares two apps against this payload.
+  const series = Array.from({ length: FRAME_COUNT }, (_, frame) => {
+    const ratio = frame / (FRAME_COUNT - 1);
+    // A single slow arc: down through the morning, back up into the close. That
+    // is enough for the ATM band and spot line to visibly travel when scrubbed.
+    const frameSpot = spot + step * 3 * (Math.cos(Math.PI * 2 * ratio) - 1) * 0.5;
     return {
-      t,
+      t: new Date(SESSION_OPEN_MS + frame * FRAME_MS).toISOString(),
       strikes: strikeList,
       call: strikes.map((s) => Math.round(s.call_oi_open + s.call_oi_chg * ratio)),
-      put: strikes.map((s) => Math.round(s.put_oi_open + s.put_oi_chg * ratio))
+      put: strikes.map((s) => Math.round(s.put_oi_open + s.put_oi_chg * ratio)),
+      spot: Math.round(frameSpot * 100) / 100,
+      atm: Math.round(frameSpot / step) * step,
+      max_pain: Math.round((frameSpot - step * 2) / step) * step
     };
   });
+  const frameTimes = series.map((f) => f.t);
 
   const totalCall = strikes.reduce((a, s) => a + s.call_oi_now, 0);
   const totalPut = strikes.reduce((a, s) => a + s.put_oi_now, 0);
@@ -165,6 +176,8 @@ function openInterestView(symbol) {
     open_ts: frameTimes[0],
     now_ts: frameTimes[frameTimes.length - 1],
     data_quality: 'intraday',
+    // A full session captured from the bell, so the baseline is a real frame.
+    open_is_estimated: false,
     total_call_oi: totalCall,
     total_put_oi: totalPut,
     total_call_oi_chg: strikes.reduce((a, s) => a + s.call_oi_chg, 0),
