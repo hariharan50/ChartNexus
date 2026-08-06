@@ -1,0 +1,52 @@
+.wrap {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--mc-space-3);
+}
+
+.donut {
+  position: relative;
+  width: 140px;
+  height: 140px;
+}
+
+.ring {
+  transform: rotate(-90deg);
+}
+
+.center {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.k {
+  font-size: var(--mc-text-xs);
+  color: var(--mc-text-subtle);
+}
+
+.v {
+  font-size: var(--mc-text-xl);
+  font-weight: 700;
+  color: var(--mc-text);
+}
+
+.side {
+  font-size: var(--mc-text-xs);
+  font-weight: 700;
+  max-width: 3rem;
+  line-height: 1.2;
+}
+
+.side.call {
+  color: var(--mc-bullish);
+  text-align: right;
+}
+
+.side.put {
+  color: var(--mc-bearish);
+}

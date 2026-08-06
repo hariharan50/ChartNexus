@@ -1,0 +1,6 @@
+/* The chart fills whatever box the caller gives it; ECharts measures this
+   element, so it must have a real size before init. */
+.chart {
+  width: 100%;
+  height: 100%;
+}

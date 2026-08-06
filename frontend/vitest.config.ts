@@ -1,45 +1,38 @@
-import { svelte, vitePreprocess } from '@sveltejs/vite-plugin-svelte';
+import react from '@vitejs/plugin-react';
 import { fileURLToPath } from 'node:url';
 import { defineConfig } from 'vitest/config';
 
 const resolve = (path: string) => fileURLToPath(new URL(path, import.meta.url));
 
 export default defineConfig({
-  plugins: [
-    svelte({
-      hot: false,
-      // Ignore svelte.config.js here. Its `vitePreprocess()` runs Vite's CSS
-      // pipeline over every <style> block, which throws under Vitest ("Cannot
-      // create proxy with a non-object as target"). Nothing in that config is
-      // needed for component tests — the kit aliases are redeclared below, and
-      // `lang="ts"` is handled by esbuild.
-      configFile: false,
-      preprocess: vitePreprocess({ style: false })
-    })
-  ],
+  // The React Router plugin is deliberately absent: it owns routing/SSR entry
+  // generation, none of which a unit or component test needs. Plain
+  // @vitejs/plugin-react gives JSX + Fast Refresh transforms and nothing else.
+  plugins: [react()],
   resolve: {
-    // Vitest runs without the SvelteKit plugin, so the kit aliases from
-    // svelte.config.js have to be repeated here.
     alias: {
-      $app: resolve('./src/lib/app'),
-      $contexts: resolve('./src/lib/contexts'),
-      $shared: resolve('./src/lib/shared'),
-      $lib: resolve('./src/lib')
+      $app: resolve('./app/lib/app'),
+      $contexts: resolve('./app/lib/contexts'),
+      $shared: resolve('./app/lib/shared'),
+      $lib: resolve('./app/lib')
     },
     conditions: ['browser']
+  },
+  css: {
+    modules: { localsConvention: 'camelCase' }
   },
   test: {
     environment: 'jsdom',
     globals: true,
-    include: ['tests/unit/**/*.{test,spec}.ts', 'tests/component/**/*.{test,spec}.ts'],
-    setupFiles: ['./src/lib/shared/testing/setup.ts'],
+    include: ['tests/unit/**/*.{test,spec}.{ts,tsx}', 'tests/component/**/*.{test,spec}.{ts,tsx}'],
+    setupFiles: ['./app/lib/shared/testing/setup.ts'],
     clearMocks: true,
     restoreMocks: true,
     coverage: {
       provider: 'v8',
       reportsDirectory: './coverage',
-      include: ['src/lib/**/*.{ts,svelte}'],
-      exclude: ['src/lib/shared/api/generated/**', 'src/lib/shared/testing/**']
+      include: ['app/lib/**/*.{ts,tsx}'],
+      exclude: ['app/lib/shared/api/generated/**', 'app/lib/shared/testing/**']
     }
   }
 });

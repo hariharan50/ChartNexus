@@ -1,9 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import {
-  isValidIndianMobile,
-  normalisePhoneDigits,
-  toE164
-} from '../../src/lib/shared/validation/phone';
+import { isValidIndianMobile, normalisePhoneDigits, toE164 } from '$shared/validation/phone';
 
 /**
  * These mirror the backend's PhoneNumber value object. If the two ever

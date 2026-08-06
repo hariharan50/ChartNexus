@@ -1,8 +1,12 @@
-import { sveltekit } from '@sveltejs/kit/vite';
+import { reactRouter } from '@react-router/dev/vite';
 import { defineConfig } from 'vite';
 
 export default defineConfig({
-  plugins: [sveltekit()],
+  plugins: [reactRouter()],
+
+  // Resolves the $app / $contexts / $shared aliases from tsconfig.json. Native
+  // since Vite 8 — no vite-tsconfig-paths plugin needed.
+  resolve: { tsconfigPaths: true },
 
   server: {
     port: 5173,
@@ -21,13 +25,21 @@ export default defineConfig({
     }
   },
 
+  css: {
+    modules: {
+      // Svelte scoped `.badge-ico` verbatim; CSS Modules files keep kebab-case
+      // so style blocks copy across unedited, and TSX reads them as `s.badgeIco`.
+      localsConvention: 'camelCase'
+    }
+  },
+
   build: {
     target: 'es2022',
     sourcemap: true,
     chunkSizeWarningLimit: 700
   },
 
-  optimizeDeps: {
-    exclude: ['@tanstack/svelte-query']
-  }
+  // Only PUBLIC_-prefixed variables reach the browser bundle, matching the
+  // SvelteKit `env.publicPrefix` this replaces.
+  envPrefix: 'PUBLIC_'
 });

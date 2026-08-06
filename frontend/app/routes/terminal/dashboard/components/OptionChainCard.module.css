@@ -1,0 +1,118 @@
+.scroll {
+  overflow-x: auto;
+}
+
+.strike-toggle {
+  display: inline-flex;
+  padding: 2px;
+  gap: 2px;
+  border: 1px solid var(--mc-border);
+  border-radius: var(--mc-radius);
+  background: var(--mc-surface-raised);
+}
+
+.strike-toggle button {
+  min-width: 2rem;
+  padding: 0.25rem 0.5rem;
+  border: none;
+  border-radius: calc(var(--mc-radius) - 2px);
+  background: transparent;
+  color: var(--mc-text-subtle);
+  font-size: var(--mc-text-xs);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  cursor: pointer;
+  transition:
+    background 0.12s ease,
+    color 0.12s ease;
+}
+
+.strike-toggle button:hover {
+  color: var(--mc-text);
+}
+
+.strike-toggle button.active {
+  background: var(--mc-accent);
+  color: var(--mc-accent-contrast, #fff);
+}
+
+.empty {
+  margin: 0;
+  padding: var(--mc-space-6) var(--mc-space-3);
+  text-align: center;
+  font-size: var(--mc-text-sm);
+  color: var(--mc-text-subtle);
+}
+
+.scroll table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--mc-text-sm);
+}
+
+.scroll th {
+  padding: 0 var(--mc-space-3) var(--mc-space-2);
+  text-align: left;
+  font-size: var(--mc-text-xs);
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--mc-text-subtle);
+  border-bottom: 1px solid var(--mc-border);
+  white-space: nowrap;
+}
+
+.scroll th.num {
+  text-align: right;
+}
+
+.scroll td {
+  padding: var(--mc-space-2) var(--mc-space-3);
+  border-bottom: 1px solid var(--mc-border);
+  white-space: nowrap;
+}
+
+.scroll tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.scroll tbody tr:hover {
+  background: var(--mc-surface-raised);
+}
+
+.scroll tr.atm {
+  background: color-mix(in srgb, var(--mc-accent) 6%, transparent);
+}
+
+.scroll tr.atm:hover {
+  background: color-mix(in srgb, var(--mc-accent) 10%, transparent);
+}
+
+.strike {
+  display: flex;
+  align-items: center;
+  gap: var(--mc-space-2);
+  font-weight: 600;
+}
+
+.scroll td.strike {
+  font-size: var(--mc-text-base);
+}
+
+.num {
+  text-align: right;
+}
+
+.muted {
+  color: var(--mc-text-muted);
+}
+
+.up {
+  color: var(--mc-bullish);
+  font-weight: 600;
+}
+
+.down {
+  color: var(--mc-bearish);
+  font-weight: 600;
+}

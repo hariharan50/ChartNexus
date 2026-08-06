@@ -1,0 +1,60 @@
+.grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0;
+  margin: 0;
+}
+
+.cell {
+  padding: var(--mc-space-2) var(--mc-space-3);
+}
+
+.cell:nth-child(odd) {
+  border-right: 1px solid var(--mc-border);
+}
+
+.cell:nth-child(-n + 2) {
+  border-bottom: 1px solid var(--mc-border);
+  padding-bottom: var(--mc-space-3);
+}
+
+.cell:nth-child(n + 3) {
+  padding-top: var(--mc-space-3);
+}
+
+.grid dt,
+.posture dt {
+  font-size: var(--mc-text-xs);
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--mc-text-subtle);
+}
+
+.grid dd,
+.posture dd {
+  margin: 0.25rem 0 0;
+  font-size: var(--mc-text-xl);
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+
+.support {
+  color: var(--mc-bullish);
+}
+
+.resistance {
+  color: var(--mc-bearish);
+}
+
+.posture {
+  margin-top: var(--mc-space-3);
+  padding-top: var(--mc-space-3);
+  border-top: 1px solid var(--mc-border);
+}
+
+.posture dd {
+  font-family: var(--mc-font-mono);
+  font-size: var(--mc-text-base);
+  letter-spacing: 0.01em;
+}

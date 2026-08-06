@@ -1,0 +1,51 @@
+.track {
+  position: relative;
+  flex: 1;
+  height: 1.75rem;
+  display: flex;
+  align-items: center;
+  /* Without this a drag on touch scrolls the page instead of moving a handle. */
+  touch-action: none;
+  cursor: pointer;
+}
+
+.track.disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+.rail {
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 0.25rem;
+  border-radius: 999px;
+  background: var(--mc-border-strong);
+}
+
+.fill {
+  position: absolute;
+  height: 0.25rem;
+  border-radius: 999px;
+  background: var(--mc-bearish);
+}
+
+/* Inert by design — the container handles every pointer gesture, so a thumb
+   must never become the event target and swallow it. */
+.thumb {
+  position: absolute;
+  top: 50%;
+  width: 1.375rem;
+  height: 1.375rem;
+  border-radius: 50%;
+  border: 2px solid var(--mc-bearish);
+  background: var(--mc-surface);
+  box-shadow: 0 1px 3px rgb(0 0 0 / 0.35);
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+}
+
+.track:not(.disabled) .thumb:focus-visible {
+  outline: 2px solid var(--mc-bearish);
+  outline-offset: 2px;
+}

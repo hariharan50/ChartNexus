@@ -79,8 +79,8 @@ node_modules/
 .yarn/
 *.tsbuildinfo
 
-# SvelteKit / Vite build output
-.svelte-kit/
+# React Router / Vite build output
+.react-router/
 frontend/build/
 frontend/.vercel/
 frontend/.netlify/
@@ -89,6 +89,8 @@ vite.config.*.timestamp-*
 
 # Test runners
 frontend/test-results/
+frontend/test-results-parity/
+frontend/parity-output/
 frontend/playwright-report/
 frontend/blob-report/
 frontend/playwright/.cache/

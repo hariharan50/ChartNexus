@@ -1,0 +1,454 @@
+.terminal {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  min-height: 100dvh;
+  background: var(--mc-bg);
+}
+
+.nav {
+  position: sticky;
+  top: 0;
+  z-index: var(--mc-z-sticky);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--mc-space-4);
+  padding: 1.125rem var(--mc-space-6);
+  border-bottom: 1px solid var(--mc-border);
+  background: var(--mc-surface);
+}
+
+.nav-left,
+.nav-right {
+  display: flex;
+  align-items: center;
+  gap: var(--mc-space-2);
+}
+
+.nav-left {
+  gap: var(--mc-space-6);
+  min-width: 0;
+}
+
+.brand {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--mc-space-2);
+  color: var(--mc-text);
+  text-decoration: none;
+  flex: none;
+}
+
+.mark {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.875rem;
+  height: 1.875rem;
+  border-radius: var(--mc-radius);
+  background: var(--mc-accent);
+  color: #fff;
+}
+
+.mark svg {
+  width: 1.15rem;
+  height: 1.15rem;
+}
+
+.name {
+  font-size: var(--mc-text-lg);
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
+/* Targeted by class, not as `.terminal nav`. Svelte scoped this block to the
+   elements in *this* component's template; a descendant selector would also
+   catch the settings sub-layout's <nav>, which is nested inside .terminal. */
+.primary-nav ul {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.nav-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.4375rem 0.9375rem;
+  border-radius: var(--mc-radius);
+  color: var(--mc-text-muted);
+  font-size: var(--mc-text-sm);
+  font-weight: 600;
+  text-decoration: none;
+  white-space: nowrap;
+  transition:
+    background var(--mc-duration-fast) ease,
+    color var(--mc-duration-fast) ease;
+}
+
+.nav-link:hover {
+  background: var(--mc-surface-raised);
+  color: var(--mc-text);
+  text-decoration: none;
+}
+
+.nav-link.active {
+  background: var(--mc-accent-weak);
+  color: var(--mc-accent);
+}
+
+.caret {
+  display: inline-flex;
+  opacity: 0.7;
+}
+
+.caret svg {
+  width: 0.875rem;
+  height: 0.875rem;
+}
+
+.nav-menu {
+  position: relative;
+}
+
+.nav-menu summary.nav-link {
+  cursor: pointer;
+  list-style: none;
+}
+
+.nav-menu summary::-webkit-details-marker {
+  display: none;
+}
+
+.nav-menu[open] summary .caret {
+  transform: rotate(180deg);
+}
+
+.submenu {
+  position: absolute;
+  left: 0;
+  top: calc(100% + 0.5rem);
+  z-index: var(--mc-z-dropdown);
+  display: flex;
+  flex-direction: column;
+  gap: 0.1875rem;
+  width: 20rem;
+  max-width: calc(100vw - 2rem);
+  padding: var(--mc-space-3);
+  border: 1px solid var(--mc-border);
+  border-radius: var(--mc-radius-lg);
+  background: var(--mc-surface);
+  box-shadow: var(--mc-shadow-lg, var(--mc-shadow));
+}
+
+.submenu-head {
+  padding: 0.25rem 0.625rem var(--mc-space-3);
+  margin-bottom: 0.1875rem;
+  border-bottom: 1px solid var(--mc-border);
+}
+
+.submenu-title {
+  margin: 0;
+  font-size: var(--mc-text-xs);
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--mc-text-subtle);
+}
+
+.submenu-sub {
+  margin: 0.3125rem 0 0;
+  font-size: var(--mc-text-sm);
+  color: var(--mc-text-muted);
+}
+
+.submenu-item {
+  display: flex;
+  align-items: center;
+  gap: var(--mc-space-3);
+  padding: 0.625rem;
+  border-radius: var(--mc-radius);
+  color: var(--mc-text);
+  font-size: var(--mc-text-base);
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.submenu-item:hover {
+  background: var(--mc-surface-raised);
+  text-decoration: none;
+}
+
+.submenu-item.active {
+  background: var(--mc-accent-weak);
+  color: var(--mc-accent);
+}
+
+.submenu-ico {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.75rem;
+  height: 1.75rem;
+  flex: none;
+  border-radius: var(--mc-radius);
+  background: var(--mc-surface-raised);
+  color: var(--mc-text-muted);
+}
+
+.submenu-item:hover .submenu-ico,
+.submenu-item.active .submenu-ico {
+  color: var(--mc-accent);
+}
+
+.submenu-text {
+  display: flex;
+  flex-direction: column;
+  gap: 0.0625rem;
+  min-width: 0;
+}
+
+.submenu-label {
+  font-size: var(--mc-text-sm);
+  font-weight: 600;
+}
+
+.submenu-desc {
+  font-size: var(--mc-text-xs);
+  font-weight: 500;
+  color: var(--mc-text-subtle);
+}
+
+.submenu-item.active .submenu-desc {
+  color: color-mix(in srgb, var(--mc-accent) 70%, var(--mc-text-subtle));
+}
+
+.submenu-ico svg {
+  width: 1.05rem;
+  height: 1.05rem;
+}
+
+.search {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.search-ico {
+  position: absolute;
+  left: 0.625rem;
+  display: inline-flex;
+  color: var(--mc-text-subtle);
+  pointer-events: none;
+}
+
+.search-ico svg {
+  width: 1rem;
+  height: 1rem;
+}
+
+.search input {
+  width: 11rem;
+  height: var(--mc-control-h-sm);
+  padding: 0 0.75rem 0 2rem;
+  border: 1px solid var(--mc-border);
+  border-radius: var(--mc-radius);
+  background: var(--mc-surface-raised);
+  color: var(--mc-text);
+  font-size: var(--mc-text-sm);
+}
+
+.search input::placeholder {
+  color: var(--mc-text-subtle);
+}
+
+.search input:focus-visible {
+  outline: none;
+  border-color: var(--mc-accent);
+}
+
+.icon-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--mc-control-h-sm);
+  height: var(--mc-control-h-sm);
+  border: 1px solid var(--mc-border);
+  border-radius: var(--mc-radius);
+  background: var(--mc-surface-raised);
+  color: var(--mc-text-muted);
+  cursor: pointer;
+  transition:
+    color var(--mc-duration-fast) ease,
+    border-color var(--mc-duration-fast) ease;
+}
+
+.icon-btn:hover {
+  color: var(--mc-text);
+  border-color: var(--mc-border-strong);
+}
+
+.icon-btn svg {
+  width: 1.05rem;
+  height: 1.05rem;
+}
+
+.account {
+  position: relative;
+}
+
+.account summary {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--mc-space-2);
+  height: var(--mc-control-h-sm);
+  padding: 0 0.5rem 0 0.375rem;
+  border: 1px solid transparent;
+  border-radius: var(--mc-radius);
+  cursor: pointer;
+  list-style: none;
+}
+
+.account summary::-webkit-details-marker {
+  display: none;
+}
+
+.account summary:hover {
+  background: var(--mc-surface-raised);
+}
+
+.account[open] summary {
+  background: var(--mc-surface-raised);
+  border-color: var(--mc-border);
+}
+
+.avatar {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.75rem;
+  height: 1.75rem;
+  border-radius: 50%;
+  background: var(--mc-accent);
+  color: #fff;
+  font-size: var(--mc-text-xs);
+  font-weight: 700;
+}
+
+.who {
+  font-size: var(--mc-text-sm);
+  font-weight: 600;
+}
+
+.menu {
+  position: absolute;
+  right: 0;
+  top: calc(100% + 0.375rem);
+  z-index: var(--mc-z-dropdown);
+  width: 15rem;
+  padding: var(--mc-space-2);
+  border: 1px solid var(--mc-border);
+  border-radius: var(--mc-radius);
+  background: var(--mc-surface);
+  box-shadow: var(--mc-shadow);
+}
+
+.menu-head {
+  padding: var(--mc-space-2) var(--mc-space-2) var(--mc-space-3);
+  border-bottom: 1px solid var(--mc-border);
+  margin-bottom: var(--mc-space-1);
+}
+
+.menu-name {
+  margin: 0;
+  font-size: var(--mc-text-sm);
+  font-weight: 600;
+}
+
+.menu-email {
+  margin: 0.125rem 0 0;
+  font-size: var(--mc-text-xs);
+  color: var(--mc-text-subtle);
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.menu-item {
+  display: block;
+  width: 100%;
+  padding: 0.5rem var(--mc-space-2);
+  border: none;
+  border-radius: var(--mc-radius-sm);
+  background: transparent;
+  color: var(--mc-text);
+  font-size: var(--mc-text-sm);
+  text-align: left;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.menu-item:hover {
+  background: var(--mc-surface-raised);
+  text-decoration: none;
+}
+
+.menu-item:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+.content {
+  flex: 1;
+}
+
+/* Wide-but-tight: pull the header in before anything has to disappear. */
+@media (max-width: 90rem) {
+  .nav-left {
+    gap: var(--mc-space-4);
+  }
+
+  .nav-link {
+    padding: 0.4375rem 0.5rem;
+  }
+
+  .primary-nav ul {
+    gap: 0;
+  }
+}
+
+/* Reclaim the brand wordmark and search width so the primary nav survives. */
+@media (max-width: 72rem) {
+  .name {
+    display: none;
+  }
+
+  .search input {
+    width: 8.5rem;
+  }
+}
+
+/* Below the tablet range there is no room for the full menu bar, so collapse
+   it. The account menu and search stay reachable. */
+@media (max-width: 60rem) {
+  .primary-nav {
+    display: none;
+  }
+}
+
+@media (max-width: 40rem) {
+  .nav {
+    padding: 0.5rem var(--mc-space-4);
+  }
+
+  .search input {
+    width: 7rem;
+  }
+
+  .who {
+    display: none;
+  }
+}

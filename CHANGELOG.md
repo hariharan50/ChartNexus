@@ -6,6 +6,38 @@ pre-release and does not yet version its API.
 
 ## [Unreleased]
 
+### Changed
+
+**Frontend migrated from SvelteKit to React** — see `docs/MIGRATION.md`.
+
+- `frontend/` is now React Router v8 (framework mode) on React 19 and Vite 8,
+  replacing SvelteKit 2 / Svelte 5. The backend, API contract, session cookies,
+  CSRF handling and the `--mc-*` design tokens are unchanged.
+- A framework swap, not a redesign: a pixel-diff harness (`pnpm parity`) checks
+  every screen against the SvelteKit build at six viewport widths. All 96 checks
+  pass. The last SvelteKit commit is `7a3144b`.
+- Component styles moved to CSS Modules; state moved from Svelte runes to
+  Zustand; `@tanstack/svelte-query` to `@tanstack/react-query`.
+- New reusable chart layer under `app/lib/shared/charts` — one `<EChart>` mount
+  point, a lifecycle hook, and chart options as pure, testable functions.
+- Removed `layerchart`, `d3-scale`, `d3-shape` and `zod`: all four were declared
+  but imported nowhere.
+- New server-only `API_INTERNAL_URL` tells loaders where to reach the API,
+  replacing SvelteKit's `handleFetch`.
+
+### Fixed
+
+- `/healthz` now exists. The container healthcheck in
+  `deploy/docker/frontend.Dockerfile` has always requested it, but no such route
+  was ever defined, so the probe was hitting the 404 page.
+- No flash of the dark theme on load for users who chose a light one; the stored
+  theme is applied before first paint.
+- The Open Interest chart takes its axis, grid and tooltip colours from the
+  design tokens, so the `warm` and `terminal` themes render correctly. It
+  previously chose between two hard-coded palettes on a dark/light boolean.
+- Token refresh no longer runs during SSR, where its single-flight promise was
+  shared across concurrent requests instead of being scoped to one browser tab.
+
 ### Added
 
 **Broker connections (`broker_connections` context)**

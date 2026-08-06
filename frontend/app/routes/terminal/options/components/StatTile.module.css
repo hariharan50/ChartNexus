@@ -1,0 +1,45 @@
+.tile {
+  display: flex;
+  flex-direction: column;
+  padding: var(--mc-space-4);
+  background: var(--mc-surface);
+  border: 1px solid var(--mc-border);
+  border-radius: var(--mc-radius-lg);
+  box-shadow: var(--mc-shadow);
+  min-width: 0;
+}
+
+.label {
+  margin: 0;
+  font-size: var(--mc-text-xs);
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--mc-text-subtle);
+}
+
+.value {
+  margin: var(--mc-space-2) 0 0;
+  font-size: var(--mc-text-2xl);
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: var(--mc-text);
+}
+
+.value.bullish {
+  color: var(--mc-bullish);
+}
+
+.value.bearish {
+  color: var(--mc-bearish);
+}
+
+.sub {
+  margin: var(--mc-space-2) 0 0;
+  font-size: var(--mc-text-sm);
+  color: var(--mc-text-muted);
+}
+
+.footer {
+  margin-top: var(--mc-space-2);
+}

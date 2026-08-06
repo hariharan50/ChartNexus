@@ -1,0 +1,25 @@
+.track {
+  display: block;
+  position: relative;
+  height: 0.375rem;
+  width: 5rem;
+  border-radius: 999px;
+  background: var(--mc-border);
+}
+
+.fill {
+  position: absolute;
+  top: 0;
+  height: 100%;
+  border-radius: 999px;
+}
+
+.fill.ce {
+  right: 0;
+  background: var(--mc-bullish);
+}
+
+.fill.pe {
+  left: 0;
+  background: var(--mc-bearish);
+}

@@ -61,7 +61,7 @@ Full runbook, including Google sign-in setup and troubleshooting:
 
 ```
 backend/     FastAPI + SQLAlchemy, one package per bounded context
-frontend/    SvelteKit terminal UI, mirroring the same context boundaries
+frontend/    React Router terminal UI, mirroring the same context boundaries
 contracts/   OpenAPI, websocket, event, and analytics contracts — the source of truth
 deploy/      Dockerfiles, compose stack, Helm chart
 docs/        architecture, ADRs, runbooks

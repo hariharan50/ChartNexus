@@ -1,0 +1,36 @@
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.125rem;
+  padding: 0.125rem 0.375rem;
+  border-radius: var(--mc-radius-sm);
+  font-size: var(--mc-text-xs);
+  font-weight: 700;
+  line-height: 1.2;
+  white-space: nowrap;
+}
+
+.sc {
+  background: var(--mc-bullish);
+  color: #fff;
+}
+
+.l {
+  background: color-mix(in srgb, var(--mc-bullish) 62%, black);
+  color: #fff;
+}
+
+.s {
+  background: var(--mc-bearish);
+  color: #fff;
+}
+
+.lu {
+  background: color-mix(in srgb, var(--mc-bearish) 45%, black);
+  color: color-mix(in srgb, var(--mc-bearish) 45%, white);
+}
+
+.none {
+  color: var(--mc-text-subtle);
+  font-weight: 400;
+}

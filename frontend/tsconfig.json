@@ -1,10 +1,22 @@
 {
-  "extends": "./.svelte-kit/tsconfig.json",
+  // eslint.config.js and prettier.config.js are deliberately absent: `checkJs`
+  // is on, and neither eslint-config-prettier nor eslint-plugin-jsx-a11y ships
+  // types. ESLint checks those files itself.
+  // `tests/**/*.ts` rather than `tests/**/*`: the e2e stub API is plain `.mjs`
+  // test scaffolding, and `checkJs` would demand annotations on it.
+  "include": [
+    "app/**/*",
+    "tests/**/*.ts",
+    "tests/**/*.tsx",
+    "*.config.ts",
+    ".react-router/types/**/*"
+  ],
   "compilerOptions": {
     "target": "ES2022",
     "module": "ESNext",
     "moduleResolution": "bundler",
     "lib": ["ES2022", "DOM", "DOM.Iterable"],
+    "jsx": "react-jsx",
 
     "strict": true,
     "noUncheckedIndexedAccess": true,
@@ -19,6 +31,22 @@
     "forceConsistentCasingInFileNames": true,
     "resolveJsonModule": true,
     "skipLibCheck": true,
-    "sourceMap": true
+    "sourceMap": true,
+    "noEmit": true,
+
+    "types": ["vite/client", "node"],
+
+    // React Router writes typed route modules into .react-router/types, mirroring
+    // the app/ tree. `rootDirs` lets a route module import its own `./+types/...`
+    // as if the generated file sat beside it.
+    "rootDirs": [".", "./.react-router/types"],
+
+    "baseUrl": ".",
+    "paths": {
+      "$app/*": ["./app/lib/app/*"],
+      "$contexts/*": ["./app/lib/contexts/*"],
+      "$shared/*": ["./app/lib/shared/*"],
+      "$lib/*": ["./app/lib/*"]
+    }
   }
 }

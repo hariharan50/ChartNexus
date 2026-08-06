@@ -1,0 +1,44 @@
+/* This route sits outside the (public) split-screen group, so it centres
+   itself rather than inheriting a form column. */
+.state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--mc-space-3);
+  min-height: 80vh;
+  max-width: 22rem;
+  margin: 0 auto;
+  padding: var(--mc-space-6);
+  text-align: center;
+}
+
+.state h1 {
+  margin: var(--mc-space-2) 0 0;
+  font-size: 1.5rem;
+  font-weight: 700;
+}
+
+.state p {
+  margin: 0 0 var(--mc-space-4);
+  color: var(--mc-text-muted);
+}
+
+.icon.error {
+  color: var(--mc-danger);
+}
+
+.spinner {
+  width: 2rem;
+  height: 2rem;
+  border: 2px solid var(--mc-auth-border);
+  border-top-color: var(--mc-brand);
+  border-radius: 50%;
+  animation: spin 800ms linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}

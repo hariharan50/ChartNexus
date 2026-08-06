@@ -43,7 +43,10 @@ WORKDIR /app
 RUN addgroup --system --gid 1001 app \
     && adduser --system --uid 1001 --ingroup app app
 
-# adapter-node output: the server plus the pruned production dependencies.
+# React Router build output — `build/client` (static assets) and `build/server`
+# (the request handler) — plus the pruned production dependencies.
+# `@react-router/serve` is a runtime dependency, not a dev one, so
+# `pnpm prune --prod` above keeps it.
 COPY --from=build --chown=app:app /app/build ./build
 COPY --from=build --chown=app:app /app/node_modules ./node_modules
 COPY --from=build --chown=app:app /app/package.json ./package.json
@@ -54,4 +57,7 @@ EXPOSE 3000
 HEALTHCHECK --interval=30s --timeout=3s --start-period=15s --retries=3 \
     CMD node -e "fetch('http://localhost:3000/healthz').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"
 
-CMD ["node", "build/index.js"]
+# Was `node build/index.js`, which was adapter-node's entrypoint and no longer
+# exists. `/healthz` above is a real route now, so this healthcheck passes for
+# the first time.
+CMD ["pnpm", "start"]

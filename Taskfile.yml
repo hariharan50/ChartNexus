@@ -74,7 +74,7 @@ tasks:
       - uv run uvicorn marketcompass.entrypoints.main_api:create_app --factory --reload --port 8000
 
   dev:web:
-    desc: Run the SvelteKit dev server
+    desc: Run the React Router dev server
     dir: "{{.FRONTEND}}"
     cmds:
       - pnpm dev
@@ -128,7 +128,7 @@ tasks:
     desc: Type-check both sides
     cmds:
       - cd {{.BACKEND}} && uv run mypy
-      - cd {{.FRONTEND}} && pnpm check
+      - cd {{.FRONTEND}} && pnpm typecheck
 
   test:
     desc: Run unit and architecture tests (no containers needed)
@@ -163,9 +163,14 @@ tasks:
     cmds:
       - pnpm api:generate
 
-  contracts:verify:
-    desc: Fail if the generated client is out of date with the contract
-    dir: "{{.FRONTEND}}"
-    cmds:
-      - pnpm api:generate
-      - git diff --exit-code src/lib/shared/api/generated
+  # `contracts:verify` is deliberately absent. It ran `api:generate` and failed
+  # on a diff, but contracts/openapi/v1/openapi.yaml is an empty file — orval has
+  # never produced any output, and every endpoint is a hand-written wrapper under
+  # frontend/app/lib/contexts. Restore this task the moment that contract is
+  # authored:
+  #
+  #   contracts:verify:
+  #     dir: "{{.FRONTEND}}"
+  #     cmds:
+  #       - pnpm api:generate
+  #       - git diff --exit-code app/lib/shared/api/generated

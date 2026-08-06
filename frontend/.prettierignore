@@ -1,10 +1,8 @@
 build/
-.svelte-kit/
+.react-router/
 node_modules/
 coverage/
 playwright-report/
 test-results/
+app/lib/shared/api/generated/
 pnpm-lock.yaml
-
-# Generated from contracts/openapi — formatted by orval's own hook.
-src/lib/shared/api/generated/
