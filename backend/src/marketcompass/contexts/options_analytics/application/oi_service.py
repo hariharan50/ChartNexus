@@ -25,8 +25,7 @@ payload so the page always renders.
 from __future__ import annotations
 
 from collections import OrderedDict
-from dataclasses import replace
-from datetime import UTC, datetime, time, timedelta, timezone
+from datetime import UTC, datetime
 from itertools import pairwise
 from typing import Any
 
@@ -36,6 +35,12 @@ from marketcompass.contexts.options_analytics.application.ports import (
     ProviderChain,
     SnapshotReader,
 )
+from marketcompass.contexts.options_analytics.application.session import (
+    attach_utc as _attach_utc,
+    drop_future,
+    session_open_frame,
+    session_open_utc,
+)
 from marketcompass.contexts.options_analytics.domain.oi_math import (
     ChainRow,
     atm_strike,
@@ -44,14 +49,8 @@ from marketcompass.contexts.options_analytics.domain.oi_math import (
 )
 from marketcompass.shared_kernel.types.identifiers import TenantId
 
-IST = timezone(timedelta(hours=5, minutes=30))
-SESSION_OPEN = time(9, 15)
-SESSION_CLOSE = time(15, 30)
 _DEFAULT_STEP = 50.0
 _MIN_INTRADAY_SNAPSHOTS = 2
-# How late the first stored snapshot may be before the session open is
-# reconstructed rather than taken from it. One capture interval's grace.
-_OPEN_TOLERANCE = timedelta(minutes=5)
 # Strikes either side of ATM kept in the intraday series. The widest filter the
 # UI offers is ±20, so this is a superset — it exists to stop a day with a
 # shifting ladder growing the payload without bound.
@@ -84,12 +83,7 @@ class GetOiView:
 
         # Snapshot tiers first; the null reader falls straight through to live.
         snaps = await self._snapshots.day_snapshots(tenant_id, symbol, trade_date_utc=now)
-        # Never serve a capture that has not happened yet. Real ingest cannot
-        # produce one, but a seeded or restored day can, and the effect is that
-        # the tool's "as of" handle sits on 3:30 pm all morning and the newest
-        # frame reports a market that does not exist. Dropping them here covers
-        # every tier and every way such a row might arrive.
-        snaps = [snap for snap in snaps if _attach_utc(snap.captured_at) <= now]
+        snaps = drop_future(snaps, now)
         if len(snaps) >= _MIN_INTRADAY_SNAPSHOTS:
             return self._intraday(symbol, chain, snaps)
         if len(snaps) == 1:
@@ -102,7 +96,7 @@ class GetOiView:
         self, symbol: str, chain: ProviderChain, now_rows: tuple[ChainRow, ...], now: datetime
     ) -> dict[str, Any]:
         """LIVE / LIVE_PROXY: open is reconstructed per leg from ``oi_change``."""
-        open_ts = self._session_open_utc(now)
+        open_ts = session_open_utc(now)
         series = self._two_point_series(now_rows, open_ts, now)
         return self._build(
             symbol,
@@ -115,45 +109,12 @@ class GetOiView:
             series=series,
         )
 
-    def _session_open_frame(self, ordered: list[ChainSnapshot]) -> ChainSnapshot | None:
-        """A 09:15 frame reconstructed from the broker's day-change field.
-
-        The archive only holds what was captured, so a worker that started at
-        13:01 leaves the tool with no morning: the baseline handle sits at
-        13:01, and "OI change" silently means "change since lunchtime" — the
-        single most-read number on the page, quietly wrong.
-
-        It does not need to have been captured. ``oi_change`` is the change
-        *since the session open* as the broker reports it, so ``oi - oi_change``
-        is the 09:15 book, and reading it off the newest snapshot gives the most
-        current version of it. This is the same inversion the ``live_proxy``
-        tier already relies on.
-
-        Returns ``None`` when the archive already reaches back to the open.
-        """
-        newest = ordered[-1]
-        open_ts = self._session_open_utc(_attach_utc(newest.captured_at))
-        if _attach_utc(ordered[0].captured_at) <= open_ts + _OPEN_TOLERANCE:
-            return None
-
-        rows = tuple(
-            replace(row, oi=max(0, row.oi - row.oi_change), oi_change=0) for row in newest.rows
-        )
-        return ChainSnapshot(
-            captured_at=open_ts,
-            rows=rows,
-            # Deliberately no spot/ATM: nobody recorded where the index was at
-            # 09:15, and inventing one would move the spot line to a price that
-            # never traded. The client falls back to the payload's own values.
-            max_pain=max_pain(rows, sorted({row.strike for row in rows})),
-        )
-
     def _intraday(
         self, symbol: str, chain: ProviderChain, snaps: list[ChainSnapshot]
     ) -> dict[str, Any]:
         """INTRADAY: earliest in-session snapshot is the real open."""
         ordered = sorted(snaps, key=lambda s: s.captured_at)
-        reconstructed = self._session_open_frame(ordered)
+        reconstructed = session_open_frame(ordered)
         if reconstructed is not None:
             ordered = [reconstructed, *ordered]
         open_snap = ordered[0]
@@ -397,14 +358,6 @@ class GetOiView:
 
     # -- session time -------------------------------------------------------
 
-    def _session_open_utc(self, now: datetime) -> datetime:
-        """Today's 09:15 IST expressed in UTC (the LIVE tier's synthetic open)."""
-        now_ist = _attach_utc(now).astimezone(IST)
-        open_ist = now_ist.replace(
-            hour=SESSION_OPEN.hour, minute=SESSION_OPEN.minute, second=0, microsecond=0
-        )
-        return open_ist.astimezone(UTC)
-
 
 # -- module helpers ---------------------------------------------------------
 
@@ -444,11 +397,6 @@ def _pcr_from_totals(put_oi: int, call_oi: int) -> float:
 def _infer_step(strikes: list[float]) -> float:
     diffs = [b - a for a, b in pairwise(strikes) if b - a > 0]
     return min(diffs) if diffs else _DEFAULT_STEP
-
-
-def _attach_utc(dt: datetime) -> datetime:
-    """Naive DB datetimes are UTC; attach it. Aware datetimes pass through."""
-    return dt.replace(tzinfo=UTC) if dt.tzinfo is None else dt
 
 
 def _iso(dt: datetime) -> str:

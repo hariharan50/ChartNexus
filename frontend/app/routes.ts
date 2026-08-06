@@ -50,7 +50,7 @@ export default [
       route('iv-hv-ivp', 'routes/terminal/options/iv-hv-ivp.tsx'),
       route('iv-intraday', 'routes/terminal/options/iv-intraday.tsx'),
       route('max-pain', 'routes/terminal/options/max-pain.tsx'),
-      route('multi-oi-volume', 'routes/terminal/options/multi-oi-volume.tsx'),
+      route('multi-oi-volume', 'routes/terminal/options/multi-oi-volume/route.tsx'),
       route('multi-straddle', 'routes/terminal/options/multi-straddle.tsx'),
       route('multistrike', 'routes/terminal/options/multistrike.tsx'),
       route('oi-crossover', 'routes/terminal/options/oi-crossover.tsx'),

@@ -8,6 +8,7 @@ from typing import Annotated
 from fastapi import Depends, Request
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from marketcompass.contexts.options_analytics.application.oi_series_service import GetOiSeries
 from marketcompass.contexts.options_analytics.application.oi_service import GetOiView
 from marketcompass.infrastructure.analytics.oi_chain_source import SqlAlchemySnapshotReader
 from marketcompass.infrastructure.brokers.oi_chain_provider import build_oi_chain_provider
@@ -20,6 +21,7 @@ from marketcompass.infrastructure.transport.http.dependencies import (
 @dataclass(slots=True)
 class OptionsAnalyticsServices:
     oi_view: GetOiView
+    oi_series: GetOiSeries
 
 
 def build_options_analytics_services(
@@ -28,12 +30,14 @@ def build_options_analytics_services(
 ) -> OptionsAnalyticsServices:
     container = get_container(request)
     provider = build_oi_chain_provider(session=session, container=container)
+    snapshots = SqlAlchemySnapshotReader(session)
     return OptionsAnalyticsServices(
         oi_view=GetOiView(
             provider=provider,
-            snapshots=SqlAlchemySnapshotReader(session),
+            snapshots=snapshots,
             strike_span=container.settings.market.snapshot_max_series_strikes,
         ),
+        oi_series=GetOiSeries(provider=provider, snapshots=snapshots),
     )
 
 

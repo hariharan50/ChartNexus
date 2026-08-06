@@ -13,6 +13,8 @@ interface Props {
   option: EChartsCoreOption;
   /** See `useEChart` — changing this rebuilds rather than merges. */
   resetKey?: string | undefined;
+  /** See `useEChart` — charts sharing a group share one crosshair. */
+  group?: string | undefined;
   className?: string | undefined;
   style?: CSSProperties | undefined;
 }
@@ -24,9 +26,9 @@ interface Props {
  * layout is identical before and after hydration and the chart never causes a
  * shift when it appears.
  */
-export default function EChart({ option, resetKey, className, style }: Props) {
+export default function EChart({ option, resetKey, group, className, style }: Props) {
   const container = useRef<HTMLDivElement>(null);
-  useEChart({ option, resetKey }, container);
+  useEChart({ option, resetKey, group }, container);
 
   return <div ref={container} className={cx(s.chart, className)} style={style} />;
 }

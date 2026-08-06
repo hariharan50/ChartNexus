@@ -118,4 +118,8 @@ def _to_chain_snapshot(record: OptionChainSnapshotRecord) -> ChainSnapshot:
         spot=float(record.spot) if record.spot is not None else None,
         atm_strike=float(record.atm_strike) if record.atm_strike is not None else None,
         max_pain=float(record.max_pain_strike) if record.max_pain_strike is not None else None,
+        # Falls back to spot only for rows captured before the column existed.
+        future_price=float(record.future_price)
+        if record.future_price is not None
+        else (float(record.spot) if record.spot is not None else None),
     )

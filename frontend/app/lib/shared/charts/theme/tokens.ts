@@ -29,7 +29,7 @@ const CHART_TOKENS: Record<keyof ChartTheme, string> = {
  * `useSyncExternalStore` has a stable server snapshot rather than throwing.
  */
 export const SERVER_CHART_THEME: ChartTheme = Object.freeze({
-  axis: 'rgb(107, 116, 136)',
+  axis: 'rgb(125, 134, 156)',
   grid: 'rgb(38, 43, 58)',
   tooltipBg: 'rgb(19, 23, 34)',
   tooltipText: 'rgb(230, 233, 240)',

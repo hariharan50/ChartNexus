@@ -1,5 +1,6 @@
-import { BarChart } from 'echarts/charts';
+import { BarChart, LineChart } from 'echarts/charts';
 import {
+  AxisPointerComponent,
   GridComponent,
   MarkAreaComponent,
   MarkLineComponent,
@@ -21,8 +22,13 @@ import { CanvasRenderer } from 'echarts/renderers';
  */
 echarts.use([
   BarChart,
+  // Multi OI & Volume plots one line per contract plus a futures overlay.
+  LineChart,
   GridComponent,
   TooltipComponent,
+  // Lets `echarts.connect` drive one crosshair across the three stacked charts
+  // on that page, so a reading at 11:30 is a reading at 11:30 on all of them.
+  AxisPointerComponent,
   MarkLineComponent,
   MarkAreaComponent,
   CanvasRenderer

@@ -67,11 +67,6 @@ const PAGES: Array<{ path: string; heading: string; title?: string }> = [
   },
   { path: '/options/max-pain', heading: 'Max Pain', title: 'Max Pain · MarketCompass' },
   {
-    path: '/options/multi-oi-volume',
-    heading: 'Multi OI & Volume',
-    title: 'Multi OI & Volume · MarketCompass'
-  },
-  {
     path: '/options/multi-straddle',
     heading: 'Multi-Straddle Chart',
     title: 'Multi-Straddle Chart · MarketCompass'

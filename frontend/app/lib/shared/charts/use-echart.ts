@@ -13,6 +13,14 @@ interface Options {
    * chart is rebuilt from scratch instead of half-repainted.
    */
   resetKey?: string | undefined;
+  /**
+   * Charts sharing a group id share one axis pointer.
+   *
+   * Stacked charts over the same time axis have to move together — a crosshair
+   * that reads 11:30 on one and nothing on the two below it is worse than no
+   * crosshair, because the eye still tries to compare them.
+   */
+  group?: string | undefined;
 }
 
 /**
@@ -24,7 +32,7 @@ interface Options {
  * timing the Svelte version had.
  */
 export function useEChart<T extends HTMLElement>(
-  { option, resetKey }: Options,
+  { option, resetKey, group }: Options,
   containerRef: RefObject<T | null>
 ): RefObject<ECharts | undefined> {
   const chartRef = useRef<ECharts | undefined>(undefined);
@@ -37,6 +45,13 @@ export function useEChart<T extends HTMLElement>(
     const chart = echarts.init(el, undefined, { renderer: 'canvas' });
     chartRef.current = chart;
     paintedKey.current = undefined;
+
+    if (group) {
+      chart.group = group;
+      // Idempotent: connecting an already-connected group is a no-op, so each
+      // chart in the group can call it as it mounts without coordinating.
+      echarts.connect(group);
+    }
 
     const observer = new ResizeObserver(() => chart.resize());
     observer.observe(el);

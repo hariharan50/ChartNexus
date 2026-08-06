@@ -193,6 +193,76 @@ function openInterestView(symbol) {
   };
 }
 
+/** How many model steps one interval covers, mirroring the real service. */
+const SERIES_BUCKETS = { '1m': 1, '5m': 5, '15m': 15, '1h': 60 };
+
+/**
+ * The Multi OI & Volume payload: a shared time axis plus per-contract arrays.
+ *
+ * Deterministic like everything else here — the parity suite pixel-compares
+ * against it, so a value that moved between two page loads would read as a
+ * migration defect rather than as live data.
+ */
+function oiSeriesView(symbol, interval) {
+  const chain = optionChain(symbol in SPOTS ? symbol : 'NIFTY');
+  const spot = Number.parseFloat(chain.spot_price);
+  const atm = Number.parseFloat(chain.atm_strike);
+  const step = symbol === 'SENSEX' ? 100 : 50;
+  const stride = SERIES_BUCKETS[interval] ?? 1;
+
+  const points = [];
+  for (let frame = 0; frame < FRAME_COUNT; frame += stride) points.push(frame);
+
+  const t = points.map((frame) => new Date(SESSION_OPEN_MS + frame * FRAME_MS).toISOString());
+  // `null` at the open, exactly as the reconstructed 09:15 frame arrives.
+  const fut = points.map((frame, i) =>
+    i === 0 ? null : Math.round((spot + step * 0.6 * Math.sin(frame / 9)) * 100) / 100
+  );
+
+  const contracts = [];
+  for (let offset = -10; offset <= 10; offset += 1) {
+    const strike = atm + offset * step;
+    for (const side of ['CE', 'PE']) {
+      // A fixed hump around ATM plus a steady build, so `oi[i] - oi[0]` is
+      // always positive and the change chart has real shape.
+      const base = 400_000 + Math.round(300_000 * Math.exp(-((offset / 5) ** 2)));
+      const rate = 1_500 + (((offset + 10) * (side === 'CE' ? 37 : 43)) % 900);
+      contracts.push({
+        id: `${strike}${side}`,
+        strike,
+        option_type: side,
+        oi: points.map((frame) => base + rate * frame),
+        volume: points.map((frame) => Math.round(rate * frame * 0.4))
+      });
+    }
+  }
+
+  const rank = (key) =>
+    [...contracts]
+      .sort((a, b) => (b[key].at(-1) ?? 0) - (a[key].at(-1) ?? 0) || a.id.localeCompare(b.id))
+      .slice(0, 5)
+      .map((contract) => contract.id);
+
+  return {
+    instrument_id: '1',
+    symbol,
+    expiry_date: '2026-01-29',
+    atm_strike: atm,
+    lot_size: symbol === 'BANKNIFTY' ? 15 : 75,
+    open_ts: t[0],
+    now_ts: t[t.length - 1],
+    data_quality: 'intraday',
+    open_is_estimated: false,
+    interval,
+    window: 10,
+    t,
+    fut,
+    contracts,
+    default_ids: rank('oi'),
+    default_vol_ids: rank('volume')
+  };
+}
+
 function send(res, status, body) {
   const payload = body === null ? '' : JSON.stringify(body);
   res.writeHead(status, {
@@ -268,6 +338,11 @@ const server = createServer((req, res) => {
 
   if (url.pathname === '/api/v1/market/option-chain') {
     return send(res, 200, optionChain(instrument));
+  }
+
+  if (url.pathname.startsWith('/api/v1/options-lab/oi-series/')) {
+    const symbol = decodeURIComponent(url.pathname.split('/').pop() ?? 'NIFTY');
+    return send(res, 200, oiSeriesView(symbol, url.searchParams.get('interval') ?? '1m'));
   }
 
   if (url.pathname.startsWith('/api/v1/options-lab/oi/')) {

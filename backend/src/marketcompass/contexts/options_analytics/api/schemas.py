@@ -75,3 +75,48 @@ class OiViewResponse(_Schema):
     @classmethod
     def of(cls, payload: dict[str, Any]) -> OiViewResponse:
         return cls.model_validate(payload)
+
+
+class ContractSeriesResponse(_Schema):
+    """One contract's day, aligned to the payload's shared time axis.
+
+    ``oi_change`` is absent on purpose: index 0 is the session open, so the
+    client derives ``oi[i] - oi[0]``. Sending it as well would be a third array
+    per contract carrying no new information — and a second source of truth for
+    a figure the Open Interest page derives the same way.
+    """
+
+    id: str
+    strike: float
+    option_type: str
+    oi: list[int]
+    volume: list[int]
+
+
+class OiSeriesResponse(_Schema):
+    """Per-contract intraday series behind Multi OI & Volume."""
+
+    instrument_id: str
+    symbol: str
+    expiry_date: str | None
+    atm_strike: float
+    lot_size: int | None
+    open_ts: str
+    now_ts: str
+    data_quality: str
+    open_is_estimated: bool = False
+    # The bucket actually used, which can be coarser than the one requested:
+    # no interval can produce resolution finer than the capture cadence.
+    interval: str
+    window: int
+    t: list[str]
+    # Aligned to `t`. The tradable current-month future, not index spot — and
+    # `None` on the reconstructed 09:15 frame, where nothing was recorded.
+    fut: list[float | None]
+    contracts: list[ContractSeriesResponse]
+    default_ids: list[str]
+    default_vol_ids: list[str]
+
+    @classmethod
+    def of(cls, payload: dict[str, Any]) -> OiSeriesResponse:
+        return cls.model_validate(payload)

@@ -1,0 +1,188 @@
+.backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  display: grid;
+  place-items: center;
+  padding: var(--mc-space-4);
+  background: rgb(0 0 0 / 0.55);
+}
+
+.dialog {
+  display: flex;
+  flex-direction: column;
+  width: min(30rem, 100%);
+  max-height: min(34rem, 90vh);
+  border: 1px solid var(--mc-border-strong);
+  border-radius: var(--mc-radius-lg);
+  background: var(--mc-surface);
+  box-shadow: var(--mc-shadow-lg, 0 12px 40px rgb(0 0 0 / 0.4));
+}
+
+.head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--mc-space-3);
+  padding: var(--mc-space-4);
+  border-bottom: 1px solid var(--mc-border);
+}
+
+.title {
+  margin: 0;
+  font-size: var(--mc-text-base);
+  font-weight: 700;
+}
+
+.close {
+  width: 1.75rem;
+  height: 1.75rem;
+  border: 1px solid var(--mc-border);
+  border-radius: var(--mc-radius-sm);
+  background: transparent;
+  color: var(--mc-text-muted);
+  font-size: 1.125rem;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.filters {
+  display: flex;
+  gap: var(--mc-space-2);
+  padding: var(--mc-space-3) var(--mc-space-4) 0;
+}
+
+.search {
+  flex: 1;
+  min-width: 0;
+  height: var(--mc-control-h);
+  padding: 0 0.625rem;
+  border: 1px solid var(--mc-border);
+  border-radius: var(--mc-radius);
+  background: var(--mc-surface-raised);
+  color: var(--mc-text);
+  font-size: var(--mc-text-sm);
+}
+
+.sides {
+  display: inline-flex;
+  gap: 0.25rem;
+}
+
+.side {
+  padding: 0 0.625rem;
+  height: var(--mc-control-h);
+  border: 1px solid var(--mc-border);
+  border-radius: var(--mc-radius);
+  background: transparent;
+  color: var(--mc-text-muted);
+  font-size: var(--mc-text-xs);
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.side.active {
+  border-color: color-mix(in srgb, var(--mc-accent) 45%, transparent);
+  background: var(--mc-accent-weak);
+  color: var(--mc-accent);
+}
+
+.count {
+  margin: var(--mc-space-2) 0 0;
+  padding: 0 var(--mc-space-4);
+  font-size: var(--mc-text-xs);
+  color: var(--mc-text-subtle);
+}
+
+.list {
+  flex: 1;
+  overflow-y: auto;
+  margin: var(--mc-space-2) 0 0;
+  padding: 0 var(--mc-space-4) var(--mc-space-2);
+  list-style: none;
+}
+
+.row {
+  display: grid;
+  grid-template-columns: 1fr auto auto;
+  gap: var(--mc-space-3);
+  align-items: center;
+  width: 100%;
+  padding: 0.4375rem 0.5rem;
+  border: 1px solid transparent;
+  border-radius: var(--mc-radius);
+  background: transparent;
+  color: var(--mc-text-muted);
+  font-size: var(--mc-text-sm);
+  text-align: left;
+  cursor: pointer;
+}
+
+.row:hover:not(:disabled) {
+  background: var(--mc-surface-raised);
+}
+
+.row.on {
+  border-color: color-mix(in srgb, var(--mc-accent) 45%, transparent);
+  background: var(--mc-accent-weak);
+  color: var(--mc-accent);
+}
+
+/* Dimmed rather than hidden once the cap is reached: the contract is still a
+   valid choice, just not an additional one. */
+.row:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.name {
+  font-weight: 600;
+  color: var(--mc-text);
+}
+
+.row.on .name {
+  color: var(--mc-accent);
+}
+
+.stat {
+  font-size: var(--mc-text-xs);
+  color: var(--mc-text-subtle);
+  font-variant-numeric: tabular-nums;
+}
+
+.none {
+  padding: var(--mc-space-5) 0;
+  text-align: center;
+  color: var(--mc-text-muted);
+  font-size: var(--mc-text-sm);
+}
+
+.foot {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--mc-space-2);
+  padding: var(--mc-space-3) var(--mc-space-4);
+  border-top: 1px solid var(--mc-border);
+}
+
+.ghost,
+.primary {
+  height: var(--mc-control-h);
+  padding: 0 var(--mc-space-4);
+  border-radius: var(--mc-radius);
+  font-size: var(--mc-text-sm);
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.ghost {
+  border: 1px solid var(--mc-border);
+  background: transparent;
+  color: var(--mc-text-muted);
+}
+
+.primary {
+  border: 1px solid transparent;
+  background: var(--mc-accent);
+  color: var(--mc-on-accent, #fff);
+}

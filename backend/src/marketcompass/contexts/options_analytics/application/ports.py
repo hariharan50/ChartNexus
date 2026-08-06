@@ -48,6 +48,10 @@ class ChainSnapshot:
     spot: float | None = None
     atm_strike: float | None = None
     max_pain: float | None = None
+    # The current-month future at this instant. Price overlays plot *this*, not
+    # spot: it is the tradable instrument, and on a chart of option positions
+    # the index level is the one price nobody in the picture can deal at.
+    future_price: float | None = None
 
 
 @runtime_checkable

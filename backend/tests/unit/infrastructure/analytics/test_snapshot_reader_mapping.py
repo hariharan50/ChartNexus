@@ -44,6 +44,7 @@ def _record(**kwargs: object) -> SimpleNamespace:
         "spot": Decimal("24050.75"),
         "atm_strike": Decimal("24050"),
         "max_pain_strike": Decimal("24000"),
+        "future_price": Decimal("24067.25"),
     }
     base.update(kwargs)
     return SimpleNamespace(**base)
@@ -79,10 +80,28 @@ def test_the_frame_carries_its_own_market_state() -> None:
     assert snapshot.max_pain == 24000.0
 
 
+def test_the_futures_overlay_prefers_the_future_over_spot() -> None:
+    # Price overlays plot the tradable contract. Reading spot instead would put
+    # the line on the one price nobody in an options chart can deal at.
+    snapshot = _to_chain_snapshot(_record())
+
+    assert snapshot.future_price == 24067.25
+    assert snapshot.spot == 24050.75
+
+
+def test_the_futures_overlay_falls_back_to_spot_when_never_stored() -> None:
+    # Rows captured before the column existed have no future to read.
+    snapshot = _to_chain_snapshot(_record(future_price=None))
+
+    assert snapshot.future_price == 24050.75
+
+
 def test_absent_header_metrics_stay_none() -> None:
     # Nullable columns: an early capture may predate them. `None` lets the client
     # fall back to the payload-level values rather than plotting a zero.
-    snapshot = _to_chain_snapshot(_record(spot=None, atm_strike=None, max_pain_strike=None))
+    snapshot = _to_chain_snapshot(
+        _record(spot=None, atm_strike=None, max_pain_strike=None, future_price=None)
+    )
 
     assert (snapshot.spot, snapshot.atm_strike, snapshot.max_pain) == (None, None, None)
 
