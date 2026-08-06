@@ -39,8 +39,14 @@ export const securityHeadersMiddleware: MiddlewareFunction<Response> = async (
   { context },
   next
 ) => {
+  // Empty in development, where `script-src` opts out of nonces entirely (see
+  // above). Emitting one anyway would be worse than useless: the browser blanks
+  // a `nonce` attribute once it has read it, so every nonce-carrying element
+  // React rendered on the server mismatches what it finds in the DOM at
+  // hydration — including React Router's own dev-only critical-CSS <link>.
+  //
   // Base64url alphabet only, so it never needs escaping inside the header.
-  const nonce = crypto.randomUUID().replaceAll('-', '');
+  const nonce = import.meta.env.DEV ? '' : crypto.randomUUID().replaceAll('-', '');
   context.set(nonceContext, nonce);
 
   const response = await next();

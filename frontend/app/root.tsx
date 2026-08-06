@@ -72,15 +72,31 @@ export const links: Route.LinksFunction = () => [
 ];
 
 export function Layout({ children }: { children: React.ReactNode }) {
-  // Absent when the root loader itself failed; the boundary still renders, just
-  // without the bootstrap (and so with the server's default theme).
+  // Absent when the root loader itself failed, and empty in development where
+  // the CSP allows inline scripts outright.
   const nonce = useRouteLoaderData<typeof loader>('root')?.nonce;
 
+  // In production an unsigned inline script would just be blocked, so there is
+  // nothing to gain by emitting one; the page falls back to the server's theme.
+  const canInlineScript = import.meta.env.DEV || Boolean(nonce);
+
   return (
-    // `data-theme` is a static literal, never React state: the theme store
-    // writes the attribute imperatively on the client (as it did under Svelte),
-    // so React must not reconcile it or hydration would fight the store.
-    <html lang="en" data-theme="dark">
+    /*
+     * `data-theme` is a static literal, never React state: the theme store
+     * writes the attribute imperatively on the client (as it did under Svelte),
+     * so React must not reconcile it.
+     *
+     * `suppressHydrationWarning` is required, not cosmetic. React Router
+     * hydrates the whole `document`, so `<html>` is inside the hydration root —
+     * SvelteKit never had this exposure, because its `<html>` lived in
+     * `app.html` outside the mounted tree. The bootstrap script below runs
+     * before hydration and rewrites `data-theme`/`data-callput`, which React
+     * then sees as a server/client mismatch. Suppressing it here tells React the
+     * difference is deliberate and to leave the DOM's values alone — which is
+     * exactly what we want, since the browser's stored preference should win.
+     * It applies only to this element's own attributes, not to any descendant.
+     */
+    <html lang="en" data-theme="dark" suppressHydrationWarning>
       <head>
         <meta charSet="utf-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -88,8 +104,14 @@ export function Layout({ children }: { children: React.ReactNode }) {
         <meta name="theme-color" content="#0b0e14" />
         <Meta />
         <Links />
-        {nonce ? (
-          <script nonce={nonce} dangerouslySetInnerHTML={{ __html: THEME_BOOTSTRAP }} />
+        {canInlineScript ? (
+          // Browsers blank a `nonce` content attribute once they have read it,
+          // so what React rendered never matches what it finds in the DOM.
+          <script
+            nonce={nonce || undefined}
+            suppressHydrationWarning
+            dangerouslySetInnerHTML={{ __html: THEME_BOOTSTRAP }}
+          />
         ) : null}
       </head>
       <body>

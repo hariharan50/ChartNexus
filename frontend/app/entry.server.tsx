@@ -22,7 +22,14 @@ export default function handleRequest(
   // `<ServerRouter nonce>` is the default for every nonce-aware component it
   // renders — <Links>, <Scripts>, <ScrollRestoration> — so the CSP nonce set in
   // middleware only has to be handed over once, here.
-  const nonce = loadContext.get(nonceContext);
+  //
+  // Empty in development, where the CSP allows inline scripts outright. Spread
+  // rather than passed as `nonce={undefined}`: under `exactOptionalPropertyTypes`
+  // an explicit undefined is not the same as an absent key, and absent is what
+  // keeps the attribute off these elements — which is what stops them
+  // mismatching at hydration.
+  const nonceValue = loadContext.get(nonceContext);
+  const nonce = nonceValue ? { nonce: nonceValue } : {};
 
   return new Promise((resolve, reject) => {
     let shellRendered = false;
@@ -34,9 +41,9 @@ export default function handleRequest(
       : 'onShellReady';
 
     const { pipe, abort } = renderToPipeableStream(
-      <ServerRouter context={routerContext} url={request.url} nonce={nonce} />,
+      <ServerRouter context={routerContext} url={request.url} {...nonce} />,
       {
-        nonce,
+        ...nonce,
         [readyOption]() {
           shellRendered = true;
           const body = new PassThrough();

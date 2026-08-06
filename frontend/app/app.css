@@ -43,6 +43,14 @@
   --mc-auth-field-hover: #1d1d21;
   --mc-auth-border: #2a2a30;
 
+  /* Text for that surface. Fixed for the same reason the surfaces are: the
+     panel stays dark under every theme, so it cannot borrow --mc-text, which
+     inverts to near-black under `light` and `warm`. These match the dark
+     neutrals above, so the default theme is unaffected. */
+  --mc-auth-text: #e6e9f0;
+  --mc-auth-text-muted: #9aa3b8;
+  --mc-auth-text-subtle: #6b7488;
+
   /* Generic input/control surface used everywhere outside the auth screen.
      Derived from theme-aware tokens so it repaints correctly per theme
      without a per-theme override; the auth layout overrides these three back

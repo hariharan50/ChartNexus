@@ -5,6 +5,24 @@
   --mc-field-bg-hover: var(--mc-auth-field-hover);
   --mc-field-border: var(--mc-auth-border);
 
+  /* Text has to be pinned for exactly the same reason, and previously was not.
+     Under `light`/`warm` the theme's near-black --mc-text landed on this
+     permanently-dark panel, which made the heading unreadable and — because
+     TextField colours its input with it — made typing look like it did nothing.
+     Reachable in the SvelteKit app too, by signing out while on a light theme;
+     applying the stored theme before first paint just made it reachable on a
+     cold load as well. */
+  --mc-text: var(--mc-auth-text);
+  --mc-text-muted: var(--mc-auth-text-muted);
+  --mc-text-subtle: var(--mc-auth-text-subtle);
+
+  /* Redefining the variable is not enough on its own. `color` inherits as a
+     computed value, so an element with no `color` of its own — the "Welcome
+     back" heading — inherits what <body> already resolved from the *theme's*
+     --mc-text, outside this subtree. Setting it here gives those elements
+     something correct to inherit. */
+  color: var(--mc-auth-text);
+
   display: grid;
   grid-template-columns: 1fr 1fr;
   min-height: 100vh;
