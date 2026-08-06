@@ -20,6 +20,7 @@ import type { ChartTheme } from '$shared/charts/theme/types';
 
 const THEME: ChartTheme = {
   axis: 'rgb(1, 1, 1)',
+  accent: 'rgb(13, 13, 13)',
   grid: 'rgb(2, 2, 2)',
   tooltipBg: 'rgb(3, 3, 3)',
   tooltipText: 'rgb(4, 4, 4)',

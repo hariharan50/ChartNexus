@@ -65,6 +65,10 @@ class FyersEndpoints:
     def option_chain(self) -> str:
         return f"{self.data_base}/options-chain-v3"
 
+    @property
+    def history(self) -> str:
+        return f"{self.data_base}/history"
+
 
 def app_id_hash(app_id: str, secret_id: str) -> str:
     """SHA-256 of ``"{app_id}:{secret_id}"``.
@@ -143,6 +147,33 @@ class FyersRestClient:
             app_id=app_id,
             access_token=access_token,
             params={"symbol": symbol, "strikecount": strike_count, "timestamp": timestamp},
+        )
+
+    async def fetch_history(
+        self,
+        *,
+        app_id: str,
+        access_token: str,
+        symbol: str,
+        resolution: str,
+        range_from: str,
+        range_to: str,
+    ) -> dict[str, Any]:
+        return await self._get(
+            self._endpoints.history,
+            app_id=app_id,
+            access_token=access_token,
+            params={
+                "symbol": symbol,
+                "resolution": resolution,
+                # `1` means the range bounds are ISO dates rather than epochs.
+                "date_format": 1,
+                "range_from": range_from,
+                "range_to": range_to,
+                # Continuous series across contract rolls. Harmless for an index
+                # and required for anything futures-based, so it is always on.
+                "cont_flag": 1,
+            },
         )
 
     # -- transport ----------------------------------------------------------

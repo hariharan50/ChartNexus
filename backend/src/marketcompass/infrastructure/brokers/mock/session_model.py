@@ -240,6 +240,22 @@ def frame_count() -> int:
     return len(_grid(date(2026, 1, 1)))
 
 
+def spot_track(symbol: str | InstrumentSymbol, session_date: date) -> tuple[float, ...]:
+    """One session's seeded walk, one entry per grid step.
+
+    Public because the history factory aggregates whole days of it into candles.
+    Reaching into ``_spot_track`` from outside would work and would also make the
+    caching and the parsing someone else's problem.
+    """
+    return _spot_track(_parse(symbol), session_date)
+
+
+def session_grid(session_date: date) -> tuple[datetime, ...]:
+    """The UTC instant of every grid step in a session, aligned with
+    :func:`spot_track`."""
+    return _grid(session_date)
+
+
 # -- the walk ---------------------------------------------------------------
 
 

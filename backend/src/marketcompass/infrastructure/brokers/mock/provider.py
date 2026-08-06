@@ -9,6 +9,8 @@ from __future__ import annotations
 
 from marketcompass.contexts.market_data.domain.instruments import InstrumentSymbol
 from marketcompass.contexts.market_data.domain.market_data import (
+    CandleInterval,
+    CandleSeries,
     DataSource,
     ExpiryList,
     FuturesQuote,
@@ -20,6 +22,7 @@ from marketcompass.infrastructure.brokers.futures_contract import (
     local_front_month,
     to_futures_symbol,
 )
+from marketcompass.infrastructure.brokers.mock.history_factory import build_history
 from marketcompass.infrastructure.brokers.mock.option_chain_factory import (
     build_option_chain,
     upcoming_expiries,
@@ -54,6 +57,11 @@ class MockMarketDataProvider:
         self, instrument: InstrumentSymbol, expiry: str | None = None
     ) -> OptionChain:
         return build_option_chain(instrument, self._clock.now(), expiry)
+
+    async def get_history(
+        self, instrument: InstrumentSymbol, interval: CandleInterval, days: int
+    ) -> CandleSeries:
+        return build_history(instrument, interval, days, self._clock.now())
 
     async def get_expiries(self, instrument: InstrumentSymbol) -> ExpiryList:
         now = self._clock.now()

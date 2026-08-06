@@ -27,7 +27,12 @@ test.beforeEach(async ({ context, baseURL, page }) => {
 
   await page.goto('/options/multi-oi-volume');
   // `exact` matters: without it this also matches "MultiStrike OI Change".
-  await expect(page.getByRole('heading', { name: 'MultiStrike OI', exact: true })).toBeVisible();
+  // Generous: this page mounts ECharts canvases, and under the suite's eight
+  // parallel workers a first paint can genuinely take longer than the 5s
+  // default. A slow mount is not the same as a broken page.
+  await expect(page.getByRole('heading', { name: 'MultiStrike OI', exact: true })).toBeVisible({
+    timeout: 15_000
+  });
 });
 
 const chartPanel = (page: Page, title: string) =>
@@ -43,13 +48,35 @@ test('does not render a volume chart', async ({ page }) => {
   await expect(page.getByRole('heading', { name: 'MultiStrike Volume' })).toHaveCount(0);
 });
 
-test('pre-selects the busiest contracts and names them in the sidebar', async ({ page }) => {
+test('offers three strike sources, one of them live', async ({ page }) => {
   const sidebar = page.locator('aside');
 
-  // One picker now: both charts plot the same contracts, so a second selection
-  // would have nothing of its own to drive.
-  await expect(sidebar.getByText('Contracts', { exact: true })).toBeVisible();
+  for (const title of ['High Volume', 'High OI', 'Custom Strikes']) {
+    await expect(sidebar.getByText(title, { exact: true })).toBeVisible();
+  }
+
+  // Only the live source shows chips — three expanded lists would fill the
+  // sidebar with contracts that are not on the chart.
   await expect(sidebar.getByText(/^\d+ (CE|PE)$/)).toHaveCount(5);
+  await expect(sidebar.getByRole('button', { name: 'Select' })).toHaveCount(2);
+});
+
+test('switching source changes which strikes are plotted', async ({ page }) => {
+  const sidebar = page.locator('aside');
+  const chips = () => sidebar.getByText(/^\d+ (CE|PE)$/).allInnerTexts();
+  const before = await chips();
+
+  // High OI is live by default; High Volume ranks by a different measure.
+  await sidebar
+    .getByRole('region', { name: 'High Volume' })
+    .getByRole('button', { name: 'Select' })
+    .click();
+
+  await expect
+    .poll(chips, { message: 'the chips should follow the live source' })
+    .not.toEqual(before);
+  const legend = page.locator('section').filter({ hasText: 'MultiStrike OI Change' });
+  await expect(legend.getByRole('button').filter({ hasText: /^\d+ (CE|PE)$/ })).toHaveCount(5);
 });
 
 test('every chart offers a futures overlay toggle', async ({ page }) => {
@@ -95,7 +122,11 @@ test('1D is offered but not selectable until multi-day history exists', async ({
 });
 
 test('Custom Strikes picks a contract and it joins the charts', async ({ page }) => {
-  await page.locator('aside').getByRole('button', { name: 'Select' }).first().click();
+  await page
+    .locator('aside')
+    .getByRole('region', { name: 'Custom Strikes' })
+    .getByRole('button', { name: 'Select' })
+    .click();
 
   const dialog = page.getByRole('dialog');
   await expect(dialog).toBeVisible();
@@ -117,7 +148,10 @@ test('Escape closes the picker without changing the selection', async ({ page })
   const sidebar = page.locator('aside');
   const before = await sidebar.getByText(/^\d+ (CE|PE)$/).allInnerTexts();
 
-  await sidebar.getByRole('button', { name: 'Select' }).first().click();
+  await sidebar
+    .getByRole('region', { name: 'Custom Strikes' })
+    .getByRole('button', { name: 'Select' })
+    .click();
   await expect(page.getByRole('dialog')).toBeVisible();
   await page.keyboard.press('Escape');
 

@@ -120,3 +120,91 @@ class OiSeriesResponse(_Schema):
     @classmethod
     def of(cls, payload: dict[str, Any]) -> OiSeriesResponse:
         return cls.model_validate(payload)
+
+
+class PcrSeriesResponse(_Schema):
+    """Chain-wide totals behind the Put-Call Ratio tool's three charts."""
+
+    instrument_id: str
+    symbol: str
+    expiry_date: str | None
+    lot_size: int | None
+    open_ts: str
+    now_ts: str
+    data_quality: str
+    open_is_estimated: bool = False
+    t: list[str]
+    # The tradable current-month future, not index spot. `None` on the
+    # reconstructed 09:15 frame, where nothing was recorded.
+    fut: list[float | None]
+    # `None`, never 0, where there was no call interest to divide by: a ratio
+    # with an empty denominator is undefined, and 0 would draw a floor the
+    # market never printed.
+    pcr: list[float | None]
+    call_oi: list[int]
+    put_oi: list[int]
+    call_oi_chg: list[int]
+    put_oi_chg: list[int]
+
+    @classmethod
+    def of(cls, payload: dict[str, Any]) -> PcrSeriesResponse:
+        return cls.model_validate(payload)
+
+
+class GexFrameResponse(_Schema):
+    """One capture's gamma profile, plus the levels read off it.
+
+    The four levels are per-frame, not per-payload: scrubbing back to 11:00 must
+    move the wall and flip markers with the bars, or the chart shows this
+    morning's structure against this afternoon's positioning.
+    """
+
+    t: str
+    spot: float
+    #: `None` on captures taken before the ATM column was denormalised.
+    atm: float | None
+    # Aligned to the payload's `strikes`. Rupee gamma per 1% move in spot,
+    # expressed in **crore** — see `gex_service` for why the unit is on the
+    # wire rather than applied by the client.
+    #
+    # Signed for the dealer view: calls positive, puts negative.
+    call_gex: list[float]
+    put_gex: list[float]
+    #: The two headline figures, same unit.
+    net_total: float
+    abs_total: float
+    # Every level is nullable. A one-sided book has no wall, and a profile that
+    # never changes sign has no flip — `None` says so, where 0 would plant a
+    # marker at the bottom of the ladder.
+    call_wall: float | None
+    put_wall: float | None
+    gamma_flip: float | None
+    net_cross: float | None
+
+
+class GexResponse(_Schema):
+    """Per-strike gamma exposure behind the Gamma Exposure tool."""
+
+    instrument_id: str
+    symbol: str
+    expiry_date: str | None
+    lot_size: int | None
+    spot: float
+    atm_strike: float | None
+    open_ts: str
+    now_ts: str
+    data_quality: str
+    #: Always `False` here — gamma has no reconstructable session open.
+    open_is_estimated: bool = False
+    # Fraction of legs that carried a quoted implied volatility, 0-1. Without
+    # it, a chain the broker priced no volatility on renders as a flat profile
+    # indistinguishable from a balanced book.
+    iv_coverage: float
+    #: The shared strike axis every frame's arrays are aligned to.
+    strikes: list[float]
+    t: list[str]
+    frames: list[GexFrameResponse]
+
+    @classmethod
+    def of(cls, payload: dict[str, Any]) -> GexResponse:
+        return cls.model_validate(payload)

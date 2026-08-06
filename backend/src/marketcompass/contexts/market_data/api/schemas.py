@@ -13,6 +13,8 @@ from decimal import Decimal
 from pydantic import BaseModel, ConfigDict
 
 from marketcompass.contexts.market_data.domain.market_data import (
+    Candle,
+    CandleSeries,
     ExpiryList,
     FuturesQuote,
     MarketStatus,
@@ -61,6 +63,44 @@ class QuoteResponse(_Schema):
             change=quote.change,
             change_percent=quote.change_percent,
             provenance=ProvenanceResponse.of(quote.provenance),
+        )
+
+
+class CandleResponse(_Schema):
+    """One bar. Field names are the chart library's, so no client-side rename."""
+
+    time: datetime
+    open: Decimal
+    high: Decimal
+    low: Decimal
+    close: Decimal
+    volume: int
+
+    @classmethod
+    def of(cls, candle: Candle) -> CandleResponse:
+        return cls(
+            time=candle.opened_at,
+            open=candle.open,
+            high=candle.high,
+            low=candle.low,
+            close=candle.close,
+            volume=candle.volume,
+        )
+
+
+class HistoryResponse(_Schema):
+    instrument: str
+    interval: str
+    candles: list[CandleResponse]
+    provenance: ProvenanceResponse
+
+    @classmethod
+    def of(cls, series: CandleSeries) -> HistoryResponse:
+        return cls(
+            instrument=series.instrument.value,
+            interval=series.interval.value,
+            candles=[CandleResponse.of(candle) for candle in series.candles],
+            provenance=ProvenanceResponse.of(series.provenance),
         )
 
 

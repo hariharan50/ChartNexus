@@ -7,7 +7,7 @@ import BarPair from './components/BarPair';
 import OpenInterestChart from './components/OpenInterestChart';
 import PcrDonut from './components/PcrDonut';
 import SentimentDonut from './components/SentimentDonut';
-import TimeRangeSlider from './components/TimeRangeSlider';
+import TimeRangeSlider from '../components/TimeRangeSlider';
 import {
   axisTicks,
   baselineIndex,

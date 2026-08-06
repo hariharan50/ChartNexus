@@ -95,6 +95,17 @@
   --mc-space-8: 2rem;
   --mc-space-10: 2.5rem;
 
+  /* How wide a terminal page is allowed to get.
+
+     2240px, not a laptop-sized 1344px. Every page here is a dense grid or an
+     intraday time series, and width buys rows and minutes rather than just
+     air — a 1080p or 1440p monitor fills outright, and only a true ultrawide
+     is left with gutters, where a 3000px-wide chart would be unreadable
+     anyway. One token because the pages sit next to each other in the same
+     menu: a cap that differed between them would make navigating feel like
+     the layout jumped. */
+  --mc-page-max: 140rem;
+
   /* One height for every input, select and button, so a row of controls lines
      up without per-component nudging. */
   --mc-control-h: 2.5rem;

@@ -2,14 +2,8 @@
    sit next to each other in the same menu, so a different grid or panel
    treatment would read as a different product. */
 
-/* 140rem (2240px) rather than a laptop-sized 96rem: these are intraday time
-   series, and width buys resolution — more minutes visible without thinning the
-   x axis. It fills a 1080p and most 1440p monitors outright and only leaves
-   gutters on a true ultrawide, where a 3000px-wide line would be unreadable
-   anyway. The Open Interest page uses the same cap so switching between the two
-   does not jump. */
 .page {
-  max-width: 140rem;
+  max-width: var(--mc-page-max);
   margin: 0 auto;
   padding: var(--mc-space-6);
 }
@@ -194,21 +188,30 @@
   cursor: pointer;
 }
 
-/* -- contract pickers -- */
-.picker {
-  margin-top: var(--mc-space-3);
+/* -- strike sources -- */
+.source {
+  margin-top: var(--mc-space-2);
   padding: var(--mc-space-3);
   border: 1px solid var(--mc-border);
   border-radius: var(--mc-radius);
 }
 
-.picker-head {
+/* The live source is outlined, not merely tinted: it is the one thing in the
+   sidebar that says which five contracts are on the chart, and a tint alone
+   loses that at a glance on the darker themes. */
+.source.source-active {
+  border-color: color-mix(in srgb, var(--mc-accent) 55%, transparent);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--mc-accent) 22%, transparent);
+}
+
+.source-head {
   display: flex;
   align-items: center;
   gap: var(--mc-space-2);
+  min-height: var(--mc-control-h);
 }
 
-.picker-title {
+.source-title {
   flex: 1;
   min-width: 0;
   font-size: var(--mc-text-sm);
@@ -218,7 +221,7 @@
 
 /* The count dropdown holds one or two digits, so it should not take a share of
    the row the chips could use. */
-.picker-head .select-native {
+.source-head .select-native {
   width: 3.5rem;
   flex: none;
 }

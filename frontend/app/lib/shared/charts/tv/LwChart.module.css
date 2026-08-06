@@ -1,0 +1,7 @@
+/* The chart fills whatever box the caller gives it. Lightweight Charts measures
+   this element under `autoSize`, so it must have a real size before it mounts —
+   same contract as `EChart.module.css`. */
+.chart {
+  width: 100%;
+  height: 100%;
+}

@@ -1,10 +1,17 @@
 import { useRef, useState, type KeyboardEvent, type PointerEvent } from 'react';
 import { cx } from '$shared/ui/cx';
-import type { SliderTick } from '../oi-data';
+import type { SliderTick } from '../open-interest/oi-data';
 import s from './TimeRangeSlider.module.css';
 
 /**
- * A two-handle range slider for scrubbing the OI session window.
+ * A range slider for scrubbing a session, with one handle or two.
+ *
+ * Two handles answer "what changed between these times" — the Open Interest
+ * page's question. One answers "what did the book look like at this time",
+ * which is the only sensible question about a stock quantity like gamma: a
+ * baseline handle there would bound a window nothing is measured over. Setting
+ * `single` drops the baseline thumb and fills the track from the left edge, so
+ * both pages get the same gesture, the same keyboard map and the same ticks.
  *
  * The container owns the entire gesture: on pointer-down it captures the
  * pointer, so every subsequent move lands here regardless of what is under
@@ -27,9 +34,24 @@ interface Props {
   openIndex: number;
   nowIndex: number;
   disabled?: boolean;
+  /**
+   * Hide the baseline handle and fill from the left edge — an "as of" scrub
+   * rather than a window. `openIndex` and `onOpenChange` are then unused.
+   */
+  single?: boolean;
   /** IST clock reading at each handle, e.g. `10:30 am`. */
   openLabel?: string;
   nowLabel?: string;
+  /**
+   * Where each index sits on the track, 0–100.
+   *
+   * Omitted, the track is index space: frame `i` of `n` sits at `i/n`, and
+   * whatever was recorded fills the full width. Supplied, the track is
+   * something wider that the frames merely occupy — a whole trading session,
+   * say — and a day that started archiving late is drawn as the partial day it
+   * is instead of being stretched over the morning it never saw.
+   */
+  positions?: number[];
   /** Hour / half-hour marks under the track. */
   ticks?: SliderTick[];
   onOpenChange: (index: number) => void;
@@ -45,8 +67,10 @@ export default function TimeRangeSlider({
   openIndex,
   nowIndex,
   disabled = false,
+  single = false,
   openLabel,
   nowLabel,
+  positions,
   ticks = [],
   onOpenChange,
   onNowChange
@@ -65,8 +89,17 @@ export default function TimeRangeSlider({
   const lastSent = useRef<number | null>(null);
 
   const span = Math.max(1, max - min);
-  const openPct = ((openIndex - min) / span) * 100;
-  const nowPct = ((nowIndex - min) / span) * 100;
+
+  /** Where an index sits on the track — the two positioning modes, once. */
+  function pctOf(index: number): number {
+    if (positions) return positions[index - min] ?? 0;
+    return ((index - min) / span) * 100;
+  }
+
+  // In single mode the window starts at the left edge and the baseline handle
+  // is never drawn, so the fill is simply everything up to the "as of" point.
+  const openPct = single ? 0 : pctOf(openIndex);
+  const nowPct = pctOf(nowIndex);
 
   function indexFromClientX(clientX: number): number {
     const el = trackEl.current;
@@ -74,6 +107,25 @@ export default function TimeRangeSlider({
     const rect = el.getBoundingClientRect();
     if (rect.width <= 0) return min;
     const ratio = (clientX - rect.left) / rect.width;
+
+    if (positions) {
+      // Nearest recorded frame to where the pointer landed. On a session track
+      // the frames are not evenly spaced, so rounding the ratio would land on
+      // an index that exists but sits nowhere near the cursor — and dragging
+      // across a recording gap would jump.
+      let best = min;
+      let bestGap = Infinity;
+      const target = ratio * 100;
+      for (let i = 0; i < positions.length; i++) {
+        const gap = Math.abs((positions[i] ?? 0) - target);
+        if (gap < bestGap) {
+          bestGap = gap;
+          best = min + i;
+        }
+      }
+      return Math.min(max, Math.max(min, best));
+    }
+
     const index = Math.round(ratio * span) + min;
     return Math.min(max, Math.max(min, index));
   }
@@ -81,6 +133,13 @@ export default function TimeRangeSlider({
   /** Move a handle, keeping the two from crossing over each other. */
   function moveHandle(which: 'open' | 'now', clientX: number) {
     const index = indexFromClientX(clientX);
+    if (single) {
+      // Nothing to cross: the window always starts at the left edge.
+      if (lastSent.current === index) return;
+      lastSent.current = index;
+      onNowChange(index);
+      return;
+    }
     const next = which === 'open' ? Math.min(index, nowIndex) : Math.max(index, openIndex);
     if (lastSent.current === next) return;
     lastSent.current = next;
@@ -93,7 +152,8 @@ export default function TimeRangeSlider({
     // Whichever handle is nearer the click is the one being grabbed, so the
     // whole track is a valid target rather than just the ~20px thumb.
     const index = indexFromClientX(event.clientX);
-    const which = Math.abs(index - openIndex) <= Math.abs(index - nowIndex) ? 'open' : 'now';
+    const which =
+      !single && Math.abs(index - openIndex) <= Math.abs(index - nowIndex) ? 'open' : 'now';
     setDragging(which);
     lastSent.current = null;
 
@@ -131,7 +191,8 @@ export default function TimeRangeSlider({
 
     event.preventDefault();
     next = Math.min(max, Math.max(min, next));
-    if (which === 'open') onOpenChange(Math.min(next, nowIndex));
+    if (single) onNowChange(next);
+    else if (which === 'open') onOpenChange(Math.min(next, nowIndex));
     else onNowChange(Math.max(next, openIndex));
   }
 
@@ -149,23 +210,25 @@ export default function TimeRangeSlider({
         <div className={s.rail} />
         <div className={s.fill} style={{ left: `${openPct}%`, right: `${100 - nowPct}%` }} />
 
-        <div
-          className={s.thumb}
-          style={{ left: `${openPct}%` }}
-          role="slider"
-          aria-label="Baseline time"
-          aria-valuemin={min}
-          aria-valuemax={max}
-          aria-valuenow={openIndex}
-          aria-valuetext={openLabel}
-          aria-disabled={disabled}
-          tabIndex={disabled ? -1 : 0}
-          onKeyDown={(e) => onKeyDown('open', e)}
-        >
-          {openLabel ? (
-            <span className={cx(s.bubble, dragging === 'open' && s.active)}>{openLabel}</span>
-          ) : null}
-        </div>
+        {single ? null : (
+          <div
+            className={s.thumb}
+            style={{ left: `${openPct}%` }}
+            role="slider"
+            aria-label="Baseline time"
+            aria-valuemin={min}
+            aria-valuemax={max}
+            aria-valuenow={openIndex}
+            aria-valuetext={openLabel}
+            aria-disabled={disabled}
+            tabIndex={disabled ? -1 : 0}
+            onKeyDown={(e) => onKeyDown('open', e)}
+          >
+            {openLabel ? (
+              <span className={cx(s.bubble, dragging === 'open' && s.active)}>{openLabel}</span>
+            ) : null}
+          </div>
+        )}
 
         <div
           className={s.thumb}

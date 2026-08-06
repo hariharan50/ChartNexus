@@ -32,7 +32,12 @@ test.beforeEach(async ({ context, baseURL, page }) => {
   });
 
   await page.goto('/options/open-interest');
-  await expect(page.getByRole('slider', { name: 'Baseline time' })).toBeVisible();
+  // Generous: this page mounts ECharts canvases, and under the suite's eight
+  // parallel workers a first paint can genuinely take longer than the 5s
+  // default. A slow mount is not the same as a broken page.
+  await expect(page.getByRole('slider', { name: 'Baseline time' })).toBeVisible({
+    timeout: 15_000
+  });
 });
 
 const baselineThumb = (page: Page) => page.getByRole('slider', { name: 'Baseline time' });

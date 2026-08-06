@@ -11,6 +11,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from marketcompass.contexts.market_data.application.queries import (
     GetExpiries,
     GetFuturesQuote,
+    GetHistory,
     GetMarketStatus,
     GetOptionChain,
     GetSpotPrice,
@@ -36,6 +37,7 @@ class MarketServices:
     futures: GetFuturesQuote
     option_chain: GetOptionChain
     expiries: GetExpiries
+    history: GetHistory
     status: GetMarketStatus
 
 
@@ -78,6 +80,7 @@ def build_market_services(
             iv_history=RedisIvHistoryRecorder(container.redis),
         ),
         expiries=GetExpiries(resolver=resolver, fallback=fallback, clock=clock),
+        history=GetHistory(resolver=resolver, fallback=fallback, clock=clock),
         status=GetMarketStatus(resolver=resolver, clock=clock, calendar=calendar),
     )
 

@@ -27,6 +27,8 @@ from marketcompass.contexts.market_data.domain.implied_volatility import (
 )
 from marketcompass.contexts.market_data.domain.instruments import InstrumentSymbol
 from marketcompass.contexts.market_data.domain.market_data import (
+    CandleInterval,
+    CandleSeries,
     DataSource,
     ExpiryList,
     FuturesQuote,
@@ -56,6 +58,14 @@ class OptionChainQuery:
     tenant_id: TenantId
     instrument: InstrumentSymbol
     expiry: str | None = None
+
+
+@dataclass(frozen=True, slots=True)
+class HistoryQuery:
+    tenant_id: TenantId
+    instrument: InstrumentSymbol
+    interval: CandleInterval
+    days: int
 
 
 class _FallbackMixin:
@@ -235,6 +245,49 @@ class GetExpiries(_FallbackMixin):
             return await self._fallback.get_expiries(query.instrument)
 
 
+class GetHistory(_FallbackMixin):
+    """Price bars, on the same degrade ladder as the spot.
+
+    Named for the ``get_history`` the source architecture already prescribes —
+    ATR, trend strength and realised volatility are all meant to read from this
+    one port, so a second candles-shaped port beside it would be a fork.
+    """
+
+    def __init__(
+        self,
+        *,
+        resolver: ProviderResolver,
+        fallback: MarketDataProvider,
+        clock: Clock,
+    ) -> None:
+        self._resolver = resolver
+        self._fallback = fallback
+        self._clock = clock
+        self._last_good: dict[str, CandleSeries] = {}
+
+    async def __call__(self, query: HistoryQuery) -> CandleSeries:
+        provider, live = await self._providers(query.tenant_id)
+        # The range cap belongs here rather than at the router: both providers
+        # answer to it, and a request past the broker's per-resolution limit is
+        # an error from the broker rather than a slow chart.
+        days = max(1, min(query.days, query.interval.max_days))
+        key = f"{query.tenant_id}:{query.instrument.value}:{query.interval.value}:{days}"
+
+        try:
+            series = await provider.get_history(query.instrument, query.interval, days)
+        except UpstreamError:
+            previous = self._last_good.get(key)
+            if previous is not None:
+                return replace(
+                    previous, provenance=_degrade(previous.provenance, self._clock.now())
+                )
+            return await self._fallback.get_history(query.instrument, query.interval, days)
+
+        if live:
+            self._last_good[key] = series
+        return series
+
+
 class GetMarketStatus:
     """What is feeding this tenant, and is the exchange open."""
 
@@ -253,11 +306,15 @@ class GetMarketStatus:
         provider = await self._resolver.resolve(tenant_id)
         connected = provider.name != MOCK_PROVIDER_NAME
         now = self._clock.now()
+        # The clock is UTC-aware, and both of these fields are exchange-local by
+        # name: reading them off the raw instant put the badge 5h30m behind, and
+        # rolled the session date a day early after 18:30 IST.
+        local = now.astimezone(_IST)
 
         return MarketStatus(
             is_open=self._calendar.is_open(now),
-            session_date=now.date().isoformat(),
-            time_ist=now.strftime("%H:%M:%S"),
+            session_date=local.date().isoformat(),
+            time_ist=local.strftime("%H:%M:%S"),
             provider=provider.name,
             connected=connected,
             source=DataSource.LIVE if connected else DataSource.MOCK,

@@ -25,7 +25,7 @@ class ExchangeCalendar:
 
     timezone: str = "Asia/Kolkata"
     session_open: str = "09:15"
-    session_close: str = "15:30"
+    session_close: str = "15:40"
     holidays: frozenset[date] = field(default_factory=frozenset)
 
     @property

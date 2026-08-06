@@ -1,0 +1,68 @@
+.strip {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--mc-space-3);
+  align-self: flex-start;
+  padding: 0.4375rem 0.875rem;
+  border: 1px solid var(--mc-border);
+  border-radius: 999px;
+  background: var(--mc-surface);
+  box-shadow: var(--mc-shadow);
+  white-space: nowrap;
+}
+
+.dot {
+  width: 0.5rem;
+  height: 0.5rem;
+  border-radius: 50%;
+  background: var(--mc-stale);
+}
+
+.label {
+  font-size: var(--mc-text-sm);
+  font-weight: 600;
+  color: var(--mc-text);
+}
+
+.window {
+  padding-left: var(--mc-space-3);
+  border-left: 1px solid var(--mc-border);
+  font-size: var(--mc-text-xs);
+  font-weight: 500;
+  color: var(--mc-text-muted);
+}
+
+/* Only the open session pulses — a phase the user cannot trade in should not
+   advertise itself as a live feed. */
+.tone-open .dot {
+  background: var(--mc-live);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--mc-live) 22%, transparent);
+  animation: pulse 2s ease-in-out infinite;
+}
+
+.tone-pre .dot {
+  background: var(--mc-accent);
+}
+
+.tone-auction .dot {
+  background: var(--mc-stale);
+}
+
+.tone-closed {
+  background: transparent;
+  box-shadow: none;
+}
+
+.tone-closed .dot {
+  background: var(--mc-text-muted);
+}
+
+.tone-closed .label {
+  color: var(--mc-text-muted);
+}
+
+@keyframes pulse {
+  50% {
+    opacity: 0.55;
+  }
+}

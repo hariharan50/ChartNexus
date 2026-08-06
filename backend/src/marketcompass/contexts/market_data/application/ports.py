@@ -8,6 +8,8 @@ from typing import Protocol, runtime_checkable
 
 from marketcompass.contexts.market_data.domain.instruments import InstrumentSymbol
 from marketcompass.contexts.market_data.domain.market_data import (
+    CandleInterval,
+    CandleSeries,
     ExpiryList,
     FuturesQuote,
     OptionChain,
@@ -38,6 +40,10 @@ class MarketDataProvider(Protocol):
     ) -> OptionChain: ...
 
     async def get_expiries(self, instrument: InstrumentSymbol) -> ExpiryList: ...
+
+    async def get_history(
+        self, instrument: InstrumentSymbol, interval: CandleInterval, days: int
+    ) -> CandleSeries: ...
 
 
 @runtime_checkable

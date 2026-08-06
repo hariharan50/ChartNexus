@@ -93,7 +93,6 @@ export default function AdvancedDashboard() {
   const focusedLabel = indices.find((q) => q.key === focused)?.label ?? 'NIFTY 50';
   const vix = vixCard(chain);
   const ivPct = ivPercentile(chain);
-  const clock = statusQ.data?.time_ist ?? '—';
   const isLive = statusQ.data?.is_open ?? false;
 
   return (
@@ -105,7 +104,7 @@ export default function AdvancedDashboard() {
         </div>
         <div className={s.controls}>
           <IndexTabs value={focused} onChange={setFocused} />
-          <LiveBadge time={clock} live={isLive} />
+          <LiveBadge live={isLive} />
         </div>
       </header>
 

@@ -1,4 +1,4 @@
-import { BarChart, LineChart } from 'echarts/charts';
+import { BarChart, GaugeChart, LineChart } from 'echarts/charts';
 import {
   AxisPointerComponent,
   GridComponent,
@@ -24,6 +24,10 @@ echarts.use([
   BarChart,
   // Multi OI & Volume plots one line per contract plus a futures overlay.
   LineChart,
+  // The Max Pain sentiment gauge: a graded arc with a pointer. Hand-rolling the
+  // ticks, the banded axis line and the rotated band labels in SVG would be a
+  // few hundred lines of geometry that this draws for free.
+  GaugeChart,
   GridComponent,
   TooltipComponent,
   // Lets `echarts.connect` drive one crosshair across the three stacked charts

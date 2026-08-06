@@ -38,6 +38,8 @@ from marketcompass.contexts.options_analytics.application.ports import (
 from marketcompass.contexts.options_analytics.application.session import (
     attach_utc,
     drop_future,
+    future_of as _future_of,
+    iso as _iso,
     session_open_frame,
     session_open_utc,
 )
@@ -267,17 +269,3 @@ def _anchor_atm(frame: ChainSnapshot | None, chain: ProviderChain) -> float:
     if spot is None or not strikes:
         return strikes[len(strikes) // 2] if strikes else 0.0
     return atm_strike(spot, strikes)
-
-
-def _future_of(frame: ChainSnapshot) -> float | None:
-    """The tradable future, falling back to spot only when it was never stored.
-
-    The reconstructed 09:15 frame has neither, and returning ``None`` there is
-    right: the line should start where the recording does rather than reach back
-    to a level nobody observed.
-    """
-    return frame.future_price if frame.future_price is not None else frame.spot
-
-
-def _iso(moment: datetime) -> str:
-    return attach_utc(moment).astimezone(UTC).isoformat()

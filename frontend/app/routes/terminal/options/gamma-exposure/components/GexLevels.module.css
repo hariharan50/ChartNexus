@@ -1,0 +1,79 @@
+/* Four equal cells that fold to two columns before they fold to one — three
+   across would leave a lone orphan on the second row. */
+.grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: var(--mc-space-3);
+  margin: var(--mc-space-4) 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.cell {
+  display: flex;
+  flex-direction: column;
+  gap: 0.125rem;
+  padding: var(--mc-space-3);
+  border: 1px solid var(--mc-border);
+  border-radius: var(--mc-radius);
+  background: var(--mc-surface-raised);
+  min-width: 0;
+}
+
+.head {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  min-width: 0;
+}
+
+.swatch {
+  flex: none;
+  width: 0.625rem;
+  height: 0.625rem;
+  border-radius: 2px;
+}
+
+/* The level is still real when its marker is toggled off — the swatch recedes
+   rather than disappearing, so the row does not reflow when Show Walls flips. */
+.swatch.muted {
+  opacity: 0.3;
+}
+
+.label {
+  font-size: var(--mc-text-xs);
+  color: var(--mc-text-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.value {
+  font-size: var(--mc-text-lg);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.value.absent {
+  color: var(--mc-text-subtle);
+}
+
+.gap {
+  font-size: var(--mc-text-xs);
+  color: var(--mc-text-subtle);
+  font-variant-numeric: tabular-nums;
+}
+
+.gap.up {
+  color: var(--mc-bullish);
+}
+
+.gap.down {
+  color: var(--mc-bearish);
+}
+
+@media (max-width: 60rem) {
+  .grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}

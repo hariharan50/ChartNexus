@@ -8,6 +8,7 @@ import type { ChartTheme } from './types';
  */
 const CHART_TOKENS: Record<keyof ChartTheme, string> = {
   axis: '--mc-text-subtle',
+  accent: '--mc-accent',
   grid: '--mc-border',
   tooltipBg: '--mc-surface',
   tooltipText: '--mc-text',
@@ -30,6 +31,7 @@ const CHART_TOKENS: Record<keyof ChartTheme, string> = {
  */
 export const SERVER_CHART_THEME: ChartTheme = Object.freeze({
   axis: 'rgb(125, 134, 156)',
+  accent: 'rgb(76, 141, 255)',
   grid: 'rgb(38, 43, 58)',
   tooltipBg: 'rgb(19, 23, 34)',
   tooltipText: 'rgb(230, 233, 240)',

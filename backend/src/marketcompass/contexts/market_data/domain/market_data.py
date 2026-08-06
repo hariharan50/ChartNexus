@@ -87,6 +87,69 @@ class FuturesQuote:
     provenance: Provenance
 
 
+class CandleInterval(StrEnum):
+    """Bar sizes the history endpoint serves.
+
+    A closed set rather than a free-form string: each maps to one broker
+    resolution and one range limit, and an unrecognised value would reach the
+    broker as a 4xx rather than a useful error here.
+    """
+
+    M1 = "1m"
+    M5 = "5m"
+    M15 = "15m"
+    H1 = "1h"
+    D1 = "1d"
+
+    @property
+    def seconds(self) -> int:
+        return {
+            CandleInterval.M1: 60,
+            CandleInterval.M5: 300,
+            CandleInterval.M15: 900,
+            CandleInterval.H1: 3600,
+            CandleInterval.D1: 86_400,
+        }[self]
+
+    @property
+    def max_days(self) -> int:
+        """How far back this resolution may be asked for.
+
+        The broker caps the range per resolution — a year of one-minute bars is
+        an error, not a slow response — and the cap is enforced here so both
+        providers behave the same way.
+        """
+        return {
+            CandleInterval.M1: 15,
+            CandleInterval.M5: 60,
+            CandleInterval.M15: 90,
+            CandleInterval.H1: 180,
+            CandleInterval.D1: 365,
+        }[self]
+
+
+@dataclass(frozen=True, slots=True)
+class Candle:
+    """One price bar. ``opened_at`` is the bar's start, in UTC."""
+
+    opened_at: datetime
+    open: Decimal
+    high: Decimal
+    low: Decimal
+    close: Decimal
+    volume: int
+
+
+@dataclass(frozen=True, slots=True)
+class CandleSeries:
+    """A price history, oldest bar first."""
+
+    instrument: InstrumentSymbol
+    interval: CandleInterval
+    candles: tuple[Candle, ...]
+    provenance: Provenance
+
+
 @dataclass(frozen=True, slots=True)
 class OptionQuote:
     """One side of a strike."""

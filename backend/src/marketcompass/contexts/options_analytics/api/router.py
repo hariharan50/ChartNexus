@@ -12,7 +12,12 @@ from typing import Annotated
 from fastapi import APIRouter, Path, Query, Request
 
 from marketcompass.contexts.options_analytics.api.dependencies import Services
-from marketcompass.contexts.options_analytics.api.schemas import OiSeriesResponse, OiViewResponse
+from marketcompass.contexts.options_analytics.api.schemas import (
+    GexResponse,
+    OiSeriesResponse,
+    OiViewResponse,
+    PcrSeriesResponse,
+)
 from marketcompass.contexts.options_analytics.application.oi_series_service import (
     DEFAULT_INTERVAL,
     DEFAULT_WINDOW,
@@ -100,5 +105,72 @@ async def oi_series(
         principal.tenant_id, symbol, interval=interval, window=window
     )
     response = OiSeriesResponse.of(payload)
+    await redis.client.set(cache_key, response.model_dump_json(), ex=_CACHE_TTL_SECONDS)
+    return response
+
+
+@router.get(
+    "/pcr-series/{instrument_id}",
+    response_model=PcrSeriesResponse,
+    summary="Intraday put/call ratio and chain-wide OI totals",
+    description=(
+        "One point per capture: the put/call ratio by open interest, each "
+        "side's total OI and day change, and the tradable future. Powers the "
+        "Put-Call Ratio tool's three charts."
+    ),
+    responses={422: {"description": "Unknown instrument"}},
+)
+async def pcr_series(
+    request: Request,
+    principal: CurrentPrincipal,
+    services: Services,
+    instrument_id: InstrumentParam,
+) -> PcrSeriesResponse:
+    symbol = instrument_id.strip().upper()
+    redis = get_container(request).redis
+    # No interval in the key: this payload is six numbers a capture, so the
+    # timeframe is applied on the client and one cached entry serves them all.
+    cache_key = redis.key("lab:pcr-series", str(principal.tenant_id), symbol)
+
+    cached = await redis.client.get(cache_key)
+    if cached is not None:
+        return PcrSeriesResponse.model_validate_json(cached)
+
+    payload = await services.pcr_series(principal.tenant_id, symbol)
+    response = PcrSeriesResponse.of(payload)
+    await redis.client.set(cache_key, response.model_dump_json(), ex=_CACHE_TTL_SECONDS)
+    return response
+
+
+@router.get(
+    "/gex/{instrument_id}",
+    response_model=GexResponse,
+    summary="Intraday per-strike gamma exposure",
+    description=(
+        "Dealer gamma by strike through the session — call and put exposure in "
+        "crore per 1% move in spot, with the call wall, put wall, gamma flip "
+        "and net-GEX crossing recomputed at every capture. Powers Gamma "
+        "Exposure."
+    ),
+    responses={422: {"description": "Unknown instrument"}},
+)
+async def gex(
+    request: Request,
+    principal: CurrentPrincipal,
+    services: Services,
+    instrument_id: InstrumentParam,
+) -> GexResponse:
+    symbol = instrument_id.strip().upper()
+    redis = get_container(request).redis
+    # No query params, so one entry per tenant/symbol serves every reader — the
+    # strike filter and the time scrub are both applied on the client.
+    cache_key = redis.key("lab:gex", str(principal.tenant_id), symbol)
+
+    cached = await redis.client.get(cache_key)
+    if cached is not None:
+        return GexResponse.model_validate_json(cached)
+
+    payload = await services.gex(principal.tenant_id, symbol)
+    response = GexResponse.of(payload)
     await redis.client.set(cache_key, response.model_dump_json(), ex=_CACHE_TTL_SECONDS)
     return response

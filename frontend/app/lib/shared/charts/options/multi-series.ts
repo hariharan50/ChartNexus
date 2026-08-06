@@ -33,6 +33,10 @@ export interface MultiSeriesInput {
   formatValue: (value: number) => string;
   /** Formats the left-axis price. */
   formatPrice: (value: number) => string;
+  /** What the right axis measures, e.g. "Open interest". */
+  valueAxisName: string;
+  /** A horizontal marker on the value axis, e.g. PCR = 1. */
+  referenceLine?: { value: number; label: string } | undefined;
   showFutures: boolean;
 }
 
@@ -66,20 +70,36 @@ export function buildMultiSeriesOption(
   input: MultiSeriesInput,
   theme: ChartTheme
 ): EChartsCoreOption {
-  const { times, futures, lines, formatValue, formatPrice, showFutures } = input;
+  const { times, futures, lines, formatValue, formatPrice, valueAxisName } = input;
+  const { referenceLine, showFutures } = input;
+  const axisName = { color: theme.axis, fontSize: 11, fontWeight: 600 as const };
 
   return {
     backgroundColor: 'transparent',
-    // Room on the right for the end labels; they sit outside the plot area and
-    // are the whole point of the layout, so the grid has to yield to them.
-    grid: { left: 8, right: 76, top: 16, bottom: 8, containLabel: true },
+    // Generous top and bottom margins. The cramped version had labels touching
+    // the plot edge, which is most of what separates a chart that looks
+    // considered from one that looks emitted.
+    grid: { left: 8, right: 80, top: 36, bottom: 24, containLabel: true },
     tooltip: {
       trigger: 'axis',
-      axisPointer: { type: 'line', lineStyle: { color: theme.axis, type: 'dashed' } },
+      // Biggest first: with five lines crossing each other, reading the tooltip
+      // in series order means hunting for the one you are pointing at.
+      order: 'valueDesc',
+      axisPointer: {
+        type: 'line',
+        lineStyle: { color: theme.axis, type: 'dashed', width: 1 },
+        label: {
+          backgroundColor: theme.tooltipBg,
+          borderColor: theme.grid,
+          borderWidth: 1,
+          color: theme.tooltipText
+        }
+      },
       appendTo: 'body',
       backgroundColor: theme.tooltipBg,
       borderColor: theme.grid,
-      textStyle: { color: theme.tooltipText, fontSize: 12 }
+      textStyle: { color: theme.tooltipText, fontSize: 12 },
+      padding: [8, 12]
     },
     xAxis: {
       type: 'category',
@@ -90,6 +110,8 @@ export function buildMultiSeriesOption(
       axisLabel: {
         color: theme.axis,
         fontSize: 11,
+        // Breathing room between the labels and the axis line.
+        margin: 12,
         // Let ECharts thin the labels itself; a 375-point session cannot show
         // every one, and forcing `interval: 0` would overprint them.
         hideOverlap: true
@@ -100,13 +122,29 @@ export function buildMultiSeriesOption(
         type: 'value',
         scale: true,
         position: 'left',
-        splitLine: { lineStyle: { color: theme.grid } },
+        // Named at the top rather than rotated up the side: a rotated title
+        // costs horizontal room the plot needs more, and this chart is wide.
+        name: 'Future',
+        nameLocation: 'end',
+        nameGap: 14,
+        nameTextStyle: { ...axisName, align: 'left' },
+        axisLine: { show: false },
+        axisTick: { show: false },
+        // Dashed and faint. Gridlines are for reading a value off, not for
+        // looking at, and solid rules compete with the series for attention.
+        splitLine: { lineStyle: { color: theme.grid, type: 'dashed' } },
         axisLabel: { color: theme.axis, fontSize: 11, formatter: formatPrice }
       },
       {
         type: 'value',
         scale: true,
         position: 'right',
+        name: valueAxisName,
+        nameLocation: 'end',
+        nameGap: 14,
+        nameTextStyle: { ...axisName, align: 'right' },
+        axisLine: { show: false },
+        axisTick: { show: false },
         // Only the price axis draws split lines. Two sets of horizontal rules at
         // different intervals reads as a moiré and neither is followable.
         splitLine: { show: false },
@@ -115,7 +153,8 @@ export function buildMultiSeriesOption(
     ],
     series: [
       ...(showFutures ? [futuresSeries(futures, theme, formatPrice)] : []),
-      ...lines.map((line) => contractSeries(line, formatValue))
+      ...lines.map((line) => contractSeries(line, formatValue)),
+      ...(referenceLine ? [markerSeries(referenceLine, theme)] : [])
     ]
   };
 }
@@ -140,11 +179,16 @@ function futuresSeries(
     z: 1,
     data: values,
     showSymbol: false,
+    smooth: false,
     // Bridges the gap left by the reconstructed 09:15 frame, which has no
     // recorded price. Breaking the line there would imply the future stopped
     // trading rather than that we started watching late.
     connectNulls: true,
-    lineStyle: { width: 1, type: 'dashed', color: withAlpha(theme.axis, 0.9) },
+    lineStyle: { width: 1.25, type: 'dashed', color: withAlpha(theme.axis, 0.75) },
+    // Never dimmed when another series is hovered: it is the reference every
+    // other line is read against, so losing it defeats the isolation.
+    emphasis: { disabled: true },
+    blur: { lineStyle: { opacity: 0.75 } },
     tooltip: {
       valueFormatter: (value: number | null) => (value == null ? '—' : formatPrice(value))
     }
@@ -160,9 +204,21 @@ function contractSeries(line: SeriesLine, formatValue: (value: number) => string
     z: 2,
     data: line.values,
     showSymbol: false,
+    // A dot appears under the crosshair, so a reading can be pinpointed without
+    // 375 symbols cluttering the line the rest of the time.
+    symbol: 'circle',
+    symbolSize: 6,
     connectNulls: true,
-    lineStyle: { width: 1.5, color: line.color },
+    // Straight segments, never smoothed. A spline through open-interest points
+    // draws values between captures that were never recorded, and the overshoot
+    // it invents at a turn is exactly where someone would read a peak.
+    smooth: false,
+    lineStyle: { width: 2, color: line.color },
     itemStyle: { color: line.color },
+    // Hovering one line fades the rest. With five contracts crossing repeatedly
+    // this is the difference between a readable chart and a tangle.
+    emphasis: { focus: 'series', lineStyle: { width: 3 } },
+    blur: { lineStyle: { opacity: 0.15 } },
     // The value tag pinned past the right edge. The latest reading is what
     // anyone reads first on an intraday chart, and hunting for the end of a
     // line among five to find it is the thing this removes.
@@ -170,9 +226,11 @@ function contractSeries(line: SeriesLine, formatValue: (value: number) => string
       show: true,
       color: '#fff',
       backgroundColor: line.color,
-      padding: [2, 4],
-      borderRadius: 2,
+      padding: [3, 6],
+      borderRadius: 3,
       fontSize: 11,
+      fontWeight: 600,
+      distance: 6,
       formatter: (params: { value: number | null }) =>
         params.value == null ? '' : formatValue(params.value)
     },
@@ -183,6 +241,36 @@ function contractSeries(line: SeriesLine, formatValue: (value: number) => string
     labelLayout: { moveOverlap: 'shiftY' },
     tooltip: {
       valueFormatter: (value: number | null) => (value == null ? '—' : formatValue(value))
+    }
+  };
+}
+
+/**
+ * A horizontal marker on the value axis — PCR = 1, say.
+ *
+ * Carried by its own empty series rather than hung off a data series, so hiding
+ * a line from the legend cannot take the reference with it. The reference is
+ * the thing the lines are read *against*; it has to outlive them.
+ */
+function markerSeries(reference: { value: number; label: string }, theme: ChartTheme) {
+  return {
+    id: 'reference',
+    type: 'line',
+    yAxisIndex: 1,
+    data: [],
+    silent: true,
+    markLine: {
+      silent: true,
+      symbol: 'none',
+      data: [{ yAxis: reference.value }],
+      lineStyle: { color: withAlpha(theme.marker, 0.7), type: 'dashed', width: 1 },
+      label: {
+        formatter: reference.label,
+        position: 'insideEndTop',
+        color: theme.marker,
+        fontSize: 10,
+        fontWeight: 600
+      }
     }
   };
 }

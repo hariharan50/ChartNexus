@@ -225,11 +225,78 @@ const HOUR_LABEL = new Intl.DateTimeFormat('en-US', {
   hour12: true
 });
 
+/** Minutes past IST midnight for an instant. */
+function istMinutes(iso: string): number {
+  const at = new Date(iso);
+  const ist = new Date(at.getTime() + (330 + at.getTimezoneOffset()) * 60_000);
+  return ist.getHours() * 60 + ist.getMinutes();
+}
+
 /** IST half-hour bucket for an instant — `hour * 2`, plus one past the half. */
 function halfHour(iso: string): number {
-  const parts = new Date(iso);
-  const ist = new Date(parts.getTime() + (330 + parts.getTimezoneOffset()) * 60_000);
-  return ist.getHours() * 2 + (ist.getMinutes() >= 30 ? 1 : 0);
+  const minutes = istMinutes(iso);
+  return Math.floor(minutes / 60) * 2 + (minutes % 60 >= 30 ? 1 : 0);
+}
+
+/** 09:15 and 15:30 IST, as minutes past midnight. */
+const SESSION_OPEN_MIN = 9 * 60 + 15;
+const SESSION_CLOSE_MIN = 15 * 60 + 30;
+const SESSION_SPAN_MIN = SESSION_CLOSE_MIN - SESSION_OPEN_MIN;
+
+/** Where an instant sits on a track spanning 09:15–15:30 IST, 0–100. */
+function sessionPct(iso: string): number {
+  const offset = ((istMinutes(iso) - SESSION_OPEN_MIN) / SESSION_SPAN_MIN) * 100;
+  // Clamped rather than dropped: a capture a minute either side of the bell is
+  // a real observation, and it belongs at the end of the track, not off it.
+  return Math.min(100, Math.max(0, offset));
+}
+
+/**
+ * Each frame's position on a **session-length** track, as a percentage.
+ *
+ * The counterpart to {@link axisTicks}'s index positioning, and the right
+ * choice when the question is "what did the book look like at this time"
+ * rather than "what changed between these two snapshots". Index positioning
+ * stretches whatever was recorded across the full width, so a session that
+ * only started archiving at 1 pm draws a track labelled 1 pm to 3 pm and
+ * silently reads as a whole trading day. On a session track the same data
+ * occupies the right-hand third, and the empty left-hand two-thirds is the
+ * honest picture: there is no morning.
+ */
+export function sessionPositions(times: readonly string[]): number[] {
+  return times.map(sessionPct);
+}
+
+/**
+ * Hour marks across the whole trading session, at their clock positions.
+ *
+ * Fixed geometry — it does not depend on what was recorded, which is the
+ * point: the track means the same thing on a full day and on a day whose
+ * ingest started late.
+ *
+ * The hour names are built arithmetically rather than through `Intl`. These
+ * are IST wall-clock hours with no instant behind them, and manufacturing a
+ * `Date` to format is how an off-by-one timezone bug gets into a label that
+ * only ever needed "10 am".
+ */
+export function sessionTicks(): SliderTick[] {
+  // The bell and the close get a mark but no text: the caller renders both
+  // times either side of the track, and at 375px "9:15 am" and "10 am" are
+  // 45px apart — they overprint into `9:15 am10 am`.
+  const ticks: SliderTick[] = [{ index: SESSION_OPEN_MIN, pct: 0, label: null }];
+
+  for (let hour = 10; hour <= 15; hour++) {
+    const minutes = hour * 60;
+    if (minutes <= SESSION_OPEN_MIN || minutes >= SESSION_CLOSE_MIN) continue;
+    ticks.push({
+      index: minutes,
+      pct: ((minutes - SESSION_OPEN_MIN) / SESSION_SPAN_MIN) * 100,
+      label: `${hour > 12 ? hour - 12 : hour} ${hour < 12 ? 'am' : 'pm'}`
+    });
+  }
+
+  ticks.push({ index: SESSION_CLOSE_MIN, pct: 100, label: null });
+  return ticks;
 }
 
 /**
@@ -253,7 +320,12 @@ function halfHour(iso: string): number {
  */
 const MIN_LABEL_GAP_PCT = 7;
 
-export function axisTicks(series: OiSeriesFrame[]): SliderTick[] {
+/**
+ * Typed on the timestamp alone, not on `OiSeriesFrame`: every Options Lab tool
+ * scrubs a session, and the tick geometry is the same whether the frames carry
+ * open interest, gamma or nothing but a clock.
+ */
+export function axisTicks(series: readonly { t: string }[]): SliderTick[] {
   if (series.length < 2) return [];
 
   const span = series.length - 1;

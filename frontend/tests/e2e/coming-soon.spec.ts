@@ -7,7 +7,6 @@ import { expect, test } from '@playwright/test';
  */
 
 const PAGES: Array<{ path: string; heading: string; title?: string }> = [
-  { path: '/analyse', heading: 'Analyse' },
   { path: '/smart-insights', heading: 'Smart Insights' },
 
   { path: '/future-lab', heading: 'Future Lab' },
@@ -44,11 +43,6 @@ const PAGES: Array<{ path: string; heading: string; title?: string }> = [
     title: 'ATM Straddle Chart · MarketCompass'
   },
   {
-    path: '/options/gamma-exposure',
-    heading: 'Gamma Exposure',
-    title: 'Gamma Exposure · MarketCompass'
-  },
-  {
     path: '/options/intraday-booster',
     heading: 'Intraday Booster',
     title: 'Intraday Booster · MarketCompass'
@@ -65,7 +59,6 @@ const PAGES: Array<{ path: string; heading: string; title?: string }> = [
     heading: 'IV - Intraday',
     title: 'IV - Intraday · MarketCompass'
   },
-  { path: '/options/max-pain', heading: 'Max Pain', title: 'Max Pain · MarketCompass' },
   {
     path: '/options/multi-straddle',
     heading: 'Multi-Straddle Chart',
@@ -82,7 +75,6 @@ const PAGES: Array<{ path: string; heading: string; title?: string }> = [
     heading: 'Option Triggers',
     title: 'Option Triggers · MarketCompass'
   },
-  { path: '/options/pcr', heading: 'Put-Call Ratio', title: 'Put-Call Ratio · MarketCompass' },
   {
     path: '/options/pe-ce-difference',
     heading: 'PE-CE Difference',

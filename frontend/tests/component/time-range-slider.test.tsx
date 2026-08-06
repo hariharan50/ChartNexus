@@ -1,7 +1,7 @@
 import { render } from '@testing-library/react';
 import { act } from 'react';
 import { beforeAll, describe, expect, it, vi } from 'vitest';
-import TimeRangeSlider from '../../app/routes/terminal/options/open-interest/components/TimeRangeSlider';
+import TimeRangeSlider from '../../app/routes/terminal/options/components/TimeRangeSlider';
 
 /**
  * Proves the drag gesture actually reaches the callbacks.

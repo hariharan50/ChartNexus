@@ -50,7 +50,6 @@ export default function OptionsIndex() {
   const pcrVol = useMemo(() => (chain ? pcrByVolume(chain) : Number.NaN), [chain]);
 
   const provenance = chain?.provenance;
-  const clock = statusQ.data?.time_ist ?? '—';
   const isLive = statusQ.data?.is_open ?? false;
 
   const writer = ((): { label: string; pill: string; tone: 'bullish' | 'bearish' | 'neutral' } => {
@@ -80,7 +79,7 @@ export default function OptionsIndex() {
           {provenance ? (
             <DataSourceBadge source={provenance.source} ageSeconds={provenance.age_seconds} />
           ) : null}
-          <LiveBadge time={clock} live={isLive} />
+          <LiveBadge live={isLive} />
         </div>
       </header>
 

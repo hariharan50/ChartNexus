@@ -16,7 +16,13 @@ import s from './SeriesChart.module.css';
  */
 interface Props {
   title: string;
+  /** One line under the title saying what the chart is for. */
+  subtitle: string;
   icon: ReactNode;
+  /** What the right axis measures. */
+  valueAxisName: string;
+  /** A horizontal marker on the value axis, e.g. PCR = 1. */
+  referenceLine?: { value: number; label: string } | undefined;
   lines: SeriesLine[];
   times: string[];
   futures: (number | null)[];
@@ -24,18 +30,30 @@ interface Props {
   formatPrice: (value: number) => string;
   /** Charts sharing a group id share one crosshair. */
   group: string;
+  /**
+   * Draw only up to this index — the replay head.
+   *
+   * Truncating here rather than in the caller keeps the head out of the route's
+   * per-chart `useMemo` dependency lists, so a sweep re-derives one option
+   * object per frame instead of every series array on the page.
+   */
+  head?: number | undefined;
   empty?: string;
 }
 
 export default function SeriesChart({
   title,
+  subtitle,
   icon,
+  valueAxisName,
+  referenceLine,
   lines,
   times,
   futures,
   formatValue,
   formatPrice,
   group,
+  head,
   empty
 }: Props) {
   const [hidden, setHidden] = useState<Set<string>>(() => new Set());
@@ -50,15 +68,44 @@ export default function SeriesChart({
     });
   }
 
-  const visible = useMemo(() => lines.filter((line) => !hidden.has(line.id)), [lines, hidden]);
+  const shown = useMemo(() => (head === undefined ? lines : truncate(lines, head)), [lines, head]);
+  const shownTimes = useMemo(
+    () => (head === undefined ? times : times.slice(0, head + 1)),
+    [times, head]
+  );
+  const shownFutures = useMemo(
+    () => (head === undefined ? futures : futures.slice(0, head + 1)),
+    [futures, head]
+  );
+
+  const visible = useMemo(() => shown.filter((line) => !hidden.has(line.id)), [shown, hidden]);
 
   const option = useMemo(
     () =>
       buildMultiSeriesOption(
-        { times, futures, lines: visible, formatValue, formatPrice, showFutures: futuresOn },
+        {
+          times: shownTimes,
+          futures: shownFutures,
+          lines: visible,
+          formatValue,
+          formatPrice,
+          valueAxisName,
+          referenceLine,
+          showFutures: futuresOn
+        },
         theme
       ),
-    [times, futures, visible, formatValue, formatPrice, futuresOn, theme]
+    [
+      shownTimes,
+      shownFutures,
+      visible,
+      formatValue,
+      formatPrice,
+      valueAxisName,
+      referenceLine,
+      futuresOn,
+      theme
+    ]
   );
 
   return (
@@ -69,6 +116,7 @@ export default function SeriesChart({
         </span>{' '}
         {title}
       </h2>
+      <p className={s.subtitle}>{subtitle}</p>
 
       <div className={s.legend}>
         <button
@@ -99,7 +147,7 @@ export default function SeriesChart({
         })}
       </div>
 
-      {times.length === 0 ? (
+      {shownTimes.length === 0 ? (
         <p className={s.empty}>{empty ?? 'No intraday history recorded yet.'}</p>
       ) : (
         <EChart option={option} className={s.chart} group={group} />
@@ -122,4 +170,9 @@ function Eye({ on }: { on: boolean }) {
       {!on ? <path d="M2 14 14 2" stroke="currentColor" strokeWidth="1.3" /> : null}
     </svg>
   );
+}
+
+/** The visible slice of every line, up to and including `head`. */
+function truncate(lines: SeriesLine[], head: number): SeriesLine[] {
+  return lines.map((line) => ({ ...line, values: line.values.slice(0, head + 1) }));
 }

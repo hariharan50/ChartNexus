@@ -5,7 +5,7 @@ import { cx } from '$shared/ui/cx';
 import IconChart from '$shared/ui/icons/IconChart';
 import IconChevronDown from '$shared/ui/icons/IconChevronDown';
 import ContractPicker from './components/ContractPicker';
-import SeriesChart from './components/SeriesChart';
+import SeriesChart from '../components/SeriesChart';
 import {
   contractLabel,
   DEFAULT_INTERVAL,
@@ -39,13 +39,27 @@ const INSTRUMENTS = [
 /** Charts sharing this group share one crosshair. */
 const CHART_GROUP = 'multi-oi';
 
+type StrikeSourceId = 'volume' | 'oi' | 'custom';
+
+/** Order matters — this is the sidebar's reading order. */
+const SOURCES: { id: StrikeSourceId; title: string; hint: string }[] = [
+  { id: 'volume', title: 'High Volume', hint: 'No volume recorded yet' },
+  { id: 'oi', title: 'High OI', hint: 'No open interest recorded yet' },
+  { id: 'custom', title: 'Custom Strikes', hint: 'Nothing picked yet — press Edit' }
+];
+
 export default function MultiOiVolume() {
   const [instIdx, setInstIdx] = useState(0);
   const [interval, setInterval] = useState<Interval>(DEFAULT_INTERVAL);
   const [topN, setTopN] = useState(5);
   const [showNet, setShowNet] = useState(false);
-  /** Explicit picks, or `null` while the top-N defaults are in charge. */
-  const [customOi, setCustomOi] = useState<string[] | null>(null);
+  /**
+   * Where the plotted strikes come from. Exactly one source is live at a time —
+   * three independent selections feeding one pair of charts would leave no way
+   * to tell which set you were looking at.
+   */
+  const [source, setSource] = useState<StrikeSourceId>('oi');
+  const [customIds, setCustomIds] = useState<string[]>([]);
   const [picking, setPicking] = useState(false);
 
   const instrument = INSTRUMENTS[instIdx] ?? INSTRUMENTS[0]!;
@@ -54,7 +68,8 @@ export default function MultiOiVolume() {
     setInstIdx((current) => (current + delta + INSTRUMENTS.length) % INSTRUMENTS.length);
     // A strike that exists on NIFTY means nothing on BANKNIFTY, so an explicit
     // selection cannot survive an instrument change.
-    setCustomOi(null);
+    setCustomIds([]);
+    if (source === 'custom') setSource('oi');
   }
 
   const query = useQuery<OiSeriesView>({
@@ -71,10 +86,10 @@ export default function MultiOiVolume() {
   );
 
   // -- selection ------------------------------------------------------------
-  const oiIds = useMemo(
-    () => customOi ?? topByLatest(contracts, 'oi', topN),
-    [customOi, contracts, topN]
-  );
+  const oiIds = useMemo(() => {
+    if (source === 'custom') return customIds;
+    return topByLatest(contracts, source === 'volume' ? 'volume' : 'oi', topN);
+  }, [source, customIds, contracts, topN]);
 
   const oiPicked = useMemo(() => resolve(oiIds, byId), [oiIds, byId]);
 
@@ -191,18 +206,27 @@ export default function MultiOiVolume() {
                 </div>
               </div>
 
-              <PickerRow
-                title="Contracts"
-                count={topN}
-                onCount={(n) => {
-                  setTopN(n);
-                  setCustomOi(null);
-                }}
-                picked={oiPicked}
-                custom={customOi !== null}
-                onSelect={() => setPicking(true)}
-                onReset={() => setCustomOi(null)}
-              />
+              <p className={s.subLabel}>Strike selection</p>
+              {SOURCES.map((entry) => (
+                <StrikeSource
+                  key={entry.id}
+                  title={entry.title}
+                  hint={entry.hint}
+                  active={source === entry.id}
+                  countable={entry.id !== 'custom'}
+                  count={topN}
+                  onCount={setTopN}
+                  picked={source === entry.id ? oiPicked : []}
+                  onActivate={() => {
+                    // Custom Strikes only goes live on Apply. Switching on the
+                    // way *into* the picker would empty the charts behind the
+                    // modal and leave them empty if you then cancelled.
+                    if (entry.id === 'custom') setPicking(true);
+                    else setSource(entry.id);
+                  }}
+                  onEdit={() => setPicking(true)}
+                />
+              ))}
 
               <label className={s.netToggle}>
                 <input
@@ -229,7 +253,9 @@ export default function MultiOiVolume() {
 
             <SeriesChart
               title="MultiStrike OI"
+              subtitle="Total open interest held on each contract through the session."
               icon={<IconChart />}
+              valueAxisName="Open interest"
               lines={oiLines}
               times={times}
               futures={futures}
@@ -239,7 +265,9 @@ export default function MultiOiVolume() {
             />
             <SeriesChart
               title="MultiStrike OI Change"
+              subtitle="Positions added or closed since the 9:15 open — where today's flow went."
               icon={<IconChart />}
+              valueAxisName="OI change"
               lines={changeLines}
               times={times}
               futures={futures}
@@ -265,7 +293,8 @@ export default function MultiOiVolume() {
           selected={oiIds}
           title="Choose contracts"
           onApply={(ids) => {
-            setCustomOi(ids);
+            setCustomIds(ids);
+            setSource('custom');
             setPicking(false);
           }}
           onClose={() => setPicking(false)}
@@ -275,33 +304,41 @@ export default function MultiOiVolume() {
   );
 }
 
-/** One sidebar picker: a top-N count, the coloured chips, and a Select button. */
-function PickerRow({
+/**
+ * One way of choosing which strikes the charts plot.
+ *
+ * Only the live source shows its chips; the others collapse to a Select button.
+ * Three expanded lists of five strikes would fill the sidebar with contracts
+ * that are not on the chart, and nothing on screen would say which set was.
+ */
+function StrikeSource({
   title,
+  hint,
+  active,
+  countable,
   count,
   onCount,
   picked,
-  custom,
-  onSelect,
-  onReset
+  onActivate,
+  onEdit
 }: {
   title: string;
+  hint: string;
+  active: boolean;
+  countable: boolean;
   count: number;
   onCount: (n: number) => void;
   picked: ContractSeries[];
-  custom: boolean;
-  onSelect: () => void;
-  onReset: () => void;
+  onActivate: () => void;
+  onEdit: () => void;
 }) {
   return (
-    <div className={s.picker}>
-      <div className={s.pickerHead}>
-        <span className={s.pickerTitle}>{title}</span>
-        {custom ? (
-          <button type="button" className={s.link} onClick={onReset}>
-            Reset
-          </button>
-        ) : (
+    /* Named so it is a labelled group rather than an anonymous box: three
+       stacked sections of controls are exactly what a landmark name is for. */
+    <section className={cx(s.source, active && s.sourceActive)} aria-label={title}>
+      <div className={s.sourceHead}>
+        <span className={s.sourceTitle}>{title}</span>
+        {active && countable ? (
           <select
             className={s.selectNative}
             aria-label={`${title} count`}
@@ -314,21 +351,31 @@ function PickerRow({
               </option>
             ))}
           </select>
-        )}
-        <button type="button" className={s.link} onClick={onSelect}>
-          Select
-        </button>
+        ) : null}
+        {active && !countable ? (
+          <button type="button" className={s.link} onClick={onEdit}>
+            Edit
+          </button>
+        ) : null}
+        {!active ? (
+          <button type="button" className={s.link} onClick={onActivate}>
+            Select
+          </button>
+        ) : null}
       </div>
-      <div className={s.chips}>
-        {picked.map((contract, index) => (
-          <span key={contract.id} className={s.chip}>
-            <i className={s.swatch} style={{ background: seriesColor(index) }} />
-            {contractLabel(contract)}
-          </span>
-        ))}
-        {picked.length === 0 ? <span className={s.chipEmpty}>Nothing to plot yet</span> : null}
-      </div>
-    </div>
+
+      {active ? (
+        <div className={s.chips}>
+          {picked.map((contract, index) => (
+            <span key={contract.id} className={s.chip}>
+              <i className={s.swatch} style={{ background: seriesColor(index) }} />
+              {contractLabel(contract)}
+            </span>
+          ))}
+          {picked.length === 0 ? <span className={s.chipEmpty}>{hint}</span> : null}
+        </div>
+      ) : null}
+    </section>
   );
 }
 

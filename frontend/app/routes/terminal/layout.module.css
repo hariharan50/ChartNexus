@@ -65,7 +65,15 @@
 /* Targeted by class, not as `.terminal nav`. Svelte scoped this block to the
    elements in *this* component's template; a descendant selector would also
    catch the settings sub-layout's <nav>, which is nested inside .terminal. */
-.primary-nav ul {
+/* Direct child, not a descendant.
+   As a descendant this also matched the `<ul>` inside every mega-menu column,
+   handing them `align-items: center` — which the panels' own `.col ul` sets a
+   direction on but never realigns. The result was menu items centred in their
+   column, so each one started at a different x depending on how long its label
+   was. Same trap as the `.terminal nav { display: none }` rule that once hid the
+   settings sub-nav: a descendant selector reaches into nested components in a
+   way Svelte's scoping never allowed. */
+.primary-nav > ul {
   display: flex;
   align-items: center;
   gap: 0.375rem;
@@ -415,7 +423,9 @@
     padding: 0.4375rem 0.5rem;
   }
 
-  .primary-nav ul {
+  /* Direct child for the same reason as the base rule — as a descendant this
+     also flattened the gap between items inside the mega-menu columns. */
+  .primary-nav > ul {
     gap: 0;
   }
 }

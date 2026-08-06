@@ -8,6 +8,14 @@
 export interface ChartTheme {
   /** Axis lines and tick labels. */
   axis: string;
+  /**
+   * The app's interactive blue, tuned per theme for contrast.
+   *
+   * For the one thing a chart is picking out — the active zone on the Max Pain
+   * gauge. A literal blue would fail contrast on the light and warm themes,
+   * which is exactly what a token exists to prevent.
+   */
+  accent: string;
   /** Grid split lines and axis borders. */
   grid: string;
   tooltipBg: string;

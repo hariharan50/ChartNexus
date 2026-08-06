@@ -11,11 +11,14 @@ that layer can label the result honestly.
 
 from __future__ import annotations
 
+from datetime import timedelta
 from typing import Protocol
 
 from marketcompass.contexts.broker_connections.domain.value_objects import BrokerCredentials
 from marketcompass.contexts.market_data.domain.instruments import InstrumentSymbol
 from marketcompass.contexts.market_data.domain.market_data import (
+    CandleInterval,
+    CandleSeries,
     DataSource,
     ExpiryList,
     FuturesQuote,
@@ -29,6 +32,7 @@ from marketcompass.infrastructure.brokers.futures_contract import (
 )
 from marketcompass.infrastructure.brokers.fyers import (
     futures_mapper,
+    history_mapper,
     option_chain_mapper,
     quote_mapper,
 )
@@ -173,6 +177,31 @@ class FyersMarketDataProvider:
             instrument=instrument,
             expiries=chain.expiries or (chain.expiry,),
             provenance=Provenance(source=DataSource.LIVE, fetched_at=self._clock.now()),
+        )
+
+    async def get_history(
+        self, instrument: InstrumentSymbol, interval: CandleInterval, days: int
+    ) -> CandleSeries:
+        symbol = to_broker_symbol(instrument)
+        await self._quota.acquire(self._credentials.app_id)
+
+        now = self._clock.now()
+        # Inclusive on both ends, so `days=1` is today rather than nothing.
+        range_from = (now.date() - timedelta(days=max(0, days - 1))).isoformat()
+
+        payload = await self._guarded(
+            lambda: self._rest.fetch_history(
+                app_id=self._credentials.app_id,
+                access_token=self._access_token,
+                symbol=symbol,
+                resolution=history_mapper.to_resolution(interval),
+                range_from=range_from,
+                range_to=now.date().isoformat(),
+            ),
+            description=f"history:{instrument.value}:{interval.value}",
+        )
+        return history_mapper.to_candle_series(
+            payload, instrument=instrument, interval=interval, fetched_at=now
         )
 
     async def _guarded(self, operation, *, description: str):  # type: ignore[no-untyped-def]

@@ -15,15 +15,18 @@ from marketcompass.contexts.market_data.api.dependencies import Services
 from marketcompass.contexts.market_data.api.schemas import (
     ExpiriesResponse,
     FuturesQuoteResponse,
+    HistoryResponse,
     MarketStatusResponse,
     OptionChainResponse,
     QuoteResponse,
 )
 from marketcompass.contexts.market_data.application.queries import (
+    HistoryQuery,
     OptionChainQuery,
     QuoteQuery,
 )
 from marketcompass.contexts.market_data.domain.instruments import InstrumentSymbol
+from marketcompass.contexts.market_data.domain.market_data import CandleInterval
 from marketcompass.infrastructure.transport.http.dependencies import CurrentPrincipal
 
 router = APIRouter(prefix="/market", tags=["market data"])
@@ -105,6 +108,35 @@ async def option_chain(
         )
     )
     return OptionChainResponse.of(chain)
+
+
+@router.get(
+    "/history",
+    response_model=HistoryResponse,
+    summary="Price history as OHLC candles",
+    description=(
+        "Bars for the requested interval, oldest first. `days` is clamped to "
+        "what the interval supports — a year of one-minute bars is not a slow "
+        "request, it is one the broker rejects."
+    ),
+    responses={422: {"description": "Unknown instrument or interval"}},
+)
+async def history(
+    principal: CurrentPrincipal,
+    services: Services,
+    instrument: InstrumentParam = "NIFTY",
+    interval: Annotated[CandleInterval, Query(description="Bar size")] = CandleInterval.M5,
+    days: Annotated[int, Query(ge=1, le=365, description="Trading days to cover")] = 5,
+) -> HistoryResponse:
+    series = await services.history(
+        HistoryQuery(
+            tenant_id=principal.tenant_id,
+            instrument=InstrumentSymbol.parse(instrument),
+            interval=interval,
+            days=days,
+        )
+    )
+    return HistoryResponse.of(series)
 
 
 @router.get(

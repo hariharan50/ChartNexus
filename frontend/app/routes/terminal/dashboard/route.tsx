@@ -18,6 +18,7 @@ import FiiDiiCard from './components/FiiDiiCard';
 import IndexCard from './components/IndexCard';
 import IndexTabs from './components/IndexTabs';
 import LiveBadge from './components/LiveBadge';
+import MarketPhase from './components/MarketPhase';
 import OptionChainCard from './components/OptionChainCard';
 import OptionsMetricsCard from './components/OptionsMetricsCard';
 import QuickActionsCard from './components/QuickActionsCard';
@@ -63,7 +64,6 @@ export default function Dashboard() {
 
   // Provenance for the source badge: prefer the chain, fall back to status.
   const provenance = chain?.provenance;
-  const clock = statusQ.data?.time_ist ?? '—';
   const isLive = statusQ.data?.is_open ?? false;
 
   return (
@@ -78,9 +78,11 @@ export default function Dashboard() {
           {provenance ? (
             <DataSourceBadge source={provenance.source} ageSeconds={provenance.age_seconds} />
           ) : null}
-          <LiveBadge time={clock} live={isLive} />
+          <LiveBadge live={isLive} />
         </div>
       </header>
+
+      <MarketPhase />
 
       <div className={s.indices}>
         {indices.map((quote) => (

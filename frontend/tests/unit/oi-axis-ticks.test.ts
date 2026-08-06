@@ -1,6 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import {
   axisTicks,
+  sessionPositions,
+  sessionTicks,
   type OiSeriesFrame
 } from '../../app/routes/terminal/options/open-interest/oi-data';
 
@@ -125,5 +127,66 @@ describe('label crowding', () => {
       .filter((l): l is string => l !== null);
 
     expect(labels).toEqual(['9 am', '10 am', '11 am', '12 pm', '1 pm', '2 pm', '3 pm']);
+  });
+});
+
+/**
+ * The session-length track, used where the question is "what did the book look
+ * like at this time" rather than "what changed between these two snapshots".
+ *
+ * Its whole reason to exist is the case `axisTicks` cannot express: a day whose
+ * ingest started late. Index positioning stretches those frames across the full
+ * width and draws a two-hour afternoon as a complete trading day.
+ */
+describe('sessionPositions', () => {
+  it('places the bell at the left edge and the close at the right', () => {
+    expect(sessionPositions([ist(9, 15), ist(15, 30)])).toEqual([0, 100]);
+  });
+
+  it('places a frame by the clock, not by how many frames precede it', () => {
+    // 11:45 is 150 minutes into a 375-minute session — 40% along, whatever the
+    // ingest cadence was, and whether or not it was the second frame recorded.
+    const [, mid] = sessionPositions([ist(9, 15), ist(11, 45), ist(15, 30)]);
+    const [, denser] = sessionPositions([ist(9, 15), ist(11, 45), ist(12, 0), ist(15, 30)]);
+
+    expect(mid).toBeCloseTo(40, 6);
+    expect(denser).toBe(mid);
+  });
+
+  it('leaves the morning empty when recording started at lunchtime', () => {
+    // The case the user hit: ingest began at 1:01 pm. On an index track this
+    // frame would sit at 0 and the timeline would claim to start there.
+    const [first] = sessionPositions([ist(13, 1), ist(15, 28)]);
+
+    expect(first).toBeGreaterThan(60);
+  });
+
+  it('clamps a capture either side of the bell rather than dropping it', () => {
+    // A pre-open or post-close capture is a real observation; it belongs at the
+    // end of the track, not off it.
+    expect(sessionPositions([ist(9, 0), ist(15, 45)])).toEqual([0, 100]);
+  });
+});
+
+describe('sessionTicks', () => {
+  it('names every hour inside the session', () => {
+    const labels = sessionTicks()
+      .map((tick) => tick.label)
+      .filter((label): label is string => label !== null);
+
+    expect(labels).toEqual(['10 am', '11 am', '12 pm', '1 pm', '2 pm', '3 pm']);
+  });
+
+  it('marks the bell and the close without labelling them', () => {
+    // The caller prints both times either side of the track; at 375px
+    // "9:15 am" and "10 am" would overprint.
+    const ticks = sessionTicks();
+
+    expect(ticks[0]).toMatchObject({ pct: 0, label: null });
+    expect(ticks[ticks.length - 1]).toMatchObject({ pct: 100, label: null });
+  });
+
+  it('is fixed geometry, so the track means the same on every day', () => {
+    expect(sessionTicks()).toEqual(sessionTicks());
   });
 });

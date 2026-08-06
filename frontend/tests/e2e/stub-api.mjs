@@ -263,6 +263,186 @@ function oiSeriesView(symbol, interval) {
   };
 }
 
+/**
+ * The Put-Call Ratio payload: chain-wide totals at the capture cadence.
+ *
+ * Deliberately carries one `null` PCR point. A ratio with no call interest is
+ * undefined, and the whole path — resampling, the chart, the tooltip — has to
+ * carry that through rather than quietly rendering 0 and drawing a floor.
+ */
+function pcrSeriesView(symbol) {
+  const chain = optionChain(symbol in SPOTS ? symbol : 'NIFTY');
+  const spot = Number.parseFloat(chain.spot_price);
+  const step = symbol === 'SENSEX' ? 100 : 50;
+
+  const t = [];
+  const fut = [];
+  const pcr = [];
+  const callOi = [];
+  const putOi = [];
+  const callChg = [];
+  const putChg = [];
+
+  for (let frame = 0; frame < FRAME_COUNT; frame += 1) {
+    t.push(new Date(SESSION_OPEN_MS + frame * FRAME_MS).toISOString());
+    fut.push(
+      frame === 0 ? null : Math.round((spot + step * 0.6 * Math.sin(frame / 9)) * 100) / 100
+    );
+
+    const calls = 100_000_000 + frame * 240_000;
+    const puts = 92_000_000 + frame * 310_000;
+    callOi.push(calls);
+    putOi.push(puts);
+    callChg.push(frame * 240_000);
+    putChg.push(frame * 310_000);
+    // One undefined ratio mid-session, standing in for a chain with no calls.
+    pcr.push(frame === 40 ? null : Math.round((puts / calls) * 10_000) / 10_000);
+  }
+
+  return {
+    instrument_id: '1',
+    symbol,
+    expiry_date: '2026-01-29',
+    lot_size: symbol === 'BANKNIFTY' ? 15 : 75,
+    open_ts: t[0],
+    now_ts: t[t.length - 1],
+    data_quality: 'intraday',
+    open_is_estimated: false,
+    t,
+    fut,
+    pcr,
+    call_oi: callOi,
+    put_oi: putOi,
+    call_oi_chg: callChg,
+    put_oi_chg: putChg
+  };
+}
+
+/**
+ * The Gamma Exposure payload: per-strike dealer gamma at the capture cadence.
+ *
+ * The profile is shaped, not random. Call gamma is deliberately piled two
+ * strikes above ATM and put gamma two below, so the call and put walls land on
+ * strikes a test can name; and the net profile runs negative below spot and
+ * positive above, so there is exactly one crossing near the money for the flip
+ * and the cross to find.
+ */
+function gexView(symbol) {
+  const chain = optionChain(symbol in SPOTS ? symbol : 'NIFTY');
+  const spot = Number.parseFloat(chain.spot_price);
+  const atm = Number.parseFloat(chain.atm_strike);
+  const step = symbol === 'SENSEX' ? 100 : 50;
+
+  const offsets = [];
+  for (let offset = -10; offset <= 10; offset += 1) offsets.push(offset);
+  const strikes = offsets.map((offset) => atm + offset * step);
+
+  const t = [];
+  const frames = [];
+
+  for (let frame = 0; frame < FRAME_COUNT; frame += 1) {
+    const at = new Date(SESSION_OPEN_MS + frame * FRAME_MS).toISOString();
+    t.push(at);
+
+    // Spot drifts through the session so a scrub visibly moves the markers.
+    const frameSpot = Math.round((spot + step * 0.4 * Math.sin(frame / 9)) * 100) / 100;
+    const callGex = [];
+    const putGex = [];
+
+    for (const offset of offsets) {
+      // A gamma hump centred on ATM, plus the two deliberate spikes.
+      const hump = Math.exp(-((offset / 4) ** 2));
+      const callSpike = offset === 2 ? 3 : 1;
+      const putSpike = offset === -2 ? 3 : 1;
+      // Calls concentrate above the money and puts below, which is what makes
+      // the net profile cross zero once, near spot.
+      const callWeight = offset >= 0 ? 1 : 0.25;
+      const putWeight = offset <= 0 ? 1 : 0.25;
+      callGex.push(Math.round(hump * callSpike * callWeight * 8_000) / 100);
+      putGex.push(-Math.round(hump * putSpike * putWeight * 8_000) / 100);
+    }
+
+    const net = callGex.map((value, i) => value + putGex[i]);
+    const abs = callGex.map((value, i) => Math.abs(value) + Math.abs(putGex[i]));
+
+    frames.push({
+      t: at,
+      spot: frameSpot,
+      atm,
+      call_gex: callGex,
+      put_gex: putGex,
+      net_total: Math.round(net.reduce((a, b) => a + b, 0) * 100) / 100,
+      abs_total: Math.round(abs.reduce((a, b) => a + b, 0) * 100) / 100,
+      call_wall: atm + 2 * step,
+      put_wall: atm - 2 * step,
+      gamma_flip: atm - step / 2,
+      net_cross: atm + step / 4
+    });
+  }
+
+  return {
+    instrument_id: '1',
+    symbol,
+    expiry_date: '2026-01-29',
+    lot_size: symbol === 'BANKNIFTY' ? 15 : 75,
+    spot: frames[frames.length - 1].spot,
+    atm_strike: atm,
+    open_ts: t[0],
+    now_ts: t[t.length - 1],
+    data_quality: 'intraday',
+    open_is_estimated: false,
+    iv_coverage: 1,
+    strikes,
+    t,
+    frames
+  };
+}
+
+/** How many model minutes one interval covers. */
+const CANDLE_MINUTES = { '1m': 1, '5m': 5, '15m': 15, '1h': 60, '1d': 375 };
+
+/**
+ * OHLC bars for the Analyse page.
+ *
+ * A deterministic saw around the instrument's spot — no clock and no
+ * randomness, because the parity suite pixel-compares against this payload.
+ * Each bar is a real high/low envelope around its open and close, so the
+ * candles have bodies and wicks rather than being flat lines.
+ */
+function historyView(symbol, interval, days) {
+  const spot = Number.parseFloat((SPOTS[symbol] ?? SPOTS.NIFTY).price);
+  const minutes = CANDLE_MINUTES[interval] ?? 5;
+  const perDay = Math.max(1, Math.floor(375 / minutes));
+
+  const candles = [];
+  const total = Math.min(400, perDay * days);
+
+  for (let i = 0; i < total; i += 1) {
+    const phase = (i / 24) * Math.PI * 2;
+    const open = spot + Math.sin(phase) * 60;
+    const close = spot + Math.sin(phase + 0.35) * 60;
+    const t = SESSION_OPEN_MS + i * minutes * 60_000;
+
+    candles.push({
+      time: new Date(t).toISOString(),
+      open: Math.round(open * 100) / 100,
+      high: Math.round((Math.max(open, close) + 18) * 100) / 100,
+      low: Math.round((Math.min(open, close) - 18) * 100) / 100,
+      close: Math.round(close * 100) / 100,
+      // Indices carry no turnover of their own; the page treats an all-zero
+      // series as "no volume" and hides the pane, which is worth exercising.
+      volume: 0
+    });
+  }
+
+  return {
+    instrument: symbol,
+    interval,
+    candles,
+    provenance: PROVENANCE
+  };
+}
+
 function send(res, status, body) {
   const payload = body === null ? '' : JSON.stringify(body);
   res.writeHead(status, {
@@ -338,6 +518,28 @@ const server = createServer((req, res) => {
 
   if (url.pathname === '/api/v1/market/option-chain') {
     return send(res, 200, optionChain(instrument));
+  }
+
+  if (url.pathname === '/api/v1/market/history') {
+    return send(
+      res,
+      200,
+      historyView(
+        instrument in SPOTS ? instrument : 'NIFTY',
+        url.searchParams.get('interval') ?? '5m',
+        Number.parseInt(url.searchParams.get('days') ?? '5', 10)
+      )
+    );
+  }
+
+  if (url.pathname.startsWith('/api/v1/options-lab/gex/')) {
+    const symbol = decodeURIComponent(url.pathname.split('/').pop() ?? 'NIFTY');
+    return send(res, 200, gexView(symbol));
+  }
+
+  if (url.pathname.startsWith('/api/v1/options-lab/pcr-series/')) {
+    const symbol = decodeURIComponent(url.pathname.split('/').pop() ?? 'NIFTY');
+    return send(res, 200, pcrSeriesView(symbol));
   }
 
   if (url.pathname.startsWith('/api/v1/options-lab/oi-series/')) {

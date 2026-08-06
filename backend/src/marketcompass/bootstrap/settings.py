@@ -233,7 +233,10 @@ class MarketSettings(_Section):
 
     timezone: str = "Asia/Kolkata"
     session_open: str = "09:15"
-    session_close: str = "15:30"
+    # 15:40, not the 15:30 cash close: from 3 August 2026 equity derivatives run
+    # ten minutes past it, and every consumer of this setting — market status,
+    # the ingest worker — is derivatives-facing.
+    session_close: str = "15:40"
     snapshot_interval_seconds: int = Field(default=180, ge=1)
     quote_staleness_seconds: int = Field(default=15, ge=1)
     # FYERS' option chain never includes IV/greeks, so ATM IV is back-solved

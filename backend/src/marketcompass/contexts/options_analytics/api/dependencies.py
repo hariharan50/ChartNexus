@@ -8,8 +8,10 @@ from typing import Annotated
 from fastapi import Depends, Request
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from marketcompass.contexts.options_analytics.application.gex_service import GetGex
 from marketcompass.contexts.options_analytics.application.oi_series_service import GetOiSeries
 from marketcompass.contexts.options_analytics.application.oi_service import GetOiView
+from marketcompass.contexts.options_analytics.application.pcr_series_service import GetPcrSeries
 from marketcompass.infrastructure.analytics.oi_chain_source import SqlAlchemySnapshotReader
 from marketcompass.infrastructure.brokers.oi_chain_provider import build_oi_chain_provider
 from marketcompass.infrastructure.transport.http.dependencies import (
@@ -22,6 +24,8 @@ from marketcompass.infrastructure.transport.http.dependencies import (
 class OptionsAnalyticsServices:
     oi_view: GetOiView
     oi_series: GetOiSeries
+    pcr_series: GetPcrSeries
+    gex: GetGex
 
 
 def build_options_analytics_services(
@@ -38,6 +42,12 @@ def build_options_analytics_services(
             strike_span=container.settings.market.snapshot_max_series_strikes,
         ),
         oi_series=GetOiSeries(provider=provider, snapshots=snapshots),
+        pcr_series=GetPcrSeries(provider=provider, snapshots=snapshots),
+        gex=GetGex(
+            provider=provider,
+            snapshots=snapshots,
+            strike_span=container.settings.market.snapshot_max_series_strikes,
+        ),
     )
 
 

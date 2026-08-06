@@ -1,7 +1,7 @@
-/* Matches Multi OI & Volume — see the note there. Width also means the ±20
-   strike ladder needs less horizontal scrolling before the y axis slides away. */
+/* Width here also means the ±20 strike ladder needs less horizontal scrolling
+   before the y axis slides out of view with it. */
 .page {
-  max-width: 140rem;
+  max-width: var(--mc-page-max);
   margin: 0 auto;
   padding: var(--mc-space-6);
 }

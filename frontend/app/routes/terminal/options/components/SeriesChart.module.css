@@ -10,9 +10,17 @@
   display: flex;
   align-items: center;
   gap: 0.375rem;
-  margin: 0 0 var(--mc-space-2);
+  margin: 0;
   font-size: var(--mc-text-base);
   font-weight: 700;
+}
+
+/* A line of context under the title, as the reference chart has. Says what the
+   chart is for so the axis names do not have to carry the whole explanation. */
+.subtitle {
+  margin: 0.125rem 0 var(--mc-space-3);
+  font-size: var(--mc-text-xs);
+  color: var(--mc-text-subtle);
 }
 
 .ico {

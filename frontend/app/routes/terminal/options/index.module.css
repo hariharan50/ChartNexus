@@ -2,7 +2,7 @@
   display: flex;
   flex-direction: column;
   gap: var(--mc-space-6);
-  max-width: 84rem;
+  max-width: var(--mc-page-max);
   margin: 0 auto;
   padding: var(--mc-space-6) var(--mc-space-6) var(--mc-space-8);
 }

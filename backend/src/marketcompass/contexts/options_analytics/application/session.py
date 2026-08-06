@@ -36,6 +36,25 @@ def attach_utc(moment: datetime) -> datetime:
     return moment.replace(tzinfo=UTC) if moment.tzinfo is None else moment
 
 
+def iso(moment: datetime) -> str:
+    """A UTC ISO timestamp, whatever the caller had."""
+    return attach_utc(moment).astimezone(UTC).isoformat()
+
+
+def future_of(snapshot: ChainSnapshot) -> float | None:
+    """The price a chart overlay should plot for this capture.
+
+    The tradable current-month future, falling back to spot only for rows
+    captured before that column existed. On a chart of option positions the
+    index level is the one price nobody in the picture can deal at.
+
+    ``None`` on the reconstructed 09:15 frame is deliberate: nobody recorded
+    where the market was at the bell, and the line should start where the
+    recording does rather than reach back to a level never observed.
+    """
+    return snapshot.future_price if snapshot.future_price is not None else snapshot.spot
+
+
 def session_open_utc(now: datetime) -> datetime:
     """The 09:15 IST bell on ``now``'s trading date, expressed in UTC."""
     now_ist = attach_utc(now).astimezone(IST)

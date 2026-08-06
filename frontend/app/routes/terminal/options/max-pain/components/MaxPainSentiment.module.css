@@ -1,0 +1,113 @@
+/* Donut on the left, readouts on the right, insight spanning both — the
+   reference's arrangement. Collapses to one column when the panel is narrow. */
+.panel {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.4fr);
+  gap: var(--mc-space-5);
+  align-items: center;
+}
+
+.gauge-wrap {
+  min-width: 0;
+}
+
+/* Qualified against `EChart.module.css`, which also defines a `.chart`-sized
+   box at `height: 100%`; a half-circle gauge needs a real height to measure. */
+/* The reference's own heading, above the dial. */
+.summary {
+  margin: 0 0 var(--mc-space-2);
+  text-align: center;
+  font-size: var(--mc-text-sm);
+  font-weight: 700;
+}
+
+/* ECharts sizes a gauge off the *smaller* side of its box, so a wide, short
+   container leaves the arc small with empty space either side. Near-square is
+   what actually fills it. Wider than tall by a little, because the "Strong
+   sell" and "Strong buy" labels sit outside the ends of the arc. */
+.gauge-wrap .gauge {
+  height: 220px;
+  max-width: 320px;
+  margin: 0 auto;
+}
+
+.verdict {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.125rem;
+  margin: 0;
+  text-align: center;
+}
+
+.label {
+  font-size: var(--mc-text-lg);
+  font-weight: 700;
+}
+
+.caption {
+  font-size: var(--mc-text-xs);
+  line-height: 1.3;
+  color: var(--mc-text-muted);
+}
+
+/* Capped: on a wide monitor a full-width row throws the label and its figure to
+   opposite edges, and the two stop reading as a pair. */
+.rows {
+  margin: 0;
+  width: 100%;
+  max-width: 34rem;
+}
+
+.row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--mc-space-4);
+  padding: var(--mc-space-3) 0;
+  border-bottom: 1px solid var(--mc-border);
+}
+
+.row:last-child {
+  border-bottom: 0;
+}
+
+.row dt {
+  font-size: var(--mc-text-sm);
+  color: var(--mc-text-muted);
+}
+
+.row dd {
+  margin: 0;
+  font-size: var(--mc-text-base);
+  font-weight: 700;
+  /* Two figures read against each other, so the digits have to line up. */
+  font-variant-numeric: tabular-nums;
+}
+
+.insight {
+  grid-column: 1 / -1;
+  padding: var(--mc-space-3);
+  border: 1px solid var(--mc-border);
+  border-radius: var(--mc-radius);
+  background: var(--mc-surface-raised);
+}
+
+.insight-title {
+  margin: 0 0 0.25rem;
+  font-size: var(--mc-text-sm);
+  font-weight: 700;
+  color: var(--mc-text-muted);
+}
+
+.insight-body {
+  margin: 0;
+  font-size: var(--mc-text-sm);
+  color: var(--mc-text-muted);
+}
+
+@media (max-width: 60rem) {
+  .panel {
+    grid-template-columns: 1fr;
+  }
+}
