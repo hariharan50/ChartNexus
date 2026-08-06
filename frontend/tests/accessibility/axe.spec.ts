@@ -30,19 +30,25 @@ interface PageCase {
   path: string;
   name: string;
   signedIn: boolean;
-  /** Known pre-existing colour-contrast nodes; matches the SvelteKit app. */
+  /**
+   * Remaining colour-contrast nodes.
+   *
+   * These were inherited from the SvelteKit app and ran to ~105 nodes. Raising
+   * `--mc-text-subtle` to clear AA on all four themes cleared about ninety of
+   * them; what is left is a handful of other token pairs, page by page.
+   */
   contrastBudget: number;
 }
 
 const PAGES: PageCase[] = [
   { path: '/login', name: 'sign in', signedIn: false, contrastBudget: 2 },
   { path: '/register', name: 'register', signedIn: false, contrastBudget: 3 },
-  { path: '/dashboard', name: 'dashboard', signedIn: true, contrastBudget: 38 },
-  { path: '/advanced-dashboard', name: 'advanced dashboard', signedIn: true, contrastBudget: 46 },
-  { path: '/option-chain', name: 'option chain', signedIn: true, contrastBudget: 29 },
-  { path: '/options', name: 'options analytics', signedIn: true, contrastBudget: 18 },
+  { path: '/dashboard', name: 'dashboard', signedIn: true, contrastBudget: 2 },
+  { path: '/advanced-dashboard', name: 'advanced dashboard', signedIn: true, contrastBudget: 5 },
+  { path: '/option-chain', name: 'option chain', signedIn: true, contrastBudget: 9 },
+  { path: '/options', name: 'options analytics', signedIn: true, contrastBudget: 2 },
   { path: '/options/open-interest', name: 'open interest', signedIn: true, contrastBudget: 1 },
-  { path: '/settings/global', name: 'global settings', signedIn: true, contrastBudget: 5 },
+  { path: '/settings/global', name: 'global settings', signedIn: true, contrastBudget: 2 },
   { path: '/settings/profile', name: 'personal info', signedIn: true, contrastBudget: 1 }
 ];
 

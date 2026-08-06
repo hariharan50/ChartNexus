@@ -88,3 +88,42 @@ describe('axisTicks', () => {
     expect(axisTicks([frame(9, 15)])).toEqual([]);
   });
 });
+
+describe('label crowding', () => {
+  it('drops a label that would overprint its neighbour, keeping the tick', () => {
+    // The shape of a day the worker joined late: a derived 9:15 baseline, then
+    // real captures from 1 pm. "9 am" and "1 pm" land ~2% apart and used to
+    // render as the unreadable "9 am1 pm".
+    const lateStart = [frame(9, 15), ...Array.from({ length: 56 }, (_, i) => frame(13, 1 + i))];
+
+    const ticks = axisTicks(lateStart);
+    const onePm = ticks.find((t) => t.index === 1);
+
+    expect(ticks[0]!.label).toBe('9 am');
+    expect(onePm).toBeDefined();
+    expect(onePm!.label).toBeNull(); // the mark stays, the text goes
+    expect(ticks.filter((t) => t.label === '9 am1 pm')).toHaveLength(0);
+  });
+
+  it('still labels hours once they are far enough apart', () => {
+    // Same late start, but now well into the afternoon: 2 pm and 3 pm have room.
+    const lateStart = [frame(9, 15), ...Array.from({ length: 130 }, (_, i) => frame(13, 1 + i))];
+
+    const labels = axisTicks(lateStart)
+      .map((t) => t.label)
+      .filter((l): l is string => l !== null);
+
+    expect(labels).toContain('9 am');
+    expect(labels).toContain('2 pm');
+    expect(labels).toContain('3 pm');
+  });
+
+  it('leaves an evenly-recorded session fully labelled', () => {
+    // The regression guard: crowding logic must not eat labels on a normal day.
+    const labels = axisTicks(session())
+      .map((t) => t.label)
+      .filter((l): l is string => l !== null);
+
+    expect(labels).toEqual(['9 am', '10 am', '11 am', '12 pm', '1 pm', '2 pm', '3 pm']);
+  });
+});

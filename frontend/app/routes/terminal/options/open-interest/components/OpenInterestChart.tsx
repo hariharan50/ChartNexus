@@ -43,7 +43,12 @@ export default function OpenInterestChart({
   nowLabel
 }: Props) {
   const theme = useChartTheme();
-  const minWidth = Math.max(560, bars.length * 58);
+  // Per-strike width. The wrapper scrolls horizontally when the ladder does not
+  // fit, and because the y-axis is painted on the same canvas it scrolls away
+  // with everything else — leaving the OI scale showing one clipped character.
+  // 50px keeps the default ±10 view (21 strikes) inside a normal window so that
+  // never happens; ±20 still scrolls, which no per-bar width can avoid.
+  const minWidth = Math.max(560, bars.length * 50);
 
   const option = useMemo(
     () =>

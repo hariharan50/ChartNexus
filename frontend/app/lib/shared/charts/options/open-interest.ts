@@ -269,6 +269,11 @@ export function buildOpenInterestOption(
       ? {
           trigger: 'axis',
           axisPointer: { type: 'shadow' },
+          // The chart sits in an `overflow-x: auto` wrapper so wide ladders can
+          // scroll, and that wrapper clips its own descendants — which cut the
+          // tooltip off mid-number ("OI @ 9:1…"). Rendering it on the body puts
+          // it outside that clipping context entirely.
+          appendTo: 'body',
           backgroundColor: theme.tooltipBg,
           borderColor: theme.grid,
           textStyle: { color: theme.tooltipText, fontSize: 12 },

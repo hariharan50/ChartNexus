@@ -243,24 +243,39 @@ function halfHour(iso: string): number {
  * it names. Each label is formatted from its own frame's timestamp — nothing is
  * interpolated, so a gap shows up as a wider spacing rather than a wrong time.
  */
+/**
+ * Closest two hour labels may sit, as a percentage of the track.
+ *
+ * An ingest gap crushes many hours into a few pixels — a session recorded from
+ * 1 pm with a derived 9:15 baseline puts "9 am" and "1 pm" 1.8% apart, and they
+ * overprint into `9 am1 pm`. The tick mark still gets drawn; only the text is
+ * dropped, so no position is silently lost.
+ */
+const MIN_LABEL_GAP_PCT = 7;
+
 export function axisTicks(series: OiSeriesFrame[]): SliderTick[] {
   if (series.length < 2) return [];
 
   const span = series.length - 1;
   const ticks: SliderTick[] = [];
   let previous = -1;
+  let lastLabelledPct = Number.NEGATIVE_INFINITY;
 
   for (let i = 0; i < series.length; i++) {
     const bucket = halfHour(series[i]!.t);
     if (bucket === previous) continue;
     previous = bucket;
-    ticks.push({
-      index: i,
-      pct: (i / span) * 100,
-      // Only the top of each hour is labelled; the half-hours are bare marks,
-      // which is as much text as fits at 375px.
-      label: bucket % 2 === 0 ? HOUR_LABEL.format(new Date(series[i]!.t)).toLowerCase() : null
-    });
+
+    const pct = (i / span) * 100;
+    // Only the top of each hour is labelled; the half-hours are bare marks,
+    // which is as much text as fits at 375px.
+    const onTheHour = bucket % 2 === 0;
+    const roomForText = pct - lastLabelledPct >= MIN_LABEL_GAP_PCT;
+    const label =
+      onTheHour && roomForText ? HOUR_LABEL.format(new Date(series[i]!.t)).toLowerCase() : null;
+    if (label !== null) lastLabelledPct = pct;
+
+    ticks.push({ index: i, pct, label });
   }
 
   return ticks;

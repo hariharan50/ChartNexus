@@ -372,8 +372,11 @@
   background: var(--mc-bearish);
 }
 
+/* The dots between the clock, the interval and the freshness. Only these are
+   decorative enough to recede — and they carry no information, so they are the
+   one thing safe to dim. */
 .sep {
-  opacity: 0.45;
+  color: var(--mc-border-strong);
 }
 
 .dot {
@@ -475,11 +478,13 @@
 /* Names what each end of the window is. Without it the two times read as an
    arbitrary range rather than "compare this moment against that one". */
 .endCaption {
-  font-size: 0.625rem;
+  font-size: 0.6875rem;
   text-transform: uppercase;
   letter-spacing: 0.04em;
   color: var(--mc-text-subtle);
-  opacity: 0.75;
+  /* No `opacity` here. Dimming a token that is already tuned to sit exactly at
+     the AA threshold pushes it back under — which is how "BASELINE" and "AS OF"
+     ended up unreadable. If something needs to recede, give it its own token. */
 }
 
 .quick {

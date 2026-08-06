@@ -261,7 +261,17 @@ export default function OptionChain() {
 
       {/* 2. Chain table ------------------------------------------------------ */}
       <section className={cx(s.panel, s.tablePanel)}>
-        <div className={s.scroll}>
+        {/* Focusable because it scrolls: on a phone the 12-column chain is far
+            wider than the viewport, and without a tab stop there is no way to
+            reach the call-side columns from the keyboard at all. The label is
+            what a screen reader announces on landing here.
+
+            The two linters disagree about this. `jsx-a11y/no-noninteractive-
+            tabindex` allows a tab stop only on `tabpanel`, while axe's
+            `scrollable-region-focusable` fails the page without one. axe is
+            testing the rendered result against WCAG 2.1.1, so it wins. */}
+        {/* eslint-disable-next-line jsx-a11y/no-noninteractive-tabindex */}
+        <div className={s.scroll} tabIndex={0} role="region" aria-label="Option chain">
           <table>
             <thead>
               <tr className={s.headA}>

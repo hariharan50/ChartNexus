@@ -17,7 +17,13 @@
 
   --mc-text: #e6e9f0;
   --mc-text-muted: #9aa3b8;
-  --mc-text-subtle: #6b7488;
+  /* `subtle` is the smallest text in the app — axis ticks, field captions,
+     timeline labels — so it is the one place where a fashionable low contrast
+     actually stops people reading. Every theme's value is picked to clear WCAG
+     AA (4.5:1) against that theme's own `--mc-surface`; the previous values sat
+     at 3.2-3.8:1 and were reported as illegible on dark *and* light.
+     Dark: 4.84:1 on #131722. */
+  --mc-text-subtle: #7d869c;
 
   /* Market semantics. Not red/green alone: colour-blind users need the
      luminance difference and the arrow glyphs that accompany these. */
@@ -121,7 +127,8 @@
 
   --mc-text: #131722;
   --mc-text-muted: #5a6478;
-  --mc-text-subtle: #858da0;
+  /* 4.80:1 on #ffffff. */
+  --mc-text-subtle: #69728a;
 
   --mc-bullish: #0e9f63;
   --mc-bullish-weak: #dcf5eb;
@@ -152,7 +159,8 @@
 
   --mc-text: #2b2620;
   --mc-text-muted: #6d6152;
-  --mc-text-subtle: #998e7c;
+  /* 4.85:1 on #fffdf8. */
+  --mc-text-subtle: #7a6f5d;
 
   --mc-bullish: #2f855a;
   --mc-bullish-weak: #dcefe1;
@@ -178,7 +186,8 @@
 
   --mc-text: #ededf0;
   --mc-text-muted: #9a9aa4;
-  --mc-text-subtle: #6a6a74;
+  /* 4.81:1 on #0c0c0e. */
+  --mc-text-subtle: #7d7d89;
 
   --mc-bullish: #17b877;
   --mc-bullish-weak: #0f3d2c;
