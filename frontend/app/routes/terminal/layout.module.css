@@ -409,8 +409,21 @@
   cursor: default;
 }
 
+/* Stays a block box. It was briefly a flex column so a full-height page could
+   claim the space with `flex: 1`, and that quietly broke every page below:
+   `.page` rules here use `max-width` with `margin: 0 auto`, and auto margins on
+   a flex or grid item's cross axis *cancel* stretch — the item collapses to
+   fit-content and centres, which on a wide monitor left the layout squeezed in
+   the middle with dead space either side.
+
+   `position: relative` instead. It changes nothing about how in-flow children
+   size themselves, and gives a page that genuinely wants the full height under
+   the header something definite to absolutely position against — `flex: 1` on a
+   `min-height: 100dvh` parent resolves a real height here, it just cannot be
+   inherited by a percentage further down. */
 .content {
   flex: 1;
+  position: relative;
 }
 
 /* Wide-but-tight: pull the header in before anything has to disappear. */

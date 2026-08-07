@@ -3,9 +3,13 @@
    copied from open-interest/route.module.css deliberately: the two pages'
    filters should be the *same* control, and a CSS Module cannot be extended
    across route directories without hoisting it somewhere neither page owns. */
+/* No max-width: these are dense, wide-format tools — a strike ladder, a
+   multi-series chart, a scrub timeline — and on a large monitor the cap left a
+   band of dead surface either side while the chart it was throttling had to
+   crush eighty contracts into the middle. The page fills whatever it is given;
+   `--mc-page-max` still governs the reading-width pages, where a 3440px line of
+   prose would be the wrong answer. */
 .page {
-  max-width: var(--mc-page-max);
-  margin: 0 auto;
   padding: var(--mc-space-6);
 }
 

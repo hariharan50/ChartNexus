@@ -37,8 +37,15 @@ export interface ContractSeries {
   id: string;
   strike: number;
   option_type: 'CE' | 'PE';
-  oi: number[];
-  volume: number[];
+  /**
+   * `null` before the leg's first appearance.
+   *
+   * A strike listed part-way through the morning was not quoted at the open.
+   * Zero would draw it along the axis and then leap, inventing a build that
+   * never happened; `null` starts the line where the contract starts.
+   */
+  oi: (number | null)[];
+  volume: (number | null)[];
 }
 
 export interface OiSeriesView {
@@ -84,11 +91,13 @@ export type Metric = 'oi' | 'change' | 'volume';
  * Interest page makes. Sending it as a third array would double as a second
  * source of truth for a figure the two pages have to agree on.
  */
-export function metricValues(contract: ContractSeries, metric: Metric): number[] {
+export function metricValues(contract: ContractSeries, metric: Metric): (number | null)[] {
   if (metric === 'volume') return contract.volume;
   if (metric === 'oi') return contract.oi;
   const open = contract.oi[0] ?? 0;
-  return contract.oi.map((value) => value - open);
+  // A leg not yet listed has no change to report — `null` breaks the line
+  // rather than drawing it at zero.
+  return contract.oi.map((value) => (value == null ? null : value - open));
 }
 
 /** `24700 CE` — how a contract reads in the legend and the chips. */
@@ -104,6 +113,9 @@ export function topByLatest(
 ): string[] {
   return [...contracts]
     .sort((a, b) => {
+      // `?? 0` twice over: `.at(-1)` is undefined on an empty array and `null`
+      // on a leg that was never quoted, and both must rank last rather than
+      // poisoning the comparison with NaN.
       const delta = (b[metric].at(-1) ?? 0) - (a[metric].at(-1) ?? 0);
       // Ties settle on the contract id so a refetch cannot silently reshuffle
       // the selection — and with it every colour on the page.

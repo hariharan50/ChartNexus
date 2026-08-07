@@ -2,9 +2,13 @@
    sit next to each other in the same menu, so a different grid or panel
    treatment would read as a different product. */
 
+/* No max-width: these are dense, wide-format tools — a strike ladder, a
+   multi-series chart, a scrub timeline — and on a large monitor the cap left a
+   band of dead surface either side while the chart it was throttling had to
+   crush eighty contracts into the middle. The page fills whatever it is given;
+   `--mc-page-max` still governs the reading-width pages, where a 3440px line of
+   prose would be the wrong answer. */
 .page {
-  max-width: var(--mc-page-max);
-  margin: 0 auto;
   padding: var(--mc-space-6);
 }
 
@@ -317,4 +321,20 @@
 .replay input:focus-visible + .switch {
   outline: 2px solid var(--mc-accent);
   outline-offset: 2px;
+}
+
+/* A feed that has stopped growing while the market is open is a fault, not a
+   quiet tape — and the clock beside it ticking on regardless is exactly what
+   made an hour-old series read as live. Same treatment as the Open Interest
+   readout, same reasoning. */
+.live.stale {
+  color: var(--mc-bearish);
+}
+
+.live.stale .dot {
+  background: var(--mc-bearish);
+}
+
+.sep {
+  color: var(--mc-border-strong);
 }

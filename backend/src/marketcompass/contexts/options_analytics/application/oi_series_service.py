@@ -20,6 +20,12 @@ Three shapes of the payload are deliberate and easy to get wrong later:
 
 Downsampling happens here rather than on the client because it is the main lever
 on payload size.
+
+Tiers, as on the Open Interest page:
+
+    INTRADAY   (>=2 stored captures today) — real open vs the whole session
+    LIVE_PROXY (0 or 1)                    — open-vs-now off the live chain
+    EMPTY      (before the bell)           — no session to draw two ends of
 """
 
 from __future__ import annotations
@@ -40,6 +46,7 @@ from marketcompass.contexts.options_analytics.application.session import (
     drop_future,
     future_of as _future_of,
     iso as _iso,
+    live_proxy_frames,
     session_open_frame,
     session_open_utc,
 )
@@ -66,6 +73,13 @@ MAX_WINDOW = 40
 # How many contracts the two "top N" pickers pre-select.
 _DEFAULT_PICK = 5
 _MIN_INTRADAY_SNAPSHOTS = 2
+
+_MINUTE = 60
+_HOUR = 3600
+# How many recent captures the reported cadence is read from. Long enough to
+# ignore a single late tick, short enough that changing the ingest interval is
+# reflected within a few minutes rather than at tomorrow's open.
+_CADENCE_SAMPLE = 12
 
 
 class GetOiSeries:
@@ -100,7 +114,7 @@ class GetOiSeries:
         )
 
         if len(snaps) < _MIN_INTRADAY_SNAPSHOTS:
-            return self._empty(symbol, chain, now, interval, span)
+            return self._live_proxy(symbol, chain, snaps, now, interval=interval, window=span)
 
         ordered = sorted(snaps, key=lambda snap: snap.captured_at)
         reconstructed = session_open_frame(ordered)
@@ -108,9 +122,71 @@ class GetOiSeries:
             ordered = [reconstructed, *ordered]
 
         frames = _downsample(ordered, bucket)
+        return self._payload(
+            symbol,
+            chain,
+            frames,
+            quality="intraday",
+            open_is_estimated=reconstructed is not None,
+            # What the archive could actually deliver, not what was asked for.
+            interval=_effective_interval(bucket, snaps),
+            window=span,
+        )
+
+    def _live_proxy(
+        self,
+        symbol: str,
+        chain: ProviderChain,
+        snaps: list[ChainSnapshot],
+        now: datetime,
+        *,
+        interval: str,
+        window: int,
+    ) -> dict[str, Any]:
+        """The tier for a day the ingest worker has not archived.
+
+        Mirrors ``GetOiView``: one stored capture is used if there is one,
+        otherwise the live chain, and the 09:15 baseline is reconstructed from
+        each leg's ``oi_change``. Without this the page renders an empty panel
+        all session on a machine with no ingest worker, while the Open Interest
+        page one menu item away shows the very same chain.
+        """
+        stored = snaps[0] if snaps else None
+        rows = stored.rows if stored is not None else chain.rows
+        spot = (stored.spot if stored is not None else None) or chain.spot
+        frames = live_proxy_frames(
+            rows,
+            now,
+            spot=spot,
+            future_price=stored.future_price if stored is not None else None,
+        )
+        if not frames:
+            return self._empty(symbol, chain, now, interval, window)
+
+        return self._payload(
+            symbol,
+            chain,
+            frames,
+            quality="live_proxy",
+            open_is_estimated=True,
+            interval=interval,
+            window=window,
+        )
+
+    def _payload(
+        self,
+        symbol: str,
+        chain: ProviderChain,
+        frames: list[ChainSnapshot],
+        *,
+        quality: str,
+        open_is_estimated: bool,
+        interval: str,
+        window: int,
+    ) -> dict[str, Any]:
         anchor = frames[-1]
         atm = _anchor_atm(anchor, chain)
-        contracts = _contract_series(frames, atm, span)
+        contracts = _contract_series(frames, atm, window)
 
         return {
             "instrument_id": symbol,
@@ -120,10 +196,10 @@ class GetOiSeries:
             "lot_size": chain.lot_size,
             "open_ts": _iso(frames[0].captured_at),
             "now_ts": _iso(anchor.captured_at),
-            "data_quality": "intraday",
-            "open_is_estimated": reconstructed is not None,
+            "data_quality": quality,
+            "open_is_estimated": open_is_estimated,
             "interval": interval,
-            "window": span,
+            "window": window,
             "t": [_iso(frame.captured_at) for frame in frames],
             "fut": [_future_of(frame) for frame in frames],
             "contracts": contracts,
@@ -199,6 +275,12 @@ def _contract_series(frames: list[ChainSnapshot], atm: float, window: int) -> li
     reading zero — a contract that stopped being quoted did not have its open
     interest wiped, and a line dropping to the axis would say it did.
 
+    Frames *before* a leg's first appearance are ``None``, not zero. With the
+    previous session carried in behind today, a strike listed only after this
+    morning's move would otherwise run along the axis all through yesterday and
+    then leap to its real value at the open — a spike the market never printed.
+    ``None`` starts the line where the contract starts.
+
     The ladder is the **union** across the session, not the newest frame's. A
     strike quoted all morning and delisted by the afternoon is exactly the case
     the forward-fill exists for, and reading only the last frame would drop it
@@ -212,10 +294,10 @@ def _contract_series(frames: list[ChainSnapshot], atm: float, window: int) -> li
     series: list[dict[str, Any]] = []
     for strike in listed:
         for side in ("CE", "PE"):
-            oi: list[int] = []
-            volume: list[int] = []
-            last_oi = 0
-            last_volume = 0
+            oi: list[int | None] = []
+            volume: list[int | None] = []
+            last_oi: int | None = None
+            last_volume: int | None = None
             for frame in frames:
                 row = _find(frame.rows, strike, side)
                 if row is not None:
@@ -236,11 +318,56 @@ def _contract_series(frames: list[ChainSnapshot], atm: float, window: int) -> li
     return series
 
 
+def _effective_interval(requested_seconds: int, captured: list[ChainSnapshot]) -> str:
+    """The bucket the archive can actually deliver, as a label.
+
+    A request cannot produce resolution finer than the capture cadence: asking
+    for 1m against a worker running every 180s yields 3m spacing whatever the
+    query said. The field is documented — here and in the client's wire type —
+    as *the bucket actually used*, but it echoed the request, so the page
+    captioned a 3-minute series "1m buckets".
+
+    Read from the **most recent** captures, not the whole day. The cadence is a
+    setting an operator can change mid-session, and after a change the day holds
+    a mix; taking the whole day's median then reports the cadence that has been
+    retired rather than the one the chart is filling in at now. This is a live
+    chart, so what matters is the resolution it is currently arriving at.
+
+    Measured from the stored captures rather than from the returned frames: the
+    reconstructed 09:15 open is not a capture, and the gap between it and the
+    first real one would otherwise be read as the cadence.
+
+    The median of that window, not the minimum — one late tick should not
+    restate the resolution.
+    """
+    ordered = sorted(attach_utc(snap.captured_at) for snap in captured)
+    recent = ordered[-_CADENCE_SAMPLE:]
+    gaps = sorted((b - a).total_seconds() for a, b in pairwise(recent))
+    if not gaps:
+        return _interval_label(requested_seconds)
+    cadence = gaps[len(gaps) // 2]
+    return _interval_label(max(requested_seconds, round(cadence)))
+
+
+def _interval_label(seconds: float) -> str:
+    """`180` -> `3m`. Matches how the UI's own interval choices read."""
+    if seconds < _MINUTE:
+        return f"{round(seconds)}s"
+    if seconds < _HOUR:
+        return f"{round(seconds / _MINUTE)}m"
+    return f"{round(seconds / _HOUR)}h"
+
+
 def _top_ids(contracts: list[dict[str, Any]], key: str) -> list[str]:
-    """The busiest contracts by their latest reading, biggest first."""
+    """The busiest contracts by their latest reading, biggest first.
+
+    ``or 0`` rather than a bare index: a leg can now end on ``None`` (never
+    quoted in the window), and comparing that against an int during the sort
+    raises rather than ranking it last.
+    """
     ranked = sorted(
         contracts,
-        key=lambda contract: contract[key][-1] if contract[key] else 0,
+        key=lambda contract: (contract[key][-1] or 0) if contract[key] else 0,
         reverse=True,
     )
     return [contract["id"] for contract in ranked[:_DEFAULT_PICK]]

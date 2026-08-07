@@ -48,3 +48,19 @@ export function istClock(at: number): IstClock {
     weekend: weekday === 'Sat' || weekday === 'Sun'
   };
 }
+
+/** 09:15 to 15:40 IST on a weekday — the window derivatives actually trade in. */
+const SESSION_OPEN_MIN = 9 * 60 + 15;
+const SESSION_CLOSE_MIN = 15 * 60 + 40;
+
+/**
+ * Whether the exchange is trading right now.
+ *
+ * Used to decide when a series that has stopped growing is a *fault* rather
+ * than simply the end of the day. Outside these hours the newest snapshot is
+ * meant to age, and warning about it would be noise every evening.
+ */
+export function isTradingWindow(at: number): boolean {
+  const { minutes, weekend } = istClock(at);
+  return !weekend && minutes >= SESSION_OPEN_MIN && minutes < SESSION_CLOSE_MIN;
+}

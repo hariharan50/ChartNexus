@@ -24,7 +24,14 @@ interface Props {
   /** A horizontal marker on the value axis, e.g. PCR = 1. */
   referenceLine?: { value: number; label: string } | undefined;
   lines: SeriesLine[];
-  times: string[];
+  /**
+   * ISO timestamps, one per point — not display strings.
+   *
+   * The axis is measured in elapsed trading time and needs to know when each
+   * point actually was; handing it pre-formatted clock text is what made every
+   * gap draw the same width regardless of how long it really was.
+   */
+  timestamps: string[];
   futures: (number | null)[];
   formatValue: (value: number) => string;
   formatPrice: (value: number) => string;
@@ -48,7 +55,7 @@ export default function SeriesChart({
   valueAxisName,
   referenceLine,
   lines,
-  times,
+  timestamps,
   futures,
   formatValue,
   formatPrice,
@@ -70,8 +77,8 @@ export default function SeriesChart({
 
   const shown = useMemo(() => (head === undefined ? lines : truncate(lines, head)), [lines, head]);
   const shownTimes = useMemo(
-    () => (head === undefined ? times : times.slice(0, head + 1)),
-    [times, head]
+    () => (head === undefined ? timestamps : timestamps.slice(0, head + 1)),
+    [timestamps, head]
   );
   const shownFutures = useMemo(
     () => (head === undefined ? futures : futures.slice(0, head + 1)),
@@ -84,7 +91,7 @@ export default function SeriesChart({
     () =>
       buildMultiSeriesOption(
         {
-          times: shownTimes,
+          timestamps: shownTimes,
           futures: shownFutures,
           lines: visible,
           formatValue,

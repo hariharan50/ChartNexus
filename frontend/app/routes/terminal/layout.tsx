@@ -116,7 +116,8 @@ const nav: NavItem[] = [
   { label: 'Future Lab', href: '/future-lab', futureMega: true },
   { label: 'Analyse', href: '/analyse' },
   { label: 'Smart Insights', href: '/smart-insights' },
-  { label: 'Option Chain', href: '/option-chain' }
+  { label: 'Option Chain', href: '/option-chain' },
+  { label: 'AI Console', href: '/ai-console' }
 ];
 
 function TerminalShell({ user }: { user: User }) {

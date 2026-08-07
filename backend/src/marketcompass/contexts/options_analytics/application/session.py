@@ -8,7 +8,8 @@ same menu:
 * what counts as a capture that has actually happened (:func:`drop_future`);
 * where 09:15 is, in UTC (:func:`session_open_utc`);
 * what the book looked like at 09:15 when nobody recorded it
-  (:func:`session_open_frame`).
+  (:func:`session_open_frame`);
+* what to draw on a day the archive never got written (:func:`live_proxy_frames`).
 
 Pure: no clock of its own, no I/O. Callers pass ``now`` so tests can freeze it.
 """
@@ -19,6 +20,7 @@ from dataclasses import replace
 from datetime import UTC, datetime, time, timedelta, timezone
 
 from marketcompass.contexts.options_analytics.application.ports import ChainSnapshot
+from marketcompass.contexts.options_analytics.domain.oi_math import ChainRow
 
 # India observes no DST, so a fixed +05:30 offset is correct and avoids needing
 # tzdata on the host.
@@ -86,6 +88,15 @@ def session_open_frame(ordered: list[ChainSnapshot]) -> ChainSnapshot | None:
     09:15 book, and reading it off the newest snapshot gives the most current
     version of it.
 
+    Volume is zeroed rather than carried over, for the same reason it is in
+    :func:`live_proxy_frames`: it is cumulative from the bell, so the newest
+    snapshot's figure is *today's whole traded volume*, not the volume as at
+    09:15 — which was nothing. Copying it forward put the day's total at index 0
+    of every contract's volume series, so the line opened at its own maximum and
+    fell for the rest of the morning. Open interest is the opposite case: it
+    carries over from the previous session, which is exactly why it is restated
+    from ``oi_change`` instead of zeroed.
+
     ``ordered`` must be sorted oldest-first. Returns ``None`` when the archive
     already reaches back to the open.
     """
@@ -100,9 +111,62 @@ def session_open_frame(ordered: list[ChainSnapshot]) -> ChainSnapshot | None:
     return ChainSnapshot(
         captured_at=open_ts,
         rows=tuple(
-            replace(row, oi=max(0, row.oi - row.oi_change), oi_change=0) for row in newest.rows
+            replace(row, oi=max(0, row.oi - row.oi_change), oi_change=0, volume=0)
+            for row in newest.rows
         ),
         # Deliberately no spot/ATM/futures: nobody recorded where the index was
         # at 09:15, and inventing one would draw the price line through a level
         # that never traded. Callers fall back to their payload-level values.
     )
+
+
+def live_proxy_frames(
+    rows: tuple[ChainRow, ...],
+    now: datetime,
+    *,
+    spot: float | None = None,
+    future_price: float | None = None,
+) -> list[ChainSnapshot]:
+    """A two-frame session synthesised from one live chain.
+
+    The archive is written by a separate ingest process, so a machine that has
+    not run it — or has not run it *yet* today — has no history at all. The Open
+    Interest page has always handled that by reconstructing the open from
+    ``oi_change`` and drawing open-vs-now; this is the same tier for the series
+    pages, which otherwise render a blank panel all session on exactly the days
+    the OI page next door is showing numbers.
+
+    Two frames, not one: a single point plots nothing, and open-vs-now is the
+    honest floor — it is genuinely all a broker that only answers "now" can tell
+    us about a day nobody recorded.
+
+    Volume is zeroed on the opening frame because it is cumulative from the
+    bell: at 09:15 nothing had traded yet, so 0 is the observation, not a gap.
+    Open interest is not zeroed — it carries over from the previous session, and
+    ``oi - oi_change`` is the broker's own statement of what it opened at.
+
+    Returns ``[]`` before the bell, which callers serve as an empty payload:
+    there is no session yet to draw two ends of.
+    """
+    if not rows:
+        return []
+
+    open_ts = session_open_utc(now)
+    now_ts = attach_utc(now)
+    if now_ts <= open_ts:
+        return []
+
+    opening = ChainSnapshot(
+        captured_at=open_ts,
+        rows=tuple(
+            replace(row, oi=max(0, row.oi - row.oi_change), oi_change=0, volume=0) for row in rows
+        ),
+        # No spot/ATM/future for the same reason as `session_open_frame`.
+    )
+    current = ChainSnapshot(
+        captured_at=now_ts,
+        rows=rows,
+        spot=spot,
+        future_price=future_price if future_price is not None else spot,
+    )
+    return [opening, current]

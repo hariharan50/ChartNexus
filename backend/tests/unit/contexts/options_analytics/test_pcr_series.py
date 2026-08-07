@@ -208,6 +208,8 @@ async def test_a_late_start_gets_the_reconstructed_open_at_index_zero() -> None:
 
 
 async def test_an_empty_day_is_shaped_not_broken() -> None:
+    # Nothing archived *and* no live chain to proxy from: there is genuinely
+    # nothing to draw, and the page says so rather than failing.
     payload = await _service([])(TENANT, "NIFTY")
 
     assert payload["data_quality"] == "empty"
@@ -216,9 +218,21 @@ async def test_an_empty_day_is_shaped_not_broken() -> None:
     assert payload["expiry_date"] == "2026-08-11"
 
 
-async def test_a_single_capture_is_not_a_series() -> None:
-    # One point is a reading, not a line. The page says so rather than drawing
-    # a one-pixel chart.
-    payload = await _service([_snap(0, call_oi=1_000, put_oi=900)])(TENANT, "NIFTY")
+async def test_a_single_capture_becomes_open_vs_now() -> None:
+    """One point is a reading, not a line — so the open is reconstructed beside it.
 
-    assert payload["data_quality"] == "empty"
+    The Open Interest page has always served this tier; leaving it out here left
+    the three charts blank all session on any machine without an ingest worker.
+    """
+    snap = _snap(0, call_oi=1_000, put_oi=900, call_chg=200, put_chg=300)
+
+    payload = await _service([snap])(TENANT, "NIFTY")
+
+    assert payload["data_quality"] == "live_proxy"
+    assert payload["open_is_estimated"] is True
+    assert payload["t"] == ["2026-08-04T03:45:00+00:00", "2026-08-04T08:00:00+00:00"]
+    # Opened at 800/600 — `oi - oi_change`, the broker's own day-change field.
+    assert payload["call_oi"] == [800, 1_000]
+    assert payload["put_oi"] == [600, 900]
+    assert payload["call_oi_chg"] == [0, 200]
+    assert payload["put_oi_chg"] == [0, 300]

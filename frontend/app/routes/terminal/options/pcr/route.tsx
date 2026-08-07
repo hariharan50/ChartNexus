@@ -5,7 +5,7 @@ import { cx } from '$shared/ui/cx';
 import IconChart from '$shared/ui/icons/IconChart';
 import IconChevronDown from '$shared/ui/icons/IconChevronDown';
 import SeriesChart from '../components/SeriesChart';
-import { CALL_COLOR, PUT_COLOR } from '../open-interest/oi-data';
+import { CALL_COLOR, feedAgeLabel, feedAgeMs, PUT_COLOR } from '../open-interest/oi-data';
 import {
   bucketIndices,
   DEFAULT_TIMEFRAME,
@@ -56,7 +56,10 @@ export default function PutCallRatio() {
   // Every array below is derived from one payload; changing the timeframe never
   // refetches, which is the whole reason the endpoint sends the raw cadence.
   const kept = useMemo(() => bucketIndices(view?.t ?? [], timeframe), [view, timeframe]);
-  const times = useMemo(() => pick(view?.t ?? [], kept).map(timeLabel), [view, kept]);
+  // Raw ISO, not display strings — the chart derives its own axis labels from
+  // the instants. Resampling drops points but never reorders them, so these
+  // stay ascending.
+  const times = useMemo(() => pick(view?.t ?? [], kept), [view, kept]);
   const futures = useMemo(() => pick(view?.fut ?? [], kept), [view, kept]);
 
   const pcrLines = useMemo<SeriesLine[]>(
@@ -122,6 +125,10 @@ export default function PutCallRatio() {
   })
     .format(now)
     .toLowerCase();
+
+  // How far the drawn series lags the clock beside it. `null` when current, and
+  // outside trading hours — see `feedAgeMs`.
+  const feedAge = feedAgeMs(view?.now_ts, now);
 
   return (
     <div className={s.page}>
@@ -229,9 +236,17 @@ export default function PutCallRatio() {
                     <span className={s.knob} />
                   </span>
                 </label>
-                <span className={s.live}>
+                <span className={cx(s.live, feedAge !== null && s.stale)}>
                   <span className={cx(s.dot, query.isFetching && s.pulse)} />
                   {clock} IST
+                  {feedAge !== null ? (
+                    <>
+                      <span className={s.sep} aria-hidden="true">
+                        ·
+                      </span>
+                      <span>{feedAgeLabel(feedAge)}</span>
+                    </>
+                  ) : null}
                 </span>
               </div>
             </div>
@@ -243,7 +258,7 @@ export default function PutCallRatio() {
               valueAxisName="PCR"
               referenceLine={{ value: 1, label: 'PCR 1' }}
               lines={pcrLines}
-              times={times}
+              timestamps={times}
               futures={futures}
               formatValue={fmtRatio}
               formatPrice={fmtPrice}
@@ -256,7 +271,7 @@ export default function PutCallRatio() {
               icon={<IconChart />}
               valueAxisName="OI change"
               lines={changeLines}
-              times={times}
+              timestamps={times}
               futures={futures}
               formatValue={fmtOi}
               formatPrice={fmtPrice}
@@ -269,7 +284,7 @@ export default function PutCallRatio() {
               icon={<IconChart />}
               valueAxisName="Open interest"
               lines={totalLines}
-              times={times}
+              timestamps={times}
               futures={futures}
               formatValue={fmtOi}
               formatPrice={fmtPrice}
@@ -280,9 +295,11 @@ export default function PutCallRatio() {
             <p className={s.caption}>
               {view.data_quality === 'empty'
                 ? 'No snapshots recorded for today yet — the series fills in as the ingest worker captures them.'
-                : view.open_is_estimated
-                  ? `The ${timeLabel(view.t[0]!)} baseline is derived from the day’s OI change; recorded history starts at ${timeLabel(view.t[1] ?? view.t[0]!)}.`
-                  : `Recorded from ${timeLabel(view.t[0]!)}, resampled to ${timeframe}.`}
+                : view.data_quality === 'live_proxy'
+                  ? 'Nothing archived for today yet — showing the 9:15 open against the live chain. The shape fills in as the ingest worker captures snapshots.'
+                  : view.open_is_estimated
+                    ? `The ${timeLabel(view.t[0]!)} baseline is derived from the day’s OI change; recorded history starts at ${timeLabel(view.t[1] ?? view.t[0]!)}.`
+                    : `Recorded from ${timeLabel(view.t[0]!)}, resampled to ${timeframe}.`}
             </p>
           </div>
         </div>

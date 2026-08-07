@@ -36,6 +36,7 @@ export default [
     route('dashboard', 'routes/terminal/dashboard/route.tsx'),
     route('advanced-dashboard', 'routes/terminal/advanced-dashboard/route.tsx'),
     route('option-chain', 'routes/terminal/option-chain/route.tsx'),
+    route('ai-console', 'routes/terminal/ai-console.tsx'),
     route('analyse', 'routes/terminal/analyse/route.tsx'),
     route('smart-insights', 'routes/terminal/smart-insights.tsx'),
 

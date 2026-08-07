@@ -18,8 +18,8 @@ import {
 function contract(
   id: string,
   option_type: 'CE' | 'PE',
-  oi: number[],
-  volume: number[] = []
+  oi: (number | null)[],
+  volume: (number | null)[] = []
 ): ContractSeries {
   return {
     id,
@@ -57,6 +57,16 @@ describe('metricValues', () => {
 
   it('survives an empty series', () => {
     expect(metricValues(contract('24600CE', 'CE', []), 'change')).toEqual([]);
+  });
+
+  it('leaves a leg null until it is first quoted', () => {
+    // A strike listed part-way through the morning was not quoted at the open;
+    // zero would draw it along the axis and then leap.
+    const c = contract('24600CE', 'CE', [null, null, 100, 160]);
+    expect(metricValues(c, 'oi')).toEqual([null, null, 100, 160]);
+    // Index 0 is null, so the baseline falls back to 0 and the change series
+    // reads the raw level from the leg's first quote onward.
+    expect(metricValues(c, 'change')).toEqual([null, null, 100, 160]);
   });
 });
 

@@ -6,6 +6,7 @@ import IconChart from '$shared/ui/icons/IconChart';
 import IconChevronDown from '$shared/ui/icons/IconChevronDown';
 import ContractPicker from './components/ContractPicker';
 import SeriesChart from '../components/SeriesChart';
+import { feedAgeLabel, feedAgeMs } from '../open-interest/oi-data';
 import {
   contractLabel,
   DEFAULT_INTERVAL,
@@ -93,7 +94,9 @@ export default function MultiOiVolume() {
 
   const oiPicked = useMemo(() => resolve(oiIds, byId), [oiIds, byId]);
 
-  const times = useMemo(() => (view?.t ?? []).map(timeLabel), [view]);
+  // Raw ISO, not display strings: the chart derives its own axis labels from
+  // the instants.
+  const times = view?.t ?? [];
   const futures = view?.fut ?? [];
   const lotSize = view?.lot_size ?? 75;
 
@@ -129,6 +132,10 @@ export default function MultiOiVolume() {
   })
     .format(now)
     .toLowerCase();
+
+  // How far the drawn series lags the clock beside it. `null` when current, and
+  // outside trading hours — see `feedAgeMs`.
+  const feedAge = feedAgeMs(view?.now_ts, now);
 
   return (
     <div className={s.page}>
@@ -245,9 +252,17 @@ export default function MultiOiVolume() {
               <span className={s.meta}>
                 ATM {view.atm_strike} · {view.contracts.length} contracts · {view.interval} buckets
               </span>
-              <span className={s.live}>
+              <span className={cx(s.live, feedAge !== null && s.stale)}>
                 <span className={cx(s.dot, query.isFetching && s.pulse)} />
                 {clock} IST
+                {feedAge !== null ? (
+                  <>
+                    <span className={s.sep} aria-hidden="true">
+                      ·
+                    </span>
+                    <span>{feedAgeLabel(feedAge)}</span>
+                  </>
+                ) : null}
               </span>
             </div>
 
@@ -257,7 +272,7 @@ export default function MultiOiVolume() {
               icon={<IconChart />}
               valueAxisName="Open interest"
               lines={oiLines}
-              times={times}
+              timestamps={times}
               futures={futures}
               formatValue={formatValue}
               formatPrice={fmtPrice}
@@ -269,7 +284,7 @@ export default function MultiOiVolume() {
               icon={<IconChart />}
               valueAxisName="OI change"
               lines={changeLines}
-              times={times}
+              timestamps={times}
               futures={futures}
               formatValue={formatValue}
               formatPrice={fmtPrice}
@@ -279,9 +294,11 @@ export default function MultiOiVolume() {
             <p className={s.caption}>
               {view.data_quality === 'empty'
                 ? 'No snapshots recorded for today yet — the series fills in as the ingest worker captures them.'
-                : view.open_is_estimated
-                  ? `The ${timeLabel(view.t[0]!)} baseline is derived from the day’s OI change; recorded history starts at ${timeLabel(view.t[1] ?? view.t[0]!)}.`
-                  : `Recorded from ${timeLabel(view.t[0]!)} at ${view.interval} buckets.`}
+                : view.data_quality === 'live_proxy'
+                  ? 'Nothing archived for today yet — showing the 9:15 open against the live chain. The shape fills in as the ingest worker captures snapshots.'
+                  : view.open_is_estimated
+                    ? `The ${timeLabel(view.t[0]!)} baseline is derived from the day’s OI change; recorded history starts at ${timeLabel(view.t[1] ?? view.t[0]!)}.`
+                    : `Recorded from ${timeLabel(view.t[0]!)} at ${view.interval} buckets.`}
             </p>
           </div>
         </div>

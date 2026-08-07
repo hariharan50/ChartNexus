@@ -105,15 +105,61 @@ async def test_contract_ids_name_the_strike_and_side() -> None:
     }
 
 
-async def test_an_empty_day_is_shaped_not_broken() -> None:
-    # Before two captures land there is genuinely nothing to draw. The page
-    # should say so rather than fail.
+async def test_an_unarchived_day_falls_back_to_open_vs_now() -> None:
+    """A machine with no ingest worker still gets a chart, not a blank panel.
+
+    This is the same tier the Open Interest page has always served, and without
+    it the two pages disagree about whether today has any data at all.
+    """
     payload = await _service([])(TENANT, "NIFTY")
+
+    assert payload["data_quality"] == "live_proxy"
+    assert payload["open_is_estimated"] is True
+    assert payload["t"] == ["2026-08-04T03:45:00+00:00", "2026-08-04T08:00:00+00:00"]
+    assert len(payload["contracts"]) == 6
+    assert payload["default_ids"]
+
+
+async def test_the_live_proxy_baseline_comes_off_the_day_change() -> None:
+    # `oi - oi_change` is the broker's own statement of where the leg opened,
+    # so the change chart reads 0 at the bell and today's flow at the right.
+    service = GetOiSeries(
+        provider=_ProviderWithChange(), snapshots=StubReader([]), now_utc=lambda: NOW
+    )
+
+    payload = await service(TENANT, "NIFTY")
+
+    contract = payload["contracts"][0]
+    assert contract["oi"] == [900, 1_000]
+    # Volume is cumulative from the bell: nothing had traded at 09:15.
+    assert contract["volume"] == [0, 4_200]
+
+
+async def test_before_the_bell_there_is_no_session_to_proxy() -> None:
+    # 08:00 IST. Two ends of a session that has not started would both be
+    # invented, so the payload stays honestly empty.
+    service = GetOiSeries(
+        provider=StubProvider(),
+        snapshots=StubReader([]),
+        now_utc=lambda: datetime(2026, 8, 4, 2, 30, tzinfo=UTC),
+    )
+
+    payload = await service(TENANT, "NIFTY")
 
     assert payload["data_quality"] == "empty"
     assert payload["t"] == []
     assert payload["contracts"] == []
     assert payload["default_ids"] == []
+
+
+class _ProviderWithChange:
+    async def fetch(self, tenant_id: TenantId, symbol: str) -> ProviderChain:
+        return ProviderChain(
+            rows=_rows(oi=1_000, change=100, volume=4_200),
+            spot=24_650.0,
+            lot_size=75,
+            expiry="2026-08-11",
+        )
 
 
 # -- bucketing --------------------------------------------------------------
@@ -228,6 +274,64 @@ async def test_a_late_start_gets_the_reconstructed_open_at_index_zero() -> None:
     # Nothing recorded the index at 09:15, so the overlay starts where the
     # recording does rather than reaching back to an invented level.
     assert payload["fut"][0] is None
+
+
+# -- cumulative volume ------------------------------------------------------
+
+
+async def test_the_reconstructed_open_carries_no_volume() -> None:
+    """Volume is cumulative from the bell, so at 09:15 it was nothing.
+
+    `session_open_frame` restates OI off the newest snapshot and used to copy its
+    volume across unchanged — putting the day's *whole* traded volume at index 0,
+    so every volume line opened at its own maximum and fell for the rest of the
+    morning.
+    """
+    late = ChainSnapshot(
+        captured_at=datetime(2026, 8, 4, 5, 0, tzinfo=UTC),
+        rows=_rows(oi=500, change=200, volume=9_000),
+        spot=24_650.0,
+        atm_strike=24_650.0,
+    )
+    later = ChainSnapshot(
+        captured_at=datetime(2026, 8, 4, 5, 30, tzinfo=UTC),
+        rows=_rows(oi=700, change=400, volume=15_000),
+        spot=24_650.0,
+        atm_strike=24_650.0,
+    )
+
+    payload = await _service([late, later])(TENANT, "NIFTY")
+
+    volume = payload["contracts"][0]["volume"]
+    assert volume[0] == 0
+    # And the series only ever climbs — a cumulative total cannot go backwards.
+    assert volume == sorted(volume)
+
+
+# -- the reported interval --------------------------------------------------
+
+
+async def test_the_interval_reports_the_cadence_not_the_request() -> None:
+    """A request cannot produce resolution finer than the capture cadence.
+
+    Asking for 1m against a worker running every three minutes yields 3m
+    spacing, and the header captioning that "1m buckets" is simply false.
+    """
+    snaps = [_snap(minute, oi=100) for minute in (0, 3, 6, 9)]
+
+    payload = await _service(snaps)(TENANT, "NIFTY", interval="1m")
+
+    assert payload["interval"] == "3m"
+
+
+async def test_a_coarser_request_than_the_cadence_is_honoured() -> None:
+    # The cadence is a floor, not an override: 15m buckets over a 3m capture
+    # rate really are 15m.
+    snaps = [_snap(minute, oi=100) for minute in range(0, 60, 3)]
+
+    payload = await _service(snaps)(TENANT, "NIFTY", interval="15m")
+
+    assert payload["interval"] == "15m"
 
 
 async def test_a_leg_that_stops_being_quoted_holds_its_last_value() -> None:

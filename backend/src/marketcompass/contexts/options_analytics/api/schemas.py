@@ -89,8 +89,11 @@ class ContractSeriesResponse(_Schema):
     id: str
     strike: float
     option_type: str
-    oi: list[int]
-    volume: list[int]
+    # `None` before a leg's first appearance. A strike listed part-way through
+    # the morning was not quoted at the open; 0 would draw it along the axis and
+    # then leap, inventing a build that never happened.
+    oi: list[int | None]
+    volume: list[int | None]
 
 
 class OiSeriesResponse(_Schema):

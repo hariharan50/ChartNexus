@@ -8,6 +8,12 @@ collapses the whole chain to one number per side per capture. That makes the
 payload small enough (six numbers a snapshot, ~20 KB a session) that the
 timeframe can be applied on the client, which is why — unlike the Multi OI
 endpoint — this one takes no interval parameter.
+
+Tiers, as on the Open Interest page:
+
+    INTRADAY   (>=2 stored captures today) — real open vs the whole session
+    LIVE_PROXY (0 or 1)                    — open-vs-now off the live chain
+    EMPTY      (before the bell)           — no session to draw two ends of
 """
 
 from __future__ import annotations
@@ -25,6 +31,7 @@ from marketcompass.contexts.options_analytics.application.session import (
     drop_future,
     future_of,
     iso,
+    live_proxy_frames,
     session_open_frame,
     session_open_utc,
 )
@@ -55,32 +62,78 @@ class GetPcrSeries:
         )
 
         if len(snaps) < _MIN_INTRADAY_SNAPSHOTS:
-            return _empty(symbol, chain, now)
+            return self._live_proxy(symbol, chain, snaps, now)
 
         ordered = sorted(snaps, key=lambda snap: snap.captured_at)
         reconstructed = session_open_frame(ordered)
         if reconstructed is not None:
             ordered = [reconstructed, *ordered]
 
-        totals = [_totals(snap) for snap in ordered]
+        return _payload(
+            symbol,
+            chain,
+            ordered,
+            quality="intraday",
+            open_is_estimated=reconstructed is not None,
+        )
 
-        return {
-            "instrument_id": symbol,
-            "symbol": symbol,
-            "expiry_date": chain.expiry,
-            "lot_size": chain.lot_size,
-            "open_ts": iso(ordered[0].captured_at),
-            "now_ts": iso(ordered[-1].captured_at),
-            "data_quality": "intraday",
-            "open_is_estimated": reconstructed is not None,
-            "t": [iso(snap.captured_at) for snap in ordered],
-            "fut": [future_of(snap) for snap in ordered],
-            "pcr": [total.pcr for total in totals],
-            "call_oi": [total.call_oi for total in totals],
-            "put_oi": [total.put_oi for total in totals],
-            "call_oi_chg": [total.call_chg for total in totals],
-            "put_oi_chg": [total.put_chg for total in totals],
-        }
+    def _live_proxy(
+        self,
+        symbol: str,
+        chain: ProviderChain,
+        snaps: list[ChainSnapshot],
+        now: datetime,
+    ) -> dict[str, Any]:
+        """The tier for a day the ingest worker has not archived.
+
+        Mirrors ``GetOiView``: one stored capture if there is one, otherwise the
+        live chain, with the 09:15 baseline reconstructed from each leg's
+        ``oi_change``. Without it the three charts stay blank all session on a
+        machine with no ingest worker, while the Open Interest page one menu item
+        away reports today's PCR from the very same chain.
+        """
+        stored = snaps[0] if snaps else None
+        rows = stored.rows if stored is not None else chain.rows
+        spot = (stored.spot if stored is not None else None) or chain.spot
+        frames = live_proxy_frames(
+            rows,
+            now,
+            spot=spot,
+            future_price=stored.future_price if stored is not None else None,
+        )
+        if not frames:
+            return _empty(symbol, chain, now)
+
+        return _payload(symbol, chain, frames, quality="live_proxy", open_is_estimated=True)
+
+
+def _payload(
+    symbol: str,
+    chain: ProviderChain,
+    frames: list[ChainSnapshot],
+    *,
+    quality: str,
+    open_is_estimated: bool,
+) -> dict[str, Any]:
+    totals = [_totals(snap) for snap in frames]
+
+    return {
+        "instrument_id": symbol,
+        "symbol": symbol,
+        "expiry_date": chain.expiry,
+        "lot_size": chain.lot_size,
+        "open_ts": iso(frames[0].captured_at),
+        "now_ts": iso(frames[-1].captured_at),
+        "data_quality": quality,
+        "open_is_estimated": open_is_estimated,
+        "t": [iso(snap.captured_at) for snap in frames],
+        "fut": [future_of(snap) for snap in frames],
+        "pcr": [total.pcr for total in totals],
+        "call_oi": [total.call_oi for total in totals],
+        "put_oi": [total.put_oi for total in totals],
+        "call_oi_chg": [total.call_chg for total in totals],
+        "put_oi_chg": [total.put_chg for total in totals],
+    }
 
 
 class _Totals:

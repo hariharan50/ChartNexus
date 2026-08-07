@@ -8,6 +8,7 @@
  */
 
 import { apiFetch } from '$shared/api/client';
+import { isTradingWindow } from '$shared/formatting/ist-clock';
 
 export interface OiSeriesFrame {
   t: string;
@@ -171,6 +172,40 @@ export function freshnessLabel(updatedAt: number, now: number): string {
   const minutes = Math.floor(seconds / 60);
   if (minutes < 60) return `${minutes}m ago`;
   return `${Math.floor(minutes / 60)}h ago`;
+}
+
+/**
+ * How far behind the newest *frame* may fall before the feed is stalled.
+ *
+ * Deliberately generous against the one-minute capture cadence: a couple of
+ * missed ticks is a slow broker, five minutes of nothing is a dead pipeline.
+ */
+export const FEED_STALE_AFTER_MS = 5 * 60_000;
+
+/**
+ * Age of the newest point in the payload, or `null` when it is current.
+ *
+ * Distinct from {@link freshnessLabel}, and the distinction is the whole point.
+ * That one times the *HTTP response*; this one times the *data inside it*. When
+ * the ingest worker dies the endpoint keeps answering in milliseconds with a
+ * series that stopped growing an hour ago — the response is fresh, the data is
+ * not, and only this reads as stale. A chart that looks live while showing
+ * hour-old open interest is worse than one that admits it has no news.
+ *
+ * `null` outside trading hours: after the close the series is *supposed* to
+ * stop, and flagging it all evening trains people to ignore the warning.
+ */
+export function feedAgeMs(nowTs: string | undefined, now: number): number | null {
+  if (!nowTs || !isTradingWindow(now)) return null;
+  const age = now - Date.parse(nowTs);
+  return age > FEED_STALE_AFTER_MS ? age : null;
+}
+
+/** `67m behind` — how far the drawn series lags the clock beside it. */
+export function feedAgeLabel(ageMs: number): string {
+  const minutes = Math.floor(ageMs / 60_000);
+  if (minutes < 60) return `${minutes}m behind`;
+  return `${Math.floor(minutes / 60)}h ${minutes % 60}m behind`;
 }
 
 /** `6 Aug` in IST — the trading date, not the viewer's. */
