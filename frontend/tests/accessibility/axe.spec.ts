@@ -41,6 +41,9 @@ interface PageCase {
 }
 
 const PAGES: PageCase[] = [
+  // Budget 0, unlike every page below it: the landing page is new markup on a
+  // new palette, so it carries none of the inherited debt and has no excuse.
+  { path: '/', name: 'landing', signedIn: false, contrastBudget: 0 },
   { path: '/login', name: 'sign in', signedIn: false, contrastBudget: 2 },
   { path: '/register', name: 'register', signedIn: false, contrastBudget: 3 },
   { path: '/dashboard', name: 'dashboard', signedIn: true, contrastBudget: 2 },
@@ -74,13 +77,20 @@ for (const { path, name, signedIn, contrastBudget } of PAGES) {
     );
     expect(summary, summary.join('\n')).toEqual([]);
 
-    const contrastNodes = violations
+    const contrastFailures = violations
       .filter((v) => v.id === 'color-contrast')
-      .reduce((total, v) => total + v.nodes.length, 0);
+      .flatMap((v) => v.nodes);
+    // Name the offending selectors here too. A bare count tells you the budget
+    // moved but not which pair to fix, which is most of the work.
+    const offenders = contrastFailures
+      .map(
+        (node) => `  ${node.target.join(' ')} — ${node.failureSummary?.split('\n').at(-1) ?? ''}`
+      )
+      .join('\n');
     expect(
-      contrastNodes,
+      contrastFailures.length,
       `Inherited contrast debt on ${path} changed. If a palette fix reduced it, ` +
-        `lower the budget; if new markup added to it, use an existing token pair.`
+        `lower the budget; if new markup added to it, use an existing token pair.\n${offenders}`
     ).toBeLessThanOrEqual(contrastBudget);
   });
 }

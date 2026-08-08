@@ -38,6 +38,16 @@ dependencies = [
     "opentelemetry-instrumentation-redis>=0.50b0",
 ]
 
+[project.optional-dependencies]
+# Generative LLM providers for the AI guider's copilot layer. Optional: with
+# neither installed the app runs on the rule-based provider (the default), and
+# the provider factory degrades gracefully when a package is absent. Install to
+# enable MC_LLM_PROVIDER=anthropic|openai:  uv sync --extra llm
+llm = [
+    "anthropic>=0.40",
+    "openai>=1.60",
+]
+
 [project.scripts]
 marketcompass-api = "marketcompass.entrypoints.main_api:run"
 marketcompass-ingest = "marketcompass.entrypoints.main_ingest:run"

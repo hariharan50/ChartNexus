@@ -26,6 +26,9 @@ services:
       MC_BROKER_PROVIDER: ${MC_BROKER_PROVIDER:-mock}
       MC_LLM_PROVIDER: ${MC_LLM_PROVIDER:-rule_based}
       MC_LLM_ANTHROPIC_API_KEY: ${MC_LLM_ANTHROPIC_API_KEY:-}
+      MC_LLM_MODEL: ${MC_LLM_MODEL:-claude-sonnet-5}
+      MC_LLM_OPENROUTER_API_KEY: ${MC_LLM_OPENROUTER_API_KEY:-}
+      MC_LLM_OPENROUTER_MODEL: ${MC_LLM_OPENROUTER_MODEL:-anthropic/claude-3.7-sonnet}
     volumes:
       - ../../backend/src:/app/src:ro
       - ../../backend/migrations:/app/migrations:ro

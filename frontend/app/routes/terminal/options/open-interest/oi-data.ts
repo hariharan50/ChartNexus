@@ -8,7 +8,12 @@
  */
 
 import { apiFetch } from '$shared/api/client';
-import { isTradingWindow } from '$shared/formatting/ist-clock';
+import {
+  isTradingWindow,
+  SESSION_CLOSE_MIN,
+  SESSION_MINUTES,
+  SESSION_OPEN_MIN
+} from '$shared/formatting/ist-clock';
 
 export interface OiSeriesFrame {
   t: string;
@@ -273,12 +278,9 @@ function halfHour(iso: string): number {
   return Math.floor(minutes / 60) * 2 + (minutes % 60 >= 30 ? 1 : 0);
 }
 
-/** 09:15 and 15:30 IST, as minutes past midnight. */
-const SESSION_OPEN_MIN = 9 * 60 + 15;
-const SESSION_CLOSE_MIN = 15 * 60 + 30;
-const SESSION_SPAN_MIN = SESSION_CLOSE_MIN - SESSION_OPEN_MIN;
+const SESSION_SPAN_MIN = SESSION_MINUTES;
 
-/** Where an instant sits on a track spanning 09:15–15:30 IST, 0–100. */
+/** Where an instant sits on a track spanning 09:15–15:40 IST, 0–100. */
 function sessionPct(iso: string): number {
   const offset = ((istMinutes(iso) - SESSION_OPEN_MIN) / SESSION_SPAN_MIN) * 100;
   // Clamped rather than dropped: a capture a minute either side of the bell is

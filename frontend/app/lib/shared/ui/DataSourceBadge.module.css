@@ -30,16 +30,20 @@
 }
 
 /* Deliberately the loudest of the three: simulated numbers must never be
-   mistaken for market data. */
+   mistaken for market data. The tint is 6% rather than the 12% the other two
+   carry: --mc-danger is much the darkest of the three foregrounds, so the same
+   wash pushed it below AA. Less tint, same loudness — the border carries the
+   colour instead. */
 .mock {
   color: var(--mc-danger);
   border-color: color-mix(in srgb, var(--mc-danger) 40%, transparent);
-  background: color-mix(in srgb, var(--mc-danger) 12%, transparent);
+  background: color-mix(in srgb, var(--mc-danger) 6%, transparent);
 }
 
+/* Lighter weight, not lower opacity. Dimming put this below AA on the mock
+   badge, and this is the text that says how stale a cached number is. */
 .detail {
   font-weight: 400;
-  opacity: 0.85;
 }
 
 .compact {

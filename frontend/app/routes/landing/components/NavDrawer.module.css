@@ -1,0 +1,168 @@
+/* The dialog is the full viewport; the panel inside it is the drawer, so the
+   uncovered area is a real backdrop to click on. */
+.drawer {
+  width: 100vw;
+  max-width: 100vw;
+  height: 100dvh;
+  max-height: 100dvh;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  overflow: hidden;
+}
+
+.drawer::backdrop {
+  background: rgb(10 10 12 / 0.72);
+  backdrop-filter: blur(2px);
+}
+
+.panel {
+  display: flex;
+  flex-direction: column;
+  gap: var(--mc-space-6);
+  width: min(22rem, 88vw);
+  height: 100%;
+  margin-left: auto;
+  padding: var(--mc-space-5);
+  border-left: 1px solid var(--mc-landing-border);
+  background: var(--mc-landing-panel);
+  color: var(--mc-landing-text);
+  overflow-y: auto;
+
+  /* Closed state is a translate, never opacity: the reduced-motion override in
+     app.css collapses the duration to ~0ms, and an opacity-based drawer would
+     then finish invisible. */
+  transform: translateX(100%);
+  transition: transform var(--mc-duration) ease-out;
+}
+
+.drawer[open] .panel {
+  transform: translateX(0);
+}
+
+.head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.head-label {
+  font-size: var(--mc-text-xs);
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--mc-landing-text-subtle);
+}
+
+.close {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--lp-tap);
+  height: var(--lp-tap);
+  border: 1px solid var(--mc-landing-border);
+  border-radius: var(--mc-radius);
+  background: transparent;
+  color: var(--mc-landing-text);
+  cursor: pointer;
+}
+
+.close:hover {
+  background: var(--mc-landing-surface);
+}
+
+.nav {
+  display: flex;
+  flex-direction: column;
+  gap: var(--mc-space-2);
+}
+
+.list {
+  display: flex;
+  flex-direction: column;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.link,
+.sublink,
+.summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: var(--lp-tap);
+  padding: 0 var(--mc-space-2);
+  border-radius: var(--mc-radius);
+  font-size: var(--mc-text-lg);
+  font-weight: 500;
+  color: var(--mc-landing-text);
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.link:hover,
+.sublink:hover,
+.summary:hover {
+  background: var(--mc-landing-surface);
+}
+
+.summary {
+  list-style: none;
+}
+
+.summary::-webkit-details-marker {
+  display: none;
+}
+
+.tools[open] .summary svg {
+  transform: rotate(180deg);
+}
+
+.summary svg {
+  transition: transform var(--mc-duration-fast);
+}
+
+.sublink {
+  padding-left: var(--mc-space-5);
+  font-size: var(--mc-text-base);
+  color: var(--mc-landing-text-muted);
+}
+
+.actions {
+  display: flex;
+  flex-direction: column;
+  gap: var(--mc-space-3);
+  margin-top: auto;
+}
+
+.signup,
+.login {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: var(--lp-tap);
+  border-radius: var(--lp-radius-pill);
+  font-size: var(--mc-text-base);
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.signup {
+  background: var(--mc-landing-accent-solid);
+  color: var(--mc-landing-on-accent);
+}
+
+.signup:hover {
+  background: var(--mc-landing-accent-solid-hover);
+}
+
+.login {
+  border: 1px solid var(--mc-landing-border-strong);
+  color: var(--mc-landing-text);
+}
+
+.login:hover {
+  background: var(--mc-landing-surface);
+}

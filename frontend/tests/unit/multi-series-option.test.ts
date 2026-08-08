@@ -75,6 +75,42 @@ describe('the x axis', () => {
     expect(axis.max!).toBeGreaterThan(36);
   });
 
+  it('keeps late-session captures apart instead of piling them on the close', () => {
+    // The tooltip is axis-triggered, so every series value sharing the hovered
+    // x is listed. This axis used to clamp at minute 375 (15:30), which put
+    // every capture after the F&O close moved to 15:40 on the same position —
+    // ten minutes of one-minute snapshots stacked into one hover, and a tooltip
+    // that ran off the screen.
+    const late = ['2026-08-07T09:55:00Z', '2026-08-07T10:00:00Z', '2026-08-07T10:05:00Z'];
+    const series = (
+      build({
+        timestamps: late, // 15:25, 15:30 and 15:35 IST
+        futures: [24_600, 24_610, 24_620],
+        lines: [{ id: '24600CE', label: '24600 CE', color: '#ec4899', values: [10, 20, 30] }]
+      }).series as Series[]
+    ).find((s) => s.id === '24600CE');
+
+    const xs = (series?.data as [number, number][]).map(([x]) => x);
+    expect(xs).toEqual([370, 375, 380]);
+    expect(new Set(xs).size).toBe(xs.length);
+  });
+
+  it('separates two captures inside the same minute', () => {
+    // The x used to be floored to whole minutes, which collided any two
+    // captures in the same minute — routine at a 60-second ingest cadence, and
+    // another way to get two rows per contract in one tooltip.
+    const series = (
+      build({
+        timestamps: ['2026-08-07T04:18:10Z', '2026-08-07T04:18:50Z'],
+        futures: [24_680, 24_681],
+        lines: [{ id: 'a', label: 'a', color: '#fff', values: [1, 2] }]
+      }).series as Series[]
+    ).find((s) => s.id === 'a');
+
+    const xs = (series?.data as [number, number][]).map(([x]) => x);
+    expect(new Set(xs).size).toBe(2);
+  });
+
   it('gives a single point somewhere to sit', () => {
     // No span to take a percentage of; the axis must not collapse to min == max.
     const axis = build({

@@ -68,7 +68,17 @@ export const meta: Route.MetaFunction = ({ error }) =>
 
 export const links: Route.LinksFunction = () => [
   { rel: 'icon', href: '/favicon/favicon.svg', type: 'image/svg+xml' },
-  { rel: 'manifest', href: '/manifest.webmanifest' }
+  { rel: 'manifest', href: '/manifest.webmanifest' },
+  // `crossOrigin` is required even though this is same-origin: CSS font fetches
+  // are always CORS-mode, so a preload without it does not match the request the
+  // stylesheet makes and the font is downloaded twice.
+  {
+    rel: 'preload',
+    href: '/fonts/inter-latin-var.woff2',
+    as: 'font',
+    type: 'font/woff2',
+    crossOrigin: 'anonymous'
+  }
 ];
 
 export function Layout({ children }: { children: React.ReactNode }) {

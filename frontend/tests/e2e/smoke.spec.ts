@@ -1,14 +1,16 @@
 import { expect, test } from '@playwright/test';
 
 /**
- * The two things the migration actually rewrote: the root redirect and the
- * terminal auth guard. Both were SvelteKit `load` functions; both are now React
- * Router loaders reached over a different fetch path.
+ * The two loaders that decide where a visitor lands: the `/` landing page and
+ * the terminal auth guard. Both were SvelteKit `load` functions; both are now
+ * React Router loaders reached over a different fetch path.
  */
 
-test('/ redirects to the dashboard', async ({ page }) => {
-  await page.goto('/');
-  await expect(page).toHaveURL('/login?next=%2Fdashboard');
+test('/ renders the landing page for a signed-out visitor', async ({ page }) => {
+  const response = await page.goto('/');
+  expect(response?.status()).toBe(200);
+  await expect(page).toHaveURL('/');
+  await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
 });
 
 test.describe('signed out', () => {
@@ -35,7 +37,7 @@ test.describe('signed in', () => {
     ]);
   });
 
-  test('/ reaches the dashboard', async ({ page }) => {
+  test('/ sends a signed-in visitor straight past the marketing page', async ({ page }) => {
     await page.goto('/');
     await expect(page).toHaveURL('/dashboard');
   });

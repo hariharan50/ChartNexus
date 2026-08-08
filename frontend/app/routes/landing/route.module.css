@@ -1,0 +1,99 @@
+/* ---------------------------------------------------------------------------
+   The landing page is dark in every theme.
+
+   The theme store writes `data-theme` on <html>, so a route cannot opt out of
+   the current theme by attribute. The sanctioned way is to re-pin the generic
+   tokens for this subtree — the same thing `.auth-layout` does in
+   routes/public/layout.module.css, for the same reason.
+   --------------------------------------------------------------------------- */
+
+.landing {
+  --mc-bg: var(--mc-landing-bg);
+  --mc-surface: var(--mc-landing-surface);
+  --mc-surface-raised: var(--mc-landing-surface-raised);
+  --mc-border: var(--mc-landing-border);
+  --mc-border-strong: var(--mc-landing-border-strong);
+  --mc-field-bg: var(--mc-landing-surface-raised);
+  --mc-field-border: var(--mc-landing-border-strong);
+
+  --mc-text: var(--mc-landing-text);
+  --mc-text-muted: var(--mc-landing-text-muted);
+  --mc-text-subtle: var(--mc-landing-text-subtle);
+
+  --mc-accent: var(--mc-landing-accent);
+  --mc-accent-weak: var(--mc-landing-accent-weak);
+
+  --mc-bullish: var(--mc-landing-bullish);
+  --mc-bullish-weak: var(--mc-landing-bullish-weak);
+  --mc-bearish: var(--mc-landing-bearish);
+  --mc-bearish-weak: var(--mc-landing-bearish-weak);
+  --mc-brand: var(--mc-landing-brand);
+
+  /* Redefining the variables is not enough on its own. `color` inherits as a
+     computed value, so an element with no `color` of its own — every heading,
+     every paragraph — inherits what <body> already resolved from the *theme's*
+     --mc-text, outside this subtree. Under `light`/`warm` that is near-black on
+     near-black. Setting it here gives them something correct to inherit.
+     Documented at routes/public/layout.module.css:19 where it was a real bug. */
+  color: var(--mc-landing-text);
+
+  /* Scrollbars and form controls follow the subtree, not the theme. */
+  color-scheme: dark;
+
+  background: var(--mc-landing-bg);
+  min-height: 100vh;
+  min-height: 100dvh;
+  overflow-x: clip;
+}
+
+/* --- marketing type scale ------------------------------------------------
+   `--lp-*`, not `--mc-*`: these are landing-local and are not part of the app
+   token contract. The app's scale stops at 1.5rem because a trading terminal
+   never needs a headline; a hero does.
+
+   Breakpoint ladder for every module under routes/landing, in rem so it reads
+   like the rest of the repo, at the pixel values the design system specifies:
+
+     36rem    576px   large phone
+     48rem    768px   tablet
+     62rem    992px   desktop — the nav collapses here
+     64rem   1024px
+     75rem   1200px
+     80rem   1280px
+     87.5rem 1400px
+
+   The terminal collapses its own nav at 60rem, which is deliberate and stays
+   where it is; these two headers are never on screen together. */
+
+.landing {
+  --lp-display-1: clamp(2.5rem, 1.6rem + 3.2vw, 3.5rem);
+  --lp-display-2: clamp(1.875rem, 1.3rem + 2vw, 2.5rem);
+  --lp-display-3: clamp(1.25rem, 1.05rem + 0.9vw, 1.625rem);
+  --lp-lead: clamp(1rem, 0.96rem + 0.25vw, 1.125rem);
+  --lp-eyebrow: 0.75rem;
+
+  /* Reading measure for body copy, and the content cap. Deliberately not
+     --mc-page-max (140rem): that exists so an option chain gets rows, and a
+     2240px-wide marketing column is unreadable. */
+  --lp-measure: 34rem;
+  --lp-max: 75rem;
+
+  --lp-section-y: clamp(3.5rem, 8vw, 7rem);
+  --lp-gap: clamp(1.5rem, 3vw, 2.5rem);
+  --lp-radius-card: 12px;
+  --lp-radius-pill: 999px;
+  /* The nav's drop shadow, and the only shadow on the page: cards get depth
+     from a 1px border against a lighter surface instead. */
+  --lp-shadow-nav: 0 8px 50px -15px rgb(0 0 0 / 0.6);
+
+  /* Touch target floor. --mc-control-h is 2.5rem/40px, just under the 44px
+     guideline, and this page is built for thumbs as much as pointers. */
+  --lp-tap: 2.75rem;
+}
+
+.closing-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: var(--mc-space-3);
+}

@@ -1,0 +1,221 @@
+.bar {
+  position: sticky;
+  top: 0;
+  z-index: var(--mc-z-sticky);
+  background: var(--mc-landing-bg);
+  box-shadow: var(--lp-shadow-nav);
+}
+
+.inner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--mc-space-5);
+  max-width: var(--lp-max);
+  margin: 0 auto;
+  padding: var(--mc-space-3) var(--mc-space-6);
+}
+
+.brand {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--mc-space-3);
+  color: var(--mc-landing-text);
+  text-decoration: none;
+  flex-shrink: 0;
+}
+
+.mark {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.125rem;
+  height: 2.125rem;
+  border-radius: var(--lp-radius-pill);
+  background: var(--mc-landing-accent-solid);
+  color: var(--mc-landing-on-accent);
+}
+
+.name {
+  font-size: 1.0625rem;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+
+/* --- desktop row ---------------------------------------------------------
+   Hidden below 62rem, where the hamburger takes over. Both render from the
+   same arrays, so nothing can be reachable here and missing there. */
+
+.desktop {
+  display: none;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--mc-space-5);
+  flex: 1;
+}
+
+.links {
+  display: flex;
+  align-items: center;
+  gap: var(--mc-space-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.link {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--mc-space-2);
+  min-height: 2.25rem;
+  padding: 0 var(--mc-space-3);
+  border-radius: var(--mc-radius);
+  background: transparent;
+  color: var(--mc-landing-text-muted);
+  font-size: var(--mc-text-base);
+  font-weight: 500;
+  text-decoration: none;
+  white-space: nowrap;
+  cursor: pointer;
+  list-style: none;
+}
+
+.link:hover {
+  color: var(--mc-landing-text);
+  background: var(--mc-landing-surface);
+}
+
+.link::-webkit-details-marker {
+  display: none;
+}
+
+.caret {
+  display: inline-flex;
+  transition: transform var(--mc-duration-fast);
+}
+
+.caret svg {
+  width: 1rem;
+  height: 1rem;
+}
+
+.menu {
+  position: relative;
+}
+
+.menu[open] .caret {
+  transform: rotate(180deg);
+}
+
+.menu[open] .panel {
+  display: flex;
+}
+
+/* `display: none` until open. A `<details>` hides its non-summary children
+   through a UA rule that any `display` of our own overrides — so setting
+   `display: flex` here unconditionally left the dropdown permanently open. */
+.panel {
+  position: absolute;
+  top: calc(100% + 0.5rem);
+  left: 0;
+  z-index: var(--mc-z-dropdown);
+  display: none;
+  flex-direction: column;
+  min-width: 15rem;
+  margin: 0;
+  padding: var(--mc-space-2);
+  border: 1px solid var(--mc-landing-border);
+  border-radius: var(--lp-radius-card);
+  background: var(--mc-landing-surface);
+  box-shadow: var(--lp-shadow-nav);
+  list-style: none;
+}
+
+.panel-item {
+  display: block;
+  padding: var(--mc-space-2) var(--mc-space-3);
+  border-radius: var(--mc-radius);
+  color: var(--mc-landing-text-muted);
+  font-size: var(--mc-text-base);
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.panel-item:hover {
+  background: var(--mc-landing-surface-raised);
+  color: var(--mc-landing-text);
+}
+
+.actions {
+  display: flex;
+  align-items: center;
+  gap: var(--mc-space-3);
+}
+
+.cta {
+  display: inline-flex;
+  align-items: center;
+  min-height: 2.5rem;
+  padding: 0 var(--mc-space-5);
+  border: 1px solid var(--mc-landing-accent-border);
+  border-radius: 8px;
+  background: var(--mc-landing-accent-solid);
+  /* Dark on orange — white on this fill is 2.9:1. See app.css. */
+  color: var(--mc-landing-on-accent);
+  font-size: var(--mc-text-base);
+  font-weight: 700;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.cta:hover {
+  background: var(--mc-landing-accent-solid-hover);
+}
+
+.icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.5rem;
+  height: 2.5rem;
+  border-radius: var(--lp-radius-pill);
+  color: var(--mc-landing-text-muted);
+}
+
+.icon:hover {
+  background: var(--mc-landing-surface);
+  color: var(--mc-landing-text);
+}
+
+/* --- hamburger ----------------------------------------------------------- */
+
+.trigger {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--lp-tap);
+  height: var(--lp-tap);
+  border: 1px solid var(--mc-landing-border-strong);
+  border-radius: var(--mc-radius);
+  background: transparent;
+  color: var(--mc-landing-text);
+  cursor: pointer;
+  transition:
+    background var(--mc-duration-fast),
+    border-color var(--mc-duration-fast);
+}
+
+.trigger:hover {
+  background: var(--mc-landing-surface);
+  border-color: var(--mc-landing-accent);
+}
+
+@media (min-width: 62rem) {
+  .desktop {
+    display: flex;
+  }
+
+  .trigger {
+    display: none;
+  }
+}

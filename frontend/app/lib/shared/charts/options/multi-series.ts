@@ -1,3 +1,4 @@
+import { SESSION_OPEN_MIN } from '$shared/formatting/ist-clock';
 import type { EChartsCoreOption } from '../echarts-modules';
 import type { ChartTheme } from '../theme/types';
 import { withAlpha } from '../theme/tokens';
@@ -93,10 +94,6 @@ const IST = 'Asia/Kolkata';
 /** India observes no DST, so a fixed offset is correct and needs no tzdata. */
 const IST_OFFSET_MS = 5.5 * 60 * 60 * 1000;
 const MINUTE_MS = 60_000;
-/** 09:15 IST, as minutes into the day. */
-const SESSION_OPEN_MIN = 9 * 60 + 15;
-/** 09:15 to 15:30. */
-const SESSION_MINUTES = 375;
 
 const clock = new Intl.DateTimeFormat('en-US', {
   timeZone: IST,
@@ -114,10 +111,26 @@ const stamp = new Intl.DateTimeFormat('en-GB', {
   hour12: true
 });
 
-/** The x value for a point: minutes past 09:15 IST, clamped to the session. */
+/**
+ * The x value for a point: minutes past the 09:15 IST bell.
+ *
+ * Fractional, and deliberately neither floored nor clamped. Both of those
+ * mapped *distinct* captures onto an identical x, and an axis-triggered tooltip
+ * reports every series value sharing the hovered x — so each collision added
+ * another row per contract. Flooring collided any two captures inside the same
+ * minute, which a 60-second ingest cadence makes routine; clamping piled every
+ * reading past the session end onto one position, which is how ten minutes of
+ * post-15:30 captures became a tooltip the height of the screen once the F&O
+ * close moved to 15:40 and this file still said 375.
+ *
+ * Out-of-session instants are left where they fall rather than pinned to the
+ * edge: the capture worker does not run outside market hours, so the case is
+ * hypothetical, and a point drawn slightly past the bell is a smaller lie than
+ * several points drawn on top of each other.
+ */
 function axisX(ms: number): number {
-  const minuteOfDay = Math.floor((ms + IST_OFFSET_MS) / MINUTE_MS) % 1440;
-  return Math.min(Math.max(minuteOfDay - SESSION_OPEN_MIN, 0), SESSION_MINUTES);
+  const minuteOfDay = ((ms + IST_OFFSET_MS) / MINUTE_MS) % 1440;
+  return minuteOfDay - SESSION_OPEN_MIN;
 }
 
 /** An axis position back to a clock reading — the inverse of `axisX`. */

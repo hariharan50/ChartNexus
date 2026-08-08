@@ -1,0 +1,38 @@
+.bar {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--mc-space-4);
+  max-width: var(--lp-max);
+  margin: 0 auto;
+  padding: 0 var(--mc-space-6) var(--lp-section-y);
+}
+
+.label {
+  margin: 0;
+  font-size: var(--lp-eyebrow);
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--mc-text-subtle);
+}
+
+.list {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: var(--mc-space-4) var(--mc-space-8);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+/* No `opacity` here. --mc-text-subtle is picked to clear AA against the surface
+   and nothing more, so dimming it lands at 4.19:1 — under the line. The muted
+   look comes from the colour itself. */
+.item {
+  font-size: var(--mc-text-lg);
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  color: var(--mc-text-subtle);
+}

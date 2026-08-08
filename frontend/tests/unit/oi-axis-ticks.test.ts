@@ -139,18 +139,29 @@ describe('label crowding', () => {
  * width and draws a two-hour afternoon as a complete trading day.
  */
 describe('sessionPositions', () => {
-  it('places the bell at the left edge and the close at the right', () => {
-    expect(sessionPositions([ist(9, 15), ist(15, 30)])).toEqual([0, 100]);
+  it('places the bell at the left edge and the F&O close at the right', () => {
+    // 15:40, not 15:30: derivatives run ten minutes past the cash close, and a
+    // track that ended at 15:30 stacked every later capture on the right edge.
+    expect(sessionPositions([ist(9, 15), ist(15, 40)])).toEqual([0, 100]);
   });
 
   it('places a frame by the clock, not by how many frames precede it', () => {
-    // 11:45 is 150 minutes into a 375-minute session — 40% along, whatever the
-    // ingest cadence was, and whether or not it was the second frame recorded.
-    const [, mid] = sessionPositions([ist(9, 15), ist(11, 45), ist(15, 30)]);
-    const [, denser] = sessionPositions([ist(9, 15), ist(11, 45), ist(12, 0), ist(15, 30)]);
+    // 11:45 is 150 minutes into a 385-minute session — 38.96% along, whatever
+    // the ingest cadence was, and whether or not it was the second frame.
+    const [, mid] = sessionPositions([ist(9, 15), ist(11, 45), ist(15, 40)]);
+    const [, denser] = sessionPositions([ist(9, 15), ist(11, 45), ist(12, 0), ist(15, 40)]);
 
-    expect(mid).toBeCloseTo(40, 6);
+    expect(mid).toBeCloseTo((150 / 385) * 100, 6);
     expect(denser).toBe(mid);
+  });
+
+  it('keeps the cash close and the F&O close at different positions', () => {
+    // Both used to land on 100. The ten minutes between them are a real part of
+    // the derivatives session and have to be scrubbable.
+    const [cash, fno] = sessionPositions([ist(15, 30), ist(15, 40)]);
+
+    expect(cash).toBeLessThan(100);
+    expect(fno).toBe(100);
   });
 
   it('leaves the morning empty when recording started at lunchtime', () => {
@@ -158,13 +169,13 @@ describe('sessionPositions', () => {
     // frame would sit at 0 and the timeline would claim to start there.
     const [first] = sessionPositions([ist(13, 1), ist(15, 28)]);
 
-    expect(first).toBeGreaterThan(60);
+    expect(first).toBeGreaterThan(55);
   });
 
   it('clamps a capture either side of the bell rather than dropping it', () => {
     // A pre-open or post-close capture is a real observation; it belongs at the
     // end of the track, not off it.
-    expect(sessionPositions([ist(9, 0), ist(15, 45)])).toEqual([0, 100]);
+    expect(sessionPositions([ist(9, 0), ist(15, 50)])).toEqual([0, 100]);
   });
 });
 

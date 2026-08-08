@@ -18,7 +18,10 @@ import { type RouteConfig, index, layout, prefix, route } from '@react-router/de
  * routes today and must not become routes here.
  */
 export default [
-  index('routes/home.tsx'),
+  // `/` is the marketing landing page. It was a bare redirect to `/dashboard`
+  // during the migration, when the app had no marketing homepage; its loader
+  // now keeps that redirect for signed-in visitors only.
+  index('routes/landing/route.tsx'),
   route('healthz', 'routes/healthz.ts'),
 
   // ── (public) ──────────────────────────────────────────────────────────────
@@ -36,7 +39,7 @@ export default [
     route('dashboard', 'routes/terminal/dashboard/route.tsx'),
     route('advanced-dashboard', 'routes/terminal/advanced-dashboard/route.tsx'),
     route('option-chain', 'routes/terminal/option-chain/route.tsx'),
-    route('ai-console', 'routes/terminal/ai-console.tsx'),
+    route('ai-console', 'routes/terminal/ai-console/route.tsx'),
     route('analyse', 'routes/terminal/analyse/route.tsx'),
     route('smart-insights', 'routes/terminal/smart-insights.tsx'),
 

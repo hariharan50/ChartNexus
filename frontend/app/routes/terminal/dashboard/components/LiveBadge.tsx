@@ -27,7 +27,12 @@ export default function LiveBadge({ live = true }: Props) {
   return (
     <span className={cx(s.badge, live && s.live)}>
       <span className={s.dot} aria-hidden="true" />
-      {live ? 'Live' : 'Delayed'} — {time} IST
+      {live ? 'Live' : 'Delayed'} —{' '}
+      {/* The server renders one second and the browser hydrates on another, so
+          this text legitimately differs — a hydration mismatch React otherwise
+          reports as an error and recovers from by re-rendering the tree. The
+          first tick, a second later, replaces whatever the server sent. */}
+      <span suppressHydrationWarning>{time}</span> IST
     </span>
   );
 }

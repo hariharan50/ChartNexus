@@ -86,7 +86,8 @@ Enforced by CI, not by convention:
   domain events. Shared HTTP plumbing lives in
   `infrastructure/transport/http/dependencies.py`, never in another context.
 - Vendor SDKs (Fyers, Anthropic, OpenAI) may only be imported inside their own
-  adapter directory.
+  adapter directory. The OpenRouter provider reuses the OpenAI SDK by subclassing
+  the OpenAI adapter, so `import openai` stays confined to `llm/openai`.
 - Infrastructure never imports the container or the entrypoints.
 
 ```bash
@@ -134,6 +135,11 @@ The whole application runs with no external credentials. A deterministic mock
 provider serves generated quotes and option chains, and
 `MC_LLM_PROVIDER=rule_based` makes the copilot deterministic. Everything is
 labelled `source: "mock"`.
+
+To make the copilot generative, set `MC_LLM_PROVIDER` to `anthropic`, `openai`,
+or `openrouter` (after `uv sync --extra llm`) and supply the matching key.
+OpenRouter uses namespaced model IDs via `MC_LLM_OPENROUTER_MODEL`
+(e.g. `anthropic/claude-3.7-sonnet`), not `MC_LLM_MODEL`.
 
 To use live NSE data, connect a FYERS account under **Settings → Broker**. Each
 tenant connects their own broker application; credentials and tokens are stored

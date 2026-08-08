@@ -7,6 +7,34 @@
    components.
    --------------------------------------------------------------------------- */
 
+/* Inter, self-hosted.
+   `--mc-font-sans` has named Inter since the design system was written, but the
+   font was never actually loaded — no @font-face, no webfont — so everyone
+   without it installed locally has been reading the app in system-ui. This is
+   that gap closed.
+
+   One file: the latin subset of the variable weight axis (47 KB), which covers
+   every weight the UI uses in a single request. The full charset is ~340 KB and
+   nothing in the product needs Cyrillic or Greek.
+
+   Vendored from @fontsource-variable/inter 5.3.0 (`inter-latin-wght-normal`),
+   Inter is licensed OFL-1.1. The unicode-range is that package's, unchanged.
+
+   No CSP change is needed: there is no `font-src` directive, so this falls back
+   to `default-src 'self'` and a same-origin /fonts/ URL is already allowed. */
+@font-face {
+  font-family: 'Inter';
+  font-style: normal;
+  font-weight: 100 900;
+  /* `swap`, not `block`: the fallback is the system font the app rendered in
+     until today, so the swap is a metric shift, not a flash of nothing. */
+  font-display: swap;
+  src: url('/fonts/inter-latin-var.woff2') format('woff2-variations');
+  unicode-range:
+    U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329,
+    U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
 :root {
   /* Neutrals — dark theme */
   --mc-bg: #0b0e14;
@@ -56,6 +84,48 @@
   --mc-auth-text: #e6e9f0;
   --mc-auth-text-muted: #9aa3b8;
   --mc-auth-text-subtle: #6b7488;
+
+  /* Landing surfaces. A permanently-dark marketing page, fixed for the same
+     reason the auth ones are — scoped to `.landing` in routes/landing, never
+     read by app chrome. Charcoal rather than the terminal's blue-black, so
+     arriving at the app reads as going somewhere else. */
+  --mc-landing-bg: #18191e;
+  --mc-landing-panel: #1e1f25;
+  --mc-landing-surface: #22242c;
+  --mc-landing-surface-raised: #2a2c35;
+  --mc-landing-border: #2d303a;
+  --mc-landing-border-strong: #3a3d49;
+
+  /* Explicit hexes, never a dimmed copy of the one above. Every value here is
+     picked to clear AA (4.5:1) on --mc-landing-bg; `opacity` on a token that
+     only just clears it is what put two components below the line already. */
+  --mc-landing-text: #ffffff;
+  --mc-landing-text-muted: #e1e1e2;
+  --mc-landing-text-subtle: #9a9aa2; /* 6.4:1 on #18191e */
+
+  /* Orange, in two strengths. #fe8935 is the *foreground* orange — links,
+     eyebrows, icon glyphs — at 7.4:1 on the page ground. #fe6c02 is the button
+     fill, and it takes dark text: white on it is 2.9:1 and fails outright,
+     while --mc-landing-on-accent clears 8.9:1. */
+  --mc-landing-accent: #fe8935;
+  --mc-landing-accent-weak: #2a1a0c;
+  --mc-landing-accent-solid: #fe6c02;
+  --mc-landing-accent-solid-hover: #ff7d1f;
+  --mc-landing-accent-border: #fe8935;
+  --mc-landing-on-accent: #18191e;
+
+  /* Warm brown-orange for the support banner, and the checklist tick. */
+  --mc-landing-banner: #33251a;
+  --mc-landing-check: #22c55e;
+
+  /* Pinned copies of the semantic and brand colours. These shift under
+     `light`/`warm` for a white ground and go muddy on charcoal, so the
+     landing page reads its own. */
+  --mc-landing-bullish: #17b877;
+  --mc-landing-bullish-weak: #123d2c;
+  --mc-landing-bearish: #f2495c;
+  --mc-landing-bearish-weak: #46232b;
+  --mc-landing-brand: #fe6c02;
 
   /* Generic input/control surface used everywhere outside the auth screen.
      Derived from theme-aware tokens so it repaints correctly per theme

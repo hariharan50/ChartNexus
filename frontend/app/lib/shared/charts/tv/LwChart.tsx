@@ -1,4 +1,4 @@
-import { useEffect, useRef, type CSSProperties, type RefObject } from 'react';
+import { useEffect, useRef, useState, type CSSProperties, type RefObject } from 'react';
 import { cx } from '$shared/ui/cx';
 // `import type`, never a value import. Type-only imports are erased entirely at
 // compile time, so this costs nothing at runtime and — critically — does not
@@ -151,6 +151,17 @@ export default function LwChart({
 
   const hasVolume = volume !== undefined;
 
+  /**
+   * Set when the library fails to load or the chart fails to build.
+   *
+   * Without this the component renders an empty `<div>` and the page looks like
+   * a chart that has simply drawn nothing — indistinguishable from a data
+   * problem, and silent in the console for anyone not looking. A dynamic import
+   * really does fail in practice: a dev server that re-optimises its
+   * dependencies invalidates the chunk under any tab that is already open.
+   */
+  const [failed, setFailed] = useState(false);
+
   useEffect(() => {
     const el = container.current;
     if (!el) return;
@@ -158,10 +169,19 @@ export default function LwChart({
     let disposed = false;
 
     void (async () => {
-      const { createChart, CandlestickSeries, LineSeries, AreaSeries, HistogramSeries } =
-        await import('lightweight-charts');
+      const lib = await import('lightweight-charts').catch((error: unknown) => {
+        if (!disposed) {
+          console.error('[LwChart] the charting library failed to load', error);
+          setFailed(true);
+        }
+        return null;
+      });
+      if (lib === null) return;
+
+      const { createChart, CandlestickSeries, LineSeries, AreaSeries, HistogramSeries } = lib;
       // The component can unmount while the import is in flight.
       if (disposed || !container.current) return;
+      setFailed(false);
 
       const chart = createChart(el, {
         // The library owns its own ResizeObserver under this flag, so there is
@@ -325,5 +345,14 @@ export default function LwChart({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [theme]);
 
-  return <div ref={container} className={cx(s.chart, className)} style={style} />;
+  return (
+    <div ref={container} className={cx(s.chart, className)} style={style}>
+      {failed ? (
+        <p className={s.failed} role="alert">
+          The price chart could not load. Reload the page — if it persists after a hard reload, the
+          charting library is failing to fetch.
+        </p>
+      ) : null}
+    </div>
+  );
 }

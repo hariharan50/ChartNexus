@@ -205,13 +205,38 @@ class BrokerSettings(_Section):
 class LLMSettings(_Section):
     model_config = _section_config("LLM_")
 
-    provider: Literal["anthropic", "openai", "rule_based"] = "rule_based"
+    provider: Literal["anthropic", "openai", "openrouter", "rule_based"] = "rule_based"
     anthropic_api_key: SecretStr = SecretStr("")
     openai_api_key: SecretStr = SecretStr("")
     model: str = "claude-sonnet-5"
     max_output_tokens: int = Field(default=2048, ge=1)
     request_timeout_seconds: float = Field(default=30.0, gt=0)
     daily_token_budget: int = Field(default=1_000_000, ge=0)
+
+    # OpenRouter is the OpenAI wire protocol pointed at an aggregator, so model
+    # IDs are namespaced (e.g. "anthropic/claude-3.7-sonnet") and won't match the
+    # native ``model`` above — it gets its own field, selected by ``resolved_model``.
+    openrouter_api_key: SecretStr = SecretStr("")
+    openrouter_model: str = "anthropic/claude-3.7-sonnet"
+    openrouter_base_url: str = "https://openrouter.ai/api/v1"
+    # Optional OpenRouter ranking headers. Sent only when set.
+    openrouter_site_url: str = ""  # HTTP-Referer
+    openrouter_app_name: str = ""  # X-Title
+
+    @property
+    def resolved_model(self) -> str:
+        """The model ID for the selected provider (OpenRouter uses its own)."""
+        return self.openrouter_model if self.provider == "openrouter" else self.model
+
+    @property
+    def openrouter_headers(self) -> dict[str, str]:
+        """OpenRouter ranking headers, omitting any that are unset."""
+        headers: dict[str, str] = {}
+        if self.openrouter_site_url:
+            headers["HTTP-Referer"] = self.openrouter_site_url
+        if self.openrouter_app_name:
+            headers["X-Title"] = self.openrouter_app_name
+        return headers
 
 
 class ObservabilitySettings(_Section):

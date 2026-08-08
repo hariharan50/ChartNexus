@@ -1,0 +1,129 @@
+.hero {
+  position: relative;
+  padding: clamp(2.5rem, 6vw, 5rem) var(--mc-space-6) clamp(3rem, 7vw, 5.5rem);
+  overflow: hidden;
+}
+
+/* A warm wash behind the copy column, echoing the accent without competing
+   with it. Literal values are the sanctioned exception on a permanently-dark
+   surface — the same call routes/public/layout.module.css makes. */
+.hero::before {
+  content: '';
+  position: absolute;
+  inset: -20% 40% auto -10%;
+  height: 80%;
+  background: radial-gradient(50% 60% at 40% 30%, #fe6c02 0%, transparent 68%);
+  opacity: 0.14;
+  pointer-events: none;
+}
+
+.inner {
+  position: relative;
+  display: grid;
+  gap: clamp(2.5rem, 5vw, 4rem);
+  max-width: var(--lp-max);
+  margin: 0 auto;
+  align-items: center;
+}
+
+.copy {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  min-width: 0;
+}
+
+.heading {
+  margin: var(--mc-space-5) 0 0;
+  font-size: var(--lp-display-1);
+  font-weight: 800;
+  line-height: 1.08;
+  letter-spacing: -0.03em;
+  color: var(--mc-landing-text);
+  text-wrap: balance;
+}
+
+.keyword {
+  font-weight: 800;
+  color: var(--mc-landing-accent);
+}
+
+.lead {
+  max-width: var(--lp-measure);
+  margin: var(--mc-space-5) 0 0;
+  font-size: var(--lp-lead);
+  line-height: 1.65;
+  color: var(--mc-landing-text-muted);
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--mc-space-5);
+  margin-top: var(--mc-space-7);
+}
+
+.secondary {
+  display: inline-flex;
+  align-items: center;
+  min-height: var(--lp-tap);
+  color: var(--mc-landing-accent);
+  font-size: var(--mc-text-base);
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.secondary:hover {
+  text-decoration: underline;
+}
+
+.note {
+  margin: var(--mc-space-5) 0 0;
+  font-size: var(--mc-text-sm);
+  color: var(--mc-landing-text-subtle);
+}
+
+/* --- product graphic ----------------------------------------------------- */
+
+.graphic {
+  position: relative;
+  min-width: 0;
+}
+
+.frame {
+  border: 1px solid var(--mc-landing-border);
+  border-radius: var(--lp-radius-card);
+  background: var(--mc-landing-surface);
+  overflow: hidden;
+}
+
+/* Overlapping the graphic's bottom edge at wide widths, and simply sitting
+   under it when the columns stack — a card floating over a chart the reader
+   has to scroll past is worse than one that waits its turn. */
+.stats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--mc-space-3);
+  margin-top: var(--mc-space-4);
+}
+
+@media (min-width: 62rem) {
+  .inner {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1.05fr);
+  }
+
+  .stats {
+    position: absolute;
+    left: calc(-1 * var(--mc-space-5));
+    bottom: calc(-1 * var(--mc-space-6));
+    margin-top: 0;
+    flex-wrap: nowrap;
+  }
+}
+
+@media (max-width: 48rem) {
+  .actions > a:first-child {
+    flex: 1 1 100%;
+  }
+}

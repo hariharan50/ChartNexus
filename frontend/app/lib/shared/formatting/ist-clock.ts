@@ -49,9 +49,19 @@ export function istClock(at: number): IstClock {
   };
 }
 
-/** 09:15 to 15:40 IST on a weekday — the window derivatives actually trade in. */
-const SESSION_OPEN_MIN = 9 * 60 + 15;
-const SESSION_CLOSE_MIN = 15 * 60 + 40;
+/**
+ * 09:15 to 15:40 IST — the window derivatives actually trade in.
+ *
+ * Exported, and the only copy: these were duplicated privately in the chart
+ * modules, and when the close moved from 15:30 to 15:40 (the F&O extension
+ * effective 3 August 2026) those copies were left behind. Every capture after
+ * 15:30 then clamped onto the same axis position, which stacked ten minutes of
+ * readings into a single hover — see `axisX` in charts/options/multi-series.
+ */
+export const SESSION_OPEN_MIN = 9 * 60 + 15;
+export const SESSION_CLOSE_MIN = 15 * 60 + 40;
+/** Length of the session in minutes — 385. */
+export const SESSION_MINUTES = SESSION_CLOSE_MIN - SESSION_OPEN_MIN;
 
 /**
  * Whether the exchange is trading right now.
