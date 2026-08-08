@@ -9,8 +9,10 @@ import { createQueryClient } from '$shared/api/query-client';
 import { createServerFetch } from '$shared/api/server-fetch';
 import { cx } from '$shared/ui/cx';
 import IconBolt from '$shared/ui/icons/IconBolt';
+import IconBrain from '$shared/ui/icons/IconBrain';
 import IconChart from '$shared/ui/icons/IconChart';
 import IconChevronDown from '$shared/ui/icons/IconChevronDown';
+import IconMessage from '$shared/ui/icons/IconMessage';
 import IconMoon from '$shared/ui/icons/IconMoon';
 import IconSearch from '$shared/ui/icons/IconSearch';
 import IconSun from '$shared/ui/icons/IconSun';
@@ -117,7 +119,26 @@ const nav: NavItem[] = [
   { label: 'Analyse', href: '/analyse' },
   { label: 'Smart Insights', href: '/smart-insights' },
   { label: 'Option Chain', href: '/option-chain' },
-  { label: 'AI Console', href: '/ai-console' }
+  {
+    label: 'AI Console',
+    href: '/ai-console',
+    menuTitle: 'AI Console',
+    menuSub: 'Signal analysis & the Hella agent',
+    children: [
+      {
+        label: 'Nifty Analysis',
+        href: '/ai-console',
+        icon: IconBrain,
+        desc: 'Decision, skills, levels & trade scaffold'
+      },
+      {
+        label: 'AI Analysis Agent',
+        href: '/ai-console/agent',
+        icon: IconMessage,
+        desc: 'Ask Hella about the call'
+      }
+    ]
+  }
 ];
 
 function TerminalShell({ user }: { user: User }) {

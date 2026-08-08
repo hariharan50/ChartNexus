@@ -1,0 +1,221 @@
+/* AI Analysis Agent — the standalone Hella chat. Built entirely on the shared
+   --mc tokens so it adapts to light and dark alongside the rest of the terminal.
+   The top bar lives in ../components/ConsoleHeader.module.css. */
+
+.page {
+  padding: var(--mc-space-6);
+  display: flex;
+  flex-direction: column;
+  gap: var(--mc-space-5, 1.25rem);
+}
+
+/* Bubbles cap at 88% of the panel, so an unbounded panel reads badly on a wide
+   monitor. Centre the conversation instead of stretching it. */
+.wrap {
+  width: 100%;
+  max-width: 980px;
+  margin: 0 auto;
+}
+
+.panel {
+  position: relative;
+  border: 1px solid var(--mc-border);
+  border-radius: var(--mc-radius-lg);
+  background: linear-gradient(
+    180deg,
+    var(--mc-surface-raised, var(--mc-surface)),
+    var(--mc-surface)
+  );
+  box-shadow: var(--mc-shadow);
+  padding: var(--mc-space-4);
+  overflow: hidden;
+}
+
+@keyframes pulse {
+  0%,
+  100% {
+    opacity: 0.55;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+/* -- Chat ------------------------------------------------------------------ */
+.chat {
+  display: flex;
+  flex-direction: column;
+  /* Fill the viewport below the header instead of the old fixed 460px, which
+     only made sense inside the two-column console grid. */
+  min-height: clamp(460px, calc(100vh - 240px), 820px);
+}
+
+.chatHead {
+  display: flex;
+  align-items: center;
+  gap: var(--mc-space-3);
+  padding-bottom: var(--mc-space-3);
+  margin-bottom: var(--mc-space-3);
+  border-bottom: 1px solid var(--mc-border);
+}
+
+.avatar {
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  flex: none;
+  border-radius: 50%;
+  color: #fff;
+  font-weight: 800;
+  background: linear-gradient(140deg, var(--mc-accent, #6366f1), #a855f7);
+  box-shadow: 0 4px 14px -5px var(--mc-accent, #6366f1);
+}
+
+.chatName {
+  font-size: var(--mc-text-sm);
+  font-weight: 700;
+  color: var(--mc-text);
+}
+
+.chatSub {
+  font-size: var(--mc-text-xs);
+  color: var(--mc-text-muted);
+}
+
+.messages {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: var(--mc-space-3);
+  overflow-y: auto;
+  padding-right: 4px;
+  margin-bottom: var(--mc-space-3);
+}
+
+.empty {
+  font-size: var(--mc-text-sm);
+  color: var(--mc-text-muted);
+  line-height: 1.55;
+  background: var(--mc-surface);
+  border: 1px solid var(--mc-border);
+  border-radius: var(--mc-radius);
+  padding: var(--mc-space-3);
+  margin: 0;
+}
+
+.bubble {
+  max-width: 88%;
+  padding: 10px 13px;
+  border-radius: 14px;
+  font-size: var(--mc-text-sm);
+  line-height: 1.5;
+}
+
+.bubble.user {
+  align-self: flex-end;
+  border-bottom-right-radius: 4px;
+  background: linear-gradient(135deg, var(--mc-accent, #6366f1), #8b5cf6);
+  color: #fff;
+}
+
+.bubble.agent {
+  align-self: flex-start;
+  border-bottom-left-radius: 4px;
+  background: var(--mc-surface);
+  border: 1px solid var(--mc-border);
+  color: var(--mc-text-base, var(--mc-text));
+}
+
+.bubble.thinking {
+  color: var(--mc-text-muted);
+  animation: pulse 1.4s ease-in-out infinite;
+}
+
+.author {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--mc-accent, #6366f1);
+  margin-bottom: 3px;
+}
+
+.bubbleText {
+  white-space: pre-wrap;
+}
+
+.msgMeta {
+  font-size: 10px;
+  color: var(--mc-text-subtle);
+  margin-top: 5px;
+}
+
+.suggestions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: var(--mc-space-3);
+}
+
+.suggestion {
+  border: 1px solid var(--mc-border);
+  border-radius: 999px;
+  background: var(--mc-surface);
+  color: var(--mc-text-muted);
+  font-size: var(--mc-text-xs);
+  padding: 6px 12px;
+  cursor: pointer;
+  transition:
+    color var(--mc-duration-fast, 120ms) ease,
+    border-color var(--mc-duration-fast, 120ms) ease;
+}
+
+.suggestion:hover {
+  color: var(--mc-accent, #6366f1);
+  border-color: var(--mc-accent, #6366f1);
+}
+
+.composer {
+  display: flex;
+  gap: var(--mc-space-2);
+}
+
+.input {
+  flex: 1;
+  height: var(--mc-control-h);
+  padding: 0 var(--mc-space-3);
+  border: 1px solid var(--mc-border);
+  border-radius: var(--mc-radius);
+  background: var(--mc-surface);
+  color: var(--mc-text);
+  font-size: var(--mc-text-sm);
+  transition: border-color var(--mc-duration-fast, 120ms) ease;
+}
+
+.input:focus {
+  outline: none;
+  border-color: var(--mc-accent, #6366f1);
+}
+
+.send {
+  height: var(--mc-control-h);
+  padding: 0 var(--mc-space-4);
+  border: 0;
+  border-radius: var(--mc-radius);
+  background: linear-gradient(135deg, var(--mc-accent, #6366f1), #8b5cf6);
+  color: #fff;
+  font-weight: 700;
+  font-size: var(--mc-text-sm);
+  cursor: pointer;
+  transition:
+    opacity var(--mc-duration-fast, 120ms) ease,
+    transform var(--mc-duration-fast, 120ms) ease;
+}
+
+.send:hover:not(:disabled) {
+  transform: translateY(-1px);
+}
+
+.send:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}

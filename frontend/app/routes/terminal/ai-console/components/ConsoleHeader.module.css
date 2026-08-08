@@ -1,0 +1,77 @@
+/* Top bar shared by both AI Console pages — brand mark, title and the
+   instrument switcher. Built entirely on the shared --mc tokens. */
+
+.topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--mc-space-4);
+  flex-wrap: wrap;
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: var(--mc-space-3);
+}
+
+.brandMark {
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  color: #fff;
+  font-weight: 800;
+  font-size: 1.1rem;
+  background: linear-gradient(140deg, var(--mc-accent, #6366f1), #a855f7);
+  box-shadow: 0 6px 18px -6px var(--mc-accent, #6366f1);
+}
+
+.title {
+  font-size: var(--mc-text-lg, 1.15rem);
+  font-weight: 700;
+  color: var(--mc-text);
+  margin: 0;
+  letter-spacing: -0.01em;
+}
+
+.subtitle {
+  font-size: var(--mc-text-sm);
+  color: var(--mc-text-muted);
+  margin: 2px 0 0;
+}
+
+.tabs {
+  display: inline-flex;
+  gap: 2px;
+  padding: 4px;
+  border: 1px solid var(--mc-border);
+  border-radius: 999px;
+  background: var(--mc-surface);
+}
+
+.tab {
+  height: calc(var(--mc-control-h) - 10px);
+  padding: 0 var(--mc-space-3);
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--mc-text-muted);
+  font-size: var(--mc-text-sm);
+  font-weight: 600;
+  cursor: pointer;
+  transition:
+    color var(--mc-duration-fast, 120ms) ease,
+    background var(--mc-duration-fast, 120ms) ease;
+}
+
+.tab:hover {
+  color: var(--mc-text);
+}
+
+.tab.active {
+  background: var(--mc-accent, #6366f1);
+  color: #fff;
+  box-shadow: 0 4px 12px -4px var(--mc-accent, #6366f1);
+}

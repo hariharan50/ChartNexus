@@ -1,31 +1,25 @@
 import { useState } from 'react';
-import { useGuidanceQuery, useAskAgentMutation } from '$contexts/signals/queries';
-import type {
-  ChatMessage,
-  Decision,
-  Guidance,
-  Levels,
-  Scaffold,
-  SkillRead
-} from '$contexts/signals/types';
+import { useGuidanceQuery } from '$contexts/signals/queries';
+import type { Decision, Guidance, Levels, Scaffold, SkillRead } from '$contexts/signals/types';
 import { cx } from '$shared/ui/cx';
 import DataSourceBadge from '$shared/ui/DataSourceBadge';
 import {
   INSTRUMENTS,
-  SUGGESTIONS,
   decisionClass,
   fmtPrice,
   fmtRatio,
   fmtScore,
   meterWidth,
-  nextId,
   scoreLean,
   spotPositionPct
-} from './ai-console-data';
+} from '../ai-console-data';
+import ConsoleHeader from '../components/ConsoleHeader';
 import s from './route.module.css';
 import type { Route } from './+types/route';
 
-export const meta: Route.MetaFunction = () => [{ title: 'Hella · AI Console · MarketCompass' }];
+export const meta: Route.MetaFunction = () => [
+  { title: 'Nifty Analysis · AI Console · MarketCompass' }
+];
 
 /** The agent's name, shown throughout the console. */
 const AGENT_NAME = 'Hella';
@@ -35,7 +29,7 @@ const DISCLAIMER =
   'personalised recommendation to buy or sell any instrument. Levels and contracts are ' +
   'illustrative only.';
 
-export default function AiConsole() {
+export default function NiftyAnalysis() {
   const [instIdx, setInstIdx] = useState(0);
   const instrument = INSTRUMENTS[instIdx] ?? INSTRUMENTS[0];
 
@@ -44,32 +38,17 @@ export default function AiConsole() {
 
   return (
     <div className={s.page}>
-      <div className={s.topbar}>
-        <div className={s.brand}>
-          <span className={s.brandMark}>H</span>
-          <div>
-            <h1 className={s.title}>AI Console</h1>
-            <p className={s.subtitle}>
-              Meet <strong>Hella</strong> — your soft-spoken guide over OI, price action, levels and
-              risk.
-            </p>
-          </div>
-        </div>
-        <div className={s.tabs} role="tablist" aria-label="Instrument">
-          {INSTRUMENTS.map((inst, idx) => (
-            <button
-              key={inst.symbol}
-              type="button"
-              role="tab"
-              aria-selected={idx === instIdx}
-              className={cx(s.tab, idx === instIdx && s.active)}
-              onClick={() => setInstIdx(idx)}
-            >
-              {inst.short}
-            </button>
-          ))}
-        </div>
-      </div>
+      <ConsoleHeader
+        title="Nifty Analysis"
+        subtitle={
+          <>
+            The call, the skills behind it, the levels that matter and the risk — read by{' '}
+            <strong>{AGENT_NAME}</strong>.
+          </>
+        }
+        instIdx={instIdx}
+        onSelect={setInstIdx}
+      />
 
       {query.isLoading && !guidance ? (
         <div className={s.panel}>
@@ -84,11 +63,10 @@ export default function AiConsole() {
           <div className={s.column}>
             <GuidanceHeader guidance={guidance} />
             <SkillCards skills={guidance.skills} />
-            <LevelsPanel levels={guidance.levels} />
-            <ScaffoldPanel scaffold={guidance.scaffold} actionable={guidance.is_actionable} />
           </div>
           <div className={s.column}>
-            <ChatPanel symbol={instrument.symbol} />
+            <LevelsPanel levels={guidance.levels} />
+            <ScaffoldPanel scaffold={guidance.scaffold} actionable={guidance.is_actionable} />
           </div>
         </div>
       )}
@@ -264,98 +242,6 @@ function Stat({ label, value, tone }: { label: string; value: string; tone?: 'po
     <div className={s.stat}>
       <span className={s.statKey}>{label}</span>
       <span className={cx(s.statVal, tone ? s[tone] : undefined)}>{value}</span>
-    </div>
-  );
-}
-
-function ChatPanel({ symbol }: { symbol: string }) {
-  const [messages, setMessages] = useState<ChatMessage[]>([]);
-  const [input, setInput] = useState('');
-  const ask = useAskAgentMutation(symbol);
-
-  async function submit(question: string) {
-    const trimmed = question.trim();
-    if (!trimmed || ask.isPending) return;
-    setInput('');
-    setMessages((prev) => [...prev, { id: nextId(), role: 'user', text: trimmed }]);
-    try {
-      const answer = await ask.mutateAsync(trimmed);
-      setMessages((prev) => [
-        ...prev,
-        { id: nextId(), role: 'agent', text: answer.answer, source: answer.source }
-      ]);
-    } catch {
-      setMessages((prev) => [
-        ...prev,
-        { id: nextId(), role: 'agent', text: 'Sorry — I could not answer that just now.' }
-      ]);
-    }
-  }
-
-  return (
-    <div className={cx(s.panel, s.chat)}>
-      <div className={s.chatHead}>
-        <span className={s.avatar}>H</span>
-        <div>
-          <div className={s.chatName}>{AGENT_NAME}</div>
-          <div className={s.chatSub}>Soft-spoken guide · {symbol}</div>
-        </div>
-      </div>
-
-      <div className={s.messages}>
-        {messages.length === 0 ? (
-          <p className={s.empty}>
-            Hi, I&apos;m {AGENT_NAME}. Ask me about the call, your stop, the target, or which levels
-            matter for {symbol} — I&apos;ll walk you through it gently.
-          </p>
-        ) : (
-          messages.map((msg) => (
-            <div key={msg.id} className={cx(s.bubble, s[msg.role])}>
-              {msg.role === 'agent' ? <div className={s.author}>{AGENT_NAME}</div> : null}
-              <div className={s.bubbleText}>{msg.text}</div>
-              {msg.role === 'agent' && msg.source && msg.source !== 'rule_based' ? (
-                <div className={s.msgMeta}>via {msg.source}</div>
-              ) : null}
-            </div>
-          ))
-        )}
-        {ask.isPending ? (
-          <div className={cx(s.bubble, s.agent, s.thinking)}>{AGENT_NAME} is thinking…</div>
-        ) : null}
-      </div>
-
-      <div className={s.suggestions}>
-        {SUGGESTIONS.map((suggestion) => (
-          <button
-            key={suggestion}
-            type="button"
-            className={s.suggestion}
-            onClick={() => void submit(suggestion)}
-          >
-            {suggestion}
-          </button>
-        ))}
-      </div>
-
-      <form
-        className={s.composer}
-        onSubmit={(event) => {
-          event.preventDefault();
-          void submit(input);
-        }}
-      >
-        <input
-          className={s.input}
-          value={input}
-          onChange={(event) => setInput(event.target.value)}
-          placeholder={`Ask ${AGENT_NAME}…`}
-          aria-label={`Ask ${AGENT_NAME}`}
-          maxLength={500}
-        />
-        <button type="submit" className={s.send} disabled={ask.isPending || !input.trim()}>
-          Send
-        </button>
-      </form>
     </div>
   );
 }
