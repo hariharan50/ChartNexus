@@ -1,5 +1,5 @@
 .section {
-  padding: var(--lp-section-y) var(--mc-space-6);
+  padding: var(--lp-section-y) var(--lp-gutter);
 }
 
 .inner {
@@ -85,5 +85,14 @@
 @media (min-width: 62rem) {
   .wide {
     grid-column: span 2;
+  }
+}
+
+/* Pin the track count once the section is wide. Left to auto-fit, a 16rem
+   minimum yields six columns at this width and the five cards — six tracks
+   with `.wide` — collapse into one thin row. Three keeps the 2×3 block. */
+@media (min-width: 90rem) {
+  .grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 }

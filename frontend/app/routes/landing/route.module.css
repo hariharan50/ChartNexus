@@ -72,11 +72,29 @@
   --lp-lead: clamp(1rem, 0.96rem + 0.25vw, 1.125rem);
   --lp-eyebrow: 0.75rem;
 
-  /* Reading measure for body copy, and the content cap. Deliberately not
-     --mc-page-max (140rem): that exists so an option chain gets rows, and a
-     2240px-wide marketing column is unreadable. */
+  /* Reading measure for body copy, and the content cap.
+
+     The cap fills a large monitor rather than leaving a 1200px column marooned
+     in the middle of it, but still stops short of --mc-page-max (140rem): that
+     exists so an option chain gets rows, and this page is not a data grid.
+     Sections add columns as the cap grows (see FeatureGrid, ChecklistRows,
+     ProofGrid) so the extra width buys density, not stretched cards.
+
+     --lp-measure stays a reading measure and does *not* scale with it: 34rem is
+     ~70 characters, and a wider paragraph is a worse one however much room the
+     viewport has. Wide layouts get more columns, not longer lines. */
   --lp-measure: 34rem;
-  --lp-max: 75rem;
+  --lp-max: 120rem;
+
+  /* Centred prose blocks keep the old 75rem cap. A heading centred over 1870px
+     with a 34rem paragraph under it is not a wide layout, it is a stranded one
+     — only the grids and the hero split have anything to do with the space. */
+  --lp-max-text: 75rem;
+
+  /* Page gutter. Fixed 1.5rem was invisible while the content capped at 75rem
+     and auto margins supplied the breathing room; once sections fill the
+     viewport it is the only thing between a card and the screen edge. */
+  --lp-gutter: clamp(1.5rem, 3.5vw, 4rem);
 
   --lp-section-y: clamp(3.5rem, 8vw, 7rem);
   --lp-gap: clamp(1.5rem, 3vw, 2.5rem);

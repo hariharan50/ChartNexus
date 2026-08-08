@@ -1,6 +1,6 @@
 .hero {
   position: relative;
-  padding: clamp(2.5rem, 6vw, 5rem) var(--mc-space-6) clamp(3rem, 7vw, 5.5rem);
+  padding: clamp(2.5rem, 6vw, 5rem) var(--lp-gutter) clamp(3rem, 7vw, 5.5rem);
   overflow: hidden;
 }
 

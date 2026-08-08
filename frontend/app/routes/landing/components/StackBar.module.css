@@ -5,7 +5,7 @@
   gap: var(--mc-space-4);
   max-width: var(--lp-max);
   margin: 0 auto;
-  padding: 0 var(--mc-space-6) var(--lp-section-y);
+  padding: 0 var(--lp-gutter) var(--lp-section-y);
 }
 
 .label {

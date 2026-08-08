@@ -1,5 +1,5 @@
 .section {
-  padding: var(--lp-section-y) var(--mc-space-6);
+  padding: var(--lp-section-y) var(--lp-gutter);
 }
 
 .inner {
@@ -92,5 +92,13 @@
 @media (min-width: 48rem) {
   .grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+/* Six features: a third column turns two rows of very wide cards into two rows
+   of readable ones. The extra width buys another card, not a longer line. */
+@media (min-width: 90rem) {
+  .grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 }

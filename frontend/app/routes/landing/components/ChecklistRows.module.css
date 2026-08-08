@@ -1,5 +1,5 @@
 .section {
-  padding: var(--lp-section-y) var(--mc-space-6);
+  padding: var(--lp-section-y) var(--lp-gutter);
   background: var(--mc-landing-panel);
 }
 
@@ -87,5 +87,12 @@
 @media (min-width: 48rem) {
   .grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+/* Six rows, so a third column stays balanced — same reasoning as FeatureGrid. */
+@media (min-width: 90rem) {
+  .grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 }

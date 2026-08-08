@@ -11,7 +11,7 @@
   gap: var(--lp-gap);
   max-width: var(--lp-max);
   margin: 0 auto;
-  padding: var(--lp-section-y) var(--mc-space-6) var(--mc-space-8);
+  padding: var(--lp-section-y) var(--lp-gutter) var(--mc-space-8);
 }
 
 .brand {
@@ -103,7 +103,7 @@
   gap: var(--mc-space-4);
   max-width: var(--lp-max);
   margin: 0 auto;
-  padding: var(--mc-space-6) var(--mc-space-6) 0;
+  padding: var(--mc-space-6) var(--lp-gutter) 0;
   border-top: 1px solid var(--mc-border);
 }
 

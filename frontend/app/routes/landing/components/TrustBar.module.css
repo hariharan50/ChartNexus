@@ -1,5 +1,5 @@
 .bar {
-  padding: var(--mc-space-8) var(--mc-space-6);
+  padding: var(--mc-space-8) var(--lp-gutter);
   border-block: 1px solid var(--mc-border);
   background: var(--mc-landing-panel);
 }

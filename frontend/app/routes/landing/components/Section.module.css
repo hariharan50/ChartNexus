@@ -1,5 +1,5 @@
 .section {
-  padding: var(--lp-section-y) var(--mc-space-6);
+  padding: var(--lp-section-y) var(--lp-gutter);
 }
 
 /* Full-bleed band, inner content still capped — this alternation is what gives
@@ -13,11 +13,15 @@
   margin: 0 auto;
 }
 
-.centred {
+/* Prose, not layout: this one keeps the narrower text cap rather than the full
+   --lp-max the grids use. Compound selector so it beats `.inner` on
+   specificity instead of on source order. */
+.inner.centred {
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: var(--lp-gap);
+  max-width: var(--lp-max-text);
   text-align: center;
 }
 

@@ -1,5 +1,5 @@
 .section {
-  padding: 0 var(--mc-space-6);
+  padding: 0 var(--lp-gutter);
 }
 
 .banner {
@@ -58,7 +58,7 @@
   align-items: center;
   flex-shrink: 0;
   min-height: var(--lp-tap);
-  padding: 0 var(--mc-space-6);
+  padding: 0 var(--lp-gutter);
   border: 1px solid var(--mc-landing-accent-border);
   border-radius: 8px;
   background: var(--mc-landing-accent-solid);

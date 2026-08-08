@@ -1,9 +1,11 @@
 .section {
-  padding: var(--lp-section-y) var(--mc-space-6);
+  padding: var(--lp-section-y) var(--lp-gutter);
 }
 
+/* The text cap, not a narrower one of its own: at the widened --lp-max a 52rem
+   accordion was the only block on the page not sharing the page's rhythm. */
 .inner {
-  max-width: 52rem;
+  max-width: var(--lp-max-text);
   margin: 0 auto;
 }
 
