@@ -18,8 +18,12 @@ pytestmark = pytest.mark.architecture
 # vendor package prefix -> the only directory allowed to import it
 CONFINED_VENDORS: dict[str, str] = {
     "fyers_apiv3": "infrastructure/brokers/fyers",
-    "anthropic": "infrastructure/llm/anthropic",
-    "openai": "infrastructure/llm/openai",
+    # The AI Console's LLM stack (LangGraph + LangChain + the Anthropic model)
+    # stays behind the agent adapter, so swapping the framework or provider is
+    # one folder.
+    "langgraph": "infrastructure/agent",
+    "langchain_core": "infrastructure/agent",
+    "langchain_anthropic": "infrastructure/agent",
     "celery": "infrastructure/messaging/celery",
     "argon2": "infrastructure/security",
     "jwt": "infrastructure/security",

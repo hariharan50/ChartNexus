@@ -2,7 +2,11 @@
 name = "marketcompass"
 version = "0.1.0"
 description = "MarketCompass — options & futures market intelligence terminal"
-readme = "../README.md"
+# Inlined rather than a path: the project README lives at the repo root
+# (../README.md), which is outside this package directory, so a wheel/sdist
+# build (as `uv sync`/`uv run` performs) rejects it. The docs live at the repo
+# root; this keeps the package buildable.
+readme = { text = "MarketCompass backend — options & futures market intelligence terminal. See the repository root README for full documentation.", content-type = "text/markdown" }
 requires-python = ">=3.13"
 
 dependencies = [
@@ -46,6 +50,16 @@ dependencies = [
 llm = [
     "anthropic>=0.40",
     "openai>=1.60",
+]
+# The agentic AI Console (Hella) — a LangGraph planner→executor over read-only
+# market-data tools. LLM-only: with no key the Agent tab is disabled rather than
+# degrading. langchain-anthropic pulls the anthropic SDK transitively. Session
+# memory uses the app's own plain-Redis store (no RedisStack checkpointer needed).
+# Install with:  uv sync --extra agent
+agent = [
+    "langgraph>=0.2.60",
+    "langchain-core>=0.3.30",
+    "langchain-anthropic>=0.3.0",
 ]
 
 [project.scripts]
@@ -109,6 +123,15 @@ forbidden_modules = ["marketcompass.entrypoints", "marketcompass.bootstrap"]
 [[tool.importlinter.contracts]]
 name = "Bounded contexts are independent"
 type = "independence"
+# The AI Console (copilot) reasons over live market data it does not own. Like
+# every cross-context need, the wiring is a sanctioned bridge in infrastructure
+# (`infrastructure/agent/langgraph/build.py`), which reads market_data and
+# options_analytics services and returns a copilot `AgentPort`. copilot imports
+# only that bridge, never those contexts directly; this exempts the bridge edge
+# so the transitive reach isn't counted as copilot depending on them.
+ignore_imports = [
+    "marketcompass.contexts.copilot.api.dependencies -> marketcompass.infrastructure.agent.langgraph.build",
+]
 modules = [
     "marketcompass.contexts.identity",
     "marketcompass.contexts.tenancy",

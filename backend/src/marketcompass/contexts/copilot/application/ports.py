@@ -1,46 +1,77 @@
 """What the copilot context needs from the outside world.
 
-* ``GuidancePort`` — the current AI-guider call for an instrument, as a
-  copilot-owned :class:`GuidanceSnapshot` (so copilot never imports ``signals``).
-  Satisfied by an infrastructure bridge over the signals use case.
-* ``LLMPort`` — a text-completion provider. ``is_generative`` is the switch the
-  conversation layer reads: the rule-based provider is *not* generative, so
-  copilot answers deterministically from the structured snapshot and never calls
-  ``complete``; the Anthropic/OpenAI providers are, and get the grounded facts as
-  a guardrail.
+* ``AgentPort`` — the agentic guider (Hella). It runs a tool-calling loop over
+  read-only market-data tools and streams :class:`AgentEvent`s. ``available``
+  gates the whole feature: the console is LLM-only, so with no model configured
+  the tab is disabled rather than degraded. Satisfied by a LangGraph adapter in
+  ``infrastructure/agent``.
+* ``SessionStorePort`` — short-lived, server-side conversation memory, so
+  follow-up questions carry context within a session (no long-term persistence).
+
+The agent value objects (``Turn``, the ``AgentEvent`` union, ``Session``) live in
+``domain.agent`` and are re-exported here so callers import them from one place.
 """
 
 from __future__ import annotations
 
-from dataclasses import dataclass
-from typing import Literal, Protocol
+from collections.abc import AsyncIterator
+from typing import Protocol
 
-from marketcompass.contexts.copilot.domain.models import GuidanceSnapshot
+from marketcompass.contexts.copilot.domain.agent import (
+    AgentDone,
+    AgentEvent,
+    Session,
+    SkillsSelected,
+    TextDelta,
+    ToolFinished,
+    ToolStarted,
+    Turn,
+)
 from marketcompass.shared_kernel.types.identifiers import TenantId
 
-
-class GuidancePort(Protocol):
-    async def current(self, tenant_id: TenantId, symbol: str) -> GuidanceSnapshot: ...
-
-
-@dataclass(frozen=True, slots=True)
-class LLMMessage:
-    role: Literal["user", "assistant"]
-    content: str
-
-
-@dataclass(frozen=True, slots=True)
-class LLMResponse:
-    text: str
-    provider: str
-    model: str | None = None
+__all__ = [
+    "AgentDone",
+    "AgentEvent",
+    "AgentPort",
+    "Session",
+    "SessionStorePort",
+    "SkillsSelected",
+    "TextDelta",
+    "ToolFinished",
+    "ToolStarted",
+    "Turn",
+]
 
 
-class LLMPort(Protocol):
-    #: The provider's name, e.g. "anthropic" / "openai" / "rule_based".
-    name: str
-    #: True when ``complete`` calls a real language model. False for the
-    #: rule-based provider, whose answers are produced deterministically instead.
-    is_generative: bool
+class AgentPort(Protocol):
+    @property
+    def available(self) -> bool:
+        """True when a model is configured and the agent can answer.
 
-    async def complete(self, *, system: str, messages: list[LLMMessage]) -> LLMResponse: ...
+        False disables the console tab — there is no keyless degradation.
+        """
+        ...
+
+    def run(
+        self,
+        tenant_id: TenantId,
+        symbol: str,
+        question: str,
+        history: list[Turn],
+    ) -> AsyncIterator[AgentEvent]:
+        """Answer ``question`` about ``symbol``, streaming :class:`AgentEvent`s.
+
+        ``history`` is the prior conversation (oldest first, excluding this
+        question). The adapter owns the tool-calling loop and its tools.
+        """
+        ...
+
+
+class SessionStorePort(Protocol):
+    async def load(self, session_id: str | None) -> Session:
+        """Fetch a session by id, or a fresh empty one when id is absent/expired."""
+        ...
+
+    async def save(self, session: Session) -> None:
+        """Persist the session under a short TTL."""
+        ...

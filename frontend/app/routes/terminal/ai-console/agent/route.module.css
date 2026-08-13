@@ -41,6 +41,36 @@
   }
 }
 
+/* -- Offline notice (no LLM configured) ------------------------------------ */
+.notice {
+  text-align: center;
+  padding: var(--mc-space-6) var(--mc-space-5);
+}
+
+.noticeTitle {
+  font-size: var(--mc-text-base, 1rem);
+  font-weight: 700;
+  color: var(--mc-text);
+  margin-bottom: var(--mc-space-2);
+}
+
+.noticeBody {
+  margin: 0 auto;
+  max-width: 52ch;
+  font-size: var(--mc-text-sm);
+  color: var(--mc-text-muted);
+  line-height: 1.6;
+}
+
+.noticeBody code {
+  font-family: var(--mc-font-mono, ui-monospace, monospace);
+  font-size: 0.85em;
+  background: var(--mc-surface);
+  border: 1px solid var(--mc-border);
+  border-radius: 4px;
+  padding: 1px 5px;
+}
+
 /* -- Chat ------------------------------------------------------------------ */
 .chat {
   display: flex;
@@ -147,6 +177,88 @@
   font-size: 10px;
   color: var(--mc-text-subtle);
   margin-top: 5px;
+}
+
+/* -- Skills (what the planner chose this turn) ----------------------------- */
+.skills {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 6px;
+}
+
+.skillsLabel {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--mc-text-subtle);
+}
+
+.skillChip {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--mc-accent, #6366f1);
+  background: color-mix(in srgb, var(--mc-accent, #6366f1) 12%, transparent);
+  border: 1px solid color-mix(in srgb, var(--mc-accent, #6366f1) 35%, transparent);
+  border-radius: 999px;
+  padding: 2px 9px;
+}
+
+/* -- Tool activity --------------------------------------------------------- */
+/* Chips that show what Hella is doing while she reasons over her tools. They
+   sit inside the agent bubble, above the text she streams once the tools have
+   returned. */
+.tools {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 6px;
+}
+
+.toolChip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--mc-text-muted);
+  background: var(--mc-surface-raised, var(--mc-surface));
+  border: 1px solid var(--mc-border);
+  border-radius: 999px;
+  padding: 3px 9px;
+}
+
+.toolChip.done {
+  color: var(--mc-text-subtle);
+}
+
+.toolDot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--mc-accent, #6366f1);
+}
+
+.toolChip:not(.done) .toolDot {
+  animation: pulse 1.1s ease-in-out infinite;
+}
+
+.toolChip.done .toolDot {
+  background: var(--mc-positive, #22c55e);
+  animation: none;
+}
+
+/* The blinking caret trailing the text as it streams in. */
+.caret {
+  display: inline-block;
+  width: 2px;
+  height: 1em;
+  margin-left: 1px;
+  vertical-align: text-bottom;
+  background: var(--mc-accent, #6366f1);
+  animation: pulse 1s step-start infinite;
 }
 
 .suggestions {

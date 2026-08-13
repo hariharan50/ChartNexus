@@ -7,10 +7,13 @@
 
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { queryKeys } from '$shared/api/query-client';
-import { askAgent, getGuidance } from './api';
-import type { AskResponse, Guidance } from './types';
+import { askAgent, getAgentAvailability, getGuidance } from './api';
+import type { AgentAvailability, AskResponse, Guidance } from './types';
 
 const REFETCH_MS = 15_000;
+// Availability only changes with server config (an LLM key), so a long stale
+// window is fine — no polling.
+const AVAILABILITY_STALE_MS = 5 * 60_000;
 
 export function useGuidanceQuery(symbol: string) {
   return useQuery<Guidance>({
@@ -23,5 +26,13 @@ export function useGuidanceQuery(symbol: string) {
 export function useAskAgentMutation(symbol: string) {
   return useMutation<AskResponse, Error, string>({
     mutationFn: (question: string) => askAgent(symbol, question)
+  });
+}
+
+export function useAgentAvailabilityQuery() {
+  return useQuery<AgentAvailability>({
+    queryKey: ['copilot', 'availability'],
+    queryFn: () => getAgentAvailability(),
+    staleTime: AVAILABILITY_STALE_MS
   });
 }

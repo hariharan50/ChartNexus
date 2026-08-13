@@ -17,7 +17,28 @@ Postgres is on 5433, Redis on 6381 (see backend/.env).
 ## 2. Backend API — port 8000
 
     cd backend
-    uv run uvicorn marketcompass.entrypoints.main_api:create_app --factory --reload --port 8000
+    uv run --extra agent --extra llm uvicorn marketcompass.entrypoints.main_api:create_app --factory --reload --port 8000
+
+The `--extra agent --extra llm` flags pull in the AI Console's LangGraph +
+Anthropic stack. Without them the API still runs, but the **AI Console → AI
+Analysis Agent** tab shows an "offline" notice (it is LLM-only, by design).
+
+### Enable the AI Console (Hella)
+
+The agent is disabled until an LLM is configured. In `backend/.env`:
+
+    MC_LLM_PROVIDER=anthropic
+    MC_LLM_ANTHROPIC_API_KEY=sk-ant-...
+    MC_LLM_MODEL=claude-sonnet-5          # optional; a good chat default
+
+With a key set and the extras installed, `GET /api/v1/copilot/availability`
+returns `{"available": true}` and the tab goes live. Hella reads the live market
+through read-only tools (spot/futures/OHLC/option-chain/OI/PCR/max-pain/gamma/
+indicators) — so the ingest worker below keeps her OI reads fresh, just like the
+charts.
+
+Optional agent tracing: set `LANGSMITH_TRACING=true` and `LANGSMITH_API_KEY` to
+send prompts + tool I/O to LangSmith. Leave unset in production.
 
 ## 3. Snapshot ingest worker (REQUIRED for the Options Lab charts)
 

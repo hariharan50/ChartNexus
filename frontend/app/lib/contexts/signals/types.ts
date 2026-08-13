@@ -55,10 +55,11 @@ export interface Guidance {
 export interface AskResponse {
   answer: string;
   symbol: string;
-  decision: string;
-  provenance: DataSourceName;
-  /** Which provider produced the text: "rule_based" when keyless, else the LLM. */
-  source: string;
+}
+
+/** Whether the AI Console is usable — false when no LLM key is configured. */
+export interface AgentAvailability {
+  available: boolean;
 }
 
 export interface HistoryItem {
@@ -75,10 +76,22 @@ export interface GuidanceHistory {
   items: HistoryItem[];
 }
 
+/** A tool Hella reached for while answering, shown as a chip in her bubble. */
+export interface ChatTool {
+  name: string;
+  title: string;
+  done: boolean;
+}
+
 /** A rendered chat turn in the console. */
 export interface ChatMessage {
   id: string;
   role: 'user' | 'agent';
   text: string;
-  source?: string;
+  /** Skills the planner chose for this turn (agent messages only). */
+  skills?: string[];
+  /** Tools the agent called this turn (agent messages only). */
+  tools?: ChatTool[];
+  /** True while tokens are still streaming into this message. */
+  streaming?: boolean;
 }

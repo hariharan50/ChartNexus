@@ -1,10 +1,10 @@
-"""Wire contract for the copilot chat endpoint."""
+"""Wire contract for the AI Console endpoints."""
 
 from __future__ import annotations
 
 from pydantic import BaseModel, ConfigDict, Field
 
-from marketcompass.contexts.copilot.application.converse import Answer
+from marketcompass.contexts.copilot.application.agent_service import Answer
 
 
 class _Schema(BaseModel):
@@ -13,22 +13,21 @@ class _Schema(BaseModel):
 
 class AskRequest(_Schema):
     question: str = Field(min_length=1, max_length=500)
+    #: The conversation to continue. Absent on the first message — the server
+    #: mints one and returns it on the stream so follow-ups carry context.
+    session_id: str | None = Field(default=None, max_length=64)
 
 
 class AskResponse(_Schema):
     answer: str
     symbol: str
-    decision: str
-    provenance: str
-    #: Which provider produced the text — "rule_based" when keyless, else the LLM.
-    source: str
 
     @classmethod
     def of(cls, answer: Answer) -> AskResponse:
-        return cls(
-            answer=answer.text,
-            symbol=answer.symbol,
-            decision=answer.decision,
-            provenance=answer.provenance,
-            source=answer.source,
-        )
+        return cls(answer=answer.text, symbol=answer.symbol)
+
+
+class AvailabilityResponse(_Schema):
+    #: False when no model is configured — the console tab shows a notice instead
+    #: of the chat. The AI Console is LLM-only; there is no keyless fallback.
+    available: bool

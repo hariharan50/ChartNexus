@@ -1,8 +1,10 @@
-"""Per-request assembly for the copilot chat routes.
+"""Per-request assembly for the AI Console (Hella).
 
-The guidance bridge and the LLM factory both live in ``infrastructure``, so this
-module never imports ``signals`` or a provider SDK directly — it only reads the
-LLM configuration off the container and wires the ``Converse`` use case.
+Wires the LangGraph agent over the tenant's market-data and options-analytics
+services, plus the Redis session store. All the framework-specific pieces
+(LangGraph, the chat model, the cross-context service bridges) live in
+infrastructure, so this module never imports another context's internals beyond
+their per-request service builders.
 """
 
 from __future__ import annotations
@@ -13,12 +15,12 @@ from typing import Annotated
 from fastapi import Depends, Request
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from marketcompass.contexts.copilot.application.converse import Converse
-from marketcompass.infrastructure.brokers.copilot_guidance_source import (
-    build_copilot_guidance_source,
-)
-from marketcompass.infrastructure.llm.factory import build_llm
+from marketcompass.contexts.copilot.application.agent_service import AgentService
+from marketcompass.contexts.copilot.application.ports import SessionStorePort
+from marketcompass.infrastructure.agent.langgraph.build import build_langgraph_agent
+from marketcompass.infrastructure.copilot.redis_session_store import RedisSessionStore
 from marketcompass.infrastructure.transport.http.dependencies import (
+    CurrentPrincipal,
     get_container,
     get_session,
 )
@@ -26,28 +28,19 @@ from marketcompass.infrastructure.transport.http.dependencies import (
 
 @dataclass(slots=True)
 class CopilotServices:
-    converse: Converse
+    agent: AgentService
+    sessions: SessionStorePort
 
 
 def build_copilot_services(
     request: Request,
+    principal: CurrentPrincipal,
     session: Annotated[AsyncSession, Depends(get_session)],
 ) -> CopilotServices:
     container = get_container(request)
-    llm_settings = container.settings.llm
-    llm = build_llm(
-        provider=llm_settings.provider,
-        anthropic_api_key=llm_settings.anthropic_api_key.get_secret_value(),
-        openai_api_key=llm_settings.openai_api_key.get_secret_value(),
-        openrouter_api_key=llm_settings.openrouter_api_key.get_secret_value(),
-        openrouter_base_url=llm_settings.openrouter_base_url,
-        openrouter_headers=llm_settings.openrouter_headers,
-        model=llm_settings.resolved_model,
-        max_output_tokens=llm_settings.max_output_tokens,
-        request_timeout_seconds=llm_settings.request_timeout_seconds,
-    )
-    guidance = build_copilot_guidance_source(request, session)
-    return CopilotServices(converse=Converse(guidance=guidance, llm=llm))
+    agent = build_langgraph_agent(request, session)
+    sessions = RedisSessionStore(container.redis, principal.tenant_id)
+    return CopilotServices(agent=AgentService(agent=agent), sessions=sessions)
 
 
 Services = Annotated[CopilotServices, Depends(build_copilot_services)]

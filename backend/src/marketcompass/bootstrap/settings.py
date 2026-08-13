@@ -209,9 +209,14 @@ class LLMSettings(_Section):
     anthropic_api_key: SecretStr = SecretStr("")
     openai_api_key: SecretStr = SecretStr("")
     model: str = "claude-sonnet-5"
-    max_output_tokens: int = Field(default=2048, ge=1)
+    # Room for a full agent answer plus any model-side thinking. 2048 truncated
+    # multi-part trade calls mid-sentence; raise via MC_LLM_MAX_OUTPUT_TOKENS.
+    max_output_tokens: int = Field(default=4096, ge=1)
     request_timeout_seconds: float = Field(default=30.0, gt=0)
     daily_token_budget: int = Field(default=1_000_000, ge=0)
+    # Appends the "educational, not investment advice" line to analytical agent
+    # answers. Set MC_LLM_AGENT_DISCLAIMER=false to bypass it while testing.
+    agent_disclaimer: bool = True
 
     # OpenRouter is the OpenAI wire protocol pointed at an aggregator, so model
     # IDs are namespaced (e.g. "anthropic/claude-3.7-sonnet") and won't match the

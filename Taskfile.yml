@@ -184,6 +184,12 @@ tasks:
     cmds:
       - pnpm test:e2e
 
+  test:eval:
+    desc: 'Run the LLM-backed agent evals (needs MC_LLM_ANTHROPIC_API_KEY): task test:eval'
+    dir: "{{.BACKEND}}"
+    cmds:
+      - uv run --extra agent pytest tests/eval -m eval {{.CLI_ARGS}}
+
   arch:
     desc: Enforce the layering and bounded-context import rules
     dir: "{{.BACKEND}}"

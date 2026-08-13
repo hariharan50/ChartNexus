@@ -1,6 +1,7 @@
 import { useQueryClient } from '@tanstack/react-query';
 import { useCallback } from 'react';
 import { useNavigate, useRevalidator, useRouteLoaderData } from 'react-router';
+import { clearAllChats } from '$contexts/signals/chat-store';
 import * as api from './api';
 import type { User } from './types';
 
@@ -50,7 +51,10 @@ export function useSignOut(): (redirectTo?: string) => Promise<void> {
         // Leave even if the call failed — the user asked to, and the cookies
         // are gone or unusable either way. Clearing the query cache matters
         // here: it holds the previous user's market data and profile reads.
+        // Wipe the persisted Hella chats too, so the next person on this browser
+        // never sees this user's conversation.
         queryClient.clear();
+        clearAllChats();
         await navigate(redirectTo);
         void revalidator.revalidate();
       }
