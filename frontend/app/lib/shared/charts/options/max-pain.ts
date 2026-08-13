@@ -114,6 +114,12 @@ function markers(input: MaxPainInput, theme: ChartTheme) {
         // Top of the plot, not the foot of the line: at the foot the two chips
         // sit straight on top of the strike labels they are pointing at.
         position: 'end',
+        // Dropped one chip-height below Max Pain's, which also anchors at the
+        // top. When spot and max pain land a strike or two apart their two
+        // top-anchored chips overlap and the wider one hides the other; the
+        // offset stacks them instead. Harmless when they are far apart — the
+        // spot chip simply sits slightly lower.
+        offset: [0, 22],
         formatter: `Spot : ${Math.round(spot)}`,
         color: theme.spotLabelText,
         backgroundColor: theme.spotLabelBg,
