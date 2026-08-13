@@ -105,6 +105,7 @@
   align-items: center;
   justify-content: space-between;
   gap: var(--mc-space-4);
+  padding: var(--mc-space-2) 0;
 }
 
 .heroLeft {
@@ -226,131 +227,137 @@
   margin: var(--mc-space-1, 4px) 0 0;
 }
 
-/* -- Skill cards ----------------------------------------------------------- */
-.skills {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: var(--mc-space-3);
-}
-
-@media (max-width: 560px) {
-  .skills {
-    grid-template-columns: 1fr;
-  }
-}
-
-.skill {
-  border: 1px solid var(--mc-border);
-  border-left-width: 3px;
-  border-radius: var(--mc-radius);
-  padding: var(--mc-space-3);
-  background: var(--mc-surface);
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  transition:
-    transform var(--mc-duration-fast, 120ms) ease,
-    box-shadow var(--mc-duration-fast, 120ms) ease;
-}
-
-.skill:hover {
-  transform: translateY(-1px);
-  box-shadow: var(--mc-shadow);
-}
-
-.skill.pos {
-  border-left-color: var(--mc-bullish, #16a34a);
-}
-
-.skill.neg {
-  border-left-color: var(--mc-bearish, #dc2626);
-}
-
-.skill.none {
-  border-left-color: var(--mc-border-strong, var(--mc-text-subtle));
-}
-
-.skillTop {
+/* -- Regime + horizon switcher --------------------------------------------- */
+.heroTop {
+  position: relative;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: var(--mc-space-2);
+  gap: var(--mc-space-3);
 }
 
-.skillLabel {
-  font-size: var(--mc-text-xs);
-  font-weight: 700;
-  color: var(--mc-text);
-}
-
-.scorePill {
+.regime {
   font-size: 11px;
   font-weight: 700;
-  font-variant-numeric: tabular-nums;
-  padding: 2px 8px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  padding: 3px 10px;
   border-radius: 999px;
   color: var(--mc-text-muted);
   background: var(--mc-surface-raised, var(--mc-surface));
   border: 1px solid var(--mc-border);
 }
 
-.scorePill.pos {
+.regime.buy {
   color: var(--mc-bullish, #16a34a);
   border-color: color-mix(in srgb, var(--mc-bullish, #16a34a) 40%, var(--mc-border));
 }
 
-.scorePill.neg {
+.regime.sell {
   color: var(--mc-bearish, #dc2626);
   border-color: color-mix(in srgb, var(--mc-bearish, #dc2626) 40%, var(--mc-border));
 }
 
-.skillHeadline {
-  font-size: var(--mc-text-xs);
-  color: var(--mc-text-muted);
-  line-height: 1.45;
-  min-height: 2.7em;
-}
-
-.meter {
+.switcher {
   position: relative;
-  height: 6px;
-  border-radius: 3px;
-  background: var(--mc-border);
-  overflow: hidden;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 4px;
+  padding: 4px;
+  border-radius: var(--mc-radius);
+  background: var(--mc-surface);
+  border: 1px solid var(--mc-border);
 }
 
-.meterMid {
-  position: absolute;
-  left: 50%;
-  top: 0;
-  bottom: 0;
-  width: 1px;
-  background: var(--mc-border-strong, var(--mc-text-subtle));
-  z-index: 1;
+.switchBtn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding: 8px 6px;
+  border: 1px solid transparent;
+  border-radius: var(--mc-radius-sm, 6px);
+  background: transparent;
+  cursor: pointer;
+  color: var(--mc-text-muted);
+  transition:
+    background var(--mc-duration-fast, 120ms) ease,
+    color var(--mc-duration-fast, 120ms) ease;
 }
 
-.meterFill {
-  position: absolute;
-  top: 0;
-  bottom: 0;
-  border-radius: 3px;
-  transition: width 500ms cubic-bezier(0.2, 0.8, 0.2, 1);
+.switchBtn:hover {
+  color: var(--mc-text);
 }
 
-.meterFill.pos {
-  left: 50%;
-  background: linear-gradient(90deg, var(--mc-bullish, #16a34a), #22c55e);
+.switchOn {
+  background: var(--mc-surface-raised, var(--mc-surface));
+  border-color: var(--mc-border);
+  color: var(--mc-text);
+  box-shadow: var(--mc-shadow);
 }
 
-.meterFill.neg {
-  right: 50%;
-  background: linear-gradient(270deg, var(--mc-bearish, #dc2626), #ef4444);
+.switchLabel {
+  font-size: var(--mc-text-xs);
+  font-weight: 700;
 }
 
-.meterFill.none {
-  left: 0;
-  right: 0;
-  background: repeating-linear-gradient(45deg, var(--mc-border) 0 4px, transparent 4px 8px);
+.switchFrame {
+  font-size: 10px;
+  letter-spacing: 0.02em;
+  color: var(--mc-text-subtle);
+}
+
+/* -- Driver breakdown ------------------------------------------------------ */
+.drivers {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: var(--mc-space-2);
+  padding-top: var(--mc-space-2);
+  border-top: 1px solid var(--mc-border);
+}
+
+.driversHead {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--mc-space-2);
+}
+
+.driversHead .panelTitle {
+  margin: 0;
+}
+
+.prob {
+  font-size: var(--mc-text-xs);
+  color: var(--mc-text-subtle);
+  font-variant-numeric: tabular-nums;
+}
+
+.prob strong {
+  color: var(--mc-text);
+}
+
+.driverChips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.driverChip {
+  font-size: var(--mc-text-xs);
+  font-weight: 600;
+  padding: 4px 10px;
+  border-radius: 999px;
+  color: var(--mc-text-muted);
+  background: var(--mc-surface);
+  border: 1px solid var(--mc-border);
+}
+
+.driversEmpty {
+  font-size: var(--mc-text-xs);
+  color: var(--mc-text-subtle);
+  margin: 0;
 }
 
 /* -- Levels position bar --------------------------------------------------- */
@@ -435,6 +442,18 @@
   border-radius: var(--mc-radius-sm);
   padding: 2px 6px;
   font-variant-numeric: tabular-nums;
+}
+
+/* Near the ends, snap the value bubble inward so it never clips the panel. */
+.posSpot.atStart .posSpotVal {
+  left: 0;
+  transform: translateX(0);
+}
+
+.posSpot.atEnd .posSpotVal {
+  left: auto;
+  right: 0;
+  transform: translateX(0);
 }
 
 .chipsRow {
@@ -545,4 +564,277 @@
   color: var(--mc-text-subtle);
   font-style: italic;
   margin: var(--mc-space-2) 0 0;
+}
+
+/* -- Context cards + status bar -------------------------------------------- */
+.cards {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: var(--mc-space-4);
+}
+
+@media (max-width: 1100px) {
+  .cards {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+@media (max-width: 560px) {
+  .cards {
+    grid-template-columns: 1fr;
+  }
+}
+
+.card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: var(--mc-space-4);
+  border: 1px solid var(--mc-border);
+  border-radius: var(--mc-radius-lg);
+  background: linear-gradient(
+    180deg,
+    var(--mc-surface-raised, var(--mc-surface)),
+    var(--mc-surface)
+  );
+  box-shadow: var(--mc-shadow);
+  overflow: hidden;
+}
+
+/* Glossy coloured cards: a saturated diagonal fill + a top-light sheen, with
+   all text switched to white for contrast. Four hues, one per card. */
+.tinted {
+  border-color: transparent;
+  color: #fff;
+}
+
+.tinted::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(120% 80% at 15% 0%, rgba(255, 255, 255, 0.4), transparent 55%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.22), rgba(255, 255, 255, 0) 45%);
+}
+
+.tinted > * {
+  position: relative;
+  z-index: 1;
+}
+
+.cardBlue {
+  background: linear-gradient(145deg, #3b82f6, #1d4ed8 58%, #1e3a8a);
+  box-shadow: 0 12px 30px -12px rgba(29, 78, 216, 0.75);
+}
+
+.cardRed {
+  background: linear-gradient(145deg, #fb7185, #ef4444 55%, #b91c1c);
+  box-shadow: 0 12px 30px -12px rgba(220, 38, 38, 0.75);
+}
+
+.cardPink {
+  background: linear-gradient(145deg, #f9a8d4, #ec4899 55%, #be185d);
+  box-shadow: 0 12px 30px -12px rgba(219, 39, 119, 0.7);
+}
+
+.cardLavender {
+  background: linear-gradient(145deg, #c4b5fd, #a78bfa 50%, #7c3aed);
+  box-shadow: 0 12px 30px -12px rgba(124, 58, 237, 0.7);
+}
+
+/* -- text on tinted cards -------------------------------------------------- */
+.tinted .cardTitle {
+  color: rgba(255, 255, 255, 0.85);
+}
+
+.tinted .cardBig,
+.tinted .cardRegime {
+  color: #fff;
+}
+
+.tinted .cardSub {
+  color: #fff;
+}
+
+.tinted .cardNote {
+  color: rgba(255, 255, 255, 0.82);
+}
+
+.tinted .cardDelta,
+.tinted .cardDelta.pos,
+.tinted .cardDelta.neg {
+  color: #fff;
+}
+
+.tinted .pill {
+  color: #fff;
+  background: rgba(255, 255, 255, 0.18);
+  border-color: rgba(255, 255, 255, 0.4);
+}
+
+.tinted .certaintyLabel {
+  color: rgba(255, 255, 255, 0.82);
+}
+
+.tinted .certaintyTrack {
+  background: rgba(255, 255, 255, 0.25);
+}
+
+.tinted .certaintyFill {
+  background: #fff;
+}
+
+.cardTitle {
+  font-size: var(--mc-text-xs);
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  color: var(--mc-text-muted);
+}
+
+.cardBig {
+  font-size: 1.9rem;
+  font-weight: 800;
+  line-height: 1.05;
+  color: var(--mc-text);
+  font-variant-numeric: tabular-nums;
+}
+
+.cardBig.buy {
+  color: var(--mc-bullish, #16a34a);
+}
+
+.cardBig.sell {
+  color: var(--mc-bearish, #dc2626);
+}
+
+.cardRegime {
+  font-size: 1.5rem;
+  font-weight: 800;
+  line-height: 1.1;
+  color: var(--mc-text);
+}
+
+.cardSub {
+  font-size: var(--mc-text-sm);
+  font-weight: 600;
+  color: var(--mc-accent, #8b5cf6);
+}
+
+.cardNote {
+  font-size: var(--mc-text-xs);
+  color: var(--mc-text-subtle);
+}
+
+.cardDelta {
+  font-size: var(--mc-text-sm);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: var(--mc-text-muted);
+}
+
+.cardDelta.pos {
+  color: var(--mc-bullish, #16a34a);
+}
+
+.cardDelta.neg {
+  color: var(--mc-bearish, #dc2626);
+}
+
+.pill {
+  align-self: flex-start;
+  margin-top: 2px;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 4px 12px;
+  border-radius: 999px;
+  color: var(--mc-text-muted);
+  background: var(--mc-surface);
+  border: 1px solid var(--mc-border);
+}
+
+.certainty {
+  margin-top: 4px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.certaintyLabel {
+  font-size: 11px;
+  color: var(--mc-text-subtle);
+}
+
+.certaintyTrack {
+  height: 6px;
+  border-radius: 3px;
+  background: var(--mc-border);
+  overflow: hidden;
+}
+
+.certaintyFill {
+  display: block;
+  height: 100%;
+  border-radius: 3px;
+  background: linear-gradient(90deg, var(--mc-accent, #8b5cf6), #a78bfa);
+  transition: width 500ms cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+.certaintyFill.buy {
+  background: linear-gradient(90deg, var(--mc-bullish, #16a34a), #22c55e);
+}
+
+.certaintyFill.sell {
+  background: linear-gradient(90deg, var(--mc-bearish, #dc2626), #ef4444);
+}
+
+.statusBar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--mc-space-3);
+  padding: var(--mc-space-3) var(--mc-space-4);
+  border: 1px solid var(--mc-border);
+  border-radius: var(--mc-radius-lg);
+  background: var(--mc-surface);
+  font-size: var(--mc-text-xs);
+  color: var(--mc-text-muted);
+}
+
+.statusItem {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.statusItem strong {
+  color: var(--mc-text);
+  font-weight: 700;
+}
+
+.statusCenter {
+  color: var(--mc-text-subtle);
+}
+
+.dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+}
+
+.dot.open {
+  background: var(--mc-bullish, #16a34a);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--mc-bullish, #16a34a) 25%, transparent);
+}
+
+.dot.closed {
+  background: var(--mc-text-subtle, #6b7280);
+}
+
+@media (max-width: 560px) {
+  .statusCenter {
+    display: none;
+  }
 }

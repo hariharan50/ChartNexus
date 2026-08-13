@@ -1,17 +1,16 @@
-"""Pure technical-indicator math over a candle series.
+"""Hella's technical read — a bundle over the shared indicator maths.
 
-No I/O, no market_data types — just number arrays in, a :class:`TechnicalRead`
-out — so every formula is unit-testable in isolation and the copilot domain stays
-free of infrastructure. The ``get_indicators`` tool fetches candles, hands the
-float arrays here, and formats the result for the model.
-
-Every value is ``None`` when the series is too short to compute it, so a thin
-history never yields a fabricated reading.
+The per-series formulas (RSI/EMA/VWAP/ATR/swings) live once in
+``shared_kernel.domain.indicators``; this module only composes them into the
+``TechnicalRead`` the ``get_indicators`` tool formats. Keeping the maths shared
+means the agent and the signals engine can never drift apart on the numbers.
 """
 
 from __future__ import annotations
 
 from dataclasses import dataclass
+
+from marketcompass.shared_kernel.domain import indicators as ind
 
 _RSI_PERIOD = 14
 _ATR_PERIOD = 14
@@ -39,88 +38,11 @@ def compute(
     volumes: list[float],
 ) -> TechnicalRead:
     return TechnicalRead(
-        rsi14=rsi(closes, _RSI_PERIOD),
-        ema20=ema(closes, _EMA_FAST),
-        ema50=ema(closes, _EMA_SLOW),
-        vwap=vwap(highs, lows, closes, volumes),
-        atr14=atr(highs, lows, closes, _ATR_PERIOD),
-        swing_support=_recent_min(lows, _SWING_WINDOW),
-        swing_resistance=_recent_max(highs, _SWING_WINDOW),
+        rsi14=ind.rsi(closes, _RSI_PERIOD),
+        ema20=ind.ema(closes, _EMA_FAST),
+        ema50=ind.ema(closes, _EMA_SLOW),
+        vwap=ind.vwap(highs, lows, closes, volumes),
+        atr14=ind.atr(highs, lows, closes, _ATR_PERIOD),
+        swing_support=ind.recent_min(lows, _SWING_WINDOW),
+        swing_resistance=ind.recent_max(highs, _SWING_WINDOW),
     )
-
-
-def ema(values: list[float], period: int) -> float | None:
-    """Exponential moving average, seeded with the SMA of the first ``period``."""
-    if period <= 0 or len(values) < period:
-        return None
-    multiplier = 2 / (period + 1)
-    avg = sum(values[:period]) / period
-    for value in values[period:]:
-        avg = (value - avg) * multiplier + avg
-    return avg
-
-
-def rsi(closes: list[float], period: int = _RSI_PERIOD) -> float | None:
-    """Wilder's RSI in 0-100. ``None`` below ``period + 1`` closes."""
-    if period <= 0 or len(closes) <= period:
-        return None
-    gains, losses = 0.0, 0.0
-    for i in range(1, period + 1):
-        change = closes[i] - closes[i - 1]
-        gains += max(change, 0.0)
-        losses += max(-change, 0.0)
-    avg_gain, avg_loss = gains / period, losses / period
-    for i in range(period + 1, len(closes)):
-        change = closes[i] - closes[i - 1]
-        avg_gain = (avg_gain * (period - 1) + max(change, 0.0)) / period
-        avg_loss = (avg_loss * (period - 1) + max(-change, 0.0)) / period
-    if avg_loss == 0.0:
-        return 100.0 if avg_gain > 0.0 else 50.0
-    rs = avg_gain / avg_loss
-    return 100.0 - (100.0 / (1.0 + rs))
-
-
-def vwap(
-    highs: list[float], lows: list[float], closes: list[float], volumes: list[float]
-) -> float | None:
-    """Volume-weighted average of the typical price over the series.
-
-    An approximation of session VWAP across whatever window the caller passes;
-    with no volume it is undefined.
-    """
-    n = min(len(highs), len(lows), len(closes), len(volumes))
-    if n == 0:
-        return None
-    pv, vol = 0.0, 0.0
-    for i in range(n):
-        typical = (highs[i] + lows[i] + closes[i]) / 3
-        pv += typical * volumes[i]
-        vol += volumes[i]
-    return pv / vol if vol > 0 else None
-
-
-def atr(
-    highs: list[float], lows: list[float], closes: list[float], period: int = _ATR_PERIOD
-) -> float | None:
-    """Wilder's Average True Range. ``None`` below ``period + 1`` bars."""
-    n = min(len(highs), len(lows), len(closes))
-    if period <= 0 or n <= period:
-        return None
-    true_ranges: list[float] = []
-    for i in range(1, n):
-        prev_close = closes[i - 1]
-        true_ranges.append(
-            max(highs[i] - lows[i], abs(highs[i] - prev_close), abs(lows[i] - prev_close))
-        )
-    atr_value = sum(true_ranges[:period]) / period
-    for tr in true_ranges[period:]:
-        atr_value = (atr_value * (period - 1) + tr) / period
-    return atr_value
-
-
-def _recent_min(values: list[float], window: int) -> float | None:
-    return min(values[-window:]) if values else None
-
-
-def _recent_max(values: list[float], window: int) -> float | None:
-    return max(values[-window:]) if values else None

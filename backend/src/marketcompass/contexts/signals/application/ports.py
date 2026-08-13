@@ -16,15 +16,26 @@ from dataclasses import dataclass
 from datetime import datetime
 from typing import Protocol
 
+from marketcompass.contexts.signals.domain.ensemble import ModelArtifact
 from marketcompass.contexts.signals.domain.inputs import MarketSnapshot
 from marketcompass.contexts.signals.domain.models import Decision, Guidance, Provenance
 from marketcompass.shared_kernel.types.identifiers import TenantId
 
 
 class MarketReadPort(Protocol):
-    """Assembles everything the four skills need for one instrument."""
+    """Assembles everything the engine needs for one instrument."""
 
     async def read(self, tenant_id: TenantId, symbol: str) -> MarketSnapshot: ...
+
+
+class ModelPort(Protocol):
+    """Supplies the calibrated model artifact (weights + calibration per horizon).
+
+    An infrastructure adapter loads the fitted artifact from disk when present,
+    else the hand-set default — so the engine always has weights to run with.
+    """
+
+    def artifact(self) -> ModelArtifact: ...
 
 
 @dataclass(frozen=True, slots=True)

@@ -16,6 +16,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from marketcompass.contexts.signals.application.get_guidance import GetGuidance
 from marketcompass.contexts.signals.application.guidance_history import GetGuidanceHistory
+from marketcompass.infrastructure.analytics.model_provider import ModelProvider
 from marketcompass.infrastructure.brokers.guidance_market_source import (
     build_guidance_market_source,
 )
@@ -37,8 +38,9 @@ def build_signals_services(
 ) -> SignalsServices:
     market = build_guidance_market_source(request, session)
     repository = SqlAlchemySignalDecisionRepository(session)
+    model = ModelProvider()
     return SignalsServices(
-        guidance=GetGuidance(market=market, repository=repository),
+        guidance=GetGuidance(market=market, repository=repository, model=model),
         history=GetGuidanceHistory(repository=repository),
     )
 

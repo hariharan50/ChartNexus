@@ -43,8 +43,7 @@ def enrich(guidance: Guidance) -> str:
     levels = guidance.levels
     if levels.support is not None and levels.resistance is not None:
         lines.append(
-            f"Watching support at {levels.support:,.0f} and resistance at "
-            f"{levels.resistance:,.0f}."
+            f"Watching support at {levels.support:,.0f} and resistance at {levels.resistance:,.0f}."
         )
     if guidance.scaffold.entry is not None:
         parts = [f"Entry near {guidance.scaffold.entry:,.0f}"]

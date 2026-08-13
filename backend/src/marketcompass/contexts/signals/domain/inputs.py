@@ -53,11 +53,25 @@ class MarketSnapshot:
     iv_percentile: float | None = None
     atm_call_iv: float | None = None
     atm_put_iv: float | None = None
+    #: India VIX's own level and its day change (%), carried straight off the
+    #: chain response — the market's forward volatility read, for context cards.
+    india_vix: float | None = None
+    india_vix_change_percent: float | None = None
 
     # -- Price action (from market_data history, oldest bar first) -----------
     closes: tuple[float, ...] = ()
     highs: tuple[float, ...] = ()
     lows: tuple[float, ...] = ()
+    volumes: tuple[float, ...] = ()
+
+    # -- Larger context for the calibrated engine ----------------------------
+    #: Daily bars (oldest first) for the swing horizon.
+    daily_closes: tuple[float, ...] = ()
+    daily_highs: tuple[float, ...] = ()
+    daily_lows: tuple[float, ...] = ()
+    #: Recent PCR readings from the intraday archive (oldest first) — its trend
+    #: is a stronger tell than the level alone. Empty on a day with no archive.
+    pcr_series: tuple[float, ...] = ()
 
     #: Listed strikes, ascending — lets Level-Based snap to tradeable prices.
     strikes: tuple[float, ...] = ()

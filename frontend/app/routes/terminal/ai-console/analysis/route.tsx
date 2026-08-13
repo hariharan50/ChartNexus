@@ -1,17 +1,31 @@
 import { useState } from 'react';
 import { useGuidanceQuery } from '$contexts/signals/queries';
-import type { Decision, Guidance, Levels, Scaffold, SkillRead } from '$contexts/signals/types';
+import type {
+  Decision,
+  Guidance,
+  Horizon,
+  HorizonCall,
+  Levels,
+  Scaffold
+} from '$contexts/signals/types';
 import { cx } from '$shared/ui/cx';
 import DataSourceBadge from '$shared/ui/DataSourceBadge';
 import {
+  HORIZONS,
   INSTRUMENTS,
+  biasPhrase,
+  confidenceBand,
   decisionClass,
+  driverLabel,
   fmtPrice,
   fmtRatio,
-  fmtScore,
-  meterWidth,
-  scoreLean,
-  spotPositionPct
+  marketStatusIST,
+  nowLabelIST,
+  pcrSentiment,
+  regimeLabel,
+  spotPositionPct,
+  vixAbsoluteChange,
+  vixEnvironment
 } from '../ai-console-data';
 import ConsoleHeader from '../components/ConsoleHeader';
 import s from './route.module.css';
@@ -31,6 +45,7 @@ const DISCLAIMER =
 
 export default function NiftyAnalysis() {
   const [instIdx, setInstIdx] = useState(0);
+  const [horizon, setHorizon] = useState<Horizon>('intraday');
   const instrument = INSTRUMENTS[instIdx] ?? INSTRUMENTS[0];
 
   const query = useGuidanceQuery(instrument.symbol);
@@ -42,8 +57,8 @@ export default function NiftyAnalysis() {
         title="Nifty Analysis"
         subtitle={
           <>
-            The call, the skills behind it, the levels that matter and the risk — read by{' '}
-            <strong>{AGENT_NAME}</strong>.
+            Calibrated calls across three horizons, the drivers behind each, the levels that matter
+            and the risk — read by <strong>{AGENT_NAME}</strong>.
           </>
         }
         instIdx={instIdx}
@@ -59,46 +74,171 @@ export default function NiftyAnalysis() {
           <div className={s.state}>Guidance is unavailable for {instrument.symbol} right now.</div>
         </div>
       ) : (
-        <div className={s.layout}>
-          <div className={s.column}>
-            <GuidanceHeader guidance={guidance} />
-            <SkillCards skills={guidance.skills} />
+        <>
+          <div className={s.layout}>
+            <div className={s.column}>
+              <GuidanceHeader guidance={guidance} horizon={horizon} onHorizon={setHorizon} />
+            </div>
+            <div className={s.column}>
+              <LevelsPanel levels={guidance.levels} />
+              <ScaffoldPanel scaffold={guidance.scaffold} actionable={guidance.is_actionable} />
+            </div>
           </div>
-          <div className={s.column}>
-            <LevelsPanel levels={guidance.levels} />
-            <ScaffoldPanel scaffold={guidance.scaffold} actionable={guidance.is_actionable} />
-          </div>
-        </div>
+          <ContextCards guidance={guidance} />
+          <StatusBar provenance={guidance.provenance} />
+        </>
       )}
     </div>
   );
 }
 
-function GuidanceHeader({ guidance }: { guidance: Guidance }) {
-  const dc = decisionClass(guidance.decision);
+function ContextCards({ guidance }: { guidance: Guidance }) {
+  const headline = guidance.horizons.find((c) => c.horizon === 'intraday') ?? guidance.horizons[0];
+  const confidence = headline?.confidence ?? guidance.confidence;
+  const decision = headline?.decision ?? guidance.decision;
+
+  const vix = guidance.context.india_vix;
+  const vixPct = guidance.context.india_vix_change_percent;
+  const vixAbs = vixAbsoluteChange(vix, vixPct);
+  const env = vixEnvironment(vix);
+  const pcr = guidance.context.pcr;
+  const pcrRead = pcrSentiment(pcr);
+  // A falling VIX (calmer market) reads positive; rising is the risk-on warning.
+  const vixTone = vixPct == null ? 'flat' : vixPct < 0 ? 'pos' : vixPct > 0 ? 'neg' : 'flat';
+
+  const vixArrow = vixPct == null || vixPct === 0 ? '' : vixPct < 0 ? '▼ ' : '▲ ';
+
+  return (
+    <div className={s.cards}>
+      <div className={cx(s.card, s.tinted, s.cardBlue)}>
+        <span className={s.cardTitle}>✦ AI Confidence</span>
+        <span className={s.cardBig}>{confidence}%</span>
+        <span className={s.cardSub}>{confidenceBand(confidence)}</span>
+        <div className={s.certainty}>
+          <span className={s.certaintyLabel}>Model certainty</span>
+          <div className={s.certaintyTrack}>
+            <span
+              className={s.certaintyFill}
+              style={{ width: `${Math.min(100, Math.max(0, confidence))}%` }}
+            />
+          </div>
+        </div>
+      </div>
+
+      <div className={cx(s.card, s.tinted, s.cardRed)}>
+        <span className={s.cardTitle}>⧉ Market Regime</span>
+        <span className={s.cardRegime}>{regimeLabel(guidance.regime)}</span>
+        <span className={s.cardSub}>{biasPhrase(decision)}</span>
+        <span className={s.pill}>{env.label}</span>
+      </div>
+
+      <div className={cx(s.card, s.tinted, s.cardPink)}>
+        <span className={s.cardTitle}>⟁ Volatility (India VIX)</span>
+        <span className={s.cardBig}>{vix == null ? '—' : vix.toFixed(2)}</span>
+        {vixAbs != null && vixPct != null ? (
+          <span className={cx(s.cardDelta, s[vixTone])}>
+            {vixArrow}
+            {vixAbs > 0 ? '+' : ''}
+            {vixAbs.toFixed(2)} ({vixPct > 0 ? '+' : ''}
+            {vixPct.toFixed(1)}%)
+          </span>
+        ) : (
+          <span className={s.cardSub}>No change data</span>
+        )}
+        <span className={s.cardNote}>{env.note}</span>
+      </div>
+
+      <div className={cx(s.card, s.tinted, s.cardLavender)}>
+        <span className={s.cardTitle}>◪ PCR (Total)</span>
+        <span className={s.cardBig}>{pcr == null ? '—' : pcr.toFixed(2)}</span>
+        <span className={s.cardSub}>{pcrRead.label}</span>
+        <span className={s.cardNote}>{pcrRead.note}</span>
+      </div>
+    </div>
+  );
+}
+
+function StatusBar({ provenance }: { provenance: Guidance['provenance'] }) {
+  const status = marketStatusIST();
+  const sourceLabel =
+    provenance === 'live'
+      ? 'Data by NSE'
+      : provenance === 'cached'
+        ? 'Cached data'
+        : 'Simulated data';
+  return (
+    <div className={s.statusBar}>
+      <span className={s.statusItem}>
+        Market Status
+        <span className={cx(s.dot, status.open ? s.open : s.closed)} />
+        <strong>{status.label}</strong>
+      </span>
+      <span className={s.statusCenter}>As of {nowLabelIST()}</span>
+      <span className={s.statusItem}>🛡 {sourceLabel}</span>
+    </div>
+  );
+}
+
+/** The selected horizon's call, or the intraday headline as a fallback. */
+function callFor(guidance: Guidance, horizon: Horizon): HorizonCall | undefined {
+  return (
+    guidance.horizons.find((c) => c.horizon === horizon) ??
+    guidance.horizons.find((c) => c.horizon === 'intraday') ??
+    guidance.horizons[0]
+  );
+}
+
+function GuidanceHeader({
+  guidance,
+  horizon,
+  onHorizon
+}: {
+  guidance: Guidance;
+  horizon: Horizon;
+  onHorizon: (h: Horizon) => void;
+}) {
+  const call = callFor(guidance, horizon);
+  const decision = call?.decision ?? guidance.decision;
+  const confidence = call?.confidence ?? guidance.confidence;
+  const dc = decisionClass(decision);
   const word =
-    guidance.decision === 'BUY'
-      ? 'leans bullish'
-      : guidance.decision === 'SELL'
-        ? 'leans bearish'
-        : 'no clear edge';
+    decision === 'BUY' ? 'leans bullish' : decision === 'SELL' ? 'leans bearish' : 'no clear edge';
 
   return (
     <div className={cx(s.panel, s.hero, s[dc])}>
+      <div className={s.heroTop}>
+        <span className={cx(s.regime, s[dc])}>{regimeLabel(guidance.regime)}</span>
+        <DataSourceBadge source={guidance.provenance} />
+      </div>
+
+      <div className={s.switcher} role="tablist" aria-label="Signal horizon">
+        {HORIZONS.map((h) => (
+          <button
+            key={h.key}
+            type="button"
+            role="tab"
+            aria-selected={h.key === horizon}
+            className={cx(s.switchBtn, h.key === horizon && s.switchOn)}
+            onClick={() => onHorizon(h.key)}
+          >
+            <span className={s.switchLabel}>{h.label}</span>
+            <span className={s.switchFrame}>{h.frame}</span>
+          </button>
+        ))}
+      </div>
+
       <div className={s.heroMain}>
         <div className={s.heroLeft}>
-          <span className={cx(s.chip, s[dc])}>{guidance.decision}</span>
+          <span className={cx(s.chip, s[dc])}>{decision}</span>
           <div>
             <div className={s.symbol}>{guidance.symbol}</div>
             <div className={s.decisionWord}>{word}</div>
           </div>
         </div>
-        <ConfidenceRing value={guidance.confidence} decision={guidance.decision} />
+        <ConfidenceRing value={confidence} decision={decision} />
       </div>
 
-      <div className={s.provRow}>
-        <DataSourceBadge source={guidance.provenance} />
-      </div>
+      {call ? <DriverList call={call} /> : null}
 
       <p className={s.rationale}>{guidance.rationale}</p>
 
@@ -108,6 +248,33 @@ function GuidanceHeader({ guidance }: { guidance: Guidance }) {
         </p>
       ))}
       <p className={s.disclaimer}>{DISCLAIMER}</p>
+    </div>
+  );
+}
+
+function DriverList({ call }: { call: HorizonCall }) {
+  const pUp = Math.round(call.probability * 100);
+  return (
+    <div className={s.drivers}>
+      <div className={s.driversHead}>
+        <span className={s.panelTitle}>What's moving this call</span>
+        <span className={s.prob}>
+          p(up) <strong>{pUp}%</strong>
+        </span>
+      </div>
+      {call.drivers.length > 0 ? (
+        <div className={s.driverChips}>
+          {call.drivers.map((name) => (
+            <span key={name} className={s.driverChip}>
+              {driverLabel(name)}
+            </span>
+          ))}
+        </div>
+      ) : (
+        <p className={s.driversEmpty}>
+          Too little data to attribute this call to specific drivers.
+        </p>
+      )}
     </div>
   );
 }
@@ -137,35 +304,6 @@ function ConfidenceRing({ value, decision }: { value: number; decision: Decision
   );
 }
 
-function SkillCards({ skills }: { skills: SkillRead[] }) {
-  return (
-    <div className={s.panel}>
-      <p className={s.panelTitle}>Skill breakdown</p>
-      <div className={s.skills}>
-        {skills.map((skill) => {
-          const lean = scoreLean(skill.score);
-          return (
-            <div key={skill.skill} className={cx(s.skill, s[lean])}>
-              <div className={s.skillTop}>
-                <span className={s.skillLabel}>{skill.label}</span>
-                <span className={cx(s.scorePill, s[lean])}>{fmtScore(skill.score)}</span>
-              </div>
-              <span className={s.skillHeadline}>{skill.headline}</span>
-              <div className={s.meter}>
-                <span className={s.meterMid} />
-                <span
-                  className={cx(s.meterFill, s[lean])}
-                  style={{ width: meterWidth(skill.score) }}
-                />
-              </div>
-            </div>
-          );
-        })}
-      </div>
-    </div>
-  );
-}
-
 function LevelsPanel({ levels }: { levels: Levels }) {
   const pct = spotPositionPct(levels.support, levels.resistance, levels.spot);
   const chips: Array<[string, number | null]> = [
@@ -191,7 +329,11 @@ function LevelsPanel({ levels }: { levels: Levels }) {
           </div>
           <div className={s.posTrack}>
             <span className={s.posFill} style={{ width: `${pct}%` }} />
-            <span className={s.posSpot} style={{ left: `${pct}%` }}>
+            <span
+              className={cx(s.posSpot, pct >= 85 ? s.atEnd : pct <= 15 ? s.atStart : undefined)}
+              // Keep the 14px dot fully on the track even at the extremes.
+              style={{ left: `${Math.min(96, Math.max(4, pct))}%` }}
+            >
               <span className={s.posSpotVal}>{fmtPrice(levels.spot)}</span>
             </span>
           </div>

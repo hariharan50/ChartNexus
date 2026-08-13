@@ -16,6 +16,7 @@ legs can.
 
 from __future__ import annotations
 
+from datetime import UTC, datetime
 from typing import Any
 
 from fastapi import Request
@@ -37,6 +38,7 @@ from marketcompass.contexts.options_analytics.api.dependencies import (
     build_options_analytics_services,
 )
 from marketcompass.contexts.options_analytics.application.gex_service import GetGex
+from marketcompass.contexts.options_analytics.application.ports import SnapshotReader
 from marketcompass.contexts.options_analytics.domain.oi_math import (
     ChainRow,
     atm_strike,
@@ -45,6 +47,7 @@ from marketcompass.contexts.options_analytics.domain.oi_math import (
 )
 from marketcompass.contexts.signals.domain.inputs import MarketSnapshot
 from marketcompass.contexts.signals.domain.models import Provenance
+from marketcompass.infrastructure.analytics.oi_chain_source import SqlAlchemySnapshotReader
 from marketcompass.shared_kernel.domain.errors import UpstreamError
 from marketcompass.shared_kernel.types.identifiers import TenantId
 
@@ -52,6 +55,9 @@ from marketcompass.shared_kernel.types.identifiers import TenantId
 # to spare, without asking the broker for a range it caps.
 _HISTORY_INTERVAL = CandleInterval.M5
 _HISTORY_DAYS = 5
+# Daily bars for the swing horizon — enough for a 50-bar EMA and RSI.
+_DAILY_INTERVAL = CandleInterval.D1
+_DAILY_DAYS = 120
 
 
 class GuidanceMarketSource:
@@ -63,10 +69,12 @@ class GuidanceMarketSource:
         option_chain: GetOptionChain,
         history: GetHistory,
         gex: GetGex,
+        snapshots: SnapshotReader,
     ) -> None:
         self._option_chain = option_chain
         self._history = history
         self._gex = gex
+        self._snapshots = snapshots
 
     async def read(self, tenant_id: TenantId, symbol: str) -> MarketSnapshot:
         instrument = InstrumentSymbol.parse(symbol)
@@ -82,9 +90,34 @@ class GuidanceMarketSource:
                 days=_HISTORY_DAYS,
             )
         )
+        daily = await self._history(
+            HistoryQuery(
+                tenant_id=tenant_id,
+                instrument=instrument,
+                interval=_DAILY_INTERVAL,
+                days=_DAILY_DAYS,
+            )
+        )
         gex = await self._safe_gex(tenant_id, symbol)
+        pcr_series = await self._pcr_series(tenant_id, symbol)
 
-        return _assemble(symbol, chain, candles, gex)
+        return _assemble(symbol, chain, candles, daily=daily, gex=gex, pcr_series=pcr_series)
+
+    async def _pcr_series(self, tenant_id: TenantId, symbol: str) -> tuple[float, ...]:
+        # The intraday PCR trail from the archive — empty on a fresh/mock day,
+        # which simply drops the PCR-velocity feature rather than failing.
+        try:
+            snaps = await self._snapshots.day_snapshots(
+                tenant_id, symbol, trade_date_utc=datetime.now(UTC)
+            )
+        except (UpstreamError, ValueError, KeyError):
+            return ()
+        series = []
+        for snap in snaps:
+            value = pcr_oi(list(snap.rows))
+            if value and value > 0:
+                series.append(float(value))
+        return tuple(series)
 
     async def _safe_gex(self, tenant_id: TenantId, symbol: str) -> dict[str, Any]:
         # GEX needs stored intraday snapshots; on a fresh day or a mock session it
@@ -97,7 +130,13 @@ class GuidanceMarketSource:
 
 
 def _assemble(
-    symbol: str, chain: OptionChain, candles: Any, gex: dict[str, Any]
+    symbol: str,
+    chain: OptionChain,
+    candles: Any,
+    *,
+    daily: Any,
+    gex: dict[str, Any],
+    pcr_series: tuple[float, ...],
 ) -> MarketSnapshot:
     rows = _chain_rows(chain)
     strikes = sorted({row.strike for row in rows})
@@ -112,7 +151,8 @@ def _assemble(
     frame = _latest_gex_frame(gex)
     ce_iv, pe_iv = _atm_skew(chain, atm)
 
-    closes, highs, lows = _candle_arrays(candles)
+    closes, highs, lows, volumes = _candle_arrays(candles)
+    d_closes, d_highs, d_lows, _ = _candle_arrays(daily)
 
     sources = [
         _to_provenance(chain),
@@ -140,9 +180,16 @@ def _assemble(
         iv_percentile=_opt_float(chain.iv_percentile),
         atm_call_iv=ce_iv,
         atm_put_iv=pe_iv,
+        india_vix=_opt_float(chain.india_vix),
+        india_vix_change_percent=_opt_float(chain.india_vix_change_percent),
         closes=closes,
         highs=highs,
         lows=lows,
+        volumes=volumes,
+        daily_closes=d_closes,
+        daily_highs=d_highs,
+        daily_lows=d_lows,
+        pcr_series=pcr_series,
         strikes=tuple(strikes),
         sources=tuple(sources),
     )
@@ -187,12 +234,15 @@ def _latest_gex_frame(gex: dict[str, Any]) -> dict[str, Any]:
     return frames[-1] if frames else {}
 
 
-def _candle_arrays(candles: Any) -> tuple[tuple[float, ...], tuple[float, ...], tuple[float, ...]]:
+def _candle_arrays(
+    candles: Any,
+) -> tuple[tuple[float, ...], tuple[float, ...], tuple[float, ...], tuple[float, ...]]:
     bars = getattr(candles, "candles", ())
     closes = tuple(float(bar.close) for bar in bars)
     highs = tuple(float(bar.high) for bar in bars)
     lows = tuple(float(bar.low) for bar in bars)
-    return closes, highs, lows
+    volumes = tuple(float(bar.volume) for bar in bars)
+    return closes, highs, lows, volumes
 
 
 def _to_provenance(payload: Any) -> Provenance:
@@ -214,8 +264,10 @@ def build_guidance_market_source(request: Request, session: AsyncSession) -> Gui
     """
     market = build_market_services(request, session)
     analytics = build_options_analytics_services(request, session)
+    snapshots = SqlAlchemySnapshotReader(session)
     return GuidanceMarketSource(
         option_chain=market.option_chain,
         history=market.history,
         gex=analytics.gex,
+        snapshots=snapshots,
     )

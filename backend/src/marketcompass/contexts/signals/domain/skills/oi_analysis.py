@@ -91,9 +91,7 @@ def _score_pcr(pcr: float | None, details: list[str]) -> float | None:
     return score
 
 
-def _score_buildup(
-    call_chg: int | None, put_chg: int | None, details: list[str]
-) -> float | None:
+def _score_buildup(call_chg: int | None, put_chg: int | None, details: list[str]) -> float | None:
     if call_chg is None or put_chg is None:
         return None
     total = abs(call_chg) + abs(put_chg)

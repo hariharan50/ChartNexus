@@ -9,14 +9,18 @@ import type { DataSourceName } from '$contexts/broker-connections/types';
 
 export type Decision = 'BUY' | 'SELL' | 'HOLD';
 
-export interface SkillRead {
-  skill: string;
-  label: string;
-  weight: number;
-  /** `null` when the skill had no usable data this session. */
-  score: number | null;
-  headline: string;
-  details: string[];
+export type Horizon = 'intraday' | 'end_of_day' | 'swing';
+
+/** One horizon's calibrated call — the unit the horizon switcher renders. */
+export interface HorizonCall {
+  horizon: Horizon;
+  decision: Decision;
+  /** Model p(up-move) in [0, 1]. */
+  probability: number;
+  /** Calibrated 0-100 conviction (measured hit-rate, scaled by coverage). */
+  confidence: number;
+  /** Features that moved this call most, strongest first. */
+  drivers: string[];
 }
 
 export interface Levels {
@@ -29,6 +33,12 @@ export interface Levels {
   put_wall: number | null;
 }
 
+export interface MarketContext {
+  india_vix: number | null;
+  india_vix_change_percent: number | null;
+  pcr: number | null;
+}
+
 export interface Scaffold {
   entry: number | null;
   stop: number | null;
@@ -39,15 +49,21 @@ export interface Scaffold {
 
 export interface Guidance {
   symbol: string;
+  /** Headline (intraday) call, echoed at top level for back-compat. */
   decision: Decision;
   confidence: number;
   score: number;
+  /** Market regime the call was made in (trending up/down, rangebound). */
+  regime: string;
   provenance: DataSourceName;
   is_actionable: boolean;
   rationale: string;
   expiry_ref: string | null;
   warnings: string[];
-  skills: SkillRead[];
+  /** One calibrated call per horizon (intraday / end-of-day / swing). */
+  horizons: HorizonCall[];
+  /** Shared market backdrop for the context cards (VIX, PCR). */
+  context: MarketContext;
   levels: Levels;
   scaffold: Scaffold;
 }

@@ -11,6 +11,7 @@ from datetime import UTC, datetime
 
 from marketcompass.contexts.signals.application.get_guidance import GetGuidance
 from marketcompass.contexts.signals.application.ports import GuidanceRecord
+from marketcompass.contexts.signals.domain.ensemble import ModelArtifact, default_artifact
 from marketcompass.contexts.signals.domain.inputs import MarketSnapshot
 from marketcompass.contexts.signals.domain.models import Decision, Guidance, Provenance
 from marketcompass.shared_kernel.types.identifiers import TenantId
@@ -24,6 +25,14 @@ class _FakeMarket:
 
     async def read(self, tenant_id: TenantId, symbol: str) -> MarketSnapshot:
         return self._snapshot
+
+
+class _FakeModel:
+    def __init__(self) -> None:
+        self._artifact = default_artifact()
+
+    def artifact(self) -> ModelArtifact:
+        return self._artifact
 
 
 class _FakeRepo:
@@ -63,11 +72,14 @@ def _flat_snapshot() -> MarketSnapshot:
 
 async def test_first_call_is_persisted() -> None:
     repo = _FakeRepo(latest=None)
-    use_case = GetGuidance(market=_FakeMarket(_flat_snapshot()), repository=repo)
+    use_case = GetGuidance(
+        market=_FakeMarket(_flat_snapshot()), repository=repo, model=_FakeModel()
+    )
 
     guidance = await use_case(TENANT, "NIFTY")
 
-    assert guidance.decision is Decision.HOLD
+    assert guidance.headline is not None
+    assert guidance.headline.decision is Decision.HOLD
     assert len(repo.saved) == 1
 
 
@@ -81,7 +93,9 @@ async def test_unchanged_call_is_not_re_persisted() -> None:
         provenance=Provenance.LIVE,
     )
     repo = _FakeRepo(latest=prior)
-    use_case = GetGuidance(market=_FakeMarket(_flat_snapshot()), repository=repo)
+    use_case = GetGuidance(
+        market=_FakeMarket(_flat_snapshot()), repository=repo, model=_FakeModel()
+    )
 
     await use_case(TENANT, "NIFTY")
 

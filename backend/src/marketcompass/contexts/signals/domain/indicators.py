@@ -34,7 +34,9 @@ def ema(values: Sequence[float], period: int) -> float | None:
     return result
 
 
-def atr(highs: Sequence[float], lows: Sequence[float], closes: Sequence[float], period: int = 14) -> float | None:
+def atr(
+    highs: Sequence[float], lows: Sequence[float], closes: Sequence[float], period: int = 14
+) -> float | None:
     """Average true range over ``period`` bars.
 
     ``None`` when the three series are not aligned or too short. True range uses
