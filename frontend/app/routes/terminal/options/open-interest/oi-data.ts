@@ -490,20 +490,41 @@ export interface OiTotals {
 export function windowTotals(
   view: OiView,
   openFrame?: OiSeriesFrame,
-  nowFrame?: OiSeriesFrame
+  nowFrame?: OiSeriesFrame,
+  /**
+   * The strikes to total over — the same ``visible`` set the chart draws, so the
+   * OI Change / Total OI / PCR summaries always describe exactly the strikes on
+   * screen (the "Strikes above-below ATM" filter). Omit to total the whole chain.
+   * Without this the cards summed the full captured series (~±25) while the bars
+   * showed ±N, so the headline numbers disagreed with the chart beside them.
+   */
+  visible?: Iterable<number>
 ): OiTotals {
+  const inWindow = visible === undefined ? null : new Set(visible);
+  const keep = (strike: number) => inWindow === null || inWindow.has(strike);
+
   let callNow: number;
   let putNow: number;
   let callOpen: number;
   let putOpen: number;
 
   if (openFrame && nowFrame) {
+    // Each frame is self-describing: `call[i]`/`put[i]` align to `strikes[i]`.
     const sum = (f: OiSeriesFrame, side: 'call' | 'put') =>
-      f[side].reduce((a: number, v) => a + (v ?? 0), 0);
+      f[side].reduce((a: number, v, i) => (keep(f.strikes[i]!) ? a + (v ?? 0) : a), 0);
     callNow = sum(nowFrame, 'call');
     putNow = sum(nowFrame, 'put');
     callOpen = sum(openFrame, 'call');
     putOpen = sum(openFrame, 'put');
+  } else if (inWindow !== null) {
+    // No time frames (live/proxy tier), but the per-strike view totals can still
+    // be scoped to the visible window so the cards match the filter.
+    const sum = (side: 'call_oi_now' | 'call_oi_open' | 'put_oi_now' | 'put_oi_open') =>
+      view.strikes.reduce((a, s) => (keep(s.strike) ? a + s[side] : a), 0);
+    callNow = sum('call_oi_now');
+    putNow = sum('put_oi_now');
+    callOpen = sum('call_oi_open');
+    putOpen = sum('put_oi_open');
   } else {
     callNow = view.total_call_oi;
     putNow = view.total_put_oi;

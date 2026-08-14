@@ -14,7 +14,11 @@
   display: grid;
   grid-template-columns: 1.35fr 1fr;
   gap: var(--mc-space-5, 1.25rem);
-  align-items: start;
+  /* Stretch, not start: the hero card grows to the height of the taller
+     Levels + Scaffold column so the two columns end on the same line. The hero
+     pins its disclaimer to the bottom (below), so the alignment reads as a
+     footer rather than a gap. */
+  align-items: stretch;
 }
 
 @media (max-width: 1100px) {
@@ -75,6 +79,8 @@
   display: flex;
   flex-direction: column;
   gap: var(--mc-space-3);
+  /* Fill the stretched column so its bottom lines up with the right column. */
+  flex: 1;
 }
 
 /* A soft directional glow bleeding from the top-right corner. */
@@ -224,7 +230,9 @@
   line-height: 1.5;
   border-top: 1px dashed var(--mc-border);
   padding-top: var(--mc-space-3);
-  margin: var(--mc-space-1, 4px) 0 0;
+  /* Pinned to the bottom of the (stretched) hero card, so its lower edge lines
+     up with the Levels/Scaffold column beside it. */
+  margin: auto 0 0;
 }
 
 /* -- Regime + horizon switcher --------------------------------------------- */

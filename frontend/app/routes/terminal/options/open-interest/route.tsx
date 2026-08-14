@@ -134,8 +134,8 @@ export default function OpenInterest() {
     [view, visible, openFrame, nowFrame]
   );
   const totals = useMemo(
-    () => (view ? windowTotals(view, openFrame, nowFrame) : undefined),
-    [view, openFrame, nowFrame]
+    () => (view ? windowTotals(view, openFrame, nowFrame, visible) : undefined),
+    [view, openFrame, nowFrame, visible]
   );
 
   const openLabel =
