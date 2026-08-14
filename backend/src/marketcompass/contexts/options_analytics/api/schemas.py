@@ -125,6 +125,34 @@ class OiSeriesResponse(_Schema):
         return cls.model_validate(payload)
 
 
+class PriceOiSeriesResponse(_Schema):
+    """The intraday price-vs-OI series behind Future Lab → Price vs OI.
+
+    Two aggregate lines on a shared time axis: the tradable future price and the
+    whole chain's total open interest.
+    """
+
+    instrument_id: str
+    symbol: str
+    expiry_date: str | None
+    lot_size: int | None
+    open_ts: str
+    now_ts: str
+    data_quality: str
+    open_is_estimated: bool = False
+    interval: str
+    t: list[str]
+    # Aligned to `t`. The tradable current-month future, `None` on the
+    # reconstructed 09:15 frame where nothing was recorded.
+    price: list[float | None]
+    # Aligned to `t`. Total open interest across the whole captured chain.
+    oi: list[int]
+
+    @classmethod
+    def of(cls, payload: dict[str, Any]) -> PriceOiSeriesResponse:
+        return cls.model_validate(payload)
+
+
 class PcrSeriesResponse(_Schema):
     """Chain-wide totals behind the Put-Call Ratio tool's three charts."""
 

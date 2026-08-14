@@ -7,6 +7,7 @@ tenant and instrument.
 
 from __future__ import annotations
 
+from datetime import UTC, date, datetime, time
 from typing import Annotated
 
 from fastapi import APIRouter, Path, Query, Request
@@ -17,6 +18,7 @@ from marketcompass.contexts.options_analytics.api.schemas import (
     OiSeriesResponse,
     OiViewResponse,
     PcrSeriesResponse,
+    PriceOiSeriesResponse,
 )
 from marketcompass.contexts.options_analytics.application.oi_series_service import (
     DEFAULT_INTERVAL,
@@ -105,6 +107,53 @@ async def oi_series(
         principal.tenant_id, symbol, interval=interval, window=window
     )
     response = OiSeriesResponse.of(payload)
+    await redis.client.set(cache_key, response.model_dump_json(), ex=_CACHE_TTL_SECONDS)
+    return response
+
+
+@router.get(
+    "/price-oi-series/{instrument_id}",
+    response_model=PriceOiSeriesResponse,
+    summary="Intraday future price vs total open interest",
+    description=(
+        "Two aggregate lines on a shared time axis: the tradable future price "
+        "and the whole chain's total open interest. Powers Future Lab → Price "
+        "vs OI. Pass ``date`` (ISO, e.g. 2026-08-13) to replay an archived past "
+        "session (Historical); omit it for today (Live)."
+    ),
+    responses={422: {"description": "Unknown instrument"}},
+)
+async def price_oi_series(
+    request: Request,
+    principal: CurrentPrincipal,
+    services: Services,
+    instrument_id: InstrumentParam,
+    *,
+    interval: Annotated[str, Query(description="1m, 5m, 15m or 1h")] = DEFAULT_INTERVAL,
+    date_: Annotated[
+        date | None,
+        Query(alias="date", description="Archived session to replay (ISO date); omit for today"),
+    ] = None,
+) -> PriceOiSeriesResponse:
+    symbol = instrument_id.strip().upper()
+    # Midday UTC (17:30 IST) sits inside the target IST trading date, so the
+    # reader resolves the intended session however the day boundary falls.
+    trade_date = None if date_ is None else datetime.combine(date_, time(12, 0), tzinfo=UTC)
+
+    redis = get_container(request).redis
+    day = "live" if date_ is None else date_.isoformat()
+    cache_key = redis.key(
+        "lab:price-oi-series", str(principal.tenant_id), symbol, interval, day
+    )
+
+    cached = await redis.client.get(cache_key)
+    if cached is not None:
+        return PriceOiSeriesResponse.model_validate_json(cached)
+
+    payload = await services.price_oi_series(
+        principal.tenant_id, symbol, interval=interval, trade_date=trade_date
+    )
+    response = PriceOiSeriesResponse.of(payload)
     await redis.client.set(cache_key, response.model_dump_json(), ex=_CACHE_TTL_SECONDS)
     return response
 

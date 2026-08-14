@@ -116,9 +116,6 @@ const nav: NavItem[] = [
   },
   { label: 'Options Lab', href: '/options/open-interest', mega: true },
   { label: 'Future Lab', href: '/future-lab', futureMega: true },
-  { label: 'Analyse', href: '/analyse' },
-  { label: 'Smart Insights', href: '/smart-insights' },
-  { label: 'Option Chain', href: '/option-chain' },
   {
     label: 'AI Console',
     href: '/ai-console',
@@ -138,7 +135,10 @@ const nav: NavItem[] = [
         desc: 'Ask Hella about the call'
       }
     ]
-  }
+  },
+  { label: 'Chart Tools', href: '/analyse' },
+  { label: 'Smart Insights', href: '/smart-insights' },
+  { label: 'Option Chain', href: '/option-chain' }
 ];
 
 function TerminalShell({ user }: { user: User }) {

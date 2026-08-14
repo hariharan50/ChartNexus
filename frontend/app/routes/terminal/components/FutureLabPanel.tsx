@@ -19,7 +19,7 @@ const sections: Section[] = [
     title: 'Price Tools',
     items: [
       { label: 'Future Dashboard', glyph: 'gauge', href: '/future-lab/dashboard' },
-      { label: 'Market Movers', glyph: 'trend', href: '/future-lab/market-movers', isNew: true },
+      { label: 'Market Movers', glyph: 'trend', href: '/future-lab/market-movers' },
       { label: 'Future Heatmap', glyph: 'grid', href: '/future-lab/heatmap' }
     ]
   },
