@@ -3,6 +3,8 @@ import { useEffect, useMemo, useState } from 'react';
 import { buildPriceVsOiOption } from '$shared/charts/options/price-vs-oi';
 import EChart from '$shared/charts/EChart';
 import { useChartTheme } from '$shared/charts/theme/use-chart-theme';
+import DatePicker from '$shared/ui/DatePicker';
+import { isoDateIST, lastTradingDayIST } from '$shared/formatting/ist-clock';
 import { cx } from '$shared/ui/cx';
 import IconChart from '$shared/ui/icons/IconChart';
 import IconChevronDown from '$shared/ui/icons/IconChevronDown';
@@ -40,7 +42,7 @@ const INTERVALS: readonly { value: Interval; label: string }[] = [
 export default function FuturePriceVsOi() {
   const [instIdx, setInstIdx] = useState(0);
   const [mode, setMode] = useState<Mode>('live');
-  const [date, setDate] = useState(() => isoDateIST(-1));
+  const [date, setDate] = useState(lastTradingDayIST);
   const [interval, setInterval] = useState<Interval>(DEFAULT_INTERVAL);
   const [showPrice, setShowPrice] = useState(true);
   const [showOi, setShowOi] = useState(true);
@@ -154,13 +156,11 @@ export default function FuturePriceVsOi() {
               {mode === 'historical' ? (
                 <>
                   <p className={s.subLabel}>Session date</p>
-                  <input
-                    type="date"
-                    className={s.selectNative}
+                  <DatePicker
                     value={date}
                     max={isoDateIST(0)}
-                    onChange={(e) => setDate(e.currentTarget.value)}
-                    aria-label="Session date"
+                    onChange={setDate}
+                    ariaLabel="Session date"
                   />
                 </>
               ) : null}
@@ -276,12 +276,6 @@ function captionFor(view: PriceOiView): string {
   return first
     ? `Recorded from ${timeLabel(first)} at ${view.interval} buckets. OI is total chain open interest.`
     : '';
-}
-
-/** Today's (or an offset) IST calendar date as YYYY-MM-DD. */
-function isoDateIST(offsetDays: number): string {
-  const ist = new Date(Date.now() + 5.5 * 60 * 60 * 1000 + offsetDays * 86_400_000);
-  return ist.toISOString().slice(0, 10);
 }
 
 /** Open eye when shown, struck through when hidden — matches the Options Lab legend. */

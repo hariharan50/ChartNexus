@@ -51,9 +51,14 @@ export interface GexView {
   frames: GexFrame[];
 }
 
-export function getGex(instrument: string, fetcher?: typeof fetch): Promise<GexView> {
+export function getGex(
+  instrument: string,
+  opts: { date?: string | undefined } = {},
+  fetcher?: typeof fetch
+): Promise<GexView> {
   return apiFetch<GexView>({
     url: `/options-lab/gex/${encodeURIComponent(instrument)}`,
+    params: opts.date ? { date: opts.date } : {},
     fetcher
   });
 }

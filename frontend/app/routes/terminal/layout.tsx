@@ -123,7 +123,7 @@ const nav: NavItem[] = [
     menuSub: 'Signal analysis & the Hella agent',
     children: [
       {
-        label: 'Nifty Analysis',
+        label: 'Market Analysis',
         href: '/ai-console',
         icon: IconBrain,
         desc: 'Decision, skills, levels & trade scaffold'

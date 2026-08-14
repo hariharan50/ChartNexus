@@ -23,6 +23,9 @@ from marketcompass.infrastructure.cache.redis.iv_history import RedisIvHistoryRe
 from marketcompass.infrastructure.persistence.postgresql.repositories.integration.broker_connection_repository import (
     SqlAlchemyBrokerConnectionRepository,
 )
+from marketcompass.infrastructure.persistence.postgresql.repositories.market_data.price_candle_repository import (
+    SqlAlchemyPriceCandleRepository,
+)
 from marketcompass.infrastructure.time.clock import SystemClock
 from marketcompass.infrastructure.time.market_calendar import ExchangeCalendar
 from marketcompass.infrastructure.transport.http.dependencies import (
@@ -80,7 +83,13 @@ def build_market_services(
             iv_history=RedisIvHistoryRecorder(container.redis),
         ),
         expiries=GetExpiries(resolver=resolver, fallback=fallback, clock=clock),
-        history=GetHistory(resolver=resolver, fallback=fallback, clock=clock),
+        history=GetHistory(
+            resolver=resolver,
+            fallback=fallback,
+            clock=clock,
+            cache=SqlAlchemyPriceCandleRepository(session),
+            cache_retention_days=settings.market.candle_cache_retention_days,
+        ),
         status=GetMarketStatus(resolver=resolver, clock=clock, calendar=calendar),
     )
 

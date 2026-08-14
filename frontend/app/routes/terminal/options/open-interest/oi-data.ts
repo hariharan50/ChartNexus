@@ -82,8 +82,16 @@ export interface OiView {
   series: OiSeriesFrame[];
 }
 
-export function getOpenInterest(instrument: string, fetcher?: typeof fetch): Promise<OiView> {
-  return apiFetch<OiView>({ url: `/options-lab/oi/${encodeURIComponent(instrument)}`, fetcher });
+export function getOpenInterest(
+  instrument: string,
+  opts: { date?: string | undefined } = {},
+  fetcher?: typeof fetch
+): Promise<OiView> {
+  return apiFetch<OiView>({
+    url: `/options-lab/oi/${encodeURIComponent(instrument)}`,
+    params: opts.date ? { date: opts.date } : {},
+    fetcher
+  });
 }
 
 /** The instrument catalog the sidebar cycles through (wraparound). */

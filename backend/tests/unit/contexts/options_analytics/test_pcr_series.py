@@ -236,3 +236,24 @@ async def test_a_single_capture_becomes_open_vs_now() -> None:
     assert payload["put_oi"] == [600, 900]
     assert payload["call_oi_chg"] == [0, 200]
     assert payload["put_oi_chg"] == [0, 300]
+
+
+# -- historical mode --------------------------------------------------------
+
+# A past trading day; the stub reader ignores the date, so any past instant works.
+PAST = datetime(2026, 8, 1, 12, 0, tzinfo=UTC)
+
+
+async def test_historical_reads_the_archived_day() -> None:
+    snaps = [_snap(0, call_oi=1_000, put_oi=800), _snap(1, call_oi=1_000, put_oi=1_200)]
+
+    payload = await _service(snaps)(TENANT, "NIFTY", trade_date=PAST)
+
+    assert payload["data_quality"] == "intraday"
+    assert payload["pcr"] == [0.8, 1.2]
+
+
+async def test_historical_with_no_archive_is_empty() -> None:
+    # A past day with nothing captured is empty — it must not borrow today's chain.
+    historical = await _service([])(TENANT, "NIFTY", trade_date=PAST)
+    assert historical["data_quality"] == "empty"

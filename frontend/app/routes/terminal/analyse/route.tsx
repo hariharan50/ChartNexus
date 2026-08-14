@@ -1,71 +1,74 @@
-import { useQuery } from '@tanstack/react-query';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import LwChart, {
-  type Candle,
-  type ChartType,
-  type LwChartHandle
-} from '$shared/charts/tv/LwChart';
-import { useChartTheme } from '$shared/charts/theme/use-chart-theme';
+import type { ChartType, LwChartHandle } from '$shared/charts/tv/LwChart';
 import { cx } from '$shared/ui/cx';
-import {
-  clockLabel,
-  dateLabel,
-  freshnessLabel,
-  OI_INSTRUMENTS,
-  REFETCH_MS,
-  STALE_AFTER_MS
-} from '../options/open-interest/oi-data';
-import ChartLegend from './components/ChartLegend';
+import { OI_INSTRUMENTS } from '../options/open-interest/oi-data';
+import ChartCell from './components/ChartCell';
 import SymbolPicker from './components/SymbolPicker';
 import TopToolbar from './components/TopToolbar';
-import {
-  getHistory,
-  INTERVALS,
-  toCandles,
-  toVolume,
-  type HistoryView,
-  type Interval
-} from './analyse-data';
+import { type Interval } from './analyse-data';
+import type { IndicatorId } from './indicators';
+import { cellsInLayout, defaultCell, type CellConfig, type LayoutId } from './workspace';
 import s from './route.module.css';
 import type { Route } from './+types/route';
 
-export const meta: Route.MetaFunction = () => [{ title: 'Analyse · MarketCompass' }];
+export const meta: Route.MetaFunction = () => [{ title: 'Chart Tools · MarketCompass' }];
 
 export default function Analyse() {
-  const [symbol, setSymbol] = useState(OI_INSTRUMENTS[0]!.symbol);
-  const [interval, setInterval] = useState<Interval>('5m');
-  const [chartType, setChartType] = useState<ChartType>('candle');
+  const [layout, setLayout] = useState<LayoutId>('1');
+  const [activeIdx, setActiveIdx] = useState(0);
+  // Always four configs; the layout decides how many are on screen. Keeping the
+  // hidden ones means switching to a 4-up grid and back does not reset them.
+  const [cells, setCells] = useState<CellConfig[]>(() => [
+    defaultCell(OI_INSTRUMENTS[0]!.symbol),
+    defaultCell(OI_INSTRUMENTS[1]?.symbol ?? OI_INSTRUMENTS[0]!.symbol),
+    defaultCell(OI_INSTRUMENTS[2]?.symbol ?? OI_INSTRUMENTS[0]!.symbol),
+    defaultCell(OI_INSTRUMENTS[0]!.symbol)
+  ]);
   const [picking, setPicking] = useState(false);
-  const [hovered, setHovered] = useState<Candle | null>(null);
   const [isFullscreen, setIsFullscreen] = useState(false);
-  const theme = useChartTheme();
 
   const workspace = useRef<HTMLDivElement>(null);
-  const chart = useRef<LwChartHandle | null>(null);
+  // One stable handle per possible cell, for the toolbar's snapshot button.
+  const h0 = useRef<LwChartHandle | null>(null);
+  const h1 = useRef<LwChartHandle | null>(null);
+  const h2 = useRef<LwChartHandle | null>(null);
+  const h3 = useRef<LwChartHandle | null>(null);
+  const handles = useMemo(() => [h0, h1, h2, h3], []);
 
-  const instrument = OI_INSTRUMENTS.find((entry) => entry.symbol === symbol) ?? OI_INSTRUMENTS[0]!;
-  const timeframe = INTERVALS.find((entry) => entry.value === interval) ?? INTERVALS[1]!;
+  const shown = cellsInLayout(layout);
+  const active = cells[activeIdx] ?? cells[0]!;
+  const instrument =
+    OI_INSTRUMENTS.find((entry) => entry.symbol === active.symbol) ?? OI_INSTRUMENTS[0]!;
 
-  const query = useQuery<HistoryView>({
-    queryKey: ['market', 'history', instrument.symbol, interval, timeframe.days],
-    queryFn: () => getHistory(instrument.symbol, interval, timeframe.days),
-    refetchInterval: REFETCH_MS,
-    // The drawn window is stable across a poll, so keeping the old candles up
-    // while the new ones arrive avoids the chart blanking every fifteen seconds.
-    placeholderData: (previous) => previous
-  });
+  const patchActive = useCallback(
+    (patch: Partial<CellConfig>) => {
+      setCells((prev) => prev.map((cell, i) => (i === activeIdx ? { ...cell, ...patch } : cell)));
+    },
+    [activeIdx]
+  );
 
-  const view = query.data;
-  const candles = useMemo(() => toCandles(view), [view]);
-  const volume = useMemo(() => toVolume(view), [view]);
+  const toggleIndicator = useCallback(
+    (id: IndicatorId) => {
+      setCells((prev) =>
+        prev.map((cell, i) => {
+          if (i !== activeIdx) return cell;
+          const on = cell.indicators.includes(id);
+          return {
+            ...cell,
+            indicators: on
+              ? cell.indicators.filter((entry) => entry !== id)
+              : [...cell.indicators, id]
+          };
+        })
+      );
+    },
+    [activeIdx]
+  );
 
-  // The legend reads the hovered bar, and the newest one whenever the pointer
-  // is off the plot — which is most of the time.
-  const shownBar = hovered ?? candles[candles.length - 1] ?? null;
-  const shownVolume = useMemo(() => {
-    if (!volume || !shownBar) return null;
-    return volume.find((bar) => bar.time === shownBar.time)?.value ?? null;
-  }, [volume, shownBar]);
+  const changeLayout = useCallback((next: LayoutId) => {
+    setLayout(next);
+    setActiveIdx((current) => Math.min(current, cellsInLayout(next) - 1));
+  }, []);
 
   // -- fullscreen -----------------------------------------------------------
   useEffect(() => {
@@ -82,115 +85,56 @@ export default function Analyse() {
   }, []);
 
   const snapshot = useCallback(() => {
-    const canvas = chart.current?.screenshot();
+    const canvas = handles[activeIdx]?.current?.screenshot();
     if (!canvas) return;
     const link = document.createElement('a');
-    link.download = `${instrument.symbol}-${interval}.png`;
+    link.download = `${active.symbol}-${active.interval}.png`;
     link.href = canvas.toDataURL('image/png');
     link.click();
-  }, [instrument.symbol, interval]);
-
-  // -- live clock -----------------------------------------------------------
-  // `null` until mounted, not `Date.now()`. Seeding it during render puts the
-  // server's clock in the HTML and the browser's in the first paint, which is a
-  // guaranteed hydration text mismatch — React then throws away and re-renders
-  // the tree, and the console error buries anything real.
-  const [now, setNow] = useState<number | null>(null);
-  useEffect(() => {
-    setNow(Date.now());
-    const tick = window.setInterval(() => setNow(Date.now()), 1000);
-    return () => window.clearInterval(tick);
-  }, []);
-
-  const updatedAt = query.dataUpdatedAt;
-  const isStale = now !== null && updatedAt > 0 && now - updatedAt > STALE_AFTER_MS;
-  const source = view?.provenance.source;
+  }, [handles, activeIdx, active.symbol, active.interval]);
 
   return (
     <div ref={workspace} className={s.workspace}>
       <TopToolbar
-        interval={interval}
-        onInterval={setInterval}
+        interval={active.interval}
+        onInterval={(value: Interval) => patchActive({ interval: value })}
         symbol={instrument.short}
         onOpenSymbols={() => setPicking(true)}
-        chartType={chartType}
-        onChartType={setChartType}
+        chartType={active.chartType}
+        onChartType={(value: ChartType) => patchActive({ chartType: value })}
+        indicators={active.indicators}
+        onToggleIndicator={toggleIndicator}
+        layout={layout}
+        onLayout={changeLayout}
+        replay={active.replay}
+        onToggleReplay={() => patchActive({ replay: !active.replay })}
         onSnapshot={snapshot}
         onFullscreen={toggleFullscreen}
         isFullscreen={isFullscreen}
       />
 
-      <div className={s.body}>
-        <div className={s.plot}>
-          {query.isError ? (
-            <div className={s.banner} role="alert">
-              <span>Couldn’t load price history.</span>
-              <button type="button" onClick={() => void query.refetch()}>
-                Retry
-              </button>
-            </div>
-          ) : candles.length === 0 ? (
-            <p className={s.empty}>{query.isPending ? 'Loading candles…' : 'No candles yet.'}</p>
-          ) : (
-            <>
-              <ChartLegend
-                symbol={instrument.short}
-                badge={instrument.badge}
-                bar={shownBar}
-                volume={shownVolume}
-              />
-              <LwChart
-                candles={candles}
-                volume={volume}
-                theme={theme}
-                type={chartType}
-                onHoverBar={setHovered}
-                handleRef={chart}
-                className={s.chart}
-              />
-            </>
-          )}
-        </div>
-
-        <div className={s.status}>
-          <span className={s.caption}>
-            {timeframe.label} bars over {timeframe.days} trading{' '}
-            {timeframe.days === 1 ? 'day' : 'days'} · {candles.length} candles
-            {volume === undefined ? ' · no volume (an index has no turnover of its own)' : ''}
-            {source && source !== 'live' ? (
-              <>
-                {' · '}
-                {/* Provenance is on screen for the same reason the API insists on
-                    sending it: cached and simulated bars look exactly like live
-                    ones, and acting on the difference is the reader's call. */}
-                <span className={s.provenance}>
-                  {source === 'mock' ? 'simulated data' : 'cached data'}
-                </span>
-              </>
-            ) : null}
-          </span>
-          <span className={cx(s.live, isStale && s.stale)}>
-            <span className={cx(s.dot, query.isFetching && s.pulse)} />
-            {now === null ? null : (
-              <>
-                <span>
-                  {dateLabel(now)}, {clockLabel(now)} IST
-                </span>
-                <span className={s.sep} aria-hidden="true">
-                  ·
-                </span>
-                <span>{freshnessLabel(updatedAt, now)}</span>
-              </>
-            )}
-          </span>
-        </div>
+      <div className={cx(s.grid, s[`grid${layout}`])}>
+        {cells.slice(0, shown).map((cell, index) => (
+          <ChartCell
+            key={index}
+            config={cell}
+            active={shown > 1 && index === activeIdx}
+            onFocus={() => setActiveIdx(index)}
+            onExitReplay={() =>
+              setCells((prev) =>
+                prev.map((entry, i) => (i === index ? { ...entry, replay: false } : entry))
+              )
+            }
+            handleRef={handles[index]}
+          />
+        ))}
       </div>
 
       {picking ? (
         <SymbolPicker
           instruments={OI_INSTRUMENTS}
-          selected={instrument.symbol}
-          onPick={setSymbol}
+          selected={active.symbol}
+          onPick={(symbol) => patchActive({ symbol })}
           onClose={() => setPicking(false)}
         />
       ) : null}

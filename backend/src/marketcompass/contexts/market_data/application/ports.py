@@ -81,6 +81,26 @@ class MarketDataCache(Protocol):
 
 
 @runtime_checkable
+class HistoryCachePort(Protocol):
+    """A bounded, durable cache of price candles behind ``GetHistory``.
+
+    ``store`` write-throughs a freshly-fetched real series and drops rows older
+    than the retention window in the same call, so the table stays small without a
+    separate worker. ``recent`` reads the cached window back when the broker is
+    unreachable — a durable last-good beyond the in-process one. Never raises on a
+    miss; a cold cache simply returns ``None``.
+    """
+
+    async def store(
+        self, series: CandleSeries, *, retain_days: int, now: datetime
+    ) -> None: ...
+
+    async def recent(
+        self, instrument: InstrumentSymbol, interval: CandleInterval, *, days: int, now: datetime
+    ) -> CandleSeries | None: ...
+
+
+@runtime_checkable
 class Clock(Protocol):
     def now(self) -> datetime: ...
 

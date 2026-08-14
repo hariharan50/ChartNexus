@@ -16,6 +16,7 @@ from datetime import datetime, timedelta, timezone
 
 from marketcompass.contexts.market_data.application.ports import (
     Clock,
+    HistoryCachePort,
     IvHistoryRecorder,
     MarketCalendar,
     MarketDataProvider,
@@ -259,10 +260,17 @@ class GetHistory(_FallbackMixin):
         resolver: ProviderResolver,
         fallback: MarketDataProvider,
         clock: Clock,
+        cache: HistoryCachePort | None = None,
+        cache_retention_days: int = 3,
     ) -> None:
         self._resolver = resolver
         self._fallback = fallback
         self._clock = clock
+        # A bounded, durable candle cache: write-through on a real fetch, read
+        # back when the broker is down. Optional — without it the in-process
+        # ``_last_good`` is the only fallback, exactly as before.
+        self._cache = cache
+        self._cache_retention_days = cache_retention_days
         self._last_good: dict[str, CandleSeries] = {}
 
     async def __call__(self, query: HistoryQuery) -> CandleSeries:
@@ -276,16 +284,47 @@ class GetHistory(_FallbackMixin):
         try:
             series = await provider.get_history(query.instrument, query.interval, days)
         except UpstreamError:
-            previous = self._last_good.get(key)
-            if previous is not None:
-                return replace(
-                    previous, provenance=_degrade(previous.provenance, self._clock.now())
-                )
-            return await self._fallback.get_history(query.instrument, query.interval, days)
+            return await self._degraded(query, days, key)
 
         if live:
             self._last_good[key] = series
+            await self._write_through(series)
         return series
+
+    async def _degraded(self, query: HistoryQuery, days: int, key: str) -> CandleSeries:
+        """The broker failed: prefer real-but-stale over synthetic.
+
+        In-process last-good first (this worker served it this run), then the
+        durable candle cache (survives a restart), then the mock fallback so the
+        chart is never simply empty.
+        """
+        previous = self._last_good.get(key)
+        if previous is not None:
+            return replace(previous, provenance=_degrade(previous.provenance, self._clock.now()))
+        if self._cache is not None:
+            cached = await self._cache.recent(
+                query.instrument, query.interval, days=days, now=self._clock.now()
+            )
+            if cached is not None:
+                return cached
+        return await self._fallback.get_history(query.instrument, query.interval, days)
+
+    async def _write_through(self, series: CandleSeries) -> None:
+        """Persist a real series and drop rows past the retention window.
+
+        Never fails the request: the cache is an optimisation and a fallback, so a
+        write error must not take the live answer down with it.
+        """
+        if self._cache is None or not series.provenance.source.is_real:
+            return
+        try:
+            await self._cache.store(
+                series, retain_days=self._cache_retention_days, now=self._clock.now()
+            )
+        except Exception:
+            # Best-effort: the request already has its real series; a failed cache
+            # write only forgoes the durable fallback, it does not fail the read.
+            return
 
 
 class GetMarketStatus:

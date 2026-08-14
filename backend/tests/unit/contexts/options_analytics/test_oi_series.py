@@ -373,3 +373,26 @@ async def test_a_narrow_window_keeps_only_strikes_near_the_money() -> None:
 
     strikes = {contract["strike"] for contract in payload["contracts"]}
     assert strikes == {24_600.0, 24_650.0, 24_700.0}
+
+
+# -- historical mode --------------------------------------------------------
+
+# A past trading day; the stub reader ignores the date, so any past instant works.
+PAST = datetime(2026, 8, 1, 12, 0, tzinfo=UTC)
+
+
+async def test_historical_reads_the_archived_day() -> None:
+    payload = await _service([_snap(0, oi=100), _snap(1, oi=110)])(
+        TENANT, "NIFTY", trade_date=PAST
+    )
+
+    assert payload["data_quality"] == "intraday"
+    assert len(payload["t"]) == 2
+
+
+async def test_historical_with_no_archive_is_empty_not_live() -> None:
+    historical = await _service([])(TENANT, "NIFTY", trade_date=PAST)
+    assert historical["data_quality"] == "empty"
+
+    live = await _service([])(TENANT, "NIFTY")
+    assert live["data_quality"] == "live_proxy"

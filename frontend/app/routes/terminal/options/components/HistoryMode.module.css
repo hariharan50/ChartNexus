@@ -1,0 +1,45 @@
+/* Matches the sidebar mode toggles the OI tools already use, so dropping this in
+   place of the inline block changes nothing visually. */
+
+.label {
+  margin: var(--mc-space-3) 0 0.375rem;
+  font-size: var(--mc-text-xs);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--mc-text-subtle);
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.5rem;
+}
+
+.seg {
+  padding: 0.5rem;
+  border: 1px solid var(--mc-border);
+  border-radius: var(--mc-radius);
+  background: transparent;
+  color: var(--mc-text-muted);
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.seg.active {
+  border-color: color-mix(in srgb, var(--mc-accent) 45%, transparent);
+  background: var(--mc-accent-weak);
+  color: var(--mc-accent);
+}
+
+.date {
+  width: 100%;
+  height: var(--mc-control-h);
+  padding: 0 0.5rem;
+  border: 1px solid var(--mc-border);
+  border-radius: var(--mc-radius);
+  background: var(--mc-surface-raised);
+  color: var(--mc-text);
+  font-size: var(--mc-text-sm);
+  font-weight: 600;
+  cursor: pointer;
+}

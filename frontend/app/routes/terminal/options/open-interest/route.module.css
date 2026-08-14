@@ -528,3 +528,17 @@
     grid-template-columns: 1fr;
   }
 }
+
+/* Empty state that keeps the mode toggle reachable, so a picked date that
+   turns up empty is never a dead end. */
+.empty-panel {
+  display: flex;
+  flex-direction: column;
+  gap: var(--mc-space-3);
+  max-width: 24rem;
+  margin: var(--mc-space-6) auto;
+}
+
+.empty-panel .muted {
+  text-align: center;
+}

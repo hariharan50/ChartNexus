@@ -8,7 +8,9 @@ import IconChart from '$shared/ui/icons/IconChart';
 import IconChevronDown from '$shared/ui/icons/IconChevronDown';
 import IconEye from '$shared/ui/icons/IconEye';
 import IconEyeOff from '$shared/ui/icons/IconEyeOff';
+import { lastTradingDayIST } from '$shared/formatting/ist-clock';
 import GexLevels from './components/GexLevels';
+import HistoryMode, { type Mode } from '../components/HistoryMode';
 import {
   csvFilename,
   expiryLabel,
@@ -67,6 +69,8 @@ const FLIP_IDS = ['gammaFlip', 'netCross'];
 
 export default function GammaExposure() {
   const [instIdx, setInstIdx] = useState(0);
+  const [dataMode, setDataMode] = useState<Mode>('live');
+  const [date, setDate] = useState(lastTradingDayIST);
   const [layout, setLayout] = useState<GexLayout>('horizontal');
   const [strikeFilter, setStrikeFilter] = useState<'all' | number>(10);
   const [showWalls, setShowWalls] = useState(false);
@@ -87,10 +91,11 @@ export default function GammaExposure() {
     setFrameIdx(-1);
   }
 
+  const historyDate = dataMode === 'historical' ? date : undefined;
   const query = useQuery<GexView>({
-    queryKey: ['options-lab', 'gex', instrument.symbol],
-    queryFn: () => getGex(instrument.symbol),
-    refetchInterval: REFETCH_MS
+    queryKey: ['options-lab', 'gex', instrument.symbol, dataMode, historyDate],
+    queryFn: () => getGex(instrument.symbol, { date: historyDate }),
+    refetchInterval: dataMode === 'live' ? REFETCH_MS : false
   });
 
   const view = query.data;
@@ -217,9 +222,15 @@ export default function GammaExposure() {
       ) : !view && query.isPending ? (
         <div className={cx(s.panel, s.muted)}>Loading Gamma Exposure…</div>
       ) : view && view.data_quality === 'empty' ? (
-        <div className={cx(s.panel, s.muted)}>
-          No gamma data recorded for today yet — the profile fills in as the ingest worker captures
-          the chain.
+        // The mode toggle rides along so a picked date that turns up empty is
+        // not a dead end — the reader can change the date or return to Live.
+        <div className={cx(s.panel, s.emptyPanel)}>
+          <HistoryMode mode={dataMode} date={date} onMode={setDataMode} onDate={setDate} />
+          <p className={s.muted}>
+            {dataMode === 'historical'
+              ? 'No session archived for that date.'
+              : 'No gamma data recorded for today yet — the profile fills in as the ingest worker captures the chain.'}
+          </p>
         </div>
       ) : view && frame ? (
         <div className={cx(s.layout, !sidebarOpen && s.collapsed)}>
@@ -253,20 +264,7 @@ export default function GammaExposure() {
                   </span>
                 </div>
 
-                <p className={s.subLabel}>Select Mode</p>
-                <div className={s.modeGrid}>
-                  <button type="button" className={cx(s.seg, s.active)}>
-                    Live
-                  </button>
-                  <button
-                    type="button"
-                    className={s.seg}
-                    disabled
-                    title="Historical mode coming soon"
-                  >
-                    Historical
-                  </button>
-                </div>
+                <HistoryMode mode={dataMode} date={date} onMode={setDataMode} onDate={setDate} />
 
                 <p className={s.subLabel}>Expiry</p>
                 <div className={s.select}>

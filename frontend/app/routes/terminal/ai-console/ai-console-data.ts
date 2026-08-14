@@ -47,9 +47,9 @@ export function driverLabel(name: string): string {
 }
 
 export const INSTRUMENTS = [
-  { short: 'NIFTY', symbol: 'NIFTY' },
-  { short: 'SENSEX', symbol: 'SENSEX' },
-  { short: 'BANKNIFTY', symbol: 'BANKNIFTY' }
+  { short: 'NIFTY', label: 'NIFTY 50', symbol: 'NIFTY' },
+  { short: 'SENSEX', label: 'SENSEX', symbol: 'SENSEX' },
+  { short: 'BANKNIFTY', label: 'BANK NIFTY', symbol: 'BANKNIFTY' }
 ] as const;
 
 export const SUGGESTIONS = [

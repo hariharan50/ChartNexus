@@ -17,6 +17,8 @@ import IconSettings from '$shared/ui/icons/IconSettings';
 import IconUndo from '$shared/ui/icons/IconUndo';
 import type { ChartType } from '$shared/charts/tv/LwChart';
 import { INTERVALS, type Interval } from '../analyse-data';
+import { INDICATORS, type IndicatorId } from '../indicators';
+import { LAYOUTS, type LayoutId } from '../workspace';
 import s from './TopToolbar.module.css';
 
 /**
@@ -35,6 +37,12 @@ interface Props {
   onOpenSymbols: () => void;
   chartType: ChartType;
   onChartType: (value: ChartType) => void;
+  indicators: IndicatorId[];
+  onToggleIndicator: (id: IndicatorId) => void;
+  layout: LayoutId;
+  onLayout: (value: LayoutId) => void;
+  replay: boolean;
+  onToggleReplay: () => void;
   onSnapshot: () => void;
   onFullscreen: () => void;
   isFullscreen: boolean;
@@ -53,11 +61,19 @@ export default function TopToolbar({
   onOpenSymbols,
   chartType,
   onChartType,
+  indicators,
+  onToggleIndicator,
+  layout,
+  onLayout,
+  replay,
+  onToggleReplay,
   onSnapshot,
   onFullscreen,
   isFullscreen
 }: Props) {
-  const [openMenu, setOpenMenu] = useState<'interval' | 'type' | null>(null);
+  const [openMenu, setOpenMenu] = useState<'interval' | 'type' | 'indicators' | 'layout' | null>(
+    null
+  );
   const bar = useRef<HTMLDivElement>(null);
 
   // A menu left open behind a click elsewhere is a stuck overlay on a page
@@ -155,12 +171,45 @@ export default function TopToolbar({
 
       <span className={s.rule} aria-hidden="true" />
 
-      <button type="button" className={s.btn} disabled title="Indicators — not built yet">
-        <span className={s.ico}>
-          <IconFx />
-        </span>
-        <span className={s.btnText}>Indicators</span>
-      </button>
+      {/* indicators */}
+      <div className={s.menuWrap}>
+        <button
+          type="button"
+          className={cx(s.btn, indicators.length > 0 && s.btnOn)}
+          aria-haspopup="menu"
+          aria-expanded={openMenu === 'indicators'}
+          onClick={() => setOpenMenu((m) => (m === 'indicators' ? null : 'indicators'))}
+        >
+          <span className={s.ico}>
+            <IconFx />
+          </span>
+          <span className={s.btnText}>
+            Indicators{indicators.length ? ` (${indicators.length})` : ''}
+          </span>
+        </button>
+        {openMenu === 'indicators' ? (
+          <div className={s.menu} role="menu">
+            {INDICATORS.map((entry) => {
+              const on = indicators.includes(entry.id);
+              return (
+                <button
+                  key={entry.id}
+                  type="button"
+                  role="menuitemcheckbox"
+                  aria-checked={on}
+                  className={cx(s.menuItem, s.checkItem, on && s.menuItemOn)}
+                  onClick={() => onToggleIndicator(entry.id)}
+                >
+                  <span className={s.check} aria-hidden="true">
+                    {on ? '✓' : ''}
+                  </span>
+                  <span>{entry.label}</span>
+                </button>
+              );
+            })}
+          </div>
+        ) : null}
+      </div>
       <button type="button" className={s.btn} disabled title="Templates — not built yet">
         <span className={s.ico}>
           <IconGrid />
@@ -182,13 +231,50 @@ export default function TopToolbar({
 
       <span className={s.rule} aria-hidden="true" />
 
-      <button type="button" className={s.btn} disabled title="Layout — not built yet">
-        <span className={s.ico}>
-          <IconLayout />
-        </span>
-        <span className={s.btnText}>Layout</span>
-      </button>
-      <button type="button" className={s.btn} disabled title="Replay — not built yet">
+      {/* layout */}
+      <div className={s.menuWrap}>
+        <button
+          type="button"
+          className={s.btn}
+          aria-haspopup="menu"
+          aria-expanded={openMenu === 'layout'}
+          onClick={() => setOpenMenu((m) => (m === 'layout' ? null : 'layout'))}
+        >
+          <span className={s.ico}>
+            <IconLayout />
+          </span>
+          <span className={s.btnText}>Layout</span>
+        </button>
+        {openMenu === 'layout' ? (
+          <div className={s.menu} role="menu">
+            {LAYOUTS.map((entry) => (
+              <button
+                key={entry.id}
+                type="button"
+                role="menuitemradio"
+                aria-checked={entry.id === layout}
+                className={cx(s.menuItem, entry.id === layout && s.menuItemOn)}
+                onClick={() => {
+                  onLayout(entry.id);
+                  setOpenMenu(null);
+                }}
+              >
+                <span>{entry.label}</span>
+                <span className={s.menuHint}>
+                  {entry.cells} {entry.cells === 1 ? 'chart' : 'charts'}
+                </span>
+              </button>
+            ))}
+          </div>
+        ) : null}
+      </div>
+      <button
+        type="button"
+        className={cx(s.btn, replay && s.btnOn)}
+        onClick={onToggleReplay}
+        aria-pressed={replay}
+        title={replay ? 'Exit replay' : 'Replay the loaded session'}
+      >
         <span className={s.ico}>
           <IconReplay />
         </span>

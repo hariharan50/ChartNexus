@@ -40,6 +40,26 @@ InstrumentParam = Annotated[
     str, Path(description="NIFTY, BANKNIFTY, or SENSEX", examples=["NIFTY"])
 ]
 
+# Optional archived-session date. Present → Historical mode; absent → Live (today).
+DateParam = Annotated[
+    date | None,
+    Query(alias="date", description="Archived session to replay (ISO date); omit for Live"),
+]
+
+
+def _trade_date(date_: date | None) -> datetime | None:
+    """A picked date as an instant safely inside its IST trading day.
+
+    Midday UTC is 17:30 IST, so the reader resolves the intended session whatever
+    the UTC/IST day boundary does. ``None`` stays ``None`` — Live reads today.
+    """
+    return None if date_ is None else datetime.combine(date_, time(12, 0), tzinfo=UTC)
+
+
+def _day_key(date_: date | None) -> str:
+    """The cache-key segment distinguishing Live from each archived day."""
+    return "live" if date_ is None else date_.isoformat()
+
 
 @router.get(
     "/oi/{instrument_id}",
@@ -56,16 +76,18 @@ async def open_interest(
     principal: CurrentPrincipal,
     services: Services,
     instrument_id: InstrumentParam,
+    *,
+    date_: DateParam = None,
 ) -> OiViewResponse:
     symbol = instrument_id.strip().upper()
     redis = get_container(request).redis
-    cache_key = redis.key("lab:oi", str(principal.tenant_id), symbol)
+    cache_key = redis.key("lab:oi", str(principal.tenant_id), symbol, _day_key(date_))
 
     cached = await redis.client.get(cache_key)
     if cached is not None:
         return OiViewResponse.model_validate_json(cached)
 
-    payload = await services.oi_view(principal.tenant_id, symbol)
+    payload = await services.oi_view(principal.tenant_id, symbol, trade_date=_trade_date(date_))
     response = OiViewResponse.of(payload)
     await redis.client.set(cache_key, response.model_dump_json(), ex=_CACHE_TTL_SECONDS)
     return response
@@ -92,19 +114,22 @@ async def oi_series(
     window: Annotated[int, Query(ge=1, le=MAX_WINDOW, description="Strikes either side of ATM")] = (
         DEFAULT_WINDOW
     ),
+    date_: DateParam = None,
 ) -> OiSeriesResponse:
     symbol = instrument_id.strip().upper()
     redis = get_container(request).redis
     # Keyed by interval and window as well: they change the payload, so sharing
     # one entry across them would serve whichever shape arrived first.
-    cache_key = redis.key("lab:oi-series", str(principal.tenant_id), symbol, interval, str(window))
+    cache_key = redis.key(
+        "lab:oi-series", str(principal.tenant_id), symbol, interval, str(window), _day_key(date_)
+    )
 
     cached = await redis.client.get(cache_key)
     if cached is not None:
         return OiSeriesResponse.model_validate_json(cached)
 
     payload = await services.oi_series(
-        principal.tenant_id, symbol, interval=interval, window=window
+        principal.tenant_id, symbol, interval=interval, window=window, trade_date=_trade_date(date_)
     )
     response = OiSeriesResponse.of(payload)
     await redis.client.set(cache_key, response.model_dump_json(), ex=_CACHE_TTL_SECONDS)
@@ -174,18 +199,22 @@ async def pcr_series(
     principal: CurrentPrincipal,
     services: Services,
     instrument_id: InstrumentParam,
+    *,
+    date_: DateParam = None,
 ) -> PcrSeriesResponse:
     symbol = instrument_id.strip().upper()
     redis = get_container(request).redis
     # No interval in the key: this payload is six numbers a capture, so the
     # timeframe is applied on the client and one cached entry serves them all.
-    cache_key = redis.key("lab:pcr-series", str(principal.tenant_id), symbol)
+    cache_key = redis.key("lab:pcr-series", str(principal.tenant_id), symbol, _day_key(date_))
 
     cached = await redis.client.get(cache_key)
     if cached is not None:
         return PcrSeriesResponse.model_validate_json(cached)
 
-    payload = await services.pcr_series(principal.tenant_id, symbol)
+    payload = await services.pcr_series(
+        principal.tenant_id, symbol, trade_date=_trade_date(date_)
+    )
     response = PcrSeriesResponse.of(payload)
     await redis.client.set(cache_key, response.model_dump_json(), ex=_CACHE_TTL_SECONDS)
     return response
@@ -208,18 +237,20 @@ async def gex(
     principal: CurrentPrincipal,
     services: Services,
     instrument_id: InstrumentParam,
+    *,
+    date_: DateParam = None,
 ) -> GexResponse:
     symbol = instrument_id.strip().upper()
     redis = get_container(request).redis
-    # No query params, so one entry per tenant/symbol serves every reader — the
-    # strike filter and the time scrub are both applied on the client.
-    cache_key = redis.key("lab:gex", str(principal.tenant_id), symbol)
+    # The strike filter and the time scrub are both applied on the client, so one
+    # entry per tenant/symbol/day serves every reader of that session.
+    cache_key = redis.key("lab:gex", str(principal.tenant_id), symbol, _day_key(date_))
 
     cached = await redis.client.get(cache_key)
     if cached is not None:
         return GexResponse.model_validate_json(cached)
 
-    payload = await services.gex(principal.tenant_id, symbol)
+    payload = await services.gex(principal.tenant_id, symbol, trade_date=_trade_date(date_))
     response = GexResponse.of(payload)
     await redis.client.set(cache_key, response.model_dump_json(), ex=_CACHE_TTL_SECONDS)
     return response

@@ -287,6 +287,10 @@ class MarketSettings(_Section):
     # Tunable because it is the main lever on payload size: the widest filter
     # the UI offers is +-20, so anything at or above that is a superset.
     snapshot_max_series_strikes: int = Field(default=25, ge=1)
+    # How many days of price candles the durable chart cache keeps. It is a
+    # bounded write-through cache pruned on every write, so this stays small; the
+    # chart shows three days of intraday history comfortably.
+    candle_cache_retention_days: int = Field(default=3, ge=1)
 
 
 class Settings(BaseSettings):

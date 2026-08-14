@@ -103,17 +103,24 @@ class GetOiSeries:
         *,
         interval: str = DEFAULT_INTERVAL,
         window: int = DEFAULT_WINDOW,
+        trade_date: datetime | None = None,
     ) -> dict[str, Any]:
         now = self._now()
+        # Live reads today; Historical replays the picked archived session.
+        as_of = trade_date or now
         bucket = INTERVALS.get(interval, INTERVALS[DEFAULT_INTERVAL])
         span = max(1, min(MAX_WINDOW, window))
 
         chain = await self._provider.fetch(tenant_id, symbol)
-        snaps = drop_future(
-            await self._snapshots.day_snapshots(tenant_id, symbol, trade_date_utc=now), now
-        )
+        snaps = await self._snapshots.day_snapshots(tenant_id, symbol, trade_date_utc=as_of)
+        # Only the live day is clipped to "now"; a past session is whole.
+        if trade_date is None:
+            snaps = drop_future(snaps, now)
 
         if len(snaps) < _MIN_INTRADAY_SNAPSHOTS:
+            # A past day with nothing archived is empty — never today's live chain.
+            if trade_date is not None:
+                return self._empty(symbol, chain, now, interval, span)
             return self._live_proxy(symbol, chain, snaps, now, interval=interval, window=span)
 
         ordered = sorted(snaps, key=lambda snap: snap.captured_at)

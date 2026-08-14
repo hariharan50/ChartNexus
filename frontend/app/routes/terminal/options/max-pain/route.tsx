@@ -6,6 +6,8 @@ import { useChartTheme } from '$shared/charts/theme/use-chart-theme';
 import { cx } from '$shared/ui/cx';
 import IconChart from '$shared/ui/icons/IconChart';
 import IconChevronDown from '$shared/ui/icons/IconChevronDown';
+import { lastTradingDayIST } from '$shared/formatting/ist-clock';
+import HistoryMode, { type Mode } from '../components/HistoryMode';
 import MaxPainSentiment from './components/MaxPainSentiment';
 import {
   CALL_COLOR,
@@ -35,17 +37,21 @@ const STRIKE_FILTERS: { label: string; value: 'all' | number }[] = [
 
 export default function MaxPain() {
   const [instIdx, setInstIdx] = useState(0);
+  const [mode, setMode] = useState<Mode>('live');
+  const [date, setDate] = useState(lastTradingDayIST);
   const [strikeFilter, setStrikeFilter] = useState<'all' | number>(20);
   const theme = useChartTheme();
 
   const instrument = OI_INSTRUMENTS[instIdx] ?? OI_INSTRUMENTS[0]!;
 
   // The same endpoint the Open Interest page reads — a shared query key, so the
-  // two pages share one cached payload rather than polling it twice.
+  // two pages share one cached payload rather than polling it twice (they share
+  // it whenever both are in the same mode/day).
+  const historyDate = mode === 'historical' ? date : undefined;
   const query = useQuery<OiView>({
-    queryKey: ['options-lab', 'oi', instrument.symbol],
-    queryFn: () => getOpenInterest(instrument.symbol),
-    refetchInterval: REFETCH_MS
+    queryKey: ['options-lab', 'oi', instrument.symbol, mode, historyDate],
+    queryFn: () => getOpenInterest(instrument.symbol, { date: historyDate }),
+    refetchInterval: mode === 'live' ? REFETCH_MS : false
   });
 
   const view = query.data;
@@ -153,20 +159,7 @@ export default function MaxPain() {
                 </span>
               </div>
 
-              <p className={s.subLabel}>Select Mode</p>
-              <div className={s.modeGrid}>
-                <button type="button" className={cx(s.seg, s.active)}>
-                  Live
-                </button>
-                <button
-                  type="button"
-                  className={s.seg}
-                  disabled
-                  title="Historical mode coming soon"
-                >
-                  Historical
-                </button>
-              </div>
+              <HistoryMode mode={mode} date={date} onMode={setMode} onDate={setDate} />
 
               <p className={s.subLabel}>Expiry</p>
               <div className={s.select}>
@@ -223,7 +216,11 @@ export default function MaxPain() {
               </p>
 
               {bars.length === 0 ? (
-                <p className={s.empty}>No option chain available yet.</p>
+                <p className={s.empty}>
+                  {mode === 'historical'
+                    ? 'No session archived for that date.'
+                    : 'No option chain available yet.'}
+                </p>
               ) : (
                 <>
                   <EChart option={option} className={s.chart} />

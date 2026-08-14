@@ -4,7 +4,9 @@ import { seriesColor, type SeriesLine } from '$shared/charts/options/multi-serie
 import { cx } from '$shared/ui/cx';
 import IconChart from '$shared/ui/icons/IconChart';
 import IconChevronDown from '$shared/ui/icons/IconChevronDown';
+import { lastTradingDayIST } from '$shared/formatting/ist-clock';
 import ContractPicker from './components/ContractPicker';
+import HistoryMode, { type Mode } from '../components/HistoryMode';
 import SeriesChart from '../components/SeriesChart';
 import { feedAgeLabel, feedAgeMs } from '../open-interest/oi-data';
 import {
@@ -51,6 +53,8 @@ const SOURCES: { id: StrikeSourceId; title: string; hint: string }[] = [
 
 export default function MultiOiVolume() {
   const [instIdx, setInstIdx] = useState(0);
+  const [mode, setMode] = useState<Mode>('live');
+  const [date, setDate] = useState(lastTradingDayIST);
   const [interval, setInterval] = useState<Interval>(DEFAULT_INTERVAL);
   const [topN, setTopN] = useState(5);
   const [showNet, setShowNet] = useState(false);
@@ -73,10 +77,11 @@ export default function MultiOiVolume() {
     if (source === 'custom') setSource('oi');
   }
 
+  const historyDate = mode === 'historical' ? date : undefined;
   const query = useQuery<OiSeriesView>({
-    queryKey: ['options-lab', 'oi-series', instrument.symbol, interval],
-    queryFn: () => getOiSeries(instrument.symbol, interval),
-    refetchInterval: REFETCH_MS
+    queryKey: ['options-lab', 'oi-series', instrument.symbol, interval, mode, historyDate],
+    queryFn: () => getOiSeries(instrument.symbol, interval, { date: historyDate }),
+    refetchInterval: mode === 'live' ? REFETCH_MS : false
   });
 
   const view = query.data;
@@ -168,20 +173,7 @@ export default function MultiOiVolume() {
                 </span>
               </div>
 
-              <p className={s.subLabel}>Select Mode</p>
-              <div className={s.modeGrid}>
-                <button type="button" className={cx(s.seg, s.active)}>
-                  Live
-                </button>
-                <button
-                  type="button"
-                  className={s.seg}
-                  disabled
-                  title="Historical mode coming soon"
-                >
-                  Historical
-                </button>
-              </div>
+              <HistoryMode mode={mode} date={date} onMode={setMode} onDate={setDate} />
 
               <div className={s.twoUp}>
                 <div>
@@ -293,7 +285,9 @@ export default function MultiOiVolume() {
 
             <p className={s.caption}>
               {view.data_quality === 'empty'
-                ? 'No snapshots recorded for today yet — the series fills in as the ingest worker captures them.'
+                ? mode === 'historical'
+                  ? 'No session archived for that date.'
+                  : 'No snapshots recorded for today yet — the series fills in as the ingest worker captures them.'
                 : view.data_quality === 'live_proxy'
                   ? 'Nothing archived for today yet — showing the 9:15 open against the live chain. The shape fills in as the ingest worker captures snapshots.'
                   : view.open_is_estimated

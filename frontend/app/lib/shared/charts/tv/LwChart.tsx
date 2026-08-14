@@ -53,6 +53,16 @@ export interface LwChartHandle {
   fitContent(): void;
 }
 
+/** One reconciled overlay line (indicator) drawn over the price or a sub-pane. */
+export interface OverlaySpec {
+  id: string;
+  /** 0 = price pane, 1 = volume pane, ≥2 = a dedicated sub-pane (e.g. RSI). */
+  paneIndex: number;
+  color: string;
+  lineWidth?: number;
+  data: { time: number; value: number }[];
+}
+
 interface Props {
   candles: Candle[];
   /** Omit for a price-only chart; an empty array draws an empty pane. */
@@ -66,14 +76,25 @@ interface Props {
    * parent because only the chart knows which bar the pointer resolved to.
    */
   onHoverBar?: ((bar: Candle | null) => void) | undefined;
+  /** Indicator lines drawn over the price pane or a sub-pane; reconciled by id. */
+  overlays?: OverlaySpec[] | undefined;
   /** Populated on mount, cleared on dispose. */
   handleRef?: RefObject<LwChartHandle | null> | undefined;
+  /**
+   * Identity of the drawn dataset — e.g. `"NIFTY:5m:candle"`. The view is fit to
+   * the data **only when this changes**; across a live refetch it stays put, so a
+   * poll never throws away the reader's zoom and scroll. Omit to fit on every
+   * paint (the old, jumpy behaviour).
+   */
+  resetKey?: string | undefined;
   className?: string | undefined;
   style?: CSSProperties | undefined;
 }
 
 /** How much of the chart's height the volume pane takes, when there is one. */
 const VOLUME_PANE_FRACTION = 0.22;
+/** The pane index volume occupies (pane 0 is price). */
+const VOLUME_PANE_INDEX = 1;
 
 /**
  * The exchange's clock, not the reader's and not UTC.
@@ -130,17 +151,23 @@ export default function LwChart({
   theme,
   type = 'candle',
   onHoverBar,
+  overlays,
   handleRef,
+  resetKey,
   className,
   style
 }: Props) {
   const container = useRef<HTMLDivElement>(null);
   // Held across renders so data updates never rebuild the chart, and so the
-  // cleanup below can dispose whatever the async mount produced.
+  // cleanup below can dispose whatever the async mount produced. `addLine` is
+  // the pane-aware line constructor captured from the dynamic import, and `lines`
+  // is the id→series map the overlay reconciler keeps in step with the props.
   const api = useRef<{
     chart: IChartApi;
     price: ISeriesApi<SeriesType>;
     volume: ISeriesApi<'Histogram'> | undefined;
+    addLine: (paneIndex: number) => ISeriesApi<'Line'>;
+    lines: Map<string, ISeriesApi<'Line'>>;
   } | null>(null);
 
   // Latest props for callbacks that are registered once at mount. Without this
@@ -148,6 +175,10 @@ export default function LwChart({
   // subscribed in, which is the first one.
   const latest = useRef({ candles, onHoverBar });
   latest.current = { candles, onHoverBar };
+
+  // The `resetKey` the view was last fit to. A refetch that keeps the same key
+  // must not re-fit — that is what threw the reader's zoom away every poll.
+  const lastFitKey = useRef<string | null>(null);
 
   const hasVolume = volume !== undefined;
 
@@ -182,6 +213,9 @@ export default function LwChart({
       // The component can unmount while the import is in flight.
       if (disposed || !container.current) return;
       setFailed(false);
+      // A freshly built chart has no view yet, so the first paint must fit
+      // whatever the current `resetKey` is.
+      lastFitKey.current = null;
 
       const chart = createChart(el, {
         // The library owns its own ResizeObserver under this flag, so there is
@@ -250,7 +284,13 @@ export default function LwChart({
         report(latest.current.candles.find((candle) => candle.time === at) ?? null);
       });
 
-      api.current = { chart, price, volume: volumeSeries };
+      api.current = {
+        chart,
+        price,
+        volume: volumeSeries,
+        addLine: (paneIndex: number) => chart.addSeries(LineSeries, {}, paneIndex),
+        lines: new Map()
+      };
       if (handleRef) {
         handleRef.current = {
           screenshot: () => chart.takeScreenshot(),
@@ -258,6 +298,7 @@ export default function LwChart({
         };
       }
       paint();
+      reconcileOverlays();
     })();
 
     return () => {
@@ -305,7 +346,14 @@ export default function LwChart({
       );
     }
 
-    current.chart.timeScale().fitContent();
+    // Fit only when the dataset identity changes — a new symbol, interval or
+    // chart type. A same-key refetch keeps the reader's zoom and scroll, which
+    // `setData` preserves on its own as long as we do not force a re-fit here.
+    // With no `resetKey` given, fall back to fitting every paint (old behaviour).
+    if (resetKey === undefined || lastFitKey.current !== resetKey) {
+      current.chart.timeScale().fitContent();
+      lastFitKey.current = resetKey ?? null;
+    }
   }
 
   useEffect(() => {
@@ -314,6 +362,65 @@ export default function LwChart({
     // re-run this effect every time regardless.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [candles, volume]);
+
+  // -- overlays (indicators) ------------------------------------------------
+  /**
+   * Bring the drawn line series in step with the `overlays` prop by id: update
+   * the ones that stayed, add the ones that appeared, remove the ones that left.
+   * Reconciling rather than clearing-and-readding means a live refetch repaints a
+   * moving average in place instead of flashing it off and on every poll.
+   */
+  function reconcileOverlays(): void {
+    const current = api.current;
+    if (!current) return;
+    const specs = overlays ?? [];
+    const wanted = new Set(specs.map((spec) => spec.id));
+
+    for (const [id, series] of current.lines) {
+      if (!wanted.has(id)) {
+        current.chart.removeSeries(series);
+        current.lines.delete(id);
+      }
+    }
+
+    for (const spec of specs) {
+      let series = current.lines.get(spec.id);
+      if (!series) {
+        series = current.addLine(spec.paneIndex);
+        current.lines.set(spec.id, series);
+      }
+      series.applyOptions({
+        color: spec.color,
+        lineWidth: (spec.lineWidth ?? 2) as 1 | 2 | 3 | 4,
+        priceLineVisible: false,
+        lastValueVisible: false,
+        crosshairMarkerVisible: false
+      });
+      series.setData(
+        spec.data.map((point) => ({ time: point.time as UTCTimestamp, value: point.value }))
+      );
+    }
+
+    // Keep any indicator sub-pane (e.g. RSI) to a slim band so it never crowds
+    // the price. Volume owns its own height from mount; this only touches the
+    // panes overlays actually occupy.
+    const el = container.current;
+    if (el && el.clientHeight > 0) {
+      const subPanes = new Set(specs.filter((spec) => spec.paneIndex >= 1).map((s) => s.paneIndex));
+      const panes = current.chart.panes();
+      for (const index of subPanes) {
+        // Skip the volume pane — it owns its height from mount. An overlay pane
+        // that happens to be pane 1 because there is no volume is sized here.
+        if (hasVolume && index === VOLUME_PANE_INDEX) continue;
+        panes[index]?.setHeight(el.clientHeight * VOLUME_PANE_FRACTION);
+      }
+    }
+  }
+
+  useEffect(() => {
+    reconcileOverlays();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [overlays]);
 
   // -- theme ----------------------------------------------------------------
   useEffect(() => {

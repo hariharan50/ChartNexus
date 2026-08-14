@@ -3,10 +3,12 @@ import { useEffect, useMemo, useState } from 'react';
 import { cx } from '$shared/ui/cx';
 import IconChart from '$shared/ui/icons/IconChart';
 import IconChevronDown from '$shared/ui/icons/IconChevronDown';
+import { lastTradingDayIST } from '$shared/formatting/ist-clock';
 import BarPair from './components/BarPair';
 import OpenInterestChart from './components/OpenInterestChart';
 import PcrDonut from './components/PcrDonut';
 import SentimentDonut from './components/SentimentDonut';
+import HistoryMode, { type Mode } from '../components/HistoryMode';
 import TimeRangeSlider from '../components/TimeRangeSlider';
 import {
   axisTicks,
@@ -59,6 +61,8 @@ const QUICK_RANGES: { label: string; value: number | 'all' }[] = [
 
 export default function OpenInterest() {
   const [instIdx, setInstIdx] = useState(0);
+  const [dataMode, setDataMode] = useState<Mode>('live');
+  const [date, setDate] = useState(lastTradingDayIST);
   const [mode, setMode] = useState<OiMode>('change_total');
   const [showLot, setShowLot] = useState(false);
   const [strikeFilter, setStrikeFilter] = useState<'all' | number>(10);
@@ -78,10 +82,11 @@ export default function OpenInterest() {
     setActivePreset('all');
   }
 
+  const historyDate = dataMode === 'historical' ? date : undefined;
   const query = useQuery<OiView>({
-    queryKey: ['options-lab', 'oi', instrument.symbol],
-    queryFn: () => getOpenInterest(instrument.symbol),
-    refetchInterval: REFETCH_MS
+    queryKey: ['options-lab', 'oi', instrument.symbol, dataMode, historyDate],
+    queryFn: () => getOpenInterest(instrument.symbol, { date: historyDate }),
+    refetchInterval: dataMode === 'live' ? REFETCH_MS : false
   });
 
   const view = query.data;
@@ -214,7 +219,16 @@ export default function OpenInterest() {
       ) : !view && query.isPending ? (
         <div className={cx(s.panel, s.muted)}>Loading Open Interest…</div>
       ) : view && view.data_quality === 'empty' ? (
-        <div className={cx(s.panel, s.muted)}>No option-chain data available yet.</div>
+        // The mode toggle rides along so a picked date that turns up empty is
+        // not a dead end — the reader can change the date or return to Live.
+        <div className={cx(s.panel, s.emptyPanel)}>
+          <HistoryMode mode={dataMode} date={date} onMode={setDataMode} onDate={setDate} />
+          <p className={s.muted}>
+            {dataMode === 'historical'
+              ? 'No session archived for that date.'
+              : 'No option-chain data available yet.'}
+          </p>
+        </div>
       ) : view && totals ? (
         <div className={s.layout}>
           {/* LEFT SIDEBAR */}
@@ -235,20 +249,7 @@ export default function OpenInterest() {
                 </span>
               </div>
 
-              <p className={s.subLabel}>Select Mode</p>
-              <div className={s.modeGrid}>
-                <button type="button" className={cx(s.seg, s.active)}>
-                  Live
-                </button>
-                <button
-                  type="button"
-                  className={s.seg}
-                  disabled
-                  title="Historical mode coming soon"
-                >
-                  Historical
-                </button>
-              </div>
+              <HistoryMode mode={dataMode} date={date} onMode={setDataMode} onDate={setDate} />
 
               <p className={s.subLabel}>Expiry</p>
               <div className={s.select}>

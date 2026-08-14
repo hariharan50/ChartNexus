@@ -35,7 +35,7 @@ export default function ConsoleHeader({ title, subtitle, instIdx, onSelect }: Pr
             className={cx(s.tab, idx === instIdx && s.active)}
             onClick={() => onSelect(idx)}
           >
-            {inst.short}
+            {inst.label}
           </button>
         ))}
       </div>

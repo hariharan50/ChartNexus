@@ -82,13 +82,20 @@ class GetGex:
         self._now = now_utc or (lambda: datetime.now(UTC))
         self._strike_span = strike_span
 
-    async def __call__(self, tenant_id: TenantId, symbol: str) -> dict[str, Any]:
+    async def __call__(
+        self, tenant_id: TenantId, symbol: str, *, trade_date: datetime | None = None
+    ) -> dict[str, Any]:
         now = self._now()
+        # Live reads today; Historical replays the picked archived session.
+        as_of = trade_date or now
         chain = await self._provider.fetch(tenant_id, symbol)
-        snaps = drop_future(
-            await self._snapshots.day_snapshots(tenant_id, symbol, trade_date_utc=now), now
-        )
+        snaps = await self._snapshots.day_snapshots(tenant_id, symbol, trade_date_utc=as_of)
+        # Only the live day is clipped to "now"; a past session is whole.
+        if trade_date is None:
+            snaps = drop_future(snaps, now)
 
+        # GEX needs real captures either way, so a thin day — live or historical —
+        # is simply empty; there is no live-chain proxy to fall back to.
         if len(snaps) < _MIN_INTRADAY_SNAPSHOTS:
             return _empty(symbol, chain, now)
 

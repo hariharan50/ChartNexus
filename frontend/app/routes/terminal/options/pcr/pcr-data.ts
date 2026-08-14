@@ -51,9 +51,14 @@ export interface PcrSeriesView {
   put_oi_chg: number[];
 }
 
-export function getPcrSeries(instrument: string, fetcher?: typeof fetch): Promise<PcrSeriesView> {
+export function getPcrSeries(
+  instrument: string,
+  opts: { date?: string | undefined } = {},
+  fetcher?: typeof fetch
+): Promise<PcrSeriesView> {
   return apiFetch<PcrSeriesView>({
     url: `/options-lab/pcr-series/${encodeURIComponent(instrument)}`,
+    params: opts.date ? { date: opts.date } : {},
     fetcher
   });
 }

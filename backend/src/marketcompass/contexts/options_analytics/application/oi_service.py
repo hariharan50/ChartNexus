@@ -77,15 +77,24 @@ class GetOiView:
         # The main lever on payload size — see `_series_axis`.
         self._strike_span = strike_span
 
-    async def __call__(self, tenant_id: TenantId, symbol: str) -> dict[str, Any]:
+    async def __call__(
+        self, tenant_id: TenantId, symbol: str, *, trade_date: datetime | None = None
+    ) -> dict[str, Any]:
         now = self._now()
+        # Live reads today; Historical replays the picked archived session.
+        as_of = trade_date or now
         chain = await self._provider.fetch(tenant_id, symbol)
 
         # Snapshot tiers first; the null reader falls straight through to live.
-        snaps = await self._snapshots.day_snapshots(tenant_id, symbol, trade_date_utc=now)
-        snaps = drop_future(snaps, now)
+        snaps = await self._snapshots.day_snapshots(tenant_id, symbol, trade_date_utc=as_of)
+        # Only the live day is clipped to "now"; a past session is whole.
+        if trade_date is None:
+            snaps = drop_future(snaps, now)
         if len(snaps) >= _MIN_INTRADAY_SNAPSHOTS:
             return self._intraday(symbol, chain, snaps)
+        # A past day with nothing archived is empty — never today's live chain.
+        if trade_date is not None:
+            return self._empty(symbol, chain, session_open_utc(now), now)
         if len(snaps) == 1:
             return self._live_proxy(symbol, chain, snaps[0].rows, now)
         return self._live_proxy(symbol, chain, chain.rows, now)

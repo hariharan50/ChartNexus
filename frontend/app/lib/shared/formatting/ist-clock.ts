@@ -74,3 +74,32 @@ export function isTradingWindow(at: number): boolean {
   const { minutes, weekend } = istClock(at);
   return !weekend && minutes >= SESSION_OPEN_MIN && minutes < SESSION_CLOSE_MIN;
 }
+
+/** IST is a fixed UTC+5:30; a Date's epoch is UTC, so shift then read getUTC*. */
+const IST_OFFSET_MS = 5.5 * 60 * 60 * 1000;
+
+/**
+ * An IST calendar date as `YYYY-MM-DD`, `offsetDays` from today.
+ *
+ * The value a `<input type="date">` reads and writes. Computed off the IST clock
+ * so a viewer past midnight UTC but before it in India still gets India's date.
+ */
+export function isoDateIST(offsetDays = 0, now: number = Date.now()): string {
+  return new Date(now + IST_OFFSET_MS + offsetDays * 86_400_000).toISOString().slice(0, 10);
+}
+
+/**
+ * The most recent weekday on or before today, IST, as `YYYY-MM-DD`.
+ *
+ * A sensible default for the Historical date picker: on a Monday it lands on the
+ * previous Friday rather than an empty weekend session.
+ */
+export function lastTradingDayIST(now: number = Date.now()): string {
+  let offset = -1;
+  for (let i = 0; i < 3; i++) {
+    const { weekend } = istClock(now + offset * 86_400_000);
+    if (!weekend) break;
+    offset -= 1;
+  }
+  return isoDateIST(offset, now);
+}

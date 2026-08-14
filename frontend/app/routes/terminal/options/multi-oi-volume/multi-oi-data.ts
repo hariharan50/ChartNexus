@@ -71,11 +71,12 @@ export interface OiSeriesView {
 export function getOiSeries(
   instrument: string,
   interval: Interval,
+  opts: { date?: string | undefined } = {},
   fetcher?: typeof fetch
 ): Promise<OiSeriesView> {
   return apiFetch<OiSeriesView>({
     url: `/options-lab/oi-series/${encodeURIComponent(instrument)}`,
-    params: { interval },
+    params: { interval, ...(opts.date ? { date: opts.date } : {}) },
     fetcher
   });
 }

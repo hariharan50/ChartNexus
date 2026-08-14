@@ -42,24 +42,26 @@
   margin: 2px 0 0;
 }
 
+/* The app's standard index switcher, matching the dashboard's IndexTabs: a
+   rounded-rectangle container with a solid-accent active pill. */
 .tabs {
   display: inline-flex;
-  gap: 2px;
-  padding: 4px;
+  gap: 0.125rem;
+  padding: 0.1875rem;
   border: 1px solid var(--mc-border);
-  border-radius: 999px;
-  background: var(--mc-surface);
+  border-radius: var(--mc-radius);
+  background: var(--mc-surface-raised);
 }
 
 .tab {
-  height: calc(var(--mc-control-h) - 10px);
-  padding: 0 var(--mc-space-3);
+  padding: 0.3125rem 0.75rem;
   border: 0;
-  border-radius: 999px;
+  border-radius: var(--mc-radius-sm);
   background: transparent;
   color: var(--mc-text-muted);
-  font-size: var(--mc-text-sm);
-  font-weight: 600;
+  font-size: var(--mc-text-xs);
+  font-weight: 700;
+  letter-spacing: 0.02em;
   cursor: pointer;
   transition:
     color var(--mc-duration-fast, 120ms) ease,
@@ -73,5 +75,4 @@
 .tab.active {
   background: var(--mc-accent, #6366f1);
   color: #fff;
-  box-shadow: 0 4px 12px -4px var(--mc-accent, #6366f1);
 }

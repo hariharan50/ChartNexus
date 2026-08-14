@@ -148,6 +148,25 @@
   font-size: var(--mc-text-xs);
 }
 
+/* A toolbar button whose feature is currently on (indicators active, replay
+   engaged) — tinted so the state is legible without opening the menu. */
+.btn-on {
+  background: var(--mc-accent-weak);
+  color: var(--mc-accent);
+}
+
+/* Checkbox rows are read left-to-right (tick, then label), not split apart. */
+.check-item {
+  justify-content: flex-start;
+}
+
+.check {
+  width: 1rem;
+  flex: none;
+  text-align: center;
+  color: var(--mc-accent);
+}
+
 /* -- symbol -- */
 .symbol {
   display: inline-flex;

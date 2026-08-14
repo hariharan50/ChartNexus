@@ -32,7 +32,7 @@ import s from './route.module.css';
 import type { Route } from './+types/route';
 
 export const meta: Route.MetaFunction = () => [
-  { title: 'Nifty Analysis · AI Console · MarketCompass' }
+  { title: 'Market Analysis · AI Console · MarketCompass' }
 ];
 
 /** The agent's name, shown throughout the console. */
@@ -54,7 +54,7 @@ export default function NiftyAnalysis() {
   return (
     <div className={s.page}>
       <ConsoleHeader
-        title="Nifty Analysis"
+        title="Market Analysis"
         subtitle={
           <>
             Calibrated calls across three horizons, the drivers behind each, the levels that matter

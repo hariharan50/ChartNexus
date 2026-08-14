@@ -4,6 +4,8 @@ import type { SeriesLine } from '$shared/charts/options/multi-series';
 import { cx } from '$shared/ui/cx';
 import IconChart from '$shared/ui/icons/IconChart';
 import IconChevronDown from '$shared/ui/icons/IconChevronDown';
+import { lastTradingDayIST } from '$shared/formatting/ist-clock';
+import HistoryMode, { type Mode } from '../components/HistoryMode';
 import SeriesChart from '../components/SeriesChart';
 import { CALL_COLOR, feedAgeLabel, feedAgeMs, PUT_COLOR } from '../open-interest/oi-data';
 import {
@@ -40,14 +42,17 @@ const REPLAY_MS = 15_000;
 
 export default function PutCallRatio() {
   const [instIdx, setInstIdx] = useState(0);
+  const [mode, setMode] = useState<Mode>('live');
+  const [date, setDate] = useState(lastTradingDayIST);
   const [timeframe, setTimeframe] = useState<Timeframe>(DEFAULT_TIMEFRAME);
 
   const instrument = INSTRUMENTS[instIdx] ?? INSTRUMENTS[0]!;
 
+  const historyDate = mode === 'historical' ? date : undefined;
   const query = useQuery<PcrSeriesView>({
-    queryKey: ['options-lab', 'pcr-series', instrument.symbol],
-    queryFn: () => getPcrSeries(instrument.symbol),
-    refetchInterval: REFETCH_MS
+    queryKey: ['options-lab', 'pcr-series', instrument.symbol, mode, historyDate],
+    queryFn: () => getPcrSeries(instrument.symbol, { date: historyDate }),
+    refetchInterval: mode === 'live' ? REFETCH_MS : false
   });
 
   const view = query.data;
@@ -171,20 +176,7 @@ export default function PutCallRatio() {
                 </span>
               </div>
 
-              <p className={s.subLabel}>Select Mode</p>
-              <div className={s.modeGrid}>
-                <button type="button" className={cx(s.seg, s.active)}>
-                  Live
-                </button>
-                <button
-                  type="button"
-                  className={s.seg}
-                  disabled
-                  title="Historical mode coming soon"
-                >
-                  Historical
-                </button>
-              </div>
+              <HistoryMode mode={mode} date={date} onMode={setMode} onDate={setDate} />
 
               <p className={s.subLabel}>Expiry</p>
               <div className={s.select}>
@@ -294,7 +286,9 @@ export default function PutCallRatio() {
 
             <p className={s.caption}>
               {view.data_quality === 'empty'
-                ? 'No snapshots recorded for today yet — the series fills in as the ingest worker captures them.'
+                ? mode === 'historical'
+                  ? 'No session archived for that date.'
+                  : 'No snapshots recorded for today yet — the series fills in as the ingest worker captures them.'
                 : view.data_quality === 'live_proxy'
                   ? 'Nothing archived for today yet — showing the 9:15 open against the live chain. The shape fills in as the ingest worker captures snapshots.'
                   : view.open_is_estimated

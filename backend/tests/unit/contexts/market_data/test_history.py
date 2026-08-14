@@ -290,3 +290,99 @@ class TestGetHistory:
         await get(_query(CandleInterval.D1))
 
         assert live.calls == 2
+
+
+class _FakeCache:
+    """An in-memory stand-in for the durable candle cache."""
+
+    def __init__(self, recent: CandleSeries | None = None) -> None:
+        self.stored: list[tuple[CandleSeries, int]] = []
+        self._recent = recent
+        self.recent_calls = 0
+
+    async def store(self, series: CandleSeries, *, retain_days: int, now: datetime) -> None:
+        self.stored.append((series, retain_days))
+
+    async def recent(
+        self,
+        instrument: InstrumentSymbol,
+        interval: CandleInterval,
+        *,
+        days: int,
+        now: datetime,
+    ) -> CandleSeries | None:
+        self.recent_calls += 1
+        return self._recent
+
+
+class TestHistoryCache:
+    @pytest.mark.asyncio
+    async def test_a_live_answer_is_written_through_with_the_retention_window(self) -> None:
+        cache = _FakeCache()
+        get = GetHistory(
+            resolver=_Resolver(_Provider("fyers", close="24600")),
+            fallback=_Provider("mock"),
+            clock=_Clock(MIDDAY),
+            cache=cache,
+            cache_retention_days=3,
+        )
+
+        await get(_query())
+
+        assert len(cache.stored) == 1
+        series, retain = cache.stored[0]
+        assert series.candles[0].close == Decimal("24600")
+        assert retain == 3
+
+    @pytest.mark.asyncio
+    async def test_mock_data_is_never_cached(self) -> None:
+        # The cache is a store of real bars; caching a mock session would let a
+        # later outage serve synthetic data dressed as cached-but-real.
+        cache = _FakeCache()
+        get = GetHistory(
+            resolver=_Resolver(_Provider("mock")),
+            fallback=_Provider("mock"),
+            clock=_Clock(MIDDAY),
+            cache=cache,
+        )
+
+        await get(_query())
+
+        assert cache.stored == []
+
+    @pytest.mark.asyncio
+    async def test_an_outage_with_no_in_process_last_good_falls_to_the_cache(self) -> None:
+        cached = _series(MIDDAY, DataSource.CACHED, "24555")
+        cache = _FakeCache(recent=cached)
+        fallback = _Provider("mock")
+        get = GetHistory(
+            resolver=_Resolver(_Provider("fyers", fails=True)),
+            fallback=fallback,
+            clock=_Clock(MIDDAY),
+            cache=cache,
+        )
+
+        series = await get(_query())
+
+        assert cache.recent_calls == 1
+        assert series.provenance.source is DataSource.CACHED
+        assert series.candles[0].close == Decimal("24555")
+        # The durable cache beat the mock: the fallback was never reached.
+        assert fallback.calls == 0
+
+    @pytest.mark.asyncio
+    async def test_the_cache_is_a_fallback_not_the_primary(self) -> None:
+        # A working broker is served directly; the cache is not consulted on the
+        # read path, only written to.
+        cache = _FakeCache(recent=_series(MIDDAY, DataSource.CACHED, "1"))
+        get = GetHistory(
+            resolver=_Resolver(_Provider("fyers", close="24600")),
+            fallback=_Provider("mock"),
+            clock=_Clock(MIDDAY),
+            cache=cache,
+        )
+
+        series = await get(_query())
+
+        assert cache.recent_calls == 0
+        assert series.candles[0].close == Decimal("24600")

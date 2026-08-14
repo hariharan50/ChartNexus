@@ -190,3 +190,28 @@ async def test_the_reconstructed_open_never_goes_negative() -> None:
     payload = await _view([late, later])(TENANT, "NIFTY")
 
     assert payload["series"][0]["call"][0] == 0
+
+
+# -- historical mode --------------------------------------------------------
+
+# A past trading day; the stub reader ignores the date, so any past instant works.
+PAST = datetime(2026, 8, 1, 12, 0, tzinfo=UTC)
+
+
+async def test_historical_reads_the_archived_day() -> None:
+    open_snap = ChainSnapshot(datetime(2026, 8, 4, 3, 45, tzinfo=UTC), _rows(200, 500))
+    now_snap = ChainSnapshot(datetime(2026, 8, 4, 5, 45, tzinfo=UTC), _rows(300, 300))
+
+    payload = await _view([open_snap, now_snap])(TENANT, "NIFTY", trade_date=PAST)
+
+    assert payload["data_quality"] == "intraday"
+    assert payload["total_call_oi"] == 600
+
+
+async def test_historical_with_no_archive_is_empty_not_live() -> None:
+    # A past day with nothing captured must not borrow today's live chain.
+    historical = await _view([])(TENANT, "NIFTY", trade_date=PAST)
+    assert historical["data_quality"] == "empty"
+
+    live = await _view([])(TENANT, "NIFTY")
+    assert live["data_quality"] == "live_proxy"
