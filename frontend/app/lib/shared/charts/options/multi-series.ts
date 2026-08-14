@@ -37,6 +37,14 @@ export interface SeriesLine {
   label: string;
   color: string;
   values: (number | null)[];
+  /**
+   * Fill the area under the line, faintly, in its own colour.
+   *
+   * Opt-in and off by default: the OI and PCR charts stack several lines that
+   * would smother each other as areas, but a single subject line — the ATM
+   * straddle — reads better as a filled band, which is what the reference draws.
+   */
+  fill?: boolean;
 }
 
 export interface MultiSeriesInput {
@@ -397,6 +405,9 @@ function contractSeries(xs: number[], line: SeriesLine, formatValue: (value: num
     smooth: false,
     lineStyle: { width: 2, color: line.color },
     itemStyle: { color: line.color },
+    // A faint fill under the line when the caller asks for one. Left off the
+    // object entirely otherwise, so a stack of lines is never quietly banded.
+    ...(line.fill ? { areaStyle: { color: withAlpha(line.color, 0.18) } } : {}),
     // Hovering one line fades the rest. With five contracts crossing repeatedly
     // this is the difference between a readable chart and a tangle.
     emphasis: { focus: 'series', lineStyle: { width: 3 } },

@@ -52,7 +52,7 @@ export default [
     ...prefix('options', [
       index('routes/terminal/options/index.tsx'),
       route('open-interest', 'routes/terminal/options/open-interest/route.tsx'),
-      route('atm-straddle', 'routes/terminal/options/atm-straddle.tsx'),
+      route('atm-straddle', 'routes/terminal/options/atm-straddle/route.tsx'),
       route('gamma-exposure', 'routes/terminal/options/gamma-exposure/route.tsx'),
       route('intraday-booster', 'routes/terminal/options/intraday-booster.tsx'),
       route('iv-grid', 'routes/terminal/options/iv-grid.tsx'),
@@ -72,7 +72,7 @@ export default [
       route('smart-oi', 'routes/terminal/options/smart-oi.tsx'),
       route('strategy-chart', 'routes/terminal/options/strategy-chart.tsx'),
       route('timeseries', 'routes/terminal/options/timeseries.tsx'),
-      route('vega-analysis', 'routes/terminal/options/vega-analysis.tsx'),
+      route('vega-analysis', 'routes/terminal/options/vega-analysis/route.tsx'),
       route('volatility-skew', 'routes/terminal/options/volatility-skew.tsx')
     ]),
 

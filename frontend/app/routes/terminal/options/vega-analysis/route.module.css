@@ -1,0 +1,517 @@
+/* Sidebar + main, the same two-column shell the other Options Lab tools use.
+   The shared classes (.panel, .instrument, .seg, .chip, .switch, …) are copied
+   from gamma-exposure/open-interest deliberately: the pages' controls should be
+   the *same* control, and a CSS Module cannot be extended across route
+   directories without hoisting it somewhere neither page owns. */
+.page {
+  padding: var(--mc-space-6);
+}
+
+.layout {
+  display: grid;
+  grid-template-columns: 290px 1fr;
+  gap: var(--mc-space-5, 1.25rem);
+  align-items: start;
+}
+
+.layout.collapsed {
+  grid-template-columns: 2rem 1fr;
+}
+
+.sidebar,
+.main {
+  display: flex;
+  flex-direction: column;
+  gap: var(--mc-space-5, 1.25rem);
+  min-width: 0;
+}
+
+.panel {
+  border: 1px solid var(--mc-border);
+  border-radius: var(--mc-radius-lg);
+  background: var(--mc-surface);
+  box-shadow: var(--mc-shadow);
+  padding: var(--mc-space-4);
+}
+
+.panel.muted {
+  color: var(--mc-text-muted);
+  text-align: center;
+}
+
+.banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--mc-space-3);
+  padding: var(--mc-space-4);
+  border: 1px solid var(--mc-bearish);
+  border-radius: var(--mc-radius-lg);
+  color: var(--mc-text);
+}
+
+.banner button {
+  padding: 0.375rem 0.75rem;
+  border: 1px solid var(--mc-border-strong);
+  border-radius: var(--mc-radius);
+  background: var(--mc-surface-raised);
+  color: var(--mc-text);
+  cursor: pointer;
+}
+
+.panel-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--mc-space-2);
+}
+
+.panel-head .p-title {
+  margin: 0;
+}
+
+.collapse-btn,
+.restore {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.75rem;
+  height: 1.75rem;
+  border: 1px solid var(--mc-border);
+  border-radius: var(--mc-radius-sm);
+  background: var(--mc-surface-raised);
+  color: var(--mc-text-muted);
+  font-size: var(--mc-text-sm);
+  cursor: pointer;
+}
+
+.restore {
+  position: sticky;
+  top: var(--mc-space-6);
+}
+
+.p-title {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+  margin: 0 0 var(--mc-space-3);
+  font-size: var(--mc-text-base);
+  font-weight: 700;
+}
+
+.ico {
+  display: inline-flex;
+  color: var(--mc-text-muted);
+}
+
+.ico svg {
+  width: 1rem;
+  height: 1rem;
+}
+
+/* -- sidebar controls -- */
+.instrument {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-top: var(--mc-space-3);
+  padding: 0.5rem 0.625rem;
+  border: 1px solid var(--mc-border);
+  border-radius: var(--mc-radius);
+  background: var(--mc-surface-raised);
+}
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.75rem;
+  height: 1.75rem;
+  border-radius: 999px;
+  background: var(--mc-accent-weak);
+  color: var(--mc-accent);
+  font-size: var(--mc-text-xs);
+  font-weight: 700;
+}
+
+.short {
+  font-weight: 700;
+}
+
+.cyclers {
+  margin-left: auto;
+  display: inline-flex;
+  gap: 0.25rem;
+}
+
+.cyclers button {
+  width: 1.75rem;
+  height: 1.75rem;
+  border: 1px solid var(--mc-border);
+  border-radius: var(--mc-radius-sm);
+  background: var(--mc-surface);
+  color: var(--mc-text-muted);
+  cursor: pointer;
+}
+
+.sub-label {
+  margin: var(--mc-space-3) 0 0.375rem;
+  font-size: var(--mc-text-xs);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--mc-text-subtle);
+}
+
+.mode-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.5rem;
+}
+
+.seg {
+  padding: 0.5rem;
+  border: 1px solid var(--mc-border);
+  border-radius: var(--mc-radius);
+  background: transparent;
+  color: var(--mc-text-muted);
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.seg.active {
+  border-color: color-mix(in srgb, var(--mc-accent) 45%, transparent);
+  background: var(--mc-accent-weak);
+  color: var(--mc-accent);
+}
+
+.seg:disabled {
+  color: var(--mc-text-subtle);
+  cursor: not-allowed;
+}
+
+.select {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.5rem 0.625rem;
+  border: 1px solid var(--mc-border);
+  border-radius: var(--mc-radius);
+  background: var(--mc-surface-raised);
+  font-weight: 600;
+}
+
+.caret svg {
+  width: 0.875rem;
+  height: 0.875rem;
+  opacity: 0.7;
+}
+
+/* Expiry + Timeframe share a row, as the reference does. */
+.two-up {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.5rem;
+  align-items: end;
+}
+
+.select-native {
+  width: 100%;
+  padding: 0.5rem 0.625rem;
+  border: 1px solid var(--mc-border);
+  border-radius: var(--mc-radius);
+  background: var(--mc-surface-raised);
+  color: var(--mc-text);
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.timeframe-row {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 0.25rem;
+}
+
+.timeframe-row .seg {
+  padding: 0.5rem 0.25rem;
+  font-size: var(--mc-text-xs);
+}
+
+.filter-row {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 0.375rem;
+}
+
+.chip {
+  padding: 0.5rem 0;
+  border: 1px solid var(--mc-border);
+  border-radius: var(--mc-radius-sm);
+  background: transparent;
+  color: var(--mc-text-muted);
+  font-size: var(--mc-text-xs);
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.chip.active {
+  border-color: color-mix(in srgb, var(--mc-accent) 45%, transparent);
+  background: var(--mc-accent-weak);
+  color: var(--mc-accent);
+}
+
+.hint {
+  margin: 0.375rem 0 0;
+  font-size: 0.6875rem;
+  color: var(--mc-text-subtle);
+}
+
+/* -- chart panel -- */
+.chart-top {
+  display: flex;
+  align-items: center;
+  gap: var(--mc-space-4);
+  flex-wrap: wrap;
+  margin-bottom: var(--mc-space-3);
+}
+
+.chart-top .p-title {
+  margin: 0;
+}
+
+.chart-top-right {
+  margin-left: auto;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--mc-space-3);
+}
+
+.live {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  font-size: var(--mc-text-sm);
+  color: var(--mc-text-muted);
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+
+.live.stale {
+  color: var(--mc-bearish);
+}
+
+.live.stale .dot {
+  background: var(--mc-bearish);
+}
+
+.dot {
+  width: 0.5rem;
+  height: 0.5rem;
+  border-radius: 50%;
+  background: var(--mc-bullish);
+}
+
+.dot.pulse {
+  animation: pulse 1.2s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  50% {
+    opacity: 0.35;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .dot.pulse {
+    animation: none;
+  }
+}
+
+.sep {
+  color: var(--mc-border-strong);
+}
+
+.download {
+  padding: 0.3125rem 0.625rem;
+  border: 1px solid var(--mc-border);
+  border-radius: var(--mc-radius);
+  background: var(--mc-surface-raised);
+  color: var(--mc-text-muted);
+  font-size: var(--mc-text-xs);
+  font-weight: 600;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+/* -- legend (series eye-toggles over the chart) -- */
+.legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--mc-space-2);
+  margin-bottom: var(--mc-space-2);
+}
+
+.entry {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  padding: 0.3125rem 0.625rem;
+  border: 1px solid var(--mc-border);
+  border-radius: var(--mc-radius);
+  background: var(--mc-surface-raised);
+  color: var(--mc-text);
+  font-size: var(--mc-text-xs);
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.entry.off {
+  color: var(--mc-text-subtle);
+  text-decoration: line-through;
+}
+
+.swatch {
+  width: 0.75rem;
+  height: 0.75rem;
+  border-radius: 3px;
+  flex: none;
+}
+
+.eye {
+  display: inline-flex;
+}
+
+.eye svg {
+  width: 0.875rem;
+  height: 0.875rem;
+}
+
+/* Qualified by `.panel`. `EChart.module.css` also defines a `.chart`
+   (`height: 100%`); with equal specificity the winner is emit order, which
+   resolved to 100% of an auto-height parent, i.e. nothing. */
+.panel .chart {
+  height: 460px;
+}
+
+/* -- time scrub -- */
+.slider-row {
+  display: flex;
+  align-items: center;
+  gap: var(--mc-space-3);
+  margin-top: var(--mc-space-4);
+}
+
+.reset {
+  padding: 0.3125rem 0.75rem;
+  border: 1px solid color-mix(in srgb, var(--mc-bearish) 40%, transparent);
+  border-radius: var(--mc-radius);
+  background: color-mix(in srgb, var(--mc-bearish) 12%, transparent);
+  color: var(--mc-bearish);
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.reset:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+.end {
+  display: flex;
+  flex-direction: column;
+  font-size: var(--mc-text-xs);
+  color: var(--mc-text-subtle);
+  white-space: nowrap;
+}
+
+.end-caption {
+  font-size: 0.6875rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--mc-text-subtle);
+}
+
+.caption {
+  margin: var(--mc-space-3) 0 0;
+  font-size: var(--mc-text-xs);
+  color: var(--mc-text-subtle);
+}
+
+.empty {
+  margin: 0;
+  padding: var(--mc-space-6) 0;
+  text-align: center;
+  color: var(--mc-text-muted);
+}
+
+/* -- table (Chart + Table view) -- */
+.table-wrap {
+  margin-top: var(--mc-space-4);
+  max-height: 320px;
+  overflow: auto;
+  border: 1px solid var(--mc-border);
+  border-radius: var(--mc-radius);
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--mc-text-xs);
+  font-variant-numeric: tabular-nums;
+}
+
+.table th,
+.table td {
+  padding: 0.375rem 0.625rem;
+  text-align: right;
+  white-space: nowrap;
+}
+
+.table th:first-child,
+.table td:first-child {
+  text-align: left;
+}
+
+.table thead th {
+  position: sticky;
+  top: 0;
+  background: var(--mc-surface-raised);
+  color: var(--mc-text-subtle);
+  font-weight: 600;
+  border-bottom: 1px solid var(--mc-border);
+}
+
+.table tbody tr:nth-child(even) {
+  background: color-mix(in srgb, var(--mc-surface-raised) 45%, transparent);
+}
+
+.pos {
+  color: var(--mc-bullish);
+}
+
+.neg {
+  color: var(--mc-bearish);
+}
+
+@media (max-width: 72rem) {
+  .layout,
+  .layout.collapsed {
+    grid-template-columns: 1fr;
+  }
+
+  .restore {
+    position: static;
+    width: 100%;
+  }
+}
+
+.empty-panel {
+  display: flex;
+  flex-direction: column;
+  gap: var(--mc-space-3);
+  max-width: 24rem;
+  margin: var(--mc-space-6) auto;
+}
+
+.empty-panel .muted {
+  text-align: center;
+}

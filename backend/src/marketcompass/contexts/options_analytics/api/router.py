@@ -19,6 +19,8 @@ from marketcompass.contexts.options_analytics.api.schemas import (
     OiViewResponse,
     PcrSeriesResponse,
     PriceOiSeriesResponse,
+    StraddleSeriesResponse,
+    VegaResponse,
 )
 from marketcompass.contexts.options_analytics.application.oi_series_service import (
     DEFAULT_INTERVAL,
@@ -252,5 +254,80 @@ async def gex(
 
     payload = await services.gex(principal.tenant_id, symbol, trade_date=_trade_date(date_))
     response = GexResponse.of(payload)
+    await redis.client.set(cache_key, response.model_dump_json(), ex=_CACHE_TTL_SECONDS)
+    return response
+
+
+@router.get(
+    "/vega/{instrument_id}",
+    response_model=VegaResponse,
+    summary="Intraday per-strike vega exposure",
+    description=(
+        "Aggregate option vega by strike through the session — call and put "
+        "vega in lakh per one volatility point, at every capture, with the "
+        "put-call-parity synthetic future overlaid. The client sums the window "
+        "it draws and plots each side's change since the open. Powers Vega "
+        "Analysis."
+    ),
+    responses={422: {"description": "Unknown instrument"}},
+)
+async def vega(
+    request: Request,
+    principal: CurrentPrincipal,
+    services: Services,
+    instrument_id: InstrumentParam,
+    *,
+    date_: DateParam = None,
+) -> VegaResponse:
+    symbol = instrument_id.strip().upper()
+    redis = get_container(request).redis
+    # The strike window and the timeframe are both applied on the client, so one
+    # entry per tenant/symbol/day serves every reader of that session.
+    cache_key = redis.key("lab:vega", str(principal.tenant_id), symbol, _day_key(date_))
+
+    cached = await redis.client.get(cache_key)
+    if cached is not None:
+        return VegaResponse.model_validate_json(cached)
+
+    payload = await services.vega(principal.tenant_id, symbol, trade_date=_trade_date(date_))
+    response = VegaResponse.of(payload)
+    await redis.client.set(cache_key, response.model_dump_json(), ex=_CACHE_TTL_SECONDS)
+    return response
+
+
+@router.get(
+    "/straddle-series/{instrument_id}",
+    response_model=StraddleSeriesResponse,
+    summary="Intraday ATM straddle premium and per-strike straddles",
+    description=(
+        "Each strike's call and put last price through the session, the rolling "
+        "at-the-money straddle (call + put at each capture's ATM), and the "
+        "tradable future overlaid. The client picks a strike or the rolling ATM "
+        "and applies the timeframe. Powers the ATM Straddle Chart."
+    ),
+    responses={422: {"description": "Unknown instrument"}},
+)
+async def straddle_series(
+    request: Request,
+    principal: CurrentPrincipal,
+    services: Services,
+    instrument_id: InstrumentParam,
+    *,
+    date_: DateParam = None,
+) -> StraddleSeriesResponse:
+    symbol = instrument_id.strip().upper()
+    redis = get_container(request).redis
+    # The strike selection and the timeframe are both applied on the client, so
+    # one entry per tenant/symbol/day serves every reader of that session.
+    cache_key = redis.key("lab:straddle-series", str(principal.tenant_id), symbol, _day_key(date_))
+
+    cached = await redis.client.get(cache_key)
+    if cached is not None:
+        return StraddleSeriesResponse.model_validate_json(cached)
+
+    payload = await services.straddle_series(
+        principal.tenant_id, symbol, trade_date=_trade_date(date_)
+    )
+    response = StraddleSeriesResponse.of(payload)
     await redis.client.set(cache_key, response.model_dump_json(), ex=_CACHE_TTL_SECONDS)
     return response

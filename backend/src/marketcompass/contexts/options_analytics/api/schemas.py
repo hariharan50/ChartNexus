@@ -239,3 +239,96 @@ class GexResponse(_Schema):
     @classmethod
     def of(cls, payload: dict[str, Any]) -> GexResponse:
         return cls.model_validate(payload)
+
+
+class VegaFrameResponse(_Schema):
+    """One capture's aggregate-vega profile, plus the synthetic future.
+
+    The two vega arrays are aligned to the payload's ``strikes`` and are the
+    per-strike aggregate vega on each side, in **lakh** per one volatility
+    point. Both sides are positive; the page plots each side's change since the
+    open, and that delta is what carries the sign the chart reads.
+    """
+
+    t: str
+    spot: float
+    #: `None` on captures taken before the ATM column was denormalised.
+    atm: float | None
+    #: Put-call parity forward at the money, falling back to the tradable
+    #: future; `None` only when neither is available for this capture.
+    synth_future: float | None
+    call_vega: list[float]
+    put_vega: list[float]
+
+
+class VegaResponse(_Schema):
+    """Per-strike vega exposure behind the Vega Analysis tool."""
+
+    instrument_id: str
+    symbol: str
+    expiry_date: str | None
+    lot_size: int | None
+    spot: float
+    atm_strike: float | None
+    open_ts: str
+    now_ts: str
+    data_quality: str
+    #: Always `False` here — vega has no reconstructable session open.
+    open_is_estimated: bool = False
+    # Fraction of legs that carried a quoted implied volatility, 0-1. Without
+    # it, a chain the broker priced no volatility on renders as a flat profile
+    # indistinguishable from a balanced book.
+    iv_coverage: float
+    #: The shared strike axis every frame's arrays are aligned to.
+    strikes: list[float]
+    t: list[str]
+    frames: list[VegaFrameResponse]
+
+    @classmethod
+    def of(cls, payload: dict[str, Any]) -> VegaResponse:
+        return cls.model_validate(payload)
+
+
+class StraddleFrameResponse(_Schema):
+    """One capture's per-strike premiums, the rolling ATM straddle, the future.
+
+    ``ce_ltp`` / ``pe_ltp`` are aligned to the payload's ``strikes`` — each
+    strike's last call and put price, `None` where that leg was not quoted in
+    the frame. ``atm_straddle`` is `call + put` at the money for the frame, the
+    rolling line the chart draws by default; `None` when the ATM legs are gone.
+    """
+
+    t: str
+    spot: float
+    #: `None` on captures taken before the ATM column was denormalised.
+    atm: float | None
+    #: The tradable future overlay; `None` only when neither future nor spot is
+    #: available for this capture.
+    future: float | None
+    atm_straddle: float | None
+    ce_ltp: list[float | None]
+    pe_ltp: list[float | None]
+
+
+class StraddleSeriesResponse(_Schema):
+    """Intraday per-strike straddle premiums behind the ATM Straddle Chart."""
+
+    instrument_id: str
+    symbol: str
+    expiry_date: str | None
+    lot_size: int | None
+    spot: float
+    atm_strike: float | None
+    open_ts: str
+    now_ts: str
+    data_quality: str
+    #: Always `False` here — a straddle premium has no reconstructable open.
+    open_is_estimated: bool = False
+    #: The shared strike axis every frame's arrays are aligned to.
+    strikes: list[float]
+    t: list[str]
+    frames: list[StraddleFrameResponse]
+
+    @classmethod
+    def of(cls, payload: dict[str, Any]) -> StraddleSeriesResponse:
+        return cls.model_validate(payload)
