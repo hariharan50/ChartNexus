@@ -1,5 +1,6 @@
 import { cx } from '$shared/ui/cx';
-import { STEPS } from './content';
+import { IconCheck, IconCross } from './components/icons';
+import { FAQ, NEEDS, STEPS } from './content';
 import s from './route.module.css';
 import type { Route } from './+types/how-it-works';
 
@@ -26,14 +27,74 @@ export default function HowItWorks() {
           </p>
         </div>
 
-        <div className={cx(s.grid, s.grid3)}>
+        <ol className={s.timeline}>
           {STEPS.map((step) => (
-            <article key={step.n} className={s.card}>
+            <li key={step.n} className={s.timelineItem}>
               <span className={cx(s.stepBadge, 'mc-numeric')}>{step.n}</span>
-              <h3 className={s.cardTitle}>{step.title}</h3>
-              <p className={s.cardBody}>{step.body}</p>
-            </article>
+              <div className={s.timelineBody}>
+                <h3>{step.title}</h3>
+                <p>{step.body}</p>
+              </div>
+            </li>
           ))}
+        </ol>
+      </div>
+
+      {/* What you need vs. what you don't — sets expectations before sign-up. */}
+      <div className={s.section}>
+        <div className={s.shell}>
+          <div className={s.sectionHead}>
+            <p className={s.eyebrow}>Before you start</p>
+            <h2 className={s.h2}>What you need, and what you don’t.</h2>
+          </div>
+
+          <div className={s.checks}>
+            <div className={s.checkCol}>
+              <h3>What you need</h3>
+              <ul className={cx(s.checkList, s.need)}>
+                {NEEDS.need.map((item) => (
+                  <li key={item}>
+                    <IconCheck />
+                    {item}
+                  </li>
+                ))}
+              </ul>
+            </div>
+            <div className={s.checkCol}>
+              <h3>What you don’t</h3>
+              <ul className={cx(s.checkList, s.skip)}>
+                {NEEDS.skip.map((item) => (
+                  <li key={item}>
+                    <IconCross />
+                    {item}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* FAQ — plain HTML <details>, no JS, no modal. */}
+      <div className={s.section}>
+        <div className={s.shell}>
+          <div className={s.sectionHead}>
+            <p className={s.eyebrow}>Questions, answered</p>
+            <h2 className={s.h2}>The honest FAQ.</h2>
+            <p className={s.lead}>
+              If the app polls instead of streams, this page says so. No claim here survives its
+              first contradiction inside the terminal.
+            </p>
+          </div>
+
+          <div className={s.faq}>
+            {FAQ.map((item) => (
+              <details key={item.q} className={s.faqItem}>
+                <summary className={s.faqQ}>{item.q}</summary>
+                <p className={s.faqA}>{item.a}</p>
+              </details>
+            ))}
+          </div>
         </div>
       </div>
     </section>

@@ -58,6 +58,8 @@ var t=localStorage.getItem('mc-theme');
 if(t==='light'||t==='dark'||t==='midnight'||t==='warm'||t==='terminal')document.documentElement.setAttribute('data-theme',t);
 var c=localStorage.getItem('mc-pref-callput');
 document.documentElement.setAttribute('data-callput',c==='inverted'?'inverted':'classic');
+var lp=localStorage.getItem('mc-landing-theme');
+if(lp==='light')document.documentElement.setAttribute('data-lp-theme','light');
 }catch(e){}`;
 
 // `meta` owns the title in both states. The error branch is what

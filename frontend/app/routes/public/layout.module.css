@@ -30,6 +30,36 @@
   background: var(--mc-auth-bg);
 }
 
+/* Follow the landing page's light theme. When a visitor turned the landing to
+   light (attribute `data-lp-theme="light"` on <html>, persisted across
+   navigation) the Log in / Create account pages match it: the form side turns
+   light and readable, while the decorative rust brand panel stays as-is. Scoped
+   to this attribute only, so the app-wide theme is untouched. */
+:global(html[data-lp-theme='light']) .auth-layout {
+  --mc-field-bg: #ffffff;
+  --mc-field-bg-hover: #f4f1ea;
+  --mc-field-border: #d2ccbb;
+  --mc-auth-border: #d2ccbb;
+
+  --mc-text: #2a2620;
+  --mc-text-muted: #5f594c;
+  --mc-text-subtle: #6f695a;
+
+  /* Links, the primary button and the checkbox accent read --mc-brand/--mc-accent;
+     the status banners read --mc-live/--mc-danger/--mc-warning. Re-pin them to
+     light-legible values (the landing rust for brand) since the app's own theme
+     is still dark underneath. */
+  --mc-brand: #b0401d;
+  --mc-accent: #b0401d;
+  --mc-live: #157a38;
+  --mc-danger: #b3261e;
+  --mc-warning: #b7791f;
+
+  color: #2a2620;
+  background: #f7f4ed;
+  color-scheme: light;
+}
+
 /* --- left panel --------------------------------------------------------- */
 
 .brand-panel {
@@ -172,6 +202,27 @@
 .form-inner {
   width: 100%;
   max-width: 21rem;
+}
+
+/* Page transition: the form wrapper is re-keyed per route, so this enter
+   animation replays on every navigation (login ↔ register, and arriving from
+   the landing page) — the form fades and rises in rather than snapping.
+   Honoured only when the visitor allows motion. */
+@media (prefers-reduced-motion: no-preference) {
+  .page-enter {
+    animation: page-enter 0.32s cubic-bezier(0.22, 0.61, 0.36, 1) both;
+  }
+}
+
+@keyframes page-enter {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 /* Below this width the two columns each become too narrow to read, so the

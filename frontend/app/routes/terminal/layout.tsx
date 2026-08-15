@@ -9,7 +9,6 @@ import { createQueryClient } from '$shared/api/query-client';
 import { createServerFetch } from '$shared/api/server-fetch';
 import { cx } from '$shared/ui/cx';
 import IconBolt from '$shared/ui/icons/IconBolt';
-import IconBrain from '$shared/ui/icons/IconBrain';
 import IconChart from '$shared/ui/icons/IconChart';
 import IconChevronDown from '$shared/ui/icons/IconChevronDown';
 import IconMessage from '$shared/ui/icons/IconMessage';
@@ -20,7 +19,6 @@ import IconShield from '$shared/ui/icons/IconShield';
 import IconSignOut from '$shared/ui/icons/IconSignOut';
 import IconSun from '$shared/ui/icons/IconSun';
 import IconTarget from '$shared/ui/icons/IconTarget';
-import IconTerminal from '$shared/ui/icons/IconTerminal';
 import IconUser from '$shared/ui/icons/IconUser';
 import { selectIsDark, useThemeStore } from '$shared/ui/theme-store';
 import { useHydratePreferences } from '$shared/ui/use-hydrate-preferences';
@@ -130,7 +128,7 @@ const nav: NavItem[] = [
       {
         label: 'Market Analysis',
         href: '/ai-console',
-        icon: IconBrain,
+        icon: IconBolt,
         desc: 'Decision, skills, levels & trade scaffold'
       },
       {
@@ -396,12 +394,6 @@ function TerminalShell({ user }: { user: User }) {
                     <IconSettings />
                   </span>
                   Settings
-                </Link>
-                <Link className={s.menuItem} to="/ai-console/agent">
-                  <span className={s.menuIco} aria-hidden="true">
-                    <IconTerminal />
-                  </span>
-                  Console
                 </Link>
               </div>
 

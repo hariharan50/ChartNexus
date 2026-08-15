@@ -18,6 +18,11 @@ export type GlyphName =
   | 'chat'
   | 'link'
   | 'mail'
+  | 'clock'
+  | 'database'
+  | 'refresh'
+  | 'ban'
+  | 'wallet'
   | 'facebook'
   | 'instagram'
   | 'music'
@@ -97,6 +102,40 @@ const GLYPHS: Record<GlyphName, React.ReactNode> = {
       <path d="m3 7 9 6 9-6" />
     </>
   ),
+  clock: (
+    <>
+      <circle cx="12" cy="12" r="9" />
+      <path d="M12 7v5l3.5 2" />
+    </>
+  ),
+  database: (
+    <>
+      <ellipse cx="12" cy="5.5" rx="8" ry="3" />
+      <path d="M4 5.5v13c0 1.7 3.6 3 8 3s8-1.3 8-3v-13" />
+      <path d="M4 12c0 1.7 3.6 3 8 3s8-1.3 8-3" />
+    </>
+  ),
+  refresh: (
+    <>
+      <path d="M20 11a8 8 0 0 0-14-4.5L4 9" />
+      <path d="M4 4v5h5" />
+      <path d="M4 13a8 8 0 0 0 14 4.5L20 15" />
+      <path d="M20 20v-5h-5" />
+    </>
+  ),
+  ban: (
+    <>
+      <circle cx="12" cy="12" r="9" />
+      <path d="M5.6 5.6 18.4 18.4" />
+    </>
+  ),
+  wallet: (
+    <>
+      <rect x="3" y="6" width="18" height="13" rx="2.5" />
+      <path d="M3 9h13a2 2 0 0 1 0 4H3" />
+      <path d="M16.5 11h.01" />
+    </>
+  ),
   facebook: <path d="M14 8h2V5h-2a3 3 0 0 0-3 3v2H9v3h2v6h3v-6h2.2l.4-3H14V8.4c0-.3.2-.4.6-.4Z" />,
   instagram: (
     <>
@@ -126,6 +165,16 @@ export function IconCheck() {
     <Svg>
       <circle cx="12" cy="12" r="9" />
       <path d="m8.5 12 2.5 2.5 4.5-5" />
+    </Svg>
+  );
+}
+
+export function IconCross() {
+  return (
+    <Svg>
+      <circle cx="12" cy="12" r="9" />
+      <path d="M9 9l6 6" />
+      <path d="M15 9l-6 6" />
     </Svg>
   );
 }

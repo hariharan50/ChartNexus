@@ -3,9 +3,12 @@ import { currentUser } from '$contexts/identity/api';
 import { createServerFetch } from '$shared/api/server-fetch';
 import IconBolt from '$shared/ui/icons/IconBolt';
 import IconMenu from '$shared/ui/icons/IconMenu';
+import IconSun from '$shared/ui/icons/IconSun';
+import IconMoon from '$shared/ui/icons/IconMoon';
 import { cx } from '$shared/ui/cx';
 import { requestIdContext } from '../../middleware/context';
 import { useDrawer } from './hooks/use-drawer';
+import { useLandingTheme } from './hooks/use-landing-theme';
 import { Icon, IconClose, IconLock } from './components/icons';
 import { FOOTER_COLS, NAV, SOCIAL } from './content';
 import s from './route.module.css';
@@ -39,10 +42,17 @@ export async function loader({ request, context }: Route.LoaderArgs) {
 }
 
 export default function MarketingLayout() {
+  // Re-key the outlet wrapper on the path so React remounts it on every
+  // navigation — that replays the CSS enter animation, so switching sections
+  // fades/slides in rather than snapping. `prefers-reduced-motion` disables it.
+  const { pathname } = useLocation();
+
   return (
     <div className={s.landing}>
       <Nav />
-      <Outlet />
+      <main key={pathname} className={s.pageEnter}>
+        <Outlet />
+      </main>
       <FinalCta />
       <Footer />
     </div>
@@ -53,7 +63,20 @@ export default function MarketingLayout() {
 function Nav() {
   const { open, setOpen, close, dialogRef, triggerRef } = useDrawer();
   const { pathname } = useLocation();
+  const { isDark, toggle } = useLandingTheme();
   const isActive = (to: string) => (to === '/' ? pathname === '/' : pathname === to);
+
+  const themeToggle = (
+    <button
+      type="button"
+      className={s.themeToggle}
+      onClick={toggle}
+      aria-label={isDark ? 'Switch to light theme' : 'Switch to dark theme'}
+      title="Toggle theme"
+    >
+      <span suppressHydrationWarning>{isDark ? <IconSun /> : <IconMoon />}</span>
+    </button>
+  );
 
   return (
     <header className={s.bar}>
@@ -82,6 +105,7 @@ function Nav() {
         </nav>
 
         <div className={s.navActions}>
+          {themeToggle}
           <Link className={cx(s.btn, s.btnGhost)} to="/login">
             Log in
           </Link>
@@ -111,9 +135,17 @@ function Nav() {
               </span>
               MarketCompass
             </span>
-            <button type="button" className={s.drawerClose} aria-label="Close menu" onClick={close}>
-              <IconClose />
-            </button>
+            <div className={s.drawerHeadActions}>
+              {themeToggle}
+              <button
+                type="button"
+                className={s.drawerClose}
+                aria-label="Close menu"
+                onClick={close}
+              >
+                <IconClose />
+              </button>
+            </div>
           </div>
 
           <div className={s.drawerLinks}>

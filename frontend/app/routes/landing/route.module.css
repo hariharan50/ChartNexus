@@ -24,49 +24,53 @@
   --mc-text-muted: #8a8a8a; /* 5.1:1 on #131313 */
   --mc-text-subtle: #9a9aa2; /* 6.3:1 — the reference's #6a6a6a fails AA on this ground */
 
-  --mc-accent: #fb7a33;
-  --mc-accent-weak: #2b1710;
+  --mc-accent: #cf5a30;
+  --mc-accent-weak: #2a140b;
 
   /* The reused ChainWidget reads a few `--mc-landing-*` tokens directly; re-pin
-     them here so it wears the burnt-orange palette. */
-  --mc-landing-accent: #fb7a33;
-  --mc-landing-accent-weak: #2b1710;
+     them here so it wears the rust palette. */
+  --mc-landing-accent: #cf5a30;
+  --mc-landing-accent-weak: #2a140b;
   --mc-landing-text: #ffffff;
 
   --mc-bullish: #31dd6a;
   --mc-bullish-weak: rgba(49, 221, 106, 0.12);
   --mc-bearish: #ff5c5c;
   --mc-bearish-weak: rgba(255, 92, 92, 0.12);
-  --mc-brand: #fb7a33;
+  --mc-brand: #cf5a30;
 
   /* Landing-local design tokens (`--lp-*`), not part of the app contract.
 
-     Accent is burnt orange. A single bright tone (#fb7a33) serves both as text
-     on the near-black page (6.1:1) and as a button fill under dark text (also
-     6.1:1); the darker rust from the reference image lives in the decorative
-     gradient and the CTA glow, where it is never load-bearing for contrast. */
-  --lp-primary: #fb7a33;
-  --lp-primary-hover: #ff8c4a;
-  --lp-on-primary: #131313;
+     Accent is a rust / burnt-terracotta (the reference swatch). This single
+     tone (#cf5a30) is chosen to clear AA both ways on the near-black ground: as
+     accent text (~4.6:1) and as a button fill under dark text (~4.6:1). The
+     deeper true-rust tones from the swatch live in the decorative gradient and
+     the CTA glow, where they are never load-bearing for contrast. */
+  --lp-primary: #cf5a30;
+  --lp-primary-hover: #e26a3c;
+  --lp-on-primary: #150a05;
+  /* Heading / emphasis ink. White on the dark page; flipped to near-black in the
+     light theme so headings never vanish on a light ground. */
+  --lp-heading: #fff;
   --lp-gain: #31dd6a;
   --lp-gain-text: #4fe483;
   --lp-loss: #ff5c5c;
   --lp-loss-text: #ff7b7b;
   --lp-warn: #f5c451;
-  --lp-accent-gradient: linear-gradient(135deg, #c34d20 0%, #9c3c1c 55%, #6b2c18 100%);
+  --lp-accent-gradient: linear-gradient(135deg, #bf4a2a 0%, #9c3c1c 55%, #6b2c18 100%);
 
-  --lp-shadow-cta: 0 6px 20px -8px rgba(251, 122, 51, 0.5);
+  --lp-shadow-cta: 0 6px 20px -8px rgba(191, 74, 42, 0.55);
   --lp-shadow-md: 0 10px 34px rgba(0, 0, 0, 0.5), inset 0 0 0 1px rgba(69, 69, 69, 0.15);
   --lp-shadow-nav: 0 8px 40px -18px rgba(0, 0, 0, 0.7);
 
-  /* Warm cream footer — a deliberate contrast against the dark page. */
-  --lp-footer-bg: #eae1cc;
-  --lp-footer-bg2: #e1d5b6;
-  --lp-footer-text: #5b5442;
-  --lp-footer-heading: #2a2a2a;
-  --lp-footer-sub: #5a5343; /* darkened from the reference's #7c7358 to clear AA on cream */
-  --lp-footer-link: #1d4ed8; /* the reference's #2563eb fails AA on cream; this clears 5:1 */
-  --lp-footer-border: rgba(0, 0, 0, 0.14);
+  /* Deeper sand footer — a warm, darker tan against the near-black page. */
+  --lp-footer-bg: #d8c69a;
+  --lp-footer-bg2: #cab785;
+  --lp-footer-text: #4b4432;
+  --lp-footer-heading: #241f16;
+  --lp-footer-sub: #4a4331; /* dark enough to clear AA on the deeper sand */
+  --lp-footer-link: #163fb8; /* deepened so it still clears AA on the darker ground */
+  --lp-footer-border: rgba(0, 0, 0, 0.18);
 
   --lp-r-card: 16px;
   --lp-r-pill: 999px;
@@ -75,20 +79,20 @@
      not just more whitespace; the ceilings lift again on the wide breakpoints
      below. Reading measures (`.lead`, paragraphs) keep their own max-widths, so
      only headings and layout grow — lines never stretch past ~70 characters. */
-  --lp-display-1: clamp(2.25rem, 1.55rem + 2.2vw, 3.25rem);
-  --lp-display-2: clamp(1.625rem, 1.3rem + 1.3vw, 2.25rem);
-  --lp-display-3: clamp(1.0625rem, 0.98rem + 0.4vw, 1.375rem);
-  --lp-lead: clamp(0.9375rem, 0.9rem + 0.2vw, 1.125rem);
-  --lp-body: clamp(0.875rem, 0.85rem + 0.12vw, 0.9375rem);
+  --lp-display-1: clamp(1.875rem, 1.35rem + 1.6vw, 2.75rem);
+  --lp-display-2: clamp(1.375rem, 1.15rem + 0.9vw, 1.875rem);
+  --lp-display-3: clamp(1rem, 0.95rem + 0.3vw, 1.1875rem);
+  --lp-lead: clamp(0.875rem, 0.84rem + 0.16vw, 1rem);
+  --lp-body: clamp(0.8125rem, 0.8rem + 0.1vw, 0.875rem);
 
   /* Fill the screen on wide monitors without the column of dead glass either
      side — but the type and spacing stay measured, so a bigger display reads as
      roomier, not zoomed-in. */
-  --lp-max: 88rem;
-  --lp-gutter: clamp(1.25rem, 4vw, 2.5rem);
-  --lp-section-y: clamp(3.5rem, 6vw, 6rem);
-  --lp-grid-gap: clamp(1rem, 1.1vw, 1.5rem);
-  --lp-card-pad: clamp(1.25rem, 0.95rem + 0.7vw, 1.75rem);
+  --lp-max: 82rem;
+  --lp-gutter: clamp(1rem, 3.5vw, 2rem);
+  --lp-section-y: clamp(2.25rem, 4vw, 3.75rem);
+  --lp-grid-gap: clamp(0.75rem, 1vw, 1.25rem);
+  --lp-card-pad: clamp(1rem, 0.85rem + 0.55vw, 1.375rem);
 
   color: var(--mc-text);
   color-scheme: dark;
@@ -106,25 +110,92 @@
    bigger cards, not longer lines. */
 @media (min-width: 100rem) {
   .landing {
-    --lp-max: 96rem;
-    --lp-gutter: clamp(2.5rem, 4vw, 4.5rem);
-    --lp-section-y: clamp(4.5rem, 6vw, 7rem);
-    --lp-display-1: clamp(2.75rem, 1rem + 2.6vw, 3.75rem);
-    --lp-display-2: clamp(2rem, 1rem + 1.6vw, 2.5rem);
+    --lp-max: 90rem;
+    --lp-gutter: clamp(2rem, 4vw, 3.5rem);
+    --lp-section-y: clamp(3rem, 5vw, 4.5rem);
+    --lp-display-1: clamp(2.25rem, 1rem + 2vw, 3rem);
+    --lp-display-2: clamp(1.625rem, 1rem + 1.1vw, 2rem);
   }
 }
 
 @media (min-width: 130rem) {
   .landing {
-    --lp-max: 108rem;
-    --lp-gutter: clamp(3.5rem, 4vw, 6rem);
+    --lp-max: 100rem;
+    --lp-gutter: clamp(3rem, 4vw, 5rem);
   }
 }
 
 @media (min-width: 160rem) {
   .landing {
-    --lp-max: 120rem;
+    --lp-max: 112rem;
   }
+}
+
+/* ---------------------------------------------------------------------------
+   Light theme — landing only. Opt-in via `data-lp-theme="light"` on <html>
+   (set by the toggle and by the pre-paint bootstrap in root.tsx). It re-pins the
+   same token set to a warm-light palette; because every rule reads tokens (and
+   headings read --lp-heading), the whole page and the reused ChainWidget flip
+   with no per-component edits. Independent of the app-wide `data-theme`.
+   --------------------------------------------------------------------------- */
+:global(html[data-lp-theme='light']) .landing {
+  --mc-bg: #f7f4ed;
+  --mc-surface: #ffffff;
+  --mc-surface-raised: #f2eee5;
+  --mc-border: #e5e0d4;
+  --mc-border-strong: #d2ccbb;
+  --mc-field-bg: #ffffff;
+  --mc-field-border: #d2ccbb;
+
+  --mc-text: #2a2620;
+  --mc-text-muted: #5f594c; /* 6.3:1 on #f7f4ed */
+  --mc-text-subtle: #6f695a; /* 5.1:1 */
+
+  --mc-accent: #b0401d;
+  --mc-accent-weak: #f6e3d9;
+
+  --mc-landing-accent: #b0401d;
+  --mc-landing-accent-weak: #f6e3d9;
+  --mc-landing-text: #2a2620;
+
+  --mc-bullish: #14a44a;
+  --mc-bullish-weak: rgba(20, 164, 74, 0.14);
+  --mc-bearish: #d33a2f;
+  --mc-bearish-weak: rgba(211, 58, 47, 0.12);
+  --mc-brand: #b0401d;
+
+  /* Rust accent, deepened so it clears AA on the light ground (~5.3:1 as text,
+     ~5.8:1 as a fill under white button text). */
+  --lp-primary: #b0401d;
+  --lp-primary-hover: #983619;
+  --lp-on-primary: #ffffff;
+  --lp-heading: #1c180f;
+  --lp-gain: #14a44a;
+  --lp-gain-text: #157a38;
+  --lp-loss: #d33a2f;
+  --lp-loss-text: #b3261e;
+  --lp-warn: #b7791f;
+
+  --lp-shadow-cta: 0 6px 18px -8px rgba(176, 64, 29, 0.4);
+  --lp-shadow-md: 0 10px 30px rgba(20, 16, 10, 0.12), inset 0 0 0 1px rgba(0, 0, 0, 0.05);
+  --lp-shadow-nav: 0 8px 30px -18px rgba(0, 0, 0, 0.25);
+
+  /* Footer inverts: a dark charcoal anchor at the foot of the light page. */
+  --lp-footer-bg: #1c1c1c;
+  --lp-footer-bg2: #151515;
+  --lp-footer-text: #b7b2a6;
+  --lp-footer-heading: #ffffff;
+  --lp-footer-sub: #a29d91;
+  --lp-footer-link: #86b0ff; /* clears AA on charcoal */
+  --lp-footer-border: rgba(255, 255, 255, 0.14);
+
+  color-scheme: light;
+}
+
+/* The footer is a dark island in the light theme, so its own control surface
+   should render dark (base `.footer` pins `color-scheme: light`). */
+:global(html[data-lp-theme='light']) .landing .footer {
+  color-scheme: dark;
 }
 
 .hero-title,
@@ -159,7 +230,7 @@
   font-size: var(--lp-display-2);
   font-weight: 800;
   line-height: 1.08;
-  color: #fff;
+  color: var(--lp-heading);
 }
 
 .lead {
@@ -176,12 +247,13 @@
   align-items: center;
   justify-content: center;
   gap: 0.5rem;
-  height: 2.75rem;
-  padding: 0 1.25rem;
+  height: 2.375rem;
+  padding: 0 1.125rem;
   border-radius: var(--lp-r-pill);
   font-size: 0.8125rem;
   font-weight: 600;
   white-space: nowrap;
+  text-decoration: none;
   cursor: pointer;
   border: 1px solid transparent;
   transition:
@@ -189,6 +261,19 @@
     background 0.15s ease,
     border-color 0.15s ease,
     box-shadow 0.15s ease;
+}
+
+/* Button-styled links must never pick up the default link underline in any
+   interaction state — the fill/border is the highlight. Doubling the class
+   keeps this above the global `:where(a):hover` reset and any variant rule. */
+.btn.btn,
+.btn.btn:link,
+.btn.btn:visited,
+.btn.btn:hover,
+.btn.btn:focus,
+.btn.btn:focus-visible,
+.btn.btn:active {
+  text-decoration: none;
 }
 
 .btn-primary {
@@ -209,14 +294,14 @@
 }
 
 .btn-ghost:hover {
-  color: #fff;
+  color: var(--lp-heading);
   border-color: var(--mc-text-subtle);
 }
 
 .btn-lg {
-  height: 3rem;
-  padding: 0 1.75rem;
-  font-size: 0.9375rem;
+  height: 2.75rem;
+  padding: 0 1.5rem;
+  font-size: 0.875rem;
 }
 
 /* -- header / navbar ------------------------------------------------------ */
@@ -230,6 +315,7 @@
 }
 
 .nav {
+  position: relative;
   display: flex;
   align-items: center;
   gap: var(--mc-space-4);
@@ -242,7 +328,7 @@
   gap: 0.625rem;
   font-weight: 800;
   font-size: 1.0625rem;
-  color: #fff;
+  color: var(--lp-heading);
 }
 
 .mark {
@@ -251,7 +337,7 @@
   justify-content: center;
   width: 2.25rem;
   height: 2.25rem;
-  border-radius: 12px;
+  border-radius: 11px;
   background: var(--lp-primary);
   color: var(--lp-on-primary);
 }
@@ -264,8 +350,8 @@
 .nav-links {
   display: none;
   align-items: center;
-  gap: 0.25rem;
-  margin-left: 1.5rem;
+  gap: 0.1875rem;
+  margin-left: 1.25rem;
 }
 
 .nav-link {
@@ -281,7 +367,7 @@
 }
 
 .nav-link:hover {
-  color: #fff;
+  color: var(--lp-heading);
   background: var(--mc-surface);
 }
 
@@ -309,8 +395,8 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 2.75rem;
-  height: 2.75rem;
+  width: 2.375rem;
+  height: 2.375rem;
   margin-left: auto;
   border-radius: var(--lp-r-pill);
   border: 1px solid var(--mc-border-strong);
@@ -320,13 +406,54 @@
 }
 
 .trigger svg {
-  width: 1.25rem;
-  height: 1.25rem;
+  width: 1.125rem;
+  height: 1.125rem;
+}
+
+/* Light/dark theme toggle — a round icon button that sits just left of Log in.
+   Token-driven, so it reads correctly in both themes. */
+.theme-toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  width: 2.375rem;
+  height: 2.375rem;
+  border-radius: var(--lp-r-pill);
+  border: 1px solid var(--mc-border-strong);
+  background: var(--mc-surface);
+  color: var(--mc-text);
+  cursor: pointer;
+  transition:
+    color 0.15s ease,
+    border-color 0.15s ease,
+    background 0.15s ease;
+}
+
+.theme-toggle:hover {
+  color: var(--lp-heading);
+  border-color: var(--mc-text-subtle);
+}
+
+.theme-toggle span {
+  display: inline-flex;
+}
+
+.theme-toggle svg {
+  width: 1.125rem;
+  height: 1.125rem;
 }
 
 @media (min-width: 64rem) {
+  /* Centre the links in the bar independently of the brand/actions widths:
+     take them out of flow and pin to the horizontal centre. */
   .nav-links {
     display: flex;
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    margin-left: 0;
   }
   .nav-actions {
     display: flex;
@@ -368,13 +495,20 @@
   height: 3.25rem;
 }
 
+/* Theme toggle + close, grouped on the right of the drawer head. */
+.drawer-head-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-left: auto;
+}
+
 .drawer-close {
   display: inline-flex;
   align-items: center;
   justify-content: center;
   width: 2.75rem;
   height: 2.75rem;
-  margin-left: auto;
   border-radius: var(--lp-r-pill);
   border: 1px solid var(--mc-border-strong);
   background: var(--mc-surface);
@@ -420,18 +554,42 @@
 /* Anchor jumps land below the sticky header rather than under it. */
 .hero,
 .section {
-  scroll-margin-top: 5.5rem;
+  scroll-margin-top: 5.25rem;
+}
+
+/* Page transition: the outlet wrapper is re-keyed per route, so this enter
+   animation replays on every navigation — sections fade and rise in rather
+   than snapping. Honoured only when the visitor allows motion. */
+.page-enter {
+  display: block;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .page-enter {
+    animation: page-enter 0.32s cubic-bezier(0.22, 0.61, 0.36, 1) both;
+  }
+}
+
+@keyframes page-enter {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 /* -- hero ----------------------------------------------------------------- */
 .hero {
-  padding-top: clamp(2.5rem, 6vw, 4.5rem);
+  padding-top: clamp(1.75rem, 4.5vw, 3rem);
   padding-bottom: var(--lp-section-y);
 }
 
 .hero-grid {
   display: grid;
-  gap: clamp(2rem, 5vw, 3.5rem);
+  gap: clamp(1.5rem, 4vw, 2.75rem);
   align-items: center;
 }
 
@@ -475,7 +633,7 @@
 }
 
 .hero-label {
-  margin: 1.25rem 0 0.75rem;
+  margin: 1rem 0 0.625rem;
   font-size: 0.75rem;
   font-weight: 700;
   letter-spacing: 0.14em;
@@ -489,26 +647,26 @@
   font-size: var(--lp-display-1);
   font-weight: 800;
   line-height: 1.06;
-  color: #fff;
+  color: var(--lp-heading);
 }
 
 .hero-lead {
-  margin: 1.25rem 0 0;
+  margin: 1rem 0 0;
   max-width: 40rem;
   font-size: var(--lp-lead);
-  line-height: 1.6;
+  line-height: 1.55;
   color: var(--mc-text-muted);
 }
 
 .hero-actions {
   display: flex;
   flex-wrap: wrap;
-  gap: 0.75rem;
-  margin-top: 1.75rem;
+  gap: 0.625rem;
+  margin-top: 1.375rem;
 }
 
 .hero-fine {
-  margin: 1.25rem 0 0;
+  margin: 1rem 0 0;
   max-width: 34rem;
   font-size: 0.75rem;
   line-height: 1.5;
@@ -518,14 +676,14 @@
 .stats {
   display: flex;
   flex-wrap: wrap;
-  gap: clamp(1.5rem, 4vw, 3rem);
-  margin-top: 2.25rem;
+  gap: clamp(1.25rem, 3.5vw, 2.5rem);
+  margin-top: 1.75rem;
 }
 
 .stat-value {
-  font-size: clamp(1.5rem, 1.2rem + 0.5vw, 2rem);
+  font-size: clamp(1.375rem, 1.15rem + 0.4vw, 1.75rem);
   font-weight: 800;
-  color: #fff;
+  color: var(--lp-heading);
   font-variant-numeric: tabular-nums;
 }
 
@@ -564,7 +722,7 @@
   margin: 0.25rem 0 0;
   font-size: 1.125rem;
   font-weight: 700;
-  color: #fff;
+  color: var(--lp-heading);
 }
 
 .desk-pill {
@@ -621,7 +779,7 @@
 
 .section-head {
   max-width: 48rem;
-  margin-bottom: clamp(1.75rem, 3.5vw, 2.75rem);
+  margin-bottom: clamp(1.25rem, 2.5vw, 1.875rem);
 }
 
 /* -- feature grid (6 cards) ---------------------------------------------- */
@@ -686,7 +844,7 @@
   margin: 0;
   font-size: clamp(1.0625rem, 1rem + 0.2vw, 1.1875rem);
   font-weight: 700;
-  color: #fff;
+  color: var(--lp-heading);
 }
 
 .card-body {
@@ -743,7 +901,7 @@
 .row-label {
   font-size: var(--lp-body);
   font-weight: 600;
-  color: #fff;
+  color: var(--lp-heading);
 }
 
 /* -- scope cards (no icon) ----------------------------------------------- */
@@ -751,7 +909,7 @@
   margin: 0;
   font-size: 1rem;
   font-weight: 700;
-  color: #fff;
+  color: var(--lp-heading);
 }
 
 /* -- how it works (numbered steps) --------------------------------------- */
@@ -780,8 +938,7 @@
   border: 1px solid var(--mc-border-strong);
   border-radius: var(--lp-r-card);
   background:
-    radial-gradient(120% 140% at 0% 0%, rgba(251, 122, 51, 0.12), transparent 55%),
-    var(--mc-surface);
+    radial-gradient(120% 140% at 0% 0%, rgba(191, 74, 42, 0.16), transparent 55%), var(--mc-surface);
 }
 
 .cta-eyebrow {
@@ -805,7 +962,7 @@
   margin: 0;
   font-size: var(--lp-display-3);
   font-weight: 800;
-  color: #fff;
+  color: var(--lp-heading);
 }
 
 .cta-body {
@@ -829,12 +986,12 @@
   width: 100%;
   max-width: 80rem;
   margin-inline: auto;
-  padding: clamp(3rem, 6vw, 5rem) var(--lp-gutter) 0;
+  padding: clamp(1.25rem, 2.25vw, 1.75rem) var(--lp-gutter) 0;
 }
 
 .footer-brand {
   text-align: center;
-  font-size: clamp(1.5rem, 1.2rem + 1vw, 2rem);
+  font-size: clamp(1.0625rem, 1rem + 0.4vw, 1.25rem);
   font-weight: 800;
   color: var(--lp-footer-heading);
 }
@@ -844,29 +1001,29 @@
 .footer-top {
   display: grid;
   grid-template-columns: 1fr;
-  gap: clamp(2rem, 4vw, 3.5rem);
-  margin-top: clamp(2.5rem, 4vw, 3.5rem);
+  gap: clamp(1.25rem, 2.5vw, 1.75rem);
+  margin-top: clamp(1rem, 2vw, 1.5rem);
 }
 
 @media (min-width: 60rem) {
   .footer-top {
     grid-template-columns: repeat(3, auto) minmax(0, 1.35fr);
-    gap: clamp(2.5rem, 5vw, 5.5rem);
+    gap: clamp(2rem, 4vw, 4rem);
     align-items: start;
   }
 }
 
 .footer-col-title {
-  margin: 0 0 0.875rem;
-  font-size: 1.0625rem;
+  margin: 0 0 0.375rem;
+  font-size: 0.9375rem;
   font-weight: 700;
   color: var(--lp-footer-heading);
 }
 
 .footer-col a {
   display: block;
-  padding: 0.375rem 0;
-  font-size: 0.9375rem;
+  padding: 0.1875rem 0;
+  font-size: 0.875rem;
   color: var(--lp-footer-link);
 }
 
@@ -887,6 +1044,14 @@
   align-items: flex-start;
 }
 
+/* On the desktop layout, push the about block to the right edge of its column
+   while its text stays left-aligned. */
+@media (min-width: 60rem) {
+  .footer-about {
+    align-items: flex-end;
+  }
+}
+
 .footer-lang {
   display: inline-flex;
   align-items: center;
@@ -904,15 +1069,15 @@
 .footer-rule {
   align-self: stretch;
   height: 1px;
-  margin: 1.25rem 0;
+  margin: 0.875rem 0;
   background: var(--lp-footer-border);
 }
 
 .footer-about p {
-  margin: 0 0 0.875rem;
+  margin: 0 0 0.625rem;
   max-width: 34rem;
-  font-size: 0.9375rem;
-  line-height: 1.6;
+  font-size: 0.875rem;
+  line-height: 1.55;
   color: var(--lp-footer-sub);
 }
 
@@ -920,15 +1085,15 @@
   display: flex;
   flex-wrap: wrap;
   gap: 0.5rem;
-  margin-top: 0.75rem;
+  margin-top: 0.5rem;
 }
 
 .footer-social a {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 2.375rem;
-  height: 2.375rem;
+  width: 2rem;
+  height: 2rem;
   border-radius: 50%;
   border: 1px solid var(--lp-footer-border);
   color: var(--lp-footer-text);
@@ -953,8 +1118,8 @@
   gap: 0.75rem;
   justify-items: center;
   text-align: center;
-  margin-top: clamp(2.5rem, 5vw, 4rem);
-  padding: 1.25rem var(--lp-gutter);
+  margin-top: clamp(1.5rem, 3vw, 2.25rem);
+  padding: 0.875rem var(--lp-gutter);
   border-top: 1px solid var(--lp-footer-border);
   background: var(--lp-footer-bg2);
   font-size: 0.875rem;
@@ -995,4 +1160,523 @@
 
 .footer-bottom strong {
   color: var(--lp-footer-heading);
+}
+
+/* ===========================================================================
+   Deep-content sections (added for the full page build-out). All reuse the
+   `.landing` tokens above so they inherit the dark palette and fluid spacing.
+   =========================================================================== */
+
+/* -- module deep-dive (Features) ----------------------------------------- */
+.deep-grid {
+  display: grid;
+  gap: var(--lp-grid-gap);
+}
+
+.deep-row {
+  display: grid;
+  gap: 1rem 1.5rem;
+  padding: var(--lp-card-pad);
+  border: 1px solid var(--mc-border);
+  border-radius: var(--lp-r-card);
+  background: var(--mc-surface);
+}
+
+@media (min-width: 48rem) {
+  .deep-row {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1.1fr);
+    align-items: start;
+  }
+}
+
+.deep-head {
+  display: flex;
+  align-items: center;
+  gap: 0.875rem;
+}
+
+.deep-head h3 {
+  margin: 0;
+  font-size: clamp(1.0625rem, 1rem + 0.2vw, 1.25rem);
+  font-weight: 700;
+  color: var(--lp-heading);
+}
+
+.deep-body {
+  margin: 0;
+  font-size: var(--lp-body);
+  line-height: 1.6;
+  color: var(--mc-text-muted);
+}
+
+.deep-points {
+  display: grid;
+  gap: 0.625rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.deep-points li {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.625rem;
+  font-size: var(--lp-body);
+  line-height: 1.5;
+  color: var(--mc-text);
+}
+
+.deep-points svg {
+  flex: none;
+  width: 1.125rem;
+  height: 1.125rem;
+  margin-top: 0.05rem;
+  color: var(--lp-gain-text);
+}
+
+/* -- provenance legend (Home, Scope) ------------------------------------- */
+.legend {
+  display: grid;
+  gap: 0.75rem;
+}
+
+@media (min-width: 48rem) {
+  .legend {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+.legend-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.875rem;
+  padding: 1rem 1.125rem;
+  border: 1px solid var(--mc-border);
+  border-radius: var(--lp-r-card);
+  background: var(--mc-surface);
+}
+
+.legend-chip {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  height: 1.5rem;
+  padding: 0 0.625rem;
+  border-radius: var(--lp-r-pill);
+  font-size: 0.6875rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  border: 1px solid transparent;
+}
+
+.legend-chip.live {
+  color: var(--lp-gain-text);
+  background: var(--mc-bullish-weak);
+  border-color: color-mix(in srgb, var(--lp-gain) 40%, transparent);
+}
+
+.legend-chip.cached {
+  color: var(--lp-warn);
+  background: color-mix(in srgb, var(--lp-warn) 14%, transparent);
+  border-color: color-mix(in srgb, var(--lp-warn) 40%, transparent);
+}
+
+.legend-chip.stale {
+  color: var(--mc-text-subtle);
+  background: color-mix(in srgb, var(--mc-text-subtle) 12%, transparent);
+  border-color: var(--mc-border-strong);
+}
+
+.legend-chip.sim {
+  color: var(--lp-primary);
+  background: var(--mc-accent-weak);
+  border-color: color-mix(in srgb, var(--lp-primary) 40%, transparent);
+}
+
+.legend-meaning {
+  margin: 0;
+  font-size: var(--lp-body);
+  line-height: 1.5;
+  color: var(--mc-text-muted);
+}
+
+/* -- spec table (Coverage matrix, provenance spec) ----------------------- */
+.spec-wrap {
+  overflow-x: auto;
+  border: 1px solid var(--mc-border);
+  border-radius: var(--lp-r-card);
+  background: var(--mc-surface);
+}
+
+.spec-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--lp-body);
+}
+
+.spec-table th,
+.spec-table td {
+  padding: 0.875rem 1.125rem;
+  text-align: left;
+  white-space: nowrap;
+  border-bottom: 1px solid var(--mc-border);
+}
+
+.spec-table thead th {
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--mc-text-subtle);
+  background: var(--mc-surface-raised);
+}
+
+.spec-table tbody tr:last-child td {
+  border-bottom: 0;
+}
+
+.spec-table tbody th {
+  font-weight: 700;
+  color: var(--lp-heading);
+}
+
+.spec-table td {
+  color: var(--mc-text-muted);
+}
+
+/* -- live vs. coming-soon compare (Coverage) ----------------------------- */
+.compare {
+  display: grid;
+  gap: var(--lp-grid-gap);
+}
+
+@media (min-width: 48rem) {
+  .compare {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+.compare-col {
+  padding: var(--lp-card-pad);
+  border: 1px solid var(--mc-border);
+  border-radius: var(--lp-r-card);
+  background: var(--mc-surface);
+}
+
+.compare-col.soon {
+  background: transparent;
+  border-style: dashed;
+}
+
+.compare-title {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin: 0 0 1rem;
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--lp-heading);
+}
+
+.compare-title .tag {
+  font-size: 0.6875rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  padding: 0.125rem 0.5rem;
+  border-radius: var(--lp-r-pill);
+}
+
+.compare-title .tag.now {
+  color: var(--lp-gain-text);
+  background: var(--mc-bullish-weak);
+}
+
+.compare-title .tag.later {
+  color: var(--mc-text-subtle);
+  background: color-mix(in srgb, var(--mc-text-subtle) 12%, transparent);
+}
+
+.compare-list {
+  display: grid;
+  gap: 0.75rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.compare-list li {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.625rem;
+  font-size: var(--lp-body);
+  line-height: 1.5;
+}
+
+.compare-list svg {
+  flex: none;
+  width: 1.125rem;
+  height: 1.125rem;
+  margin-top: 0.05rem;
+}
+
+.compare-list.yes li {
+  color: var(--mc-text);
+}
+.compare-list.yes svg {
+  color: var(--lp-gain-text);
+}
+.compare-list.no li {
+  color: var(--mc-text-muted);
+}
+.compare-list.no svg {
+  color: var(--mc-text-subtle);
+}
+
+/* -- numbered timeline (How it works) ------------------------------------ */
+.timeline {
+  display: grid;
+  gap: 0;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.timeline-item {
+  position: relative;
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 1.25rem;
+  padding-bottom: clamp(1.5rem, 3vw, 2.25rem);
+}
+
+.timeline-item:last-child {
+  padding-bottom: 0;
+}
+
+/* The connecting line runs behind the badge, from one node to the next. */
+.timeline-item:not(:last-child)::before {
+  content: '';
+  position: absolute;
+  top: 2.75rem;
+  bottom: 0;
+  left: calc(1.375rem - 1px);
+  width: 2px;
+  background: var(--mc-border-strong);
+}
+
+.timeline-item > .step-badge {
+  position: relative;
+  z-index: 1;
+  margin: 0;
+}
+
+.timeline-body h3 {
+  margin: 0.25rem 0 0;
+  font-size: clamp(1.0625rem, 1rem + 0.2vw, 1.1875rem);
+  font-weight: 700;
+  color: var(--lp-heading);
+}
+
+.timeline-body p {
+  margin: 0.375rem 0 0;
+  font-size: var(--lp-body);
+  line-height: 1.55;
+  color: var(--mc-text-muted);
+}
+
+/* -- needs / skip checklist (How it works) ------------------------------- */
+.checks {
+  display: grid;
+  gap: var(--lp-grid-gap);
+}
+
+@media (min-width: 48rem) {
+  .checks {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+.check-col {
+  padding: var(--lp-card-pad);
+  border: 1px solid var(--mc-border);
+  border-radius: var(--lp-r-card);
+  background: var(--mc-surface);
+}
+
+.check-col h3 {
+  margin: 0 0 1rem;
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--lp-heading);
+}
+
+.check-list {
+  display: grid;
+  gap: 0.75rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.check-list li {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.625rem;
+  font-size: var(--lp-body);
+  line-height: 1.5;
+  color: var(--mc-text);
+}
+
+.check-list svg {
+  flex: none;
+  width: 1.125rem;
+  height: 1.125rem;
+  margin-top: 0.05rem;
+}
+
+.check-list.need svg {
+  color: var(--lp-gain-text);
+}
+
+.check-list.skip li {
+  color: var(--mc-text-muted);
+}
+.check-list.skip svg {
+  color: var(--mc-text-subtle);
+}
+
+/* -- FAQ accordion (How it works) — HTML <details>, no JS ---------------- */
+.faq {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.faq-item {
+  border: 1px solid var(--mc-border);
+  border-radius: var(--lp-r-card);
+  background: var(--mc-surface);
+  overflow: hidden;
+}
+
+.faq-item[open] {
+  border-color: var(--mc-border-strong);
+}
+
+.faq-q {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 1.125rem 1.25rem;
+  font-size: 0.9375rem;
+  font-weight: 600;
+  color: var(--lp-heading);
+  cursor: pointer;
+  list-style: none;
+}
+
+/* Kill the native disclosure triangle across browsers. */
+.faq-q::-webkit-details-marker {
+  display: none;
+}
+.faq-q::marker {
+  content: '';
+}
+
+/* Our own chevron, rotated when the item is open. */
+.faq-q::after {
+  content: '';
+  flex: none;
+  width: 0.625rem;
+  height: 0.625rem;
+  border-right: 2px solid var(--lp-primary);
+  border-bottom: 2px solid var(--lp-primary);
+  transform: rotate(45deg);
+  transition: transform 0.18s ease;
+}
+
+.faq-item[open] .faq-q::after {
+  transform: rotate(-135deg);
+}
+
+.faq-a {
+  margin: 0;
+  padding: 0 1.25rem 1.25rem;
+  font-size: var(--lp-body);
+  line-height: 1.6;
+  color: var(--mc-text-muted);
+}
+
+/* -- callout band (provenance / disclaimer) ------------------------------ */
+.callout {
+  display: flex;
+  align-items: flex-start;
+  gap: 1rem;
+  padding: clamp(1.25rem, 3vw, 1.75rem);
+  border: 1px solid var(--mc-border-strong);
+  border-radius: var(--lp-r-card);
+  background:
+    radial-gradient(120% 140% at 0% 0%, rgba(191, 74, 42, 0.14), transparent 55%), var(--mc-surface);
+}
+
+.callout-icon {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.5rem;
+  height: 2.5rem;
+  border-radius: 12px;
+  background: var(--mc-accent-weak);
+  color: var(--lp-primary);
+}
+
+.callout-icon svg {
+  width: 1.25rem;
+  height: 1.25rem;
+}
+
+.callout h3 {
+  margin: 0;
+  font-size: var(--lp-display-3);
+  font-weight: 800;
+  color: var(--lp-heading);
+}
+
+.callout p {
+  margin: 0.5rem 0 0;
+  max-width: 46rem;
+  font-size: 0.9375rem;
+  line-height: 1.6;
+  color: var(--mc-text-muted);
+}
+
+.disclaimer {
+  margin: 1.25rem 0 0;
+  font-size: 0.8125rem;
+  line-height: 1.6;
+  color: var(--mc-text-subtle);
+}
+
+/* -- home highlight teasers (linkable cards) ----------------------------- */
+.card-link {
+  display: block;
+  color: inherit;
+  text-decoration: none;
+}
+
+.card-link .card-cue {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  margin-top: 0.875rem;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--lp-primary);
+}
+
+.card-link:hover .card-cue {
+  gap: 0.625rem;
 }

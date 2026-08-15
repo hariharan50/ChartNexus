@@ -1,9 +1,10 @@
 import type { ComponentType } from 'react';
-import { Outlet } from 'react-router';
+import { Outlet, useLocation } from 'react-router';
 import IconBank from '$shared/ui/icons/IconBank';
 import IconBolt from '$shared/ui/icons/IconBolt';
 import IconBrain from '$shared/ui/icons/IconBrain';
 import IconChart from '$shared/ui/icons/IconChart';
+import { cx } from '$shared/ui/cx';
 import s from './layout.module.css';
 
 const features: Array<{ icon: ComponentType; title: string; body: string }> = [
@@ -25,6 +26,11 @@ const features: Array<{ icon: ComponentType; title: string; body: string }> = [
 ];
 
 export default function PublicLayout() {
+  // Re-key the form wrapper per route so React remounts it on each navigation
+  // (login ↔ register ↔ forgot-password, and arriving from the landing page).
+  // That replays the CSS enter animation instead of snapping in.
+  const { pathname } = useLocation();
+
   return (
     <div className={s.authLayout}>
       {/* Decorative on small screens the panel is hidden entirely, so nothing
@@ -72,7 +78,7 @@ export default function PublicLayout() {
       </aside>
 
       <main className={s.formPanel}>
-        <div className={s.formInner}>
+        <div key={pathname} className={cx(s.formInner, s.pageEnter)}>
           <Outlet />
         </div>
       </main>

@@ -75,6 +75,7 @@ export default function NiftyAnalysis() {
         </div>
       ) : (
         <>
+          <ContextCards guidance={guidance} />
           <div className={s.layout}>
             <div className={s.column}>
               <GuidanceHeader guidance={guidance} horizon={horizon} onHorizon={setHorizon} />
@@ -84,7 +85,6 @@ export default function NiftyAnalysis() {
               <ScaffoldPanel scaffold={guidance.scaffold} actionable={guidance.is_actionable} />
             </div>
           </div>
-          <ContextCards guidance={guidance} />
           <StatusBar provenance={guidance.provenance} />
         </>
       )}
