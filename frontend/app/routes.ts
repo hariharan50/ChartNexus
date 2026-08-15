@@ -21,7 +21,14 @@ export default [
   // `/` is the marketing landing page. It was a bare redirect to `/dashboard`
   // during the migration, when the app had no marketing homepage; its loader
   // now keeps that redirect for signed-in visitors only.
-  index('routes/landing/route.tsx'),
+  // The marketing site: one page per section, sharing nav/CTA/footer chrome.
+  layout('routes/landing/layout.tsx', [
+    index('routes/landing/home.tsx'),
+    route('features', 'routes/landing/features.tsx'),
+    route('coverage', 'routes/landing/coverage.tsx'),
+    route('how-it-works', 'routes/landing/how-it-works.tsx'),
+    route('scope', 'routes/landing/scope.tsx')
+  ]),
   route('healthz', 'routes/healthz.ts'),
 
   // ── (public) ──────────────────────────────────────────────────────────────
@@ -93,6 +100,7 @@ export default [
       route('profile', 'routes/terminal/settings/profile.tsx'),
       route('security', 'routes/terminal/settings/security.tsx'),
       route('notifications', 'routes/terminal/settings/notifications.tsx'),
+      route('layout', 'routes/terminal/settings/appearance.tsx'),
       route('global', 'routes/terminal/settings/global.tsx'),
       route('help', 'routes/terminal/settings/help.tsx'),
       route('broker', 'routes/terminal/settings/broker/route.tsx'),

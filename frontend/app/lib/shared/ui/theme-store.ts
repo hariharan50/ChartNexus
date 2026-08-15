@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 
-export type Theme = 'light' | 'dark' | 'warm' | 'terminal';
+export type Theme = 'light' | 'dark' | 'midnight' | 'warm' | 'terminal';
 
 interface ThemeOption {
   id: Theme;
@@ -15,6 +15,7 @@ export const THEME_OPTIONS: readonly ThemeOption[] = [
   { id: 'light', label: 'Classic Blue', hint: 'Light & crisp', dark: false },
   { id: 'warm', label: 'Warm Cream', hint: 'Easy on the eyes', dark: false },
   { id: 'dark', label: 'Dark Mode', hint: 'Low-light slate', dark: true },
+  { id: 'midnight', label: 'Midnight', hint: 'Deep navy + amber', dark: true },
   { id: 'terminal', label: 'Classic Dark', hint: 'Pure black + terracotta', dark: true }
 ];
 

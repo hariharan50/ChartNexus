@@ -70,9 +70,8 @@ test.describe('nav drawer', () => {
     const drawer = page.getByRole('dialog', { name: 'Site navigation' });
 
     await page.getByRole('button', { name: 'Menu', exact: true }).click();
-    // Scoped to the drawer: "Sign in" also appears in the hero, the closing
-    // band and the footer.
-    await drawer.getByRole('link', { name: 'Sign in' }).click();
+    // Scoped to the drawer: "Log in" also appears in the desktop nav actions.
+    await drawer.getByRole('link', { name: 'Log in' }).click();
 
     await expect(page).toHaveURL('/login');
     await expect(drawer).toBeHidden();
@@ -113,42 +112,32 @@ test.describe('desktop navigation', () => {
 
   test('shows the links inline and hides the hamburger', async ({ page }) => {
     await expect(page.getByRole('button', { name: 'Menu', exact: true })).toBeHidden();
-    await expect(page.getByRole('link', { name: 'Dashboard' }).first()).toBeVisible();
-  });
 
-  // Scoped to the nav throughout: the footer links to the same five tools.
-  test('the tools menu opens, and Escape closes it', async ({ page }) => {
     const nav = page.getByRole('navigation', { name: 'Primary' });
-    const item = nav.getByRole('link', { name: 'Gamma Exposure' });
-
-    await nav.getByText('Options Lab', { exact: true }).click();
-    await expect(item).toBeVisible();
-
-    await page.keyboard.press('Escape');
-    await expect(item).toBeHidden();
+    await expect(nav.getByRole('link', { name: 'Features' })).toBeVisible();
+    await expect(nav.getByRole('link', { name: 'Coverage' })).toBeVisible();
   });
 
-  test('clicking outside closes the tools menu', async ({ page }) => {
-    const nav = page.getByRole('navigation', { name: 'Primary' });
-    const item = nav.getByRole('link', { name: 'Max Pain' });
-
-    await nav.getByText('Options Lab', { exact: true }).click();
-    await expect(item).toBeVisible();
-
-    await page.locator('h1').click();
-    await expect(item).toBeHidden();
+  test('the header actions point at sign-in and register', async ({ page }) => {
+    // Scoped to the header bar so the hero/footer CTAs do not match.
+    const bar = page.locator('header');
+    await expect(bar.getByRole('link', { name: 'Log in' })).toHaveAttribute('href', '/login');
+    await expect(bar.getByRole('link', { name: 'Get started' })).toHaveAttribute(
+      'href',
+      '/register'
+    );
   });
-});
 
-test('an FAQ row expands when clicked', async ({ page }) => {
-  await page.goto('/', { waitUntil: 'networkidle' });
-
-  const question = page.getByText('Can it place trades for me?');
-  const answer = page.getByText(/there is no order, position or funds path/);
-
-  await expect(answer).toBeHidden();
-  await question.click();
-  await expect(answer).toBeVisible();
+  test('a nav link navigates to its own page', async ({ page }) => {
+    await page
+      .getByRole('navigation', { name: 'Primary' })
+      .getByRole('link', { name: 'Coverage' })
+      .click();
+    await expect(page).toHaveURL(/\/coverage$/);
+    await expect(
+      page.getByRole('heading', { name: 'The tools that are live, not a roadmap.' })
+    ).toBeVisible();
+  });
 });
 
 test('the demo data is labelled simulated', async ({ page }) => {
@@ -176,7 +165,8 @@ test('it stays dark when the visitor has chosen a light theme', async ({ page, c
     .first()
     .evaluate((el) => getComputedStyle(el).backgroundColor);
 
-  // --mc-landing-bg #18191e. If the pin failed this would be the light theme's
-  // near-white, and the headline would be near-black on near-black.
-  expect(background).toBe('rgb(24, 25, 30)');
+  // The landing pins its own charcoal (#131313) inside `.landing`. If the pin
+  // failed this would be the light theme's near-white, and the headline would
+  // be near-black on near-black.
+  expect(background).toBe('rgb(19, 19, 19)');
 });

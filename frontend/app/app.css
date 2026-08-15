@@ -283,6 +283,47 @@
   color-scheme: dark;
 }
 
+/* Midnight — a deep navy-black terminal with an amber accent, tuned to match
+   the reference terminal screenshots. It differs from `dark` in two ways: the
+   ground is a touch darker and more neutral (less blue cast), and the
+   interactive accent is the brand amber rather than blue — so links, active
+   states and focus rings read amber, the way the reference does. */
+:root[data-theme='midnight'] {
+  --mc-bg: #0a0c12;
+  --mc-surface: #12151e;
+  --mc-surface-raised: #181c28;
+  --mc-border: #1f2534;
+  --mc-border-strong: #2c3346;
+
+  --mc-text: #eceff5;
+  --mc-text-muted: #98a1b5;
+  /* 5.04:1 on #12151e. */
+  --mc-text-subtle: #7c869c;
+
+  --mc-bullish: #17b877;
+  --mc-bullish-weak: #0f3d2c;
+  --mc-bearish: #f2495c;
+  --mc-bearish-weak: #47202a;
+
+  /* Amber both as the brand *and* the interactive accent — the reference draws
+     active pills, links and the selected card border in this orange. */
+  --mc-brand: #e2542a;
+  --mc-brand-hover: #f0623a;
+  --mc-brand-active: #c8471f;
+  --mc-brand-weak: #2a1409;
+
+  --mc-accent: #f0623a;
+  --mc-accent-weak: #2a1409;
+  --mc-warning: #f2a93b;
+  --mc-danger: #f2495c;
+  --mc-live: #17b877;
+  --mc-stale: #f2a93b;
+
+  --mc-shadow: 0 1px 2px rgb(0 0 0 / 0.55), 0 6px 18px rgb(0 0 0 / 0.45);
+
+  color-scheme: dark;
+}
+
 /* --------------------------------------------------------------------------- */
 
 *,

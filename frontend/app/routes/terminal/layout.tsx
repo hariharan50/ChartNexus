@@ -15,8 +15,13 @@ import IconChevronDown from '$shared/ui/icons/IconChevronDown';
 import IconMessage from '$shared/ui/icons/IconMessage';
 import IconMoon from '$shared/ui/icons/IconMoon';
 import IconSearch from '$shared/ui/icons/IconSearch';
+import IconSettings from '$shared/ui/icons/IconSettings';
+import IconShield from '$shared/ui/icons/IconShield';
+import IconSignOut from '$shared/ui/icons/IconSignOut';
 import IconSun from '$shared/ui/icons/IconSun';
 import IconTarget from '$shared/ui/icons/IconTarget';
+import IconTerminal from '$shared/ui/icons/IconTerminal';
+import IconUser from '$shared/ui/icons/IconUser';
 import { selectIsDark, useThemeStore } from '$shared/ui/theme-store';
 import { useHydratePreferences } from '$shared/ui/use-hydrate-preferences';
 import { requestIdContext } from '../../middleware/context';
@@ -157,6 +162,11 @@ function TerminalShell({ user }: { user: User }) {
     .join('');
 
   const shortName = (user.display_name || user.email || 'Account').split(/[\s@]/)[0];
+
+  // Admin Page only resolves for admins. There is no admin module yet, so it
+  // points at the account root for now; gating it keeps it hidden from the
+  // accounts that could not use it anyway.
+  const isAdmin = user.roles.includes('admin');
 
   /** For the top-level tabs, where a section owns everything beneath it. */
   const isActive = (href: string): boolean =>
@@ -356,21 +366,56 @@ function TerminalShell({ user }: { user: User }) {
             </summary>
             <div className={s.menu}>
               <div className={s.menuHead}>
-                <p className={s.menuName}>{user.display_name}</p>
-                <p className={s.menuEmail}>{user.email}</p>
+                <span className={s.menuAvatar} aria-hidden="true">
+                  {initials}
+                </span>
+                <div className={s.menuIdentity}>
+                  <p className={s.menuName}>{user.display_name}</p>
+                  <p className={s.menuEmail}>{user.email}</p>
+                  <span className={s.plan}>Free plan</span>
+                </div>
               </div>
-              <Link className={s.menuItem} to="/settings">
-                Settings
-              </Link>
-              <Link className={s.menuItem} to="/settings/broker">
-                Broker connection
-              </Link>
+
+              <div className={s.menuList}>
+                <Link className={s.menuItem} to="/settings/profile">
+                  <span className={s.menuIco} aria-hidden="true">
+                    <IconUser />
+                  </span>
+                  Profile
+                </Link>
+                {isAdmin ? (
+                  <Link className={s.menuItem} to="/settings">
+                    <span className={s.menuIco} aria-hidden="true">
+                      <IconShield />
+                    </span>
+                    Admin Page
+                  </Link>
+                ) : null}
+                <Link className={s.menuItem} to="/settings/global">
+                  <span className={s.menuIco} aria-hidden="true">
+                    <IconSettings />
+                  </span>
+                  Settings
+                </Link>
+                <Link className={s.menuItem} to="/ai-console/agent">
+                  <span className={s.menuIco} aria-hidden="true">
+                    <IconTerminal />
+                  </span>
+                  Console
+                </Link>
+              </div>
+
+              <div className={s.menuDivider} role="separator" />
+
               <button
-                className={s.menuItem}
+                className={cx(s.menuItem, s.danger)}
                 type="button"
                 onClick={handleSignOut}
                 disabled={signingOut}
               >
+                <span className={s.menuIco} aria-hidden="true">
+                  <IconSignOut />
+                </span>
                 {signingOut ? 'Signing out…' : 'Sign out'}
               </button>
             </div>

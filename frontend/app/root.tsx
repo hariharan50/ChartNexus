@@ -55,7 +55,7 @@ export function loader({ context }: Route.LoaderArgs) {
  */
 const THEME_BOOTSTRAP = `try{
 var t=localStorage.getItem('mc-theme');
-if(t==='light'||t==='dark'||t==='warm'||t==='terminal')document.documentElement.setAttribute('data-theme',t);
+if(t==='light'||t==='dark'||t==='midnight'||t==='warm'||t==='terminal')document.documentElement.setAttribute('data-theme',t);
 var c=localStorage.getItem('mc-pref-callput');
 document.documentElement.setAttribute('data-callput',c==='inverted'?'inverted':'classic');
 }catch(e){}`;
