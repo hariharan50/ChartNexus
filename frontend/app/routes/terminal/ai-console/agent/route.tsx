@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type MutableRefObject } from 'react';
+import { useEffect, useRef, useState, type MutableRefObject, type ReactNode } from 'react';
 import { streamAgent, type AgentStreamEvent } from '$contexts/signals/api';
 import { loadChat, saveChat } from '$contexts/signals/chat-store';
 import { useAgentAvailabilityQuery } from '$contexts/signals/queries';
@@ -224,6 +224,93 @@ function applyTool(
   }, []);
 }
 
+/**
+ * Lightweight, dependency-free markdown for Hella's replies. The guider emits
+ * `**bold**`, `` `code` `` and `-`/`*` bullet lines; rendering them as real
+ * elements (rather than printing the literal asterisks) makes the structured
+ * answers read cleanly. Deliberately small — no full markdown, no raw HTML.
+ */
+function parseInline(text: string, keyBase: string): ReactNode[] {
+  const nodes: ReactNode[] = [];
+  const re = /\*\*(.+?)\*\*|`([^`]+)`/g;
+  let last = 0;
+  let i = 0;
+  let m: RegExpExecArray | null;
+  while ((m = re.exec(text)) !== null) {
+    if (m.index > last) nodes.push(text.slice(last, m.index));
+    if (m[1] != null) {
+      nodes.push(
+        <strong key={`${keyBase}-b${i}`} className={s.mdStrong}>
+          {m[1]}
+        </strong>
+      );
+    } else if (m[2] != null) {
+      nodes.push(
+        <code key={`${keyBase}-c${i}`} className={s.mdCode}>
+          {m[2]}
+        </code>
+      );
+    }
+    last = re.lastIndex;
+    i++;
+  }
+  if (last < text.length) nodes.push(text.slice(last));
+  return nodes;
+}
+
+function renderRich(text: string): ReactNode {
+  const lines = text.split('\n');
+  const blocks: ReactNode[] = [];
+  let para: string[] = [];
+  let list: string[] | null = null;
+  let bk = 0;
+
+  const flushPara = () => {
+    if (para.length === 0) return;
+    const key = `p${bk++}`;
+    const para0 = para;
+    blocks.push(
+      <p key={key} className={s.mdP}>
+        {para0.flatMap((ln, idx) => [
+          ...(idx ? [<br key={`${key}-br${idx}`} />] : []),
+          ...parseInline(ln, `${key}-${idx}`)
+        ])}
+      </p>
+    );
+    para = [];
+  };
+
+  const flushList = () => {
+    if (!list) return;
+    const key = `u${bk++}`;
+    const items = list;
+    blocks.push(
+      <ul key={key} className={s.mdUl}>
+        {items.map((it, idx) => (
+          <li key={`${key}-${idx}`} className={s.mdLi}>
+            {parseInline(it, `${key}-${idx}`)}
+          </li>
+        ))}
+      </ul>
+    );
+    list = null;
+  };
+
+  for (const line of lines) {
+    if (/^\s*[-*]\s+/.test(line)) {
+      flushPara();
+      (list ??= []).push(line.replace(/^\s*[-*]\s+/, ''));
+    } else {
+      flushList();
+      if (line.trim() === '') flushPara();
+      else para.push(line);
+    }
+  }
+  flushList();
+  flushPara();
+  return blocks;
+}
+
 function Bubble({ msg }: { msg: ChatMessage }) {
   const isAgent = msg.role === 'agent';
   const empty = msg.text.length === 0;
@@ -262,7 +349,7 @@ function Bubble({ msg }: { msg: ChatMessage }) {
         <div className={s.bubbleText}>{AGENT_NAME} is reading the tape…</div>
       ) : (
         <div className={s.bubbleText}>
-          {msg.text}
+          {isAgent ? renderRich(msg.text) : msg.text}
           {isAgent && msg.streaming ? <span className={s.caret} aria-hidden="true" /> : null}
         </div>
       )}

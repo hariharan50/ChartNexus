@@ -10,11 +10,24 @@
 }
 
 /* Bubbles cap at 88% of the panel, so an unbounded panel reads badly on a wide
-   monitor. Centre the conversation instead of stretching it. */
+   monitor. Centre the conversation and let it grow in measured steps on larger
+   monitors rather than stretching edge to edge. */
 .wrap {
   width: 100%;
   max-width: 980px;
   margin: 0 auto;
+}
+
+@media (min-width: 100rem) {
+  .wrap {
+    max-width: 1160px;
+  }
+}
+
+@media (min-width: 130rem) {
+  .wrap {
+    max-width: 1320px;
+  }
 }
 
 .panel {
@@ -136,10 +149,10 @@
 
 .bubble {
   max-width: 88%;
-  padding: 10px 13px;
+  padding: 11px 14px;
   border-radius: 14px;
-  font-size: var(--mc-text-sm);
-  line-height: 1.5;
+  font-size: 1rem;
+  line-height: 1.6;
 }
 
 .bubble.user {
@@ -171,6 +184,58 @@
 
 .bubbleText {
   white-space: pre-wrap;
+}
+
+/* -- rich text (Hella's markdown-ish replies) ------------------------------ */
+.mdP {
+  margin: 0 0 0.55em;
+  white-space: pre-wrap;
+}
+
+.mdP:last-child {
+  margin-bottom: 0;
+}
+
+.mdStrong {
+  font-weight: 700;
+  color: var(--mc-text);
+}
+
+.mdCode {
+  font-family: var(--mc-font-mono, ui-monospace, monospace);
+  font-size: 0.9em;
+  background: var(--mc-surface-raised, var(--mc-surface));
+  border: 1px solid var(--mc-border);
+  border-radius: 4px;
+  padding: 1px 5px;
+}
+
+.mdUl {
+  margin: 0.2em 0 0.55em;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.mdUl:last-child {
+  margin-bottom: 0;
+}
+
+.mdLi {
+  position: relative;
+  padding-left: 1.2em;
+}
+
+/* A small accent marker instead of a bare disc — cleaner in the chat surface. */
+.mdLi::before {
+  content: '▸';
+  position: absolute;
+  left: 0.1em;
+  color: var(--mc-accent, #cf5a30);
+  font-size: 0.9em;
+  line-height: 1.5;
 }
 
 .msgMeta {
