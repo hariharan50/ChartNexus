@@ -7,6 +7,8 @@ broker call can never occupy an API worker.
 
 from __future__ import annotations
 
+import asyncio
+import contextlib
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
 
@@ -18,7 +20,8 @@ from fastapi.middleware.gzip import GZipMiddleware
 from marketcompass.bootstrap.container import Container
 from marketcompass.bootstrap.logging import configure_logging
 from marketcompass.bootstrap.route_registry import API_PREFIX, register_routes
-from marketcompass.bootstrap.settings import Settings, get_settings
+from marketcompass.bootstrap.settings import Environment, Settings, get_settings
+from marketcompass.entrypoints.ingest_runtime import run_capture_loop
 from marketcompass.infrastructure.cache.redis.client import redis_check
 from marketcompass.infrastructure.observability.structured_logging import get_logger
 from marketcompass.infrastructure.persistence.postgresql.health import postgres_check
@@ -48,9 +51,35 @@ def create_app(settings: Settings | None = None) -> FastAPI:
             broker=resolved.broker.provider,
             llm=resolved.llm.provider,
         )
+
+        # Local-only: run the snapshot capture loop as a background task so a
+        # developer who starts just the API still gets a populated archive. The
+        # Options Lab charts (Multi OI, PCR, Gamma, Vega) read that archive; with
+        # no writer they show a two-point straight-line estimate, or nothing.
+        # Never enabled outside local — deployed environments run the standalone
+        # ``marketcompass-ingest`` worker, and ``task dev`` sets the flag false so
+        # its separate worker does not double up with this one. ``allow_mock`` is
+        # forced on so the charts populate even on a day the broker never answers.
+        ingest_stop = asyncio.Event()
+        ingest_task: asyncio.Task[None] | None = None
+        if resolved.environment == Environment.LOCAL and resolved.market.ingest_in_process:
+            ingest_task = asyncio.create_task(
+                run_capture_loop(container, resolved, stop=ingest_stop, allow_mock=True),
+                name="ingest-capture-loop",
+            )
+            log.info(
+                "api_ingest_in_process",
+                interval_seconds=resolved.market.snapshot_interval_seconds,
+            )
+
         try:
             yield
         finally:
+            if ingest_task is not None:
+                ingest_stop.set()
+                ingest_task.cancel()
+                with contextlib.suppress(asyncio.CancelledError):
+                    await ingest_task
             log.info("api_stopping")
             await container.aclose()
 

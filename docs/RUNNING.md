@@ -1,12 +1,24 @@
 # Running MarketCompass locally
 
-The app has **three** processes, not two. The third — the snapshot ingest
-worker — is what the Options Lab charts (Multi OI & Volume, Put-Call Ratio, Max
-Pain, Gamma Exposure) read. Skip it and those charts have no history for today:
-they fall back to a two-point "open vs now" estimate that draws every contract as
-a straight line between two points (the crossing straight lines / "cross"), shows
-no intraday OI or OI-change history, and cannot draw the futures line. Run all
-three.
+The Options Lab charts (Multi OI & Volume, Put-Call Ratio, Max Pain, Gamma
+Exposure, Vega) plot a per-minute snapshot archive. Something has to **write**
+that archive during the session, or those charts have no history for today: they
+fall back to a two-point "open vs now" estimate that draws every contract as a
+straight line between two points (the crossing straight lines / "cross"), shows
+no intraday OI or OI-change history, cannot draw the futures line — and Gamma /
+Vega, which have no two-point fallback, show "no data recorded for today yet".
+
+**In local development the API writes that archive itself.** It runs the capture
+loop as a background task on startup (`MC_ENVIRONMENT=local`), so starting just
+the API populates the charts — no separate process to remember. This is why a
+morning with only the API running used to show flat lines: nothing was writing
+the archive. Turn it off with `MC_MARKET_INGEST_IN_PROCESS=false` (e.g. when you
+run the standalone worker below alongside the API, as `task dev` does, so the two
+do not both write and double the archive's density).
+
+Deployed environments do **not** do this — there the standalone
+`marketcompass-ingest` worker (below) is the only writer, kept off the API
+process so a slow broker call can never occupy an API worker.
 
 ## 1. Dependencies (Postgres + Redis)
 
@@ -40,19 +52,25 @@ charts.
 Optional agent tracing: set `LANGSMITH_TRACING=true` and `LANGSMITH_API_KEY` to
 send prompts + tool I/O to LangSmith. Leave unset in production.
 
-## 3. Snapshot ingest worker (REQUIRED for the Options Lab charts)
+## 3. Snapshot ingest worker (optional in local — the API already does this)
 
-Writes one option-chain snapshot per configured symbol every interval during
-market hours (09:15–15:30 IST), building the intraday archive the charts plot.
+In local dev you can **skip this**: the API runs the same capture loop in-process
+(see above). Run the standalone worker only if you want it as its own process
+(closer to production), or for a deployed environment. If you do, set
+`MC_MARKET_INGEST_IN_PROCESS=false` on the API so the two do not both write.
+
+It writes one option-chain snapshot per configured symbol every interval during
+market hours (09:15–15:40 IST), building the intraday archive the charts plot.
 `MC_MARKET_INGEST_ALLOW_MOCK=true` lets it archive the mock feed on a machine
 with no live FYERS connection — without it, mock ticks are skipped and nothing is
-ever written.
+ever written. (The API's in-process loop forces this on for local.)
 
     cd backend
     MC_MARKET_INGEST_ALLOW_MOCK=true MC_MARKET_SNAPSHOT_INTERVAL_SECONDS=60 uv run marketcompass-ingest
 
-The charts leave the two-point estimate and show real curves once two snapshots
-have landed for the day (~2 minutes after you start it, during market hours).
+Either writer: the charts leave the two-point estimate and show real curves once
+two snapshots have landed for the day (~2 minutes after start, during market
+hours).
 
 ## 4. Frontend — port 5173
 

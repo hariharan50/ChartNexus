@@ -280,6 +280,13 @@ class MarketSettings(_Section):
     # Off by default: a mock-fallback day writes nothing, leaving an honest gap.
     # Turn on locally to generate test history without a live broker connection.
     ingest_allow_mock: bool = False
+    # In LOCAL only, the API runs the capture loop itself as a background task, so
+    # a developer who starts just the API still gets a populated archive rather
+    # than the Options Lab charts' two-point "open vs now" estimate. Ignored
+    # outside local, where the standalone ``marketcompass-ingest`` process is the
+    # only writer. Set false when running that separate worker alongside the API
+    # (as ``task dev`` does) to avoid double captures.
+    ingest_in_process: bool = True
     # How long the option-chain archive is kept. Its only consumer reads today,
     # so a month is generous; a year of unpruned ingest is ~8M rows.
     snapshot_retention_days: int = Field(default=30, ge=1)

@@ -81,6 +81,12 @@ tasks:
   dev:api:
     desc: Run the API with hot reload
     dir: "{{.BACKEND}}"
+    # This task pairs with dev:ingest, which runs the capture loop as its own
+    # process. Turn the API's local in-process loop off so the two do not both
+    # write and double the archive's density. Running the API on its own (outside
+    # `task dev`) leaves the in-process loop on, so those charts still populate.
+    env:
+      MC_MARKET_INGEST_IN_PROCESS: "false"
     cmds:
       - uv run uvicorn marketcompass.entrypoints.main_api:create_app --factory --reload --port 8000
 
