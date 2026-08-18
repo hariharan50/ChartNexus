@@ -29,8 +29,18 @@ SESSION_OPEN = time(9, 15)
 SESSION_CLOSE = time(15, 30)
 
 # How late the first stored snapshot may be before the session open is
-# reconstructed rather than taken from it. One capture interval's grace.
-OPEN_TOLERANCE = timedelta(minutes=5)
+# reconstructed rather than taken from it.
+#
+# Zero, not a few minutes' grace: `oi_change` is the broker's change *since the
+# 09:15 bell*, so a snapshot taken even one minute into the session already
+# reports an OI that has moved off the open — anchoring the baseline to it makes
+# "OI change" understate the real move by that first minute's drift. Kite and
+# StockMojo both anchor at 09:15 (they show `oi - oi_change` there), and a
+# five-minute grace was quietly disagreeing with them by up to a few lakh of OI
+# on the headline number. So: use a stored frame only when it *is* the open
+# (captured at or before 09:15); otherwise reconstruct 09:15 from `oi_change`,
+# which is what the busy strikes need and what the other terminals do.
+OPEN_TOLERANCE = timedelta(0)
 
 
 def attach_utc(moment: datetime) -> datetime:

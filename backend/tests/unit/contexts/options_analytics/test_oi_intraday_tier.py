@@ -171,14 +171,31 @@ async def test_a_captured_open_is_not_second_guessed() -> None:
     assert len(payload["series"]) == 2
 
 
-async def test_a_capture_just_after_the_bell_counts_as_the_open() -> None:
-    # Three minutes late is one missed tick, not a missing morning.
+async def test_a_capture_just_after_the_bell_still_reconstructs_the_open() -> None:
+    """Even one minute late, 09:15 is reconstructed rather than assumed.
+
+    `oi_change` is the change *since the bell*, so a snapshot taken after 09:15
+    already reports an OI that has moved off the open. Anchoring the baseline to
+    it would make "OI change" understate the real move by that drift — the bug
+    that had 24300 PE reading -27.54L against Kite/StockMojo's -37.5L. The busy
+    strikes shift most in the first minute, so this is exactly where it bites.
+
+    Here the near-open capture happens to carry `oi_change=0`, so the
+    reconstructed open (700 - 400 = 300) agrees with it — but the number now
+    comes from the broker's day-change, not from a snapshot we hope is close
+    enough.
+    """
+    # 03:48 UTC is 09:18 IST — three minutes into the session, no 09:15 capture.
     nearly = ChainSnapshot(datetime(2026, 8, 4, 3, 48, tzinfo=UTC), _rows_with_change(300, 0))
     later = ChainSnapshot(datetime(2026, 8, 4, 5, 45, tzinfo=UTC), _rows_with_change(700, 400))
 
     payload = await _view([nearly, later])(TENANT, "NIFTY")
 
-    assert payload["open_is_estimated"] is False
+    assert payload["open_is_estimated"] is True
+    # 09:15 IST is 03:45 UTC — the reconstructed open, not the 03:48 capture.
+    assert payload["open_ts"].startswith("2026-08-04T03:45")
+    assert payload["series"][0]["call"][0] == 300
+    assert payload["total_call_oi_chg"] == 400
 
 
 async def test_the_reconstructed_open_never_goes_negative() -> None:
