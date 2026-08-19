@@ -92,6 +92,28 @@ export interface GuidanceHistory {
   items: HistoryItem[];
 }
 
+/** One STRYX call logged today, as returned by the journal endpoint. */
+export interface StryxJournalCall {
+  created_at: string;
+  instrument: string | null;
+  entry_style: string | null;
+  status: 'LIVE' | 'NO_TRADE' | 'WATCHING';
+  entry: string | null;
+  stop: string | null;
+  target1: string | null;
+  target2: string | null;
+  confidence: string | null;
+  reasoning: string | null;
+}
+
+/** Today's STRYX journal + the remaining LIVE-call budget (drives the UI chip). */
+export interface StryxJournalToday {
+  live_count: number;
+  cap: number;
+  remaining: number;
+  calls: StryxJournalCall[];
+}
+
 /** A tool Hella reached for while answering, shown as a chip in her bubble. */
 export interface ChatTool {
   name: string;

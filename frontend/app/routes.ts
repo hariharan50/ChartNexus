@@ -53,7 +53,8 @@ export default [
     // `/ai-console` keeps resolving to the analysis page it always was.
     ...prefix('ai-console', [
       index('routes/terminal/ai-console/analysis/route.tsx'),
-      route('agent', 'routes/terminal/ai-console/agent/route.tsx')
+      route('agent', 'routes/terminal/ai-console/agent/route.tsx'),
+      route('stryx', 'routes/terminal/ai-console/stryx/route.tsx')
     ]),
 
     ...prefix('options', [

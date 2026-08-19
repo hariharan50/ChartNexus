@@ -14,6 +14,7 @@ from marketcompass.contexts.identity.api.router import router as identity_router
 from marketcompass.contexts.market_data.api.router import router as market_router
 from marketcompass.contexts.options_analytics.api.router import router as options_lab_router
 from marketcompass.contexts.signals.api.router import router as signals_router
+from marketcompass.contexts.stryx.api.router import router as stryx_router
 
 API_PREFIX = "/api/v1"
 
@@ -24,6 +25,7 @@ _ROUTERS: tuple[APIRouter, ...] = (
     options_lab_router,
     signals_router,
     copilot_router,
+    stryx_router,
 )
 
 

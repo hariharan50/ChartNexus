@@ -7,8 +7,14 @@
 
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { queryKeys } from '$shared/api/query-client';
-import { askAgent, getAgentAvailability, getGuidance } from './api';
-import type { AgentAvailability, AskResponse, Guidance } from './types';
+import {
+  askAgent,
+  getAgentAvailability,
+  getGuidance,
+  getStryxAvailability,
+  getStryxJournalToday
+} from './api';
+import type { AgentAvailability, AskResponse, Guidance, StryxJournalToday } from './types';
 
 const REFETCH_MS = 15_000;
 // Availability only changes with server config (an LLM key), so a long stale
@@ -34,5 +40,23 @@ export function useAgentAvailabilityQuery() {
     queryKey: ['copilot', 'availability'],
     queryFn: () => getAgentAvailability(),
     staleTime: AVAILABILITY_STALE_MS
+  });
+}
+
+export function useStryxAvailabilityQuery() {
+  return useQuery<AgentAvailability>({
+    queryKey: ['stryx', 'availability'],
+    queryFn: () => getStryxAvailability(),
+    staleTime: AVAILABILITY_STALE_MS
+  });
+}
+
+/** Today's STRYX journal — refetched on the terminal cadence so the "calls left"
+ *  chip stays current as calls are issued. */
+export function useStryxJournalTodayQuery(symbol: string) {
+  return useQuery<StryxJournalToday>({
+    queryKey: ['stryx', 'journal', symbol],
+    queryFn: () => getStryxJournalToday(symbol),
+    refetchInterval: REFETCH_MS
   });
 }

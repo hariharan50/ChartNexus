@@ -41,7 +41,9 @@
     // as if the generated file sat beside it.
     "rootDirs": [".", "./.react-router/types"],
 
-    "baseUrl": ".",
+    // No `baseUrl`: it's deprecated for removal in TS 7.0, and unnecessary here —
+    // `moduleResolution: bundler` resolves the `paths` targets below relative to
+    // this file (each is already written `./…`).
     "paths": {
       "$app/*": ["./app/lib/app/*"],
       "$contexts/*": ["./app/lib/contexts/*"],

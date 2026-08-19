@@ -8,18 +8,20 @@ type Props = {
   subtitle: ReactNode;
   instIdx: number;
   onSelect: (idx: number) => void;
+  /** The brand mark letter — defaults to Hella's "H"; STRYX passes "S". */
+  mark?: string;
 };
 
 /**
- * The page header both AI Console pages share — Hella's mark, the page title
+ * The page header the AI Console pages share — the agent's mark, the page title
  * and the NIFTY / SENSEX / BANKNIFTY switcher. Each page owns its own
  * `instIdx` state; this component only reports the selection back.
  */
-export default function ConsoleHeader({ title, subtitle, instIdx, onSelect }: Props) {
+export default function ConsoleHeader({ title, subtitle, instIdx, onSelect, mark = 'H' }: Props) {
   return (
     <div className={s.topbar}>
       <div className={s.brand}>
-        <span className={s.brandMark}>H</span>
+        <span className={s.brandMark}>{mark}</span>
         <div>
           <h1 className={s.title}>{title}</h1>
           <p className={s.subtitle}>{subtitle}</p>

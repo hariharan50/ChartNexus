@@ -123,7 +123,7 @@ const nav: NavItem[] = [
     label: 'AI Console',
     href: '/ai-console',
     menuTitle: 'AI Console',
-    menuSub: 'Signal analysis & the Hella agent',
+    menuSub: 'Signal analysis, the Hella agent & STRYX',
     children: [
       {
         label: 'Market Analysis',
@@ -136,6 +136,12 @@ const nav: NavItem[] = [
         href: '/ai-console/agent',
         icon: IconMessage,
         desc: 'Ask Hella about the call'
+      },
+      {
+        label: 'STRYX — Trade Calls',
+        href: '/ai-console/stryx',
+        icon: IconTarget,
+        desc: 'Aggressive setup hunter with a defined stop'
       }
     ]
   },

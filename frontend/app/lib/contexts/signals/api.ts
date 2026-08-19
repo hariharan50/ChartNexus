@@ -1,5 +1,11 @@
 import { apiFetch } from '$shared/api/client';
-import type { AgentAvailability, AskResponse, Guidance, GuidanceHistory } from './types';
+import type {
+  AgentAvailability,
+  AskResponse,
+  Guidance,
+  GuidanceHistory,
+  StryxJournalToday
+} from './types';
 
 /** AI Market Guider — decision, factors, history, and the copilot chat. */
 
@@ -32,6 +38,19 @@ export function getAgentAvailability(fetcher?: typeof fetch): Promise<AgentAvail
   return apiFetch<AgentAvailability>({ url: '/copilot/availability', fetcher });
 }
 
+/** Whether an LLM is configured — the STRYX tab is disabled when not. */
+export function getStryxAvailability(fetcher?: typeof fetch): Promise<AgentAvailability> {
+  return apiFetch<AgentAvailability>({ url: '/stryx/availability', fetcher });
+}
+
+/** Today's STRYX calls and the remaining LIVE-call budget for the day. */
+export function getStryxJournalToday(
+  symbol: string,
+  fetcher?: typeof fetch
+): Promise<StryxJournalToday> {
+  return apiFetch<StryxJournalToday>({ url: `/stryx/${symbol}/journal/today`, fetcher });
+}
+
 /**
  * One frame off the agent's Server-Sent Events stream.
  *
@@ -47,7 +66,21 @@ export type AgentStreamEvent =
   | { type: 'done' }
   | { type: 'error'; message: string };
 
+/**
+ * One frame off STRYX's SSE stream. Same shape as {@link AgentStreamEvent} but
+ * with a `styles` frame (the five-style playbook) in place of `skills`.
+ */
+export type StryxStreamEvent =
+  | { type: 'session'; session_id: string }
+  | { type: 'styles'; titles: string[] }
+  | { type: 'token'; text: string }
+  | { type: 'tool'; status: 'started' | 'finished'; name: string; title?: string }
+  | { type: 'done' }
+  | { type: 'error'; message: string };
+
 const STREAM_PATH = (symbol: string) => `/api/v1/copilot/${encodeURIComponent(symbol)}/ask/stream`;
+const STRYX_STREAM_PATH = (symbol: string) =>
+  `/api/v1/stryx/${encodeURIComponent(symbol)}/ask/stream`;
 const CSRF_COOKIE = 'mc_csrf';
 const CSRF_HEADER = 'X-CSRF-Token';
 const REFRESH_PATH = '/api/v1/auth/refresh';
@@ -62,19 +95,49 @@ const REFRESH_PATH = '/api/v1/auth/refresh';
  * `EventSource` can send. A single silent refresh-and-retry mirrors `apiFetch`,
  * so a 15-minute access token aging out mid-chat doesn't drop the turn.
  */
-export async function streamAgent(
+export function streamAgent(
   symbol: string,
   question: string,
   sessionId: string | null,
   onEvent: (event: AgentStreamEvent) => void,
   signal?: AbortSignal
 ): Promise<void> {
+  return driveSse(STREAM_PATH(symbol), question, sessionId, onEvent, signal);
+}
+
+/**
+ * Drive STRYX's SSE stream — same transport as {@link streamAgent}, a different
+ * endpoint and event vocabulary (`styles` instead of `skills`). STRYX answers
+ * with a structured [STRYX CALL].
+ */
+export function streamStryx(
+  symbol: string,
+  question: string,
+  sessionId: string | null,
+  onEvent: (event: StryxStreamEvent) => void,
+  signal?: AbortSignal
+): Promise<void> {
+  return driveSse(STRYX_STREAM_PATH(symbol), question, sessionId, onEvent, signal);
+}
+
+/**
+ * Shared SSE driver: POST the question, retry once on a 401, then pump the
+ * `data:` frames through `onEvent`. Generic over the event union so the copilot
+ * and STRYX streams share one implementation.
+ */
+async function driveSse<E>(
+  path: string,
+  question: string,
+  sessionId: string | null,
+  onEvent: (event: E) => void,
+  signal?: AbortSignal
+): Promise<void> {
   const body = JSON.stringify({ question, session_id: sessionId });
 
-  let response = await postStream(symbol, body, signal);
+  let response = await postStream(path, body, signal);
   if (response.status === 401) {
     const refreshed = await refreshOnce();
-    if (refreshed) response = await postStream(symbol, body, signal);
+    if (refreshed) response = await postStream(path, body, signal);
   }
   if (!response.ok || !response.body) {
     throw new Error(`Agent stream failed (${response.status})`);
@@ -102,7 +165,7 @@ export async function streamAgent(
         .join('');
       if (payload) {
         try {
-          onEvent(JSON.parse(payload) as AgentStreamEvent);
+          onEvent(JSON.parse(payload) as E);
         } catch {
           // A malformed frame is not worth killing the turn — skip it.
         }
@@ -112,7 +175,7 @@ export async function streamAgent(
   }
 }
 
-function postStream(symbol: string, body: string, signal?: AbortSignal): Promise<Response> {
+function postStream(path: string, body: string, signal?: AbortSignal): Promise<Response> {
   const headers = new Headers({
     'content-type': 'application/json',
     accept: 'text/event-stream'
@@ -123,7 +186,7 @@ function postStream(symbol: string, body: string, signal?: AbortSignal): Promise
   // Assign only when present — `exactOptionalPropertyTypes` rejects
   // `signal: undefined` against the DOM's `AbortSignal | null`.
   if (signal) init.signal = signal;
-  return fetch(STREAM_PATH(symbol), init);
+  return fetch(path, init);
 }
 
 async function refreshOnce(): Promise<boolean> {
