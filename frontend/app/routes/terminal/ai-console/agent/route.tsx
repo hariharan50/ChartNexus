@@ -11,7 +11,7 @@ import s from './route.module.css';
 import type { Route } from './+types/route';
 
 export const meta: Route.MetaFunction = () => [
-  { title: 'Hella · AI Analysis Agent · MarketCompass' }
+  { title: 'Hella · Hella Analysis Agent · MarketCompass' }
 ];
 
 /** The agent's name, shown throughout the console. */
@@ -31,7 +31,7 @@ export default function AiAnalysisAgent() {
   return (
     <div className={s.page}>
       <ConsoleHeader
-        title="AI Analysis Agent"
+        title="Hella Analysis Agent"
         subtitle={
           <>
             Ask <strong>{AGENT_NAME}</strong> — an independent markets analyst who reads the live

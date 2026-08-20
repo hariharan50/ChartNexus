@@ -132,7 +132,7 @@ const nav: NavItem[] = [
         desc: 'Decision, skills, levels & trade scaffold'
       },
       {
-        label: 'AI Analysis Agent',
+        label: 'Hella Analysis Agent',
         href: '/ai-console/agent',
         icon: IconMessage,
         desc: 'Ask Hella about the call'
