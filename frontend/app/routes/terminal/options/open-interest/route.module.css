@@ -436,8 +436,12 @@
   background: var(--c);
 }
 
+/* These two mirror `charts/options/open-interest.ts`'s `changeStyle` — a legend
+   that does not look like the mark it names is worse than no legend. Solid
+   outline for a decrease, and a hatch cut out of an opaque fill in the panel
+   colour for an increase, at the same stripe pitch the chart uses. */
 .sw.outline {
-  border: 1px dashed var(--c);
+  border: 1px solid var(--c);
 }
 
 .sw.hatch {
@@ -445,9 +449,9 @@
   background: repeating-linear-gradient(
     -45deg,
     var(--c),
-    var(--c) 1px,
-    transparent 1px,
-    transparent 3px
+    var(--c) 3px,
+    var(--mc-surface) 3px,
+    var(--mc-surface) 5px
   );
 }
 

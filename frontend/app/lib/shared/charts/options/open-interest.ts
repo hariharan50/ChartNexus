@@ -61,21 +61,39 @@ export function priceIndex(strikes: number[], price: number): number {
 }
 
 /**
- * A per-bar style for a "change" magnitude: hatch decal on an increase,
- * dashed hollow border on a decrease. The shape carries the sign, so the
- * direction survives for anyone who cannot separate the two hues.
+ * A per-bar style for a "change" magnitude: hatched fill on an increase,
+ * hollow on a decrease. The shape carries the sign, so the direction survives
+ * for anyone who cannot separate the two hues.
+ *
+ * Every number here is chosen to stay legible at small bar widths, which is
+ * where the previous styling fell apart:
+ *
+ * - **Opaque fill, stripes cut in the surface colour.** A translucent fill with
+ *   translucent stripes over it put two low-contrast layers on top of each
+ *   other; the hatch read as a wash rather than as stripes. Solid bar, holes
+ *   punched through to the panel behind it, is the highest contrast available
+ *   and it is what every charting package that gets this right does.
+ * - **5px stripes, not 1px.** A one-pixel mark is the most fragile thing you can
+ *   put on a chart: it is the first casualty of any scaling, and at a 24px bar
+ *   width the eye reads a 1px/6px hatch as a flat tint anyway.
+ * - **1px borders, not 1.5px.** A 1.5px stroke cannot align to a pixel boundary
+ *   at any common display scaling, so it is always drawn as a soft two-pixel
+ *   smear. 1px lands cleanly.
+ * - **A solid border on the hollow bar, not a dashed one.** Hollow-versus-filled
+ *   already carries the sign without relying on colour; the dashes added nothing
+ *   to that and cost the outline its definition.
  */
-function changeStyle(value: number, color: string) {
+function changeStyle(value: number, color: string, theme: ChartTheme) {
   if (value >= 0) {
     return {
-      color: withAlpha(color, 0.32),
+      color,
       borderColor: color,
-      borderWidth: 1.5,
+      borderWidth: 1,
       decal: {
         symbol: 'rect',
-        color: withAlpha(color, 0.9),
-        dashArrayX: [1, 6],
-        dashArrayY: [4, 0],
+        color: theme.surface,
+        dashArrayX: [5, 6],
+        dashArrayY: [6, 0],
         rotation: -Math.PI / 4
       }
     };
@@ -83,8 +101,7 @@ function changeStyle(value: number, color: string) {
   return {
     color: 'transparent',
     borderColor: color,
-    borderWidth: 1.5,
-    borderType: 'dashed' as const
+    borderWidth: 1
   };
 }
 
@@ -174,7 +191,7 @@ function seriesFor(input: OpenInterestInput, theme: ChartTheme) {
         stack: 'call',
         data: bars.map((b) => ({
           value: Math.abs(b.callChg),
-          itemStyle: changeStyle(b.callChg, callColor)
+          itemStyle: changeStyle(b.callChg, callColor, theme)
         })),
         markArea,
         markLine
@@ -185,7 +202,7 @@ function seriesFor(input: OpenInterestInput, theme: ChartTheme) {
         stack: 'put',
         data: bars.map((b) => ({
           value: Math.abs(b.putChg),
-          itemStyle: changeStyle(b.putChg, putColor)
+          itemStyle: changeStyle(b.putChg, putColor, theme)
         }))
       }
     ];
@@ -206,10 +223,13 @@ function seriesFor(input: OpenInterestInput, theme: ChartTheme) {
       ...base,
       name: 'CallChg',
       stack: 'call',
-      itemStyle: { borderRadius: [3, 3, 0, 0] },
+      // Square, unlike the solid `total` bars: a 3px radius bent a 1px outline
+      // around an arc at the top of every hollow bar, which read as a blurred
+      // capsule rather than a bar. It also has to sit flush on the solid base
+      // segment beneath it.
       data: bars.map((b) => ({
         value: Math.abs(b.callChg),
-        itemStyle: changeStyle(b.callChg, callColor)
+        itemStyle: changeStyle(b.callChg, callColor, theme)
       }))
     },
     {
@@ -223,10 +243,9 @@ function seriesFor(input: OpenInterestInput, theme: ChartTheme) {
       ...base,
       name: 'PutChg',
       stack: 'put',
-      itemStyle: { borderRadius: [3, 3, 0, 0] },
       data: bars.map((b) => ({
         value: Math.abs(b.putChg),
-        itemStyle: changeStyle(b.putChg, putColor)
+        itemStyle: changeStyle(b.putChg, putColor, theme)
       }))
     }
   ];

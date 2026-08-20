@@ -42,7 +42,10 @@ export function useEChart<T extends HTMLElement>(
     const el = containerRef.current;
     if (!el) return;
 
-    const chart = echarts.init(el, undefined, { renderer: 'canvas' });
+    // SVG so the chart stays sharp through a browser zoom or a display-scaling
+    // change — see the renderer note in `echarts-modules.ts`. Nothing here
+    // depends on canvas-only APIs (`getDataURL` and friends are unused).
+    const chart = echarts.init(el, undefined, { renderer: 'svg' });
     chartRef.current = chart;
     paintedKey.current = undefined;
 

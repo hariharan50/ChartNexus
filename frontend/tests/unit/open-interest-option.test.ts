@@ -22,6 +22,7 @@ const THEME: ChartTheme = {
   axis: 'rgb(1, 1, 1)',
   accent: 'rgb(13, 13, 13)',
   grid: 'rgb(2, 2, 2)',
+  surface: 'rgb(14, 14, 14)',
   tooltipBg: 'rgb(3, 3, 3)',
   tooltipText: 'rgb(4, 4, 4)',
   call: 'rgb(5, 5, 5)',
@@ -119,19 +120,36 @@ describe('series per mode', () => {
     const series = seriesOf(buildOpenInterestOption(input({ mode: 'change' }), THEME));
     expect(series).toHaveLength(2);
 
-    const call = series[0]!.data[0] as { value: number; itemStyle: { decal?: unknown } };
+    const call = series[0]!.data[0] as {
+      value: number;
+      itemStyle: { color: string; decal?: { color: string } };
+    };
     const put = series[1]!.data[0] as {
       value: number;
-      itemStyle: { color: string; borderType?: string };
+      itemStyle: { color: string; borderColor: string };
     };
 
     // +200 and -100 both plot upward…
     expect(call.value).toBe(200);
     expect(put.value).toBe(100);
-    // …so the increase gets a hatch and the decrease a dashed hollow bar.
+    // …so the increase gets a hatch and the decrease a hollow bar.
     expect(call.itemStyle.decal).toBeDefined();
     expect(put.itemStyle.color).toBe('transparent');
-    expect(put.itemStyle.borderType).toBe('dashed');
+    expect(put.itemStyle.borderColor).toBe('#ef4444');
+  });
+
+  it('cuts the increase hatch out of an opaque fill, in the panel colour', () => {
+    const series = seriesOf(buildOpenInterestOption(input({ mode: 'change' }), THEME));
+    const call = series[0]!.data[0] as {
+      itemStyle: { color: string; decal: { color: string; dashArrayX: number[] } };
+    };
+
+    // Contrast is what makes a hatch readable: a solid bar with stripes punched
+    // through to the panel behind it, not two translucent layers stacked up.
+    expect(call.itemStyle.color).toBe('#22c55e');
+    expect(call.itemStyle.decal.color).toBe(THEME.surface);
+    // And wide enough to survive being drawn small — a 1px stripe reads as a tint.
+    expect(call.itemStyle.decal.dashArrayX[0]).toBeGreaterThanOrEqual(4);
   });
 
   it('change_total mode stacks a change segment on a solid base', () => {

@@ -19,6 +19,7 @@ const THEME: ChartTheme = {
   axis: '#8b93a7',
   accent: '#3b82f6',
   grid: '#232838',
+  surface: '#111524',
   tooltipBg: '#111524',
   tooltipText: '#e6e9f2',
   call: '#22c55e',

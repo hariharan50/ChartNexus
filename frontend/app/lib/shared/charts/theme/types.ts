@@ -18,6 +18,16 @@ export interface ChartTheme {
   accent: string;
   /** Grid split lines and axis borders. */
   grid: string;
+  /**
+   * The panel the chart is drawn on.
+   *
+   * For marks that have to read as *cut out of* a filled shape rather than
+   * painted over it — the Open Interest hatch. Stripes in the surface colour on
+   * an opaque bar give maximum stripe-to-fill contrast in every theme; stripes
+   * in a translucent version of the bar's own colour give the least, which is
+   * what made that hatch mush together.
+   */
+  surface: string;
   tooltipBg: string;
   tooltipText: string;
   /** Call-side series. */
