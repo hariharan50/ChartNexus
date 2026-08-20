@@ -37,7 +37,7 @@ export interface VegaFrame {
   /** Put-call-parity forward, falling back to the tradable future; `null` rare. */
   synth_future: number | null;
   /**
-   * Aligned to {@link VegaView.strikes}, in **lakh per one volatility point**.
+   * Aligned to {@link VegaView.strikes}, in **crore per one volatility point**.
    * Both sides positive — the page plots each side's change since the open, and
    * that delta is what carries the sign.
    */
@@ -159,7 +159,7 @@ export function frameTotals(
 
 // -- formatting -------------------------------------------------------------
 
-/** `+1.24`, `-9.69` — a signed vega delta in lakh, two decimals. */
+/** `+1.24`, `-9.69` — a signed vega delta in crore, two decimals. */
 export function fmtVega(value: number): string {
   const sign = value > 0 ? '+' : '';
   return `${sign}${value.toFixed(2)}`;
@@ -196,7 +196,7 @@ export interface VegaRow {
 
 /** The visible series as a spreadsheet — what is on screen, not the whole payload. */
 export function vegaCsv(rows: VegaRow[]): string {
-  const header = 'time,synth_future,call_vega_delta_lakh,put_vega_delta_lakh,put_minus_call';
+  const header = 'time,synth_future,call_vega_delta_cr,put_vega_delta_cr,put_minus_call';
   const body = rows.map((row) => [row.t, row.synth ?? '', row.call, row.put, row.diff].join(','));
   return [header, ...body].join('\n');
 }

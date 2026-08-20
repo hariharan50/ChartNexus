@@ -63,6 +63,42 @@ export interface OverlaySpec {
   data: { time: number; value: number }[];
 }
 
+/**
+ * One reconciled histogram drawn in a sub-pane, coloured per bar.
+ *
+ * The `volume` prop above is the one-histogram shortcut most pages want. This
+ * is the general case: any number of them, on any pane, each bar carrying its
+ * own colour — which is what a signed series (OI flow, delta, net turnover)
+ * needs, since its sign changes bar to bar rather than following the candle's.
+ *
+ * Two specs may share a `paneIndex` to draw side by side, e.g. call and put
+ * volume in one band.
+ */
+export interface HistogramSpec {
+  id: string;
+  /** 0 = price pane, ≥1 = a sub-pane. Sharing an index stacks two series in one band. */
+  paneIndex: number;
+  /**
+   * Fraction of the chart's height this pane takes.
+   *
+   * Applied once, when the pane is created: the library keeps a height it has
+   * been given, and re-applying it on every poll would fight a reader who has
+   * dragged the divider.
+   */
+  paneFraction?: number;
+  /**
+   * How this pane's axis labels read.
+   *
+   * Without one the library formats the axis as a price — two decimals, no
+   * grouping — so a pane of open interest is labelled `100000000.00`, which is
+   * unreadable at a glance and is the wrong unit besides. Pass the same
+   * formatter the legend uses so the axis and the readout agree.
+   */
+  format?: ((value: number) => string) | undefined;
+  /** `value: null` leaves a genuine gap rather than drawing a zero-height bar. */
+  data: { time: number; value: number | null; color: string }[];
+}
+
 interface Props {
   candles: Candle[];
   /** Omit for a price-only chart; an empty array draws an empty pane. */
@@ -78,6 +114,8 @@ interface Props {
   onHoverBar?: ((bar: Candle | null) => void) | undefined;
   /** Indicator lines drawn over the price pane or a sub-pane; reconciled by id. */
   overlays?: OverlaySpec[] | undefined;
+  /** Per-bar-coloured histograms in their own sub-panes; reconciled by id. */
+  histograms?: HistogramSpec[] | undefined;
   /** Populated on mount, cleared on dispose. */
   handleRef?: RefObject<LwChartHandle | null> | undefined;
   /**
@@ -152,6 +190,7 @@ export default function LwChart({
   type = 'candle',
   onHoverBar,
   overlays,
+  histograms,
   handleRef,
   resetKey,
   className,
@@ -168,6 +207,10 @@ export default function LwChart({
     volume: ISeriesApi<'Histogram'> | undefined;
     addLine: (paneIndex: number) => ISeriesApi<'Line'>;
     lines: Map<string, ISeriesApi<'Line'>>;
+    addHistogram: (paneIndex: number) => ISeriesApi<'Histogram'>;
+    bars: Map<string, ISeriesApi<'Histogram'>>;
+    /** Panes already given a height, so a poll never re-applies one. */
+    sized: Set<number>;
   } | null>(null);
 
   // Latest props for callbacks that are registered once at mount. Without this
@@ -289,7 +332,10 @@ export default function LwChart({
         price,
         volume: volumeSeries,
         addLine: (paneIndex: number) => chart.addSeries(LineSeries, {}, paneIndex),
-        lines: new Map()
+        lines: new Map(),
+        addHistogram: (paneIndex: number) => chart.addSeries(HistogramSeries, {}, paneIndex),
+        bars: new Map(),
+        sized: new Set(hasVolume ? [VOLUME_PANE_INDEX] : [])
       };
       if (handleRef) {
         handleRef.current = {
@@ -299,6 +345,7 @@ export default function LwChart({
       }
       paint();
       reconcileOverlays();
+      reconcileHistograms();
     })();
 
     return () => {
@@ -421,6 +468,99 @@ export default function LwChart({
     reconcileOverlays();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [overlays]);
+
+  // -- histograms (signed sub-pane series) ----------------------------------
+  /**
+   * The same add/update/remove reconciliation the overlays get, for histograms.
+   *
+   * Colour lives on each point rather than on the series, because these are
+   * signed: one bar is green and the next red within the same series, which a
+   * series-level colour cannot express.
+   *
+   * A `null` value is dropped from the data rather than sent as `0`. The
+   * library draws a zero-height bar for `0`, which on an OI-flow pane reads as
+   * "nothing was written in this bar" — a claim the caller was careful not to
+   * make when it sent `null` for "no observation here".
+   */
+  function reconcileHistograms(): void {
+    const current = api.current;
+    if (!current) return;
+    const specs = histograms ?? [];
+    const wanted = new Set(specs.map((spec) => spec.id));
+
+    for (const [id, series] of current.bars) {
+      if (!wanted.has(id)) {
+        current.chart.removeSeries(series);
+        current.bars.delete(id);
+      }
+    }
+
+    const created: HistogramSpec[] = [];
+    for (const spec of specs) {
+      let series = current.bars.get(spec.id);
+      if (!series) {
+        series = current.addHistogram(spec.paneIndex);
+        current.bars.set(spec.id, series);
+        created.push(spec);
+      }
+      series.applyOptions({
+        priceLineVisible: false,
+        lastValueVisible: false,
+        base: 0,
+        ...(spec.format
+          ? { priceFormat: { type: 'custom' as const, formatter: spec.format, minMove: 1 } }
+          : {})
+      });
+      series.setData(
+        spec.data
+          .filter((point) => point.value !== null)
+          .map((point) => ({
+            time: point.time as UTCTimestamp,
+            value: point.value as number,
+            color: point.color
+          }))
+      );
+    }
+
+    // Sized after every series exists, and once per pane. Setting a height
+    // while later panes are still being added lets the library redistribute it
+    // out from under the pane that was just sized — which is how a band asked
+    // for 20% ended up a sliver. Once, because the library keeps a height it
+    // has been given and re-applying it every poll would fight a reader who has
+    // dragged the divider.
+    // Sized by stretch factor, not by `setHeight`.
+    //
+    // `setHeight` is absolute, but the library implements it by recomputing
+    // every pane's stretch factor — so with more than one sub-pane each call
+    // undoes the last, and whichever was sized first ends up a sliver
+    // regardless of the order. Stretch factors are the declarative form of the
+    // same thing: state the whole split at once and there is no sequence to get
+    // wrong. Applied once per pane, so a reader dragging a divider keeps it.
+    const fresh = created.filter(
+      (spec) => spec.paneFraction !== undefined && !current.sized.has(spec.paneIndex)
+    );
+    if (fresh.length > 0) {
+      const shares = new Map<number, number>();
+      for (const spec of specs) {
+        if (spec.paneFraction !== undefined) shares.set(spec.paneIndex, spec.paneFraction);
+      }
+      const panes = current.chart.panes();
+      let taken = 0;
+      for (const [index, share] of shares) {
+        panes[index]?.setStretchFactor(share * 100);
+        taken += share;
+      }
+      // Whatever is left goes to price, floored so a caller asking for more
+      // than the whole chart cannot collapse it entirely.
+      panes[0]?.setStretchFactor(Math.max(0.15, 1 - taken) * 100);
+      for (const spec of fresh) current.sized.add(spec.paneIndex);
+    }
+  }
+
+  useEffect(() => {
+    reconcileHistograms();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [histograms]);
 
   // -- theme ----------------------------------------------------------------
   useEffect(() => {

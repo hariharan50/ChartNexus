@@ -34,9 +34,7 @@ SPOT = 24_650.0
 LOT = 75
 
 
-def _row(
-    side: str, strike: float, oi: int, iv: float | None = 14.0, ltp: float = 10.0
-) -> ChainRow:
+def _row(side: str, strike: float, oi: int, iv: float | None = 14.0, ltp: float = 10.0) -> ChainRow:
     return ChainRow(strike=strike, option_type=side, oi=oi, oi_change=0, ltp=ltp, volume=1, iv=iv)
 
 
@@ -126,11 +124,12 @@ def test_vega_is_zero_rather_than_undefined_at_the_edges() -> None:
 
 
 def test_exposure_is_money_per_one_vol_point() -> None:
-    # vega * oi * lot — the definition, stated once so a refactor cannot quietly
-    # reintroduce a spot^2 term and turn vega into gamma exposure.
-    value = leg_vega(vega=1.5, oi=1_000, lot_size=LOT)
+    # vega * oi — the definition, stated once so a refactor cannot quietly
+    # reintroduce a spot^2 term and turn vega into gamma exposure, or a lot
+    # multiplier over an OI already in units.
+    value = leg_vega(vega=1.5, oi=1_000)
 
-    assert value == 1.5 * 1_000 * LOT
+    assert value == 1.5 * 1_000
 
 
 # -- the profile ------------------------------------------------------------
@@ -139,7 +138,7 @@ def test_exposure_is_money_per_one_vol_point() -> None:
 def test_both_sides_are_positive() -> None:
     """A long option always has positive vega; the intraday delta carries sign."""
     axis = [SPOT - 50.0, SPOT, SPOT + 50.0]
-    profile = vega_profile(_ladder(), spot=SPOT, lot_size=LOT, years=0.02, axis=axis)
+    profile = vega_profile(_ladder(), spot=SPOT, years=0.02, axis=axis)
 
     assert all(entry.call_vega > 0.0 for entry in profile.strikes)
     assert all(entry.put_vega > 0.0 for entry in profile.strikes)
@@ -154,7 +153,7 @@ def test_a_leg_without_a_quoted_volatility_contributes_nothing() -> None:
     axis = [SPOT]
     rows = (_row("CE", SPOT, 1_000, iv=None), _row("PE", SPOT, 1_000, iv=14.0))
 
-    profile = vega_profile(rows, spot=SPOT, lot_size=LOT, years=0.02, axis=axis)
+    profile = vega_profile(rows, spot=SPOT, years=0.02, axis=axis)
 
     assert profile.strikes[0].call_vega == 0.0
     assert profile.strikes[0].put_vega > 0.0
@@ -164,7 +163,7 @@ def test_a_leg_without_a_quoted_volatility_contributes_nothing() -> None:
 def test_coverage_is_one_when_every_leg_is_priced() -> None:
     axis = [SPOT - 50.0, SPOT, SPOT + 50.0]
 
-    profile = vega_profile(_ladder(), spot=SPOT, lot_size=LOT, years=0.02, axis=axis)
+    profile = vega_profile(_ladder(), spot=SPOT, years=0.02, axis=axis)
 
     assert profile.iv_coverage == 1.0
 
@@ -175,7 +174,7 @@ def test_the_axis_is_honoured_even_where_the_chain_is_silent() -> None:
     axis = [SPOT - 50.0, SPOT, SPOT + 50.0, SPOT + 100.0]
     rows = (_row("CE", SPOT, 1_000), _row("PE", SPOT, 1_000))
 
-    profile = vega_profile(rows, spot=SPOT, lot_size=LOT, years=0.02, axis=axis)
+    profile = vega_profile(rows, spot=SPOT, years=0.02, axis=axis)
 
     assert [entry.strike for entry in profile.strikes] == axis
     assert profile.strikes[3].call_vega == 0.0
@@ -359,6 +358,6 @@ async def test_historical_with_no_archive_is_empty() -> None:
 
 def test_values_are_finite_never_nan() -> None:
     axis = [SPOT - 50.0, SPOT, SPOT + 50.0]
-    profile = vega_profile(_ladder(), spot=SPOT, lot_size=LOT, years=0.02, axis=axis)
+    profile = vega_profile(_ladder(), spot=SPOT, years=0.02, axis=axis)
 
     assert all(math.isfinite(entry.call_vega) for entry in profile.strikes)

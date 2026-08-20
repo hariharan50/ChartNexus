@@ -77,7 +77,7 @@ export default [
       route('pe-ce-difference', 'routes/terminal/options/pe-ce-difference.tsx'),
       route('premium-decay', 'routes/terminal/options/premium-decay.tsx'),
       route('price-vs-oi', 'routes/terminal/options/price-vs-oi.tsx'),
-      route('smart-oi', 'routes/terminal/options/smart-oi.tsx'),
+      route('smart-oi', 'routes/terminal/options/smart-oi/route.tsx'),
       route('strategy-chart', 'routes/terminal/options/strategy-chart.tsx'),
       route('timeseries', 'routes/terminal/options/timeseries.tsx'),
       route('vega-analysis', 'routes/terminal/options/vega-analysis/route.tsx'),

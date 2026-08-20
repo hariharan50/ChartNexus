@@ -18,9 +18,10 @@ Two departures from the OI-family services, both shared with ``gex_service``:
   day-change field, but it carries no spot — and vega, like gamma, is a function
   of where spot is. A synthetic opening bar would be an invented number, so the
   series starts where the recording does.
-* **Values are emitted in lakh.** Fifty strikes, two sides, a hundred-odd
-  captures — raw rupee vega runs to many digits a number. Four decimals of lakh
-  is the same information in a fraction of the bytes.
+* **Values are emitted in crore.** Fifty strikes, two sides, a hundred-odd
+  captures — raw rupee vega runs to many digits a number. Four decimals of crore
+  is the same information in a fraction of the bytes, and matches the scale the
+  page reads the change since open on.
 """
 
 from __future__ import annotations
@@ -57,8 +58,7 @@ _MIN_INTRADAY_SNAPSHOTS = 2
 # bound. Matches `GetGex`'s default.
 _SERIES_STRIKE_SPAN = 25
 _DEFAULT_STEP = 50.0
-_DEFAULT_LOT_SIZE = 75
-_LAKH = 1e5
+_CRORE = 1e7
 # Enough precision that a small position is still visible; anything finer is
 # below the width of a rendered point.
 _PLACES = 4
@@ -101,12 +101,11 @@ class GetVega:
         ordered = sorted(snaps, key=lambda snap: snap.captured_at)
         axis = self._axis(ordered)
         expiry = _parse_expiry(chain.expiry)
-        lot_size = chain.lot_size or _DEFAULT_LOT_SIZE
 
         frames: list[dict[str, Any]] = []
         quoted = 0.0
         for snap in ordered:
-            built = _frame(snap, axis=axis, lot_size=lot_size, expiry=expiry, chain=chain)
+            built = _frame(snap, axis=axis, expiry=expiry, chain=chain)
             if built is None:
                 continue
             frames.append(built[0])
@@ -159,7 +158,6 @@ def _frame(
     snap: ChainSnapshot,
     *,
     axis: list[float],
-    lot_size: int,
     expiry: date | None,
     chain: ProviderChain,
 ) -> tuple[dict[str, Any], VegaProfile] | None:
@@ -180,7 +178,6 @@ def _frame(
     profile = vega_profile(
         snap.rows,
         spot=spot,
-        lot_size=lot_size,
         years=_years_to_expiry(captured, expiry),
         axis=axis,
     )
@@ -199,8 +196,8 @@ def _frame(
             "spot": round(spot, 2),
             "atm": snap.atm_strike,
             "synth_future": round(synth, 2) if synth is not None else None,
-            "call_vega": [_lakh(entry.call_vega) for entry in entries],
-            "put_vega": [_lakh(entry.put_vega) for entry in entries],
+            "call_vega": [_crore(entry.call_vega) for entry in entries],
+            "put_vega": [_crore(entry.put_vega) for entry in entries],
         },
         profile,
     )
@@ -233,8 +230,8 @@ def _empty(symbol: str, chain: ProviderChain, now: datetime) -> dict[str, Any]:
 # -- helpers ----------------------------------------------------------------
 
 
-def _lakh(value: float) -> float:
-    return round(value / _LAKH, _PLACES)
+def _crore(value: float) -> float:
+    return round(value / _CRORE, _PLACES)
 
 
 def _parse_expiry(value: str | None) -> date | None:

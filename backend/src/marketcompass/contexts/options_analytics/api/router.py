@@ -19,6 +19,7 @@ from marketcompass.contexts.options_analytics.api.schemas import (
     OiViewResponse,
     PcrSeriesResponse,
     PriceOiSeriesResponse,
+    SmartOiResponse,
     StraddleSeriesResponse,
     VegaResponse,
 )
@@ -26,6 +27,12 @@ from marketcompass.contexts.options_analytics.application.oi_series_service impo
     DEFAULT_INTERVAL,
     DEFAULT_WINDOW,
     MAX_WINDOW,
+)
+from marketcompass.contexts.options_analytics.application.smart_oi_service import (
+    DEFAULT_INTERVAL as SMART_OI_DEFAULT_INTERVAL,
+    INTERVALS as SMART_OI_INTERVALS,
+    MAX_SPAN,
+    MODE_AUTO,
 )
 from marketcompass.infrastructure.transport.http.dependencies import (
     CurrentPrincipal,
@@ -169,9 +176,7 @@ async def price_oi_series(
 
     redis = get_container(request).redis
     day = "live" if date_ is None else date_.isoformat()
-    cache_key = redis.key(
-        "lab:price-oi-series", str(principal.tenant_id), symbol, interval, day
-    )
+    cache_key = redis.key("lab:price-oi-series", str(principal.tenant_id), symbol, interval, day)
 
     cached = await redis.client.get(cache_key)
     if cached is not None:
@@ -214,9 +219,7 @@ async def pcr_series(
     if cached is not None:
         return PcrSeriesResponse.model_validate_json(cached)
 
-    payload = await services.pcr_series(
-        principal.tenant_id, symbol, trade_date=_trade_date(date_)
-    )
+    payload = await services.pcr_series(principal.tenant_id, symbol, trade_date=_trade_date(date_))
     response = PcrSeriesResponse.of(payload)
     await redis.client.set(cache_key, response.model_dump_json(), ex=_CACHE_TTL_SECONDS)
     return response
@@ -264,7 +267,7 @@ async def gex(
     summary="Intraday per-strike vega exposure",
     description=(
         "Aggregate option vega by strike through the session — call and put "
-        "vega in lakh per one volatility point, at every capture, with the "
+        "vega in crore per one volatility point, at every capture, with the "
         "put-call-parity synthetic future overlaid. The client sums the window "
         "it draws and plots each side's change since the open. Powers Vega "
         "Analysis."
@@ -329,5 +332,92 @@ async def straddle_series(
         principal.tenant_id, symbol, trade_date=_trade_date(date_)
     )
     response = StraddleSeriesResponse.of(payload)
+    await redis.client.set(cache_key, response.model_dump_json(), ex=_CACHE_TTL_SECONDS)
+    return response
+
+
+@router.get(
+    "/smart-oi/{instrument_id}",
+    response_model=SmartOiResponse,
+    summary="Per-bar OI flow against the underlying's price",
+    description=(
+        "Two aligned axes: the chain's cumulative OI change and both put/call "
+        "ratios at the archive's own cadence, plus per-bar OI flow and option "
+        "volume on the candle grid. Every total respects the strike window. "
+        "Powers Smart OI."
+    ),
+    responses={422: {"description": "Unknown instrument"}},
+)
+async def smart_oi(
+    request: Request,
+    principal: CurrentPrincipal,
+    services: Services,
+    instrument_id: InstrumentParam,
+    *,
+    interval: Annotated[
+        str, Query(description=f"Bar size: {', '.join(SMART_OI_INTERVALS)}")
+    ] = SMART_OI_DEFAULT_INTERVAL,
+    mode: Annotated[
+        str,
+        Query(
+            description=(
+                "`auto` re-centres the strike window on each capture's ATM; "
+                "`fixed` pins it to the session open's."
+            ),
+            pattern="^(auto|fixed)$",
+        ),
+    ] = MODE_AUTO,
+    span: Annotated[
+        int | None,
+        Query(
+            ge=1, le=MAX_SPAN, description="Strikes either side of ATM; omit for the whole chain"
+        ),
+    ] = None,
+    min_strike: Annotated[
+        float | None, Query(description="Absolute window floor; overrides `mode` and `span`")
+    ] = None,
+    max_strike: Annotated[
+        float | None, Query(description="Absolute window ceiling; overrides `mode` and `span`")
+    ] = None,
+    expiry: Annotated[
+        str | None, Query(description="ISO date. Defaults to the nearest expiry.")
+    ] = None,
+    date_: DateParam = None,
+) -> SmartOiResponse:
+    symbol = instrument_id.strip().upper()
+    redis = get_container(request).redis
+    # Every parameter that changes the payload is in the key. Windowing happens
+    # server-side because the client only ever receives totals, so two windows
+    # sharing one cache entry would serve the wrong numbers rather than merely
+    # stale ones.
+    cache_key = redis.key(
+        "lab:smart-oi",
+        str(principal.tenant_id),
+        symbol,
+        interval,
+        mode,
+        "all" if span is None else str(span),
+        "-" if min_strike is None else f"{min_strike:g}",
+        "-" if max_strike is None else f"{max_strike:g}",
+        expiry or "near",
+        _day_key(date_),
+    )
+
+    cached = await redis.client.get(cache_key)
+    if cached is not None:
+        return SmartOiResponse.model_validate_json(cached)
+
+    payload = await services.smart_oi(
+        principal.tenant_id,
+        symbol,
+        interval=interval,
+        mode=mode,
+        span=span,
+        min_strike=min_strike,
+        max_strike=max_strike,
+        expiry=expiry,
+        trade_date=_trade_date(date_),
+    )
+    response = SmartOiResponse.of(payload)
     await redis.client.set(cache_key, response.model_dump_json(), ex=_CACHE_TTL_SECONDS)
     return response

@@ -46,6 +46,8 @@ interface Props {
    */
   head?: number | undefined;
   empty?: string;
+  /** Give the plot the width back on a narrow panel — see `buildMultiSeriesOption`. */
+  compact?: boolean | undefined;
 }
 
 export default function SeriesChart({
@@ -61,7 +63,8 @@ export default function SeriesChart({
   formatPrice,
   group,
   head,
-  empty
+  empty,
+  compact
 }: Props) {
   const [hidden, setHidden] = useState<Set<string>>(() => new Set());
   const [futuresOn, setFuturesOn] = useState(true);
@@ -98,7 +101,8 @@ export default function SeriesChart({
           formatPrice,
           valueAxisName,
           referenceLine,
-          showFutures: futuresOn
+          showFutures: futuresOn,
+          compact
         },
         theme
       ),
@@ -111,6 +115,7 @@ export default function SeriesChart({
       valueAxisName,
       referenceLine,
       futuresOn,
+      compact,
       theme
     ]
   );

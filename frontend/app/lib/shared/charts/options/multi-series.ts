@@ -62,6 +62,21 @@ export interface MultiSeriesInput {
   /** A horizontal marker on the value axis, e.g. PCR = 1. */
   referenceLine?: { value: number; label: string } | undefined;
   showFutures: boolean;
+  /**
+   * Give the plot the width back on a narrow panel.
+   *
+   * The default margins are sized for a chart that owns most of the page. In a
+   * side column they are ruinous: the fixed right gutter plus `containLabel`'s
+   * own allowance reserved ~140px of a 446px chart — a third of it blank — and
+   * the end-of-line value pills, which are drawn outward from the plot edge,
+   * landed on top of the axis labels on their way into it.
+   *
+   * Compact mode shrinks that gutter to just the pill's own breathing room,
+   * trusting `containLabel` to add whatever the axis's tick labels need on top
+   * rather than budgeting for both. The full-size gutter budgeted for both and
+   * left most of a narrow side chart blank.
+   */
+  compact?: boolean | undefined;
 }
 
 /**
@@ -163,7 +178,7 @@ export function buildMultiSeriesOption(
   theme: ChartTheme
 ): EChartsCoreOption {
   const { timestamps, futures, lines, formatValue, formatPrice, valueAxisName } = input;
-  const { referenceLine, showFutures } = input;
+  const { referenceLine, showFutures, compact } = input;
   const axisName = { color: theme.axis, fontSize: 11, fontWeight: 600 as const };
 
   const ms = timestamps.map((iso) => Date.parse(iso));
@@ -184,8 +199,17 @@ export function buildMultiSeriesOption(
     //
     // `right` is wide enough for a value pill plus the price it holds: at 80 the
     // tags for contracts finishing close together were shunted into each other
-    // and neither could be read.
-    grid: { left: 8, right: 96, top: 36, bottom: 24, containLabel: true },
+    // and neither could be read. `containLabel` already reserves whatever room
+    // the right axis's own tick labels need on top of this, so compact panels
+    // only have to budget the pill's own breathing room here — not the labels
+    // again, which is what left a third of a narrow side chart blank.
+    grid: {
+      left: 8,
+      right: compact ? 16 : 96,
+      top: compact ? 28 : 36,
+      bottom: 24,
+      containLabel: true
+    },
     tooltip: {
       trigger: 'axis',
       // Biggest first: with five lines crossing each other, reading the tooltip

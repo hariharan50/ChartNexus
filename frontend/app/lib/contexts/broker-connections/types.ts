@@ -88,6 +88,19 @@ export interface StrikeRow {
   pe: OptionQuote | null;
 }
 
+/**
+ * The instrument's listed expiries, oldest first.
+ *
+ * Separate from `OptionChain.expiries`, which only comes attached to a whole
+ * chain: a page that just needs to populate an expiry picker should not pay for
+ * three hundred strikes to read eight dates off the end of them.
+ */
+export interface ExpiryList {
+  instrument: string;
+  expiries: string[];
+  provenance: Provenance;
+}
+
 export interface OptionChain {
   instrument: string;
   expiry: string;

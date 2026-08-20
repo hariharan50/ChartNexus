@@ -15,7 +15,11 @@ re-derives gamma for exactly the same reason.
 **Units.** ``leg_vega`` returns *rupee vega per one volatility point* — the
 change in the position's value for a 1-percentage-point move in implied
 volatility. Raw Black-Scholes vega is per unit of vol (1.0 == 100 points), so
-the ``* 0.01`` scales it to the one-point step a reader thinks in.
+the ``* 0.01`` scales it to the one-point step a reader thinks in. Open interest
+enters in *underlying units*, the way the feed and the rest of this context
+carry it — not in lots — so there is no separate lot multiplier: a 100k-unit OI
+is already 100k shares of exposure, and multiplying by the lot size on top would
+inflate every figure by one contract's worth of shares.
 
 **Sign.** Both sides are returned *positive* here — a long option always has
 positive vega. The Vega Analysis page plots each side's *change since the
@@ -60,17 +64,15 @@ def bs_vega(*, spot: float, strike: float, years: float, rate: float, vol: float
     return spot * sqrt_t * _norm_pdf(d1) * _ONE_VOL_POINT
 
 
-def leg_vega(*, vega: float, oi: int, lot_size: int) -> float:
+def leg_vega(*, vega: float, oi: int) -> float:
     """One leg's vega exposure in rupees per one-point move in implied vol.
 
-    ``vega * oi * lot``: per-share vega scaled by the contract size the open
-    interest represents. Unlike gamma exposure there is no ``spot^2`` term —
-    vega is already a rupee change in the option's price, not a per-unit
+    ``vega * oi``: per-share vega scaled by the open interest, which is already
+    in underlying units, not lots. Unlike gamma exposure there is no ``spot^2``
+    term — vega is already a rupee change in the option's price, not a per-unit
     sensitivity that needs squaring back into money.
     """
-    if lot_size <= 0:
-        return 0.0
-    return vega * oi * lot_size
+    return vega * oi
 
 
 @dataclass(frozen=True, slots=True)
@@ -113,7 +115,6 @@ def vega_profile(
     rows: Iterable[ChainRow],
     *,
     spot: float,
-    lot_size: int,
     years: float,
     axis: Sequence[float],
     rate: float = DEFAULT_RISK_FREE_RATE,
@@ -152,7 +153,7 @@ def vega_profile(
             vega = bs_vega(
                 spot=spot, strike=strike, years=years, rate=rate, vol=leg.iv / _IV_PERCENT
             )
-            sides.append(leg_vega(vega=vega, oi=leg.oi, lot_size=lot_size))
+            sides.append(leg_vega(vega=vega, oi=leg.oi))
 
         entries.append(StrikeVega(strike=strike, call_vega=sides[0], put_vega=sides[1]))
 

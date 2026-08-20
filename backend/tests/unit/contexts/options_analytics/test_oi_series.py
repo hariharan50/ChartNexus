@@ -382,9 +382,7 @@ PAST = datetime(2026, 8, 1, 12, 0, tzinfo=UTC)
 
 
 async def test_historical_reads_the_archived_day() -> None:
-    payload = await _service([_snap(0, oi=100), _snap(1, oi=110)])(
-        TENANT, "NIFTY", trade_date=PAST
-    )
+    payload = await _service([_snap(0, oi=100), _snap(1, oi=110)])(TENANT, "NIFTY", trade_date=PAST)
 
     assert payload["data_quality"] == "intraday"
     assert len(payload["t"]) == 2

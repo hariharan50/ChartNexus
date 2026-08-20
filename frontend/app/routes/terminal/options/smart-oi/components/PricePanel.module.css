@@ -1,0 +1,104 @@
+.panel {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  border: 1px solid var(--mc-border);
+  border-radius: var(--mc-radius-lg);
+  background: var(--mc-surface);
+  box-shadow: var(--mc-shadow);
+  padding: var(--mc-space-3);
+}
+
+.legend {
+  display: flex;
+  align-items: center;
+  gap: var(--mc-space-2);
+  flex-wrap: wrap;
+  margin-bottom: var(--mc-space-2);
+}
+
+.entry {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  padding: 0.25rem 0.5rem;
+  border: 1px solid var(--mc-border);
+  border-radius: var(--mc-radius);
+  background: var(--mc-surface-raised);
+  color: var(--mc-text);
+  font-size: var(--mc-text-xs);
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.entry.symbol {
+  cursor: default;
+}
+
+.entry.off {
+  color: var(--mc-text-subtle);
+  text-decoration: line-through;
+}
+
+.swatch {
+  width: 0.625rem;
+  height: 0.625rem;
+  border-radius: 2px;
+  flex: none;
+}
+
+/* The hovered bar's numbers. Pushed to the right so the toggles stay put as the
+   readout's width changes under the pointer. */
+.readout {
+  margin-left: auto;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--mc-space-3);
+  flex-wrap: wrap;
+  font-size: var(--mc-text-xs);
+  color: var(--mc-text-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.pair {
+  display: inline-flex;
+  gap: 0.25rem;
+}
+
+.pair b {
+  color: var(--mc-text);
+  font-weight: 700;
+}
+
+.sep {
+  color: var(--mc-border-strong);
+}
+
+.pos {
+  color: var(--mc-bullish);
+}
+
+.neg {
+  color: var(--mc-bearish);
+}
+
+/* Qualified by `.panel`: LwChart.module.css also defines a `.chart`, and with
+   equal specificity the winner would be emit order. */
+.panel .chart {
+  height: 560px;
+  min-height: 0;
+}
+
+.empty {
+  margin: 0;
+  padding: var(--mc-space-8) var(--mc-space-4);
+  text-align: center;
+  color: var(--mc-text-muted);
+  font-size: var(--mc-text-sm);
+}
+
+@media (max-width: 90rem) {
+  .panel .chart {
+    height: 460px;
+  }
+}

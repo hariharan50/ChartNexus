@@ -73,6 +73,34 @@ def atm_strike(spot: float, strikes: Sequence[float], step: float = _DEFAULT_STE
     return min(strikes, key=lambda s: abs(s - spot))
 
 
+def strike_window(*, atm: float, step: float, span: int | None) -> tuple[float, float]:
+    """The inclusive strike range ``span`` steps either side of ``atm``.
+
+    ``span=None`` means "the whole chain" and widens to infinity rather than
+    picking an arbitrarily large number — the caller then has one filter to
+    apply, not a filter plus a special case.
+
+    Expressed in *steps* rather than points because the same "± 10 strikes"
+    means 500 points on NIFTY and 1000 on BANKNIFTY, and the reader is choosing
+    strikes.
+    """
+    if span is None:
+        return (float("-inf"), float("inf"))
+    reach = abs(step) * span
+    return (atm - reach, atm + reach)
+
+
+def rows_within(rows: Iterable[ChainRow], low: float, high: float) -> tuple[ChainRow, ...]:
+    """The legs whose strike falls inside ``[low, high]``.
+
+    The bounds are compared with a small tolerance: strike ladders arrive as
+    floats, and ``24350.0`` computed as ``24500 - 3 * 50`` is not always the
+    ``24350.0`` the broker sent. Without it the edge strike of the window drops
+    out roughly at random, which reads as an OI total that jitters.
+    """
+    return tuple(row for row in rows if low - 1e-6 <= row.strike <= high + 1e-6)
+
+
 def max_pain(rows: Iterable[ChainRow], strikes: Sequence[float]) -> float:
     """The expiry level minimising total intrinsic value owed to option holders.
 

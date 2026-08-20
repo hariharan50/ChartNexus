@@ -71,7 +71,9 @@ export default function OptionsLabPanel() {
     <div className={s.mega}>
       <div className={s.megaHead}>
         <p className={s.megaTitle}>Options Lab</p>
-        <p className={s.megaSub}>Advanced analytics toolkit · All modules coming soon</p>
+        {/* Not "all modules coming soon" any more: several are built, and a
+            blanket disclaimer over a working menu trains readers to ignore it. */}
+        <p className={s.megaSub}>Advanced analytics toolkit · More modules landing</p>
       </div>
 
       <div className={s.cols}>

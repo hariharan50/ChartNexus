@@ -9,7 +9,7 @@ import { withAlpha } from '../theme/tokens';
  * A close sibling of `multi-series.ts` (Multi OI & Volume / Put-Call Ratio): the
  * same trading-time value axis and hand-built IST tooltip, and the same dual-axis
  * split — a **Synth Future** price on the left (tens of thousands) and vega on the
- * right (single digits of lakh). It differs in two ways the page needs and the
+ * right (single digits of crore). It differs in two ways the page needs and the
  * shared builder does not offer: the vega sides fill toward the zero line as areas
  * (the shape the reader tracks is "how far from open"), and a zero reference line
  * anchors that reading. Kept pure — arrays in, an ECharts option out, no fetching
@@ -43,7 +43,7 @@ export interface VegaChartInput {
   formatValue: (value: number) => string;
   /** Formats the left-axis synth-future price. */
   formatPrice: (value: number) => string;
-  /** What the right axis measures, e.g. "Vega (Δ, lakh)". */
+  /** What the right axis measures, e.g. "Vega Δ (Cr)". */
   valueAxisName: string;
 }
 

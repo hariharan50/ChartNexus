@@ -245,7 +245,7 @@ class VegaFrameResponse(_Schema):
     """One capture's aggregate-vega profile, plus the synthetic future.
 
     The two vega arrays are aligned to the payload's ``strikes`` and are the
-    per-strike aggregate vega on each side, in **lakh** per one volatility
+    per-strike aggregate vega on each side, in **crore** per one volatility
     point. Both sides are positive; the page plots each side's change since the
     open, and that delta is what carries the sign the chart reads.
     """
@@ -331,4 +331,66 @@ class StraddleSeriesResponse(_Schema):
 
     @classmethod
     def of(cls, payload: dict[str, Any]) -> StraddleSeriesResponse:
+        return cls.model_validate(payload)
+
+
+class SmartOiBarResponse(_Schema):
+    """One price bar of the underlying, at the requested interval."""
+
+    t: str
+    o: float
+    h: float
+    l: float  # noqa: E741 — `l` is the OHLC convention the chart client reads.
+    c: float
+
+
+class SmartOiResponse(_Schema):
+    """Everything the Smart OI page draws, on its two deliberate axes.
+
+    The frame arrays (`t` .. `vol_pcr`) share one length and describe the
+    archive's capture cadence. The bar arrays (`bars`, `smart_oi`, `call_vol`,
+    `put_vol`) share a *different* length and describe the candle grid. They are
+    not interchangeable and nothing should zip one against the other.
+    """
+
+    instrument_id: str
+    symbol: str
+    expiry_date: str | None
+    lot_size: int | None
+    atm_strike: float
+    open_ts: str
+    now_ts: str
+    data_quality: str
+    open_is_estimated: bool = False
+    # The bucket actually used, which can be coarser than the one requested when
+    # the ingest cadence cannot deliver it.
+    interval: str
+    # The strikes actually summed, for the toolbar's "(21200 - 27200)" readout.
+    # `None` when there is no chain to window.
+    strike_low: float | None
+    strike_high: float | None
+
+    # -- frame axis --
+    t: list[str]
+    # The tradable current-month future, not index spot. `None` on the
+    # reconstructed 09:15 frame, where nothing was recorded.
+    fut: list[float | None]
+    call_oi_chg: list[int]
+    put_oi_chg: list[int]
+    # Put minus call OI change: the level whose first difference is Smart OI.
+    pe_ce_chg: list[int]
+    # `None`, never 0, where the denominator was empty — see `PcrSeriesResponse`.
+    oi_pcr: list[float | None]
+    vol_pcr: list[float | None]
+
+    # -- bar axis --
+    bars: list[SmartOiBarResponse]
+    # Per-bar flows, aligned to `bars`. `None` where no capture landed in that
+    # bar, which is not the same statement as "nothing was written in it".
+    smart_oi: list[int | None]
+    call_vol: list[int | None]
+    put_vol: list[int | None]
+
+    @classmethod
+    def of(cls, payload: dict[str, Any]) -> SmartOiResponse:
         return cls.model_validate(payload)

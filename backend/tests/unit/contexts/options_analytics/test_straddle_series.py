@@ -35,7 +35,9 @@ def _row(
     return ChainRow(strike=strike, option_type=side, oi=oi, oi_change=0, ltp=ltp, volume=1, iv=iv)
 
 
-def _ladder(*, call_ltp: dict[float, float] | None = None, put_ltp: dict[float, float] | None = None) -> tuple[ChainRow, ...]:
+def _ladder(
+    *, call_ltp: dict[float, float] | None = None, put_ltp: dict[float, float] | None = None
+) -> tuple[ChainRow, ...]:
     """Five strikes either side of 24650, at 50-point spacing."""
     strikes = [SPOT + 50.0 * offset for offset in range(-5, 6)]
     calls = call_ltp or {}

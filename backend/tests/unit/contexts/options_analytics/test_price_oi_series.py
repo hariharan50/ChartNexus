@@ -29,7 +29,9 @@ OPEN = datetime(2026, 8, 4, 3, 45, tzinfo=UTC)  # 09:15 IST
 def _rows(*, oi: int, change: int = 0) -> tuple[ChainRow, ...]:
     # Three strikes, both sides — six legs, so total OI is 6 * oi.
     return tuple(
-        ChainRow(strike=strike, option_type=side, oi=oi, oi_change=change, ltp=10.0, volume=0, iv=None)
+        ChainRow(
+            strike=strike, option_type=side, oi=oi, oi_change=change, ltp=10.0, volume=0, iv=None
+        )
         for strike in (24_600.0, 24_650.0, 24_700.0)
         for side in ("CE", "PE")
     )
@@ -91,8 +93,12 @@ async def test_oi_sums_the_whole_chain_not_a_window() -> None:
     wide = ChainSnapshot(
         captured_at=datetime(2026, 8, 4, 4, 0, tzinfo=UTC),
         rows=(
-            ChainRow(strike=24_650.0, option_type="CE", oi=100, oi_change=0, ltp=1, volume=0, iv=None),
-            ChainRow(strike=30_000.0, option_type="CE", oi=500, oi_change=0, ltp=1, volume=0, iv=None),
+            ChainRow(
+                strike=24_650.0, option_type="CE", oi=100, oi_change=0, ltp=1, volume=0, iv=None
+            ),
+            ChainRow(
+                strike=30_000.0, option_type="CE", oi=500, oi_change=0, ltp=1, volume=0, iv=None
+            ),
         ),
         spot=24_650.0,
         atm_strike=24_650.0,

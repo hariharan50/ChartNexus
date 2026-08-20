@@ -266,9 +266,7 @@ def zero_gamma(
         return total
 
     samples = [(strike, net_gamma(strike)) for strike in strikes]
-    brackets = [
-        (k0, g0, k1) for (k0, g0), (k1, g1) in pairwise(samples) if _straddles_zero(g0, g1)
-    ]
+    brackets = [(k0, g0, k1) for (k0, g0), (k1, g1) in pairwise(samples) if _straddles_zero(g0, g1)]
     if not brackets:
         return None
 

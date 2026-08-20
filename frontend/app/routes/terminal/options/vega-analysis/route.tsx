@@ -163,7 +163,7 @@ export default function VegaAnalysis() {
         lines,
         formatValue: fmtVega,
         formatPrice: fmtPrice,
-        valueAxisName: 'Vega Δ (lakh)'
+        valueAxisName: 'Vega Δ (Cr)'
       },
       theme
     );
@@ -441,7 +441,7 @@ export default function VegaAnalysis() {
 
               <p className={s.caption}>
                 Call and Put Vega are each side’s aggregate option vega across the{' '}
-                {series.windowSize}-strike window around the money, in lakh per one volatility
+                {series.windowSize}-strike window around the money, in crore per one volatility
                 point, shown as the change since the session open. Put-Call Difference is Put minus
                 Call. Synth Future is the put-call-parity forward at the money.
                 {vw.iv_coverage < 1

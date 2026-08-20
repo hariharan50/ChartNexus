@@ -2,6 +2,7 @@ import { apiFetch } from '$shared/api/client';
 import type {
   BrokerAuthorization,
   BrokerConnection,
+  ExpiryList,
   FuturesQuote,
   MarketStatus,
   OptionChain,
@@ -58,6 +59,10 @@ export function getSpot(instrument: string, fetcher?: typeof fetch): Promise<Quo
 
 export function getFutures(instrument: string, fetcher?: typeof fetch): Promise<FuturesQuote> {
   return apiFetch<FuturesQuote>({ url: '/market/futures', params: { instrument }, fetcher });
+}
+
+export function getExpiries(instrument: string, fetcher?: typeof fetch): Promise<ExpiryList> {
+  return apiFetch<ExpiryList>({ url: '/market/expiries', params: { instrument }, fetcher });
 }
 
 export function getOptionChain(

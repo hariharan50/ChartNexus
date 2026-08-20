@@ -1,12 +1,15 @@
 """Ports the Open Interest use case depends on.
 
-Both are satisfied by infrastructure adapters, keeping this context free of any
-import of ``market_data`` or the persistence layer.
+All three are satisfied by infrastructure adapters, keeping this context free of
+any import of ``market_data`` or the persistence layer.
 
 * ``ChainProvider`` yields a live option chain (rows + spot + contract meta).
 * ``SnapshotReader`` yields stored intraday chains. There is no writer for these
   yet, so the shipped adapter returns nothing and the service serves the live
   tier; when ingestion lands, the intraday tier activates with no service change.
+* ``CandleSource`` yields the underlying index's own price bars. Option analytics
+  needs them to draw positions *against price*, and they come from a different
+  upstream call than the chain does.
 """
 
 from __future__ import annotations
@@ -54,9 +57,50 @@ class ChainSnapshot:
     future_price: float | None = None
 
 
+@dataclass(frozen=True, slots=True)
+class Candle:
+    """One price bar of the underlying index.
+
+    ``opened_at`` is the instant the bar *starts*, in UTC — the convention the
+    charting client expects, and the one the broker's history endpoint uses.
+
+    No volume field: index candles carry the index's own turnover, which is a
+    different quantity from the option volume every Options Lab tool means when
+    it says "volume". Leaving it out is cheaper than leaving a plausible-looking
+    number that nobody should plot next to a chain total.
+    """
+
+    opened_at: datetime
+    open: float
+    high: float
+    low: float
+    close: float
+
+
 @runtime_checkable
 class ChainProvider(Protocol):
-    async def fetch(self, tenant_id: TenantId, symbol: str) -> ProviderChain: ...
+    async def fetch(
+        self, tenant_id: TenantId, symbol: str, *, expiry: str | None = None
+    ) -> ProviderChain:
+        """The chain for ``expiry``, or the nearest one when it is ``None``."""
+        ...
+
+
+@runtime_checkable
+class CandleSource(Protocol):
+    """Reads the underlying's price bars. Never raises on absence — returns empty."""
+
+    async def minute_candles(
+        self, tenant_id: TenantId, symbol: str, *, trade_date_utc: datetime
+    ) -> list[Candle]:
+        """One-minute bars for the IST trading day containing ``trade_date_utc``.
+
+        Always one-minute, never the caller's display interval: the broker does
+        not offer every bucket the UI does, and a caller that must align these
+        against option captures is already doing its own bucketing. One grid,
+        aggregated once, beats two rounding rules that disagree at the edges.
+        """
+        ...
 
 
 @runtime_checkable
