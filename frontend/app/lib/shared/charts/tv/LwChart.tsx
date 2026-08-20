@@ -51,6 +51,14 @@ export interface LwChartHandle {
   /** A PNG of the chart as drawn, for the toolbar's snapshot button. */
   screenshot(): HTMLCanvasElement;
   fitContent(): void;
+  /**
+   * The live chart and price series, for attaching custom drawings on top —
+   * see `$shared/charts/tv/drawings`. A method rather than a stored pair:
+   * both are rebuilt whenever `type` changes (candle/line/area), so a snapshot
+   * taken once would go stale the next time the reader switches chart type.
+   * `null` before the chart exists (the library is still loading).
+   */
+  getApi(): { chart: IChartApi; series: ISeriesApi<SeriesType> } | null;
 }
 
 /** One reconciled overlay line (indicator) drawn over the price or a sub-pane. */
@@ -119,6 +127,17 @@ interface Props {
   /** Populated on mount, cleared on dispose. */
   handleRef?: RefObject<LwChartHandle | null> | undefined;
   /**
+   * Fired every time a *new* chart and price series exist behind `handleRef` —
+   * on mount, and again after a rebuild (a `type` switch, or volume appearing).
+   *
+   * Anything holding library objects obtained from `getApi()` has to know when
+   * they have been thrown away: the old series is gone and whatever was attached
+   * to it went with it. Without this signal a caller cannot tell a rebuild from
+   * an ordinary re-render, and its attachments silently stop being drawn — see
+   * `drawings/useDrawingController`, which re-attaches on this.
+   */
+  onReady?: (() => void) | undefined;
+  /**
    * Identity of the drawn dataset — e.g. `"NIFTY:5m:candle"`. The view is fit to
    * the data **only when this changes**; across a live refetch it stays put, so a
    * poll never throws away the reader's zoom and scroll. Omit to fit on every
@@ -183,6 +202,39 @@ function tickLabel(seconds: number, tickMarkType: number): string {
   return tickMarkType >= TICK_TIME ? tickClock.format(ms) : tickDate.format(ms);
 }
 
+/**
+ * Strictly ascending, duplicate-free by `time` — what the library requires and
+ * throws on if violated. Keeps the *last* occurrence of a repeated timestamp,
+ * on the assumption a later entry in the source array is the more current one.
+ *
+ * Returns the input array untouched when it is already in order, which is the
+ * case on every single repaint of a well-behaved feed. This runs on the candles,
+ * the volume bars and every indicator's points on each poll and each replay
+ * tick, so the common path is a linear scan and no allocation at all rather than
+ * a copy plus a sort of a few thousand bars several times a second.
+ */
+function sortAscending<T extends { time: number }>(items: T[]): T[] {
+  let ordered = true;
+  for (let i = 1; i < items.length; i += 1) {
+    if (items[i]!.time <= items[i - 1]!.time) {
+      ordered = false;
+      break;
+    }
+  }
+  if (ordered) return items;
+
+  const sorted = [...items].sort((a, b) => a.time - b.time);
+  const deduped: T[] = [];
+  for (const item of sorted) {
+    if (deduped.length > 0 && deduped[deduped.length - 1]!.time === item.time) {
+      deduped[deduped.length - 1] = item;
+    } else {
+      deduped.push(item);
+    }
+  }
+  return deduped;
+}
+
 export default function LwChart({
   candles,
   volume,
@@ -192,6 +244,7 @@ export default function LwChart({
   overlays,
   histograms,
   handleRef,
+  onReady,
   resetKey,
   className,
   style
@@ -216,14 +269,25 @@ export default function LwChart({
   // Latest props for callbacks that are registered once at mount. Without this
   // the crosshair handler would report against the candles of the render it was
   // subscribed in, which is the first one.
-  const latest = useRef({ candles, onHoverBar });
-  latest.current = { candles, onHoverBar };
+  const latest = useRef({ candles, onHoverBar, onReady });
+  latest.current = { candles, onHoverBar, onReady };
 
   // The `resetKey` the view was last fit to. A refetch that keeps the same key
   // must not re-fit — that is what threw the reader's zoom away every poll.
   const lastFitKey = useRef<string | null>(null);
 
   const hasVolume = volume !== undefined;
+
+  // Flips once `api.current` exists, so the data/overlay/histogram effects
+  // below — which no-op while there is no chart to paint into — re-run against
+  // *current* props as soon as one exists. Without this, a chart whose mount
+  // effect is still awaiting the dynamic import can miss the one render where
+  // fresh candles arrived: the data effect fires too early (no chart yet) and
+  // never fires again once the import resolves, since `candles` itself hasn't
+  // changed since. That left a correctly-sized, correctly-created canvas that
+  // never drew anything — exactly the "empty grid" a newly added multi-chart
+  // cell showed.
+  const [ready, setReady] = useState(false);
 
   /**
    * Set when the library fails to load or the chart fails to build.
@@ -340,16 +404,20 @@ export default function LwChart({
       if (handleRef) {
         handleRef.current = {
           screenshot: () => chart.takeScreenshot(),
-          fitContent: () => chart.timeScale().fitContent()
+          fitContent: () => chart.timeScale().fitContent(),
+          getApi: () =>
+            api.current ? { chart: api.current.chart, series: api.current.price } : null
         };
       }
-      paint();
-      reconcileOverlays();
-      reconcileHistograms();
+      // Triggers the data/overlay/histogram effects below with whatever props
+      // are current *then*, not the ones closed over here — see `ready` above.
+      setReady(true);
+      latest.current.onReady?.();
     })();
 
     return () => {
       disposed = true;
+      setReady(false);
       api.current?.chart.remove();
       api.current = null;
       if (handleRef) handleRef.current = null;
@@ -366,9 +434,17 @@ export default function LwChart({
     const current = api.current;
     if (!current) return;
 
+    // The library throws — uncatchably, past the render boundary — on a bar
+    // out of order or repeated. The upstream feed is expected to already be
+    // ascending, but a single reordered or duplicated bar (a session-boundary
+    // edge case in a mock feed, a reordered response) must not take the whole
+    // chart down with it; dropping it is a far smaller failure than a crash.
+    const sortedCandles = sortAscending(candles);
+    const sortedVolume = volume ? sortAscending(volume) : undefined;
+
     if (type === 'candle') {
       current.price.setData(
-        candles.map((candle) => ({
+        sortedCandles.map((candle) => ({
           time: candle.time as UTCTimestamp,
           open: candle.open,
           high: candle.high,
@@ -379,13 +455,13 @@ export default function LwChart({
     } else {
       // Line and area plot one number a bar; the close is the one anyone means.
       current.price.setData(
-        candles.map((candle) => ({ time: candle.time as UTCTimestamp, value: candle.close }))
+        sortedCandles.map((candle) => ({ time: candle.time as UTCTimestamp, value: candle.close }))
       );
     }
 
-    if (current.volume && volume) {
+    if (current.volume && sortedVolume) {
       current.volume.setData(
-        volume.map((bar) => ({
+        sortedVolume.map((bar) => ({
           time: bar.time as UTCTimestamp,
           value: bar.value,
           color: bar.rising ? theme.call : theme.put
@@ -406,9 +482,12 @@ export default function LwChart({
   useEffect(() => {
     paint();
     // `paint` closes over the latest props on every render, so listing it would
-    // re-run this effect every time regardless.
+    // re-run this effect every time regardless. `ready` is listed deliberately:
+    // it is what makes this effect re-fire — this time against current props —
+    // once the chart actually exists, rather than relying on the mount effect's
+    // own stale-closure call.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [candles, volume]);
+  }, [candles, volume, ready]);
 
   // -- overlays (indicators) ------------------------------------------------
   /**
@@ -443,8 +522,14 @@ export default function LwChart({
         lastValueVisible: false,
         crosshairMarkerVisible: false
       });
+      // Same ascending/duplicate-free requirement `paint` guards against, and
+      // the same reason: an indicator's points are derived from the candles,
+      // so any disorder in the source data reaches here too.
       series.setData(
-        spec.data.map((point) => ({ time: point.time as UTCTimestamp, value: point.value }))
+        sortAscending(spec.data).map((point) => ({
+          time: point.time as UTCTimestamp,
+          value: point.value
+        }))
       );
     }
 
@@ -467,7 +552,7 @@ export default function LwChart({
   useEffect(() => {
     reconcileOverlays();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [overlays]);
+  }, [overlays, ready]);
 
   // -- histograms (signed sub-pane series) ----------------------------------
   /**
@@ -511,14 +596,13 @@ export default function LwChart({
           ? { priceFormat: { type: 'custom' as const, formatter: spec.format, minMove: 1 } }
           : {})
       });
+      // Same ascending/duplicate-free requirement `paint` guards against.
       series.setData(
-        spec.data
-          .filter((point) => point.value !== null)
-          .map((point) => ({
-            time: point.time as UTCTimestamp,
-            value: point.value as number,
-            color: point.color
-          }))
+        sortAscending(spec.data.filter((point) => point.value !== null)).map((point) => ({
+          time: point.time as UTCTimestamp,
+          value: point.value as number,
+          color: point.color
+        }))
       );
     }
 
@@ -560,7 +644,7 @@ export default function LwChart({
   useEffect(() => {
     reconcileHistograms();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [histograms]);
+  }, [histograms, ready]);
 
   // -- theme ----------------------------------------------------------------
   useEffect(() => {

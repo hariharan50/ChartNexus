@@ -71,13 +71,19 @@ export function getHistory(
  */
 export function toCandles(view: HistoryView | undefined): Candle[] {
   if (!view) return [];
-  return view.candles.map((candle) => ({
-    time: Math.floor(Date.parse(candle.time) / 1000),
-    open: Number(candle.open),
-    high: Number(candle.high),
-    low: Number(candle.low),
-    close: Number(candle.close)
-  }));
+  // Sorted defensively: the chart library and every indicator computed off
+  // this array assume strictly ascending time, and a single out-of-order bar
+  // — a mock-data session-boundary edge case has produced one in practice —
+  // must not corrupt an indicator's math or crash the chart it's drawn on.
+  return [...view.candles]
+    .sort((a, b) => Date.parse(a.time) - Date.parse(b.time))
+    .map((candle) => ({
+      time: Math.floor(Date.parse(candle.time) / 1000),
+      open: Number(candle.open),
+      high: Number(candle.high),
+      low: Number(candle.low),
+      close: Number(candle.close)
+    }));
 }
 
 /**
@@ -92,11 +98,14 @@ export function toVolume(view: HistoryView | undefined): VolumeBar[] | undefined
   const bars = view.candles;
   if (!bars.some((candle) => Number(candle.volume) > 0)) return undefined;
 
-  return bars.map((candle) => ({
-    time: Math.floor(Date.parse(candle.time) / 1000),
-    value: Number(candle.volume),
-    rising: Number(candle.close) >= Number(candle.open)
-  }));
+  // Sorted for the same reason `toCandles` is — see its comment.
+  return [...bars]
+    .sort((a, b) => Date.parse(a.time) - Date.parse(b.time))
+    .map((candle) => ({
+      time: Math.floor(Date.parse(candle.time) / 1000),
+      value: Number(candle.volume),
+      rising: Number(candle.close) >= Number(candle.open)
+    }));
 }
 
 /** Close, and how far it moved across the whole drawn range. */

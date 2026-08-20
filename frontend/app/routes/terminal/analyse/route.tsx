@@ -1,8 +1,10 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { ChartType, LwChartHandle } from '$shared/charts/tv/LwChart';
+import type { DrawingTool } from '$shared/charts/tv/drawings/types';
 import { cx } from '$shared/ui/cx';
 import { OI_INSTRUMENTS } from '../options/open-interest/oi-data';
-import ChartCell from './components/ChartCell';
+import ChartCell, { type DrawingHandle } from './components/ChartCell';
+import DrawingToolbar from './components/DrawingToolbar';
 import SymbolPicker from './components/SymbolPicker';
 import TopToolbar from './components/TopToolbar';
 import { type Interval } from './analyse-data';
@@ -10,6 +12,14 @@ import type { IndicatorId } from './indicators';
 import { cellsInLayout, defaultCell, type CellConfig, type LayoutId } from './workspace';
 import s from './route.module.css';
 import type { Route } from './+types/route';
+
+/** Per-cell drawing state that isn't part of `CellConfig` — see `DrawingToolbar`'s docstring for why. */
+interface DrawState {
+  locked: boolean;
+  visible: boolean;
+}
+
+const DEFAULT_DRAW_STATE: DrawState = { locked: false, visible: true };
 
 export const meta: Route.MetaFunction = () => [{ title: 'Chart Tools · MarketCompass' }];
 
@@ -35,10 +45,37 @@ export default function Analyse() {
   const h3 = useRef<LwChartHandle | null>(null);
   const handles = useMemo(() => [h0, h1, h2, h3], []);
 
+  // -- drawings ---------------------------------------------------------------
+  // The tool and magnet are "what happens on the next click", not a property
+  // of any one cell, so they're uniform across the workspace. Lock/visible are
+  // the opposite — properties of a cell's own drawings — so they're per cell,
+  // parallel to `cells` but kept separate from `CellConfig`: see
+  // `DrawingToolbar`'s docstring for why drawings aren't workspace config.
+  const [tool, setTool] = useState<DrawingTool | null>(null);
+  const [magnet, setMagnet] = useState(false);
+  const [drawState, setDrawState] = useState<DrawState[]>(() =>
+    cells.map(() => DEFAULT_DRAW_STATE)
+  );
+  const d0 = useRef<DrawingHandle | null>(null);
+  const d1 = useRef<DrawingHandle | null>(null);
+  const d2 = useRef<DrawingHandle | null>(null);
+  const d3 = useRef<DrawingHandle | null>(null);
+  const drawingHandles = useMemo(() => [d0, d1, d2, d3], []);
+
   const shown = cellsInLayout(layout);
   const active = cells[activeIdx] ?? cells[0]!;
   const instrument =
     OI_INSTRUMENTS.find((entry) => entry.symbol === active.symbol) ?? OI_INSTRUMENTS[0]!;
+  const activeDraw = drawState[activeIdx] ?? DEFAULT_DRAW_STATE;
+
+  const patchDrawState = useCallback(
+    (patch: Partial<DrawState>) => {
+      setDrawState((prev) =>
+        prev.map((entry, i) => (i === activeIdx ? { ...entry, ...patch } : entry))
+      );
+    },
+    [activeIdx]
+  );
 
   const patchActive = useCallback(
     (patch: Partial<CellConfig>) => {
@@ -113,21 +150,41 @@ export default function Analyse() {
         isFullscreen={isFullscreen}
       />
 
-      <div className={cx(s.grid, s[`grid${layout}`])}>
-        {cells.slice(0, shown).map((cell, index) => (
-          <ChartCell
-            key={index}
-            config={cell}
-            active={shown > 1 && index === activeIdx}
-            onFocus={() => setActiveIdx(index)}
-            onExitReplay={() =>
-              setCells((prev) =>
-                prev.map((entry, i) => (i === index ? { ...entry, replay: false } : entry))
-              )
-            }
-            handleRef={handles[index]}
-          />
-        ))}
+      <div className={s.body}>
+        <DrawingToolbar
+          tool={tool}
+          onTool={setTool}
+          magnet={magnet}
+          onMagnet={() => setMagnet((on) => !on)}
+          locked={activeDraw.locked}
+          onLocked={() => patchDrawState({ locked: !activeDraw.locked })}
+          visible={activeDraw.visible}
+          onVisible={() => patchDrawState({ visible: !activeDraw.visible })}
+          onClear={() => drawingHandles[activeIdx]?.current?.clear()}
+        />
+
+        <div className={cx(s.grid, s[`grid${layout}`])}>
+          {cells.slice(0, shown).map((cell, index) => (
+            <ChartCell
+              key={index}
+              config={cell}
+              active={shown > 1 && index === activeIdx}
+              onFocus={() => setActiveIdx(index)}
+              onExitReplay={() =>
+                setCells((prev) =>
+                  prev.map((entry, i) => (i === index ? { ...entry, replay: false } : entry))
+                )
+              }
+              handleRef={handles[index]}
+              tool={tool}
+              onToolDone={() => setTool(null)}
+              magnet={magnet}
+              locked={drawState[index]?.locked ?? false}
+              drawingsVisible={drawState[index]?.visible ?? true}
+              drawingHandleRef={drawingHandles[index]}
+            />
+          ))}
+        </div>
       </div>
 
       {picking ? (

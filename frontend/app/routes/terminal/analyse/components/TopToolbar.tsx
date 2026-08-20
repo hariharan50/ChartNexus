@@ -19,6 +19,7 @@ import type { ChartType } from '$shared/charts/tv/LwChart';
 import { INTERVALS, type Interval } from '../analyse-data';
 import { INDICATORS, type IndicatorId } from '../indicators';
 import { LAYOUTS, type LayoutId } from '../workspace';
+import ToolbarMenu from './ToolbarMenu';
 import s from './TopToolbar.module.css';
 
 /**
@@ -75,13 +76,23 @@ export default function TopToolbar({
     null
   );
   const bar = useRef<HTMLDivElement>(null);
+  const intervalBtn = useRef<HTMLButtonElement>(null);
+  const typeBtn = useRef<HTMLButtonElement>(null);
+  const indicatorsBtn = useRef<HTMLButtonElement>(null);
+  const layoutBtn = useRef<HTMLButtonElement>(null);
 
   // A menu left open behind a click elsewhere is a stuck overlay on a page
   // whose whole job is the area underneath it.
   useEffect(() => {
     if (openMenu === null) return;
     function onDown(event: MouseEvent) {
-      if (!bar.current?.contains(event.target as Node)) setOpenMenu(null);
+      const target = event.target as Node;
+      if (bar.current?.contains(target)) return;
+      // The open panel is portaled to `document.body` (see `ToolbarMenu`), so
+      // it is never inside `bar` — without this it would read as an outside
+      // click and close itself before its own item's `onClick` could fire.
+      if ((target as Element).closest?.('[data-toolbar-menu]')) return;
+      setOpenMenu(null);
     }
     function onKey(event: KeyboardEvent) {
       if (event.key === 'Escape') setOpenMenu(null);
@@ -101,6 +112,7 @@ export default function TopToolbar({
       {/* interval */}
       <div className={s.menuWrap}>
         <button
+          ref={intervalBtn}
           type="button"
           className={cx(s.btn, s.interval)}
           aria-haspopup="menu"
@@ -109,28 +121,26 @@ export default function TopToolbar({
         >
           {INTERVALS.find((entry) => entry.value === interval)?.label ?? interval}
         </button>
-        {openMenu === 'interval' ? (
-          <div className={s.menu} role="menu">
-            {INTERVALS.map((entry) => (
-              <button
-                key={entry.value}
-                type="button"
-                role="menuitemradio"
-                aria-checked={entry.value === interval}
-                className={cx(s.menuItem, entry.value === interval && s.menuItemOn)}
-                onClick={() => {
-                  onInterval(entry.value);
-                  setOpenMenu(null);
-                }}
-              >
-                <span>{entry.label}</span>
-                <span className={s.menuHint}>
-                  {entry.days} {entry.days === 1 ? 'day' : 'days'}
-                </span>
-              </button>
-            ))}
-          </div>
-        ) : null}
+        <ToolbarMenu anchorRef={intervalBtn} open={openMenu === 'interval'}>
+          {INTERVALS.map((entry) => (
+            <button
+              key={entry.value}
+              type="button"
+              role="menuitemradio"
+              aria-checked={entry.value === interval}
+              className={cx(s.menuItem, entry.value === interval && s.menuItemOn)}
+              onClick={() => {
+                onInterval(entry.value);
+                setOpenMenu(null);
+              }}
+            >
+              <span>{entry.label}</span>
+              <span className={s.menuHint}>
+                {entry.days} {entry.days === 1 ? 'day' : 'days'}
+              </span>
+            </button>
+          ))}
+        </ToolbarMenu>
       </div>
 
       <span className={s.rule} aria-hidden="true" />
@@ -138,6 +148,7 @@ export default function TopToolbar({
       {/* chart type */}
       <div className={s.menuWrap}>
         <button
+          ref={typeBtn}
           type="button"
           className={s.btn}
           aria-haspopup="menu"
@@ -147,26 +158,24 @@ export default function TopToolbar({
         >
           <span className={s.ico}>{activeType.icon}</span>
         </button>
-        {openMenu === 'type' ? (
-          <div className={s.menu} role="menu">
-            {CHART_TYPES.map((entry) => (
-              <button
-                key={entry.value}
-                type="button"
-                role="menuitemradio"
-                aria-checked={entry.value === chartType}
-                className={cx(s.menuItem, entry.value === chartType && s.menuItemOn)}
-                onClick={() => {
-                  onChartType(entry.value);
-                  setOpenMenu(null);
-                }}
-              >
-                <span className={s.ico}>{entry.icon}</span>
-                <span>{entry.label}</span>
-              </button>
-            ))}
-          </div>
-        ) : null}
+        <ToolbarMenu anchorRef={typeBtn} open={openMenu === 'type'}>
+          {CHART_TYPES.map((entry) => (
+            <button
+              key={entry.value}
+              type="button"
+              role="menuitemradio"
+              aria-checked={entry.value === chartType}
+              className={cx(s.menuItem, entry.value === chartType && s.menuItemOn)}
+              onClick={() => {
+                onChartType(entry.value);
+                setOpenMenu(null);
+              }}
+            >
+              <span className={s.ico}>{entry.icon}</span>
+              <span>{entry.label}</span>
+            </button>
+          ))}
+        </ToolbarMenu>
       </div>
 
       <span className={s.rule} aria-hidden="true" />
@@ -174,6 +183,7 @@ export default function TopToolbar({
       {/* indicators */}
       <div className={s.menuWrap}>
         <button
+          ref={indicatorsBtn}
           type="button"
           className={cx(s.btn, indicators.length > 0 && s.btnOn)}
           aria-haspopup="menu"
@@ -187,28 +197,26 @@ export default function TopToolbar({
             Indicators{indicators.length ? ` (${indicators.length})` : ''}
           </span>
         </button>
-        {openMenu === 'indicators' ? (
-          <div className={s.menu} role="menu">
-            {INDICATORS.map((entry) => {
-              const on = indicators.includes(entry.id);
-              return (
-                <button
-                  key={entry.id}
-                  type="button"
-                  role="menuitemcheckbox"
-                  aria-checked={on}
-                  className={cx(s.menuItem, s.checkItem, on && s.menuItemOn)}
-                  onClick={() => onToggleIndicator(entry.id)}
-                >
-                  <span className={s.check} aria-hidden="true">
-                    {on ? '✓' : ''}
-                  </span>
-                  <span>{entry.label}</span>
-                </button>
-              );
-            })}
-          </div>
-        ) : null}
+        <ToolbarMenu anchorRef={indicatorsBtn} open={openMenu === 'indicators'}>
+          {INDICATORS.map((entry) => {
+            const on = indicators.includes(entry.id);
+            return (
+              <button
+                key={entry.id}
+                type="button"
+                role="menuitemcheckbox"
+                aria-checked={on}
+                className={cx(s.menuItem, s.checkItem, on && s.menuItemOn)}
+                onClick={() => onToggleIndicator(entry.id)}
+              >
+                <span className={s.check} aria-hidden="true">
+                  {on ? '✓' : ''}
+                </span>
+                <span>{entry.label}</span>
+              </button>
+            );
+          })}
+        </ToolbarMenu>
       </div>
       <button type="button" className={s.btn} disabled title="Templates — not built yet">
         <span className={s.ico}>
@@ -234,6 +242,7 @@ export default function TopToolbar({
       {/* layout */}
       <div className={s.menuWrap}>
         <button
+          ref={layoutBtn}
           type="button"
           className={s.btn}
           aria-haspopup="menu"
@@ -245,28 +254,26 @@ export default function TopToolbar({
           </span>
           <span className={s.btnText}>Layout</span>
         </button>
-        {openMenu === 'layout' ? (
-          <div className={s.menu} role="menu">
-            {LAYOUTS.map((entry) => (
-              <button
-                key={entry.id}
-                type="button"
-                role="menuitemradio"
-                aria-checked={entry.id === layout}
-                className={cx(s.menuItem, entry.id === layout && s.menuItemOn)}
-                onClick={() => {
-                  onLayout(entry.id);
-                  setOpenMenu(null);
-                }}
-              >
-                <span>{entry.label}</span>
-                <span className={s.menuHint}>
-                  {entry.cells} {entry.cells === 1 ? 'chart' : 'charts'}
-                </span>
-              </button>
-            ))}
-          </div>
-        ) : null}
+        <ToolbarMenu anchorRef={layoutBtn} open={openMenu === 'layout'}>
+          {LAYOUTS.map((entry) => (
+            <button
+              key={entry.id}
+              type="button"
+              role="menuitemradio"
+              aria-checked={entry.id === layout}
+              className={cx(s.menuItem, entry.id === layout && s.menuItemOn)}
+              onClick={() => {
+                onLayout(entry.id);
+                setOpenMenu(null);
+              }}
+            >
+              <span>{entry.label}</span>
+              <span className={s.menuHint}>
+                {entry.cells} {entry.cells === 1 ? 'chart' : 'charts'}
+              </span>
+            </button>
+          ))}
+        </ToolbarMenu>
       </div>
       <button
         type="button"

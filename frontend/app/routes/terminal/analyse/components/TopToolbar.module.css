@@ -101,10 +101,11 @@
   flex: none;
 }
 
+/* `top`/`left` are set inline by `ToolbarMenu`, in viewport coordinates — this
+   is portaled to `document.body`, not a child of `.menu-wrap` any more. See
+   `ToolbarMenu.tsx` for why. */
 .menu {
-  position: absolute;
-  top: calc(100% + 0.375rem);
-  left: 0;
+  position: fixed;
   z-index: var(--mc-z-dropdown, 50);
   display: flex;
   flex-direction: column;

@@ -1,0 +1,34 @@
+.readout {
+  position: absolute;
+  top: var(--mc-space-2);
+  right: var(--mc-space-3);
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.25rem 0.625rem;
+  border-radius: var(--mc-radius);
+  background: var(--mc-surface-raised);
+  border: 1px solid var(--mc-border);
+  font-variant-numeric: tabular-nums;
+  /* The chart underneath must stay draggable through the readout. */
+  pointer-events: none;
+}
+
+.delta {
+  font-size: var(--mc-text-xs);
+  font-weight: 700;
+}
+
+.delta.up {
+  color: var(--mc-bullish);
+}
+
+.delta.down {
+  color: var(--mc-bearish);
+}
+
+.bars {
+  font-size: var(--mc-text-xs);
+  color: var(--mc-text-subtle);
+}

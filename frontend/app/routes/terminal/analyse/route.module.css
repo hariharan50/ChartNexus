@@ -17,13 +17,23 @@
   background: var(--mc-surface);
 }
 
-/* The chart grid fills everything under the toolbar. `min-height: 0` lets the
-   cells shrink below their content so each chart's own absolute canvas resolves
-   a real height. */
+/* The drawing rail and the chart grid, side by side, filling everything under
+   the top toolbar. `min-height: 0` lets it shrink below its content so the
+   grid inside can do the same. */
+.body {
+  display: flex;
+  flex: 1;
+  min-height: 0;
+}
+
+/* `min-height: 0` (and `min-width: 0` via the flex item default not applying
+   here since this is itself a grid) lets the cells shrink below their content
+   so each chart's own absolute canvas resolves a real height. */
 .grid {
   display: grid;
   flex: 1;
   min-height: 0;
+  min-width: 0;
   gap: 1px;
   background: var(--mc-border);
 }
