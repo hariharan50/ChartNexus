@@ -45,10 +45,10 @@ from marketcompass.contexts.options_analytics.application.session import (
 from marketcompass.contexts.options_analytics.domain.gex_math import (
     GexProfile,
     call_wall,
-    gamma_flip,
     net_cross,
     put_wall,
     strike_profile,
+    zero_gamma,
 )
 from marketcompass.shared_kernel.types.identifiers import TenantId
 
@@ -58,7 +58,6 @@ _MIN_INTRADAY_SNAPSHOTS = 2
 # cannot grow the payload without bound. Matches `GetOiView`'s default.
 _SERIES_STRIKE_SPAN = 25
 _DEFAULT_STEP = 50.0
-_DEFAULT_LOT_SIZE = 75
 _CRORE = 1e7
 # Enough precision that a 1-lakh exposure is still visible; anything finer is
 # below the width of a rendered bar.
@@ -102,12 +101,11 @@ class GetGex:
         ordered = sorted(snaps, key=lambda snap: snap.captured_at)
         axis = self._axis(ordered)
         expiry = _parse_expiry(chain.expiry)
-        lot_size = chain.lot_size or _DEFAULT_LOT_SIZE
 
         frames: list[dict[str, Any]] = []
         quoted = 0.0
         for snap in ordered:
-            frame = _frame(snap, axis=axis, lot_size=lot_size, expiry=expiry, chain=chain)
+            frame = _frame(snap, axis=axis, expiry=expiry, chain=chain)
             if frame is None:
                 continue
             frames.append(frame[0])
@@ -160,7 +158,6 @@ def _frame(
     snap: ChainSnapshot,
     *,
     axis: list[float],
-    lot_size: int,
     expiry: date | None,
     chain: ProviderChain,
 ) -> tuple[dict[str, Any], GexProfile] | None:
@@ -178,13 +175,8 @@ def _frame(
     if spot is None or spot <= 0.0:
         return None
 
-    profile = strike_profile(
-        snap.rows,
-        spot=spot,
-        lot_size=lot_size,
-        years=_years_to_expiry(captured, expiry),
-        axis=axis,
-    )
+    years = _years_to_expiry(captured, expiry)
+    profile = strike_profile(snap.rows, spot=spot, years=years, axis=axis)
     entries = profile.strikes
 
     return (
@@ -198,7 +190,9 @@ def _frame(
             "abs_total": _crore(profile.abs_total),
             "call_wall": call_wall(entries),
             "put_wall": put_wall(entries),
-            "gamma_flip": _round_level(gamma_flip(entries)),
+            # The flip is the re-priced zero-gamma spot, so it needs the raw
+            # chain and the year fraction, not the profile priced at today's spot.
+            "gamma_flip": _round_level(zero_gamma(snap.rows, spot=spot, years=years, axis=axis)),
             "net_cross": _round_level(net_cross(entries, spot)),
         },
         profile,

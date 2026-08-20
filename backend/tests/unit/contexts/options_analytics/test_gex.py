@@ -19,11 +19,11 @@ from marketcompass.contexts.options_analytics.domain.gex_math import (
     StrikeGex,
     bs_gamma,
     call_wall,
-    gamma_flip,
     leg_gex,
     net_cross,
     put_wall,
     strike_profile,
+    zero_gamma,
 )
 from marketcompass.contexts.options_analytics.domain.oi_math import ChainRow
 from marketcompass.shared_kernel.types.identifiers import TenantId
@@ -130,12 +130,12 @@ def test_gamma_is_zero_rather_than_undefined_at_the_edges() -> None:
 
 
 def test_exposure_is_money_per_one_percent_move() -> None:
-    # gamma * oi * lot * spot^2 * 0.01 — the definition, stated once so a
-    # refactor cannot quietly drop the 1% scaling and shift every figure by two
-    # orders of magnitude.
-    value = leg_gex(gamma=0.0001, oi=1_000, lot_size=LOT, spot=SPOT)
+    # gamma * oi * spot^2 * 0.01 — the definition, stated once so a refactor
+    # cannot quietly drop the 1% scaling and shift every figure by two orders of
+    # magnitude, or reintroduce a lot multiplier over an OI already in units.
+    value = leg_gex(gamma=0.0001, oi=1_000, spot=SPOT)
 
-    assert value == 0.0001 * 1_000 * LOT * SPOT * SPOT * 0.01
+    assert value == 0.0001 * 1_000 * SPOT * SPOT * 0.01
 
 
 # -- the profile ------------------------------------------------------------
@@ -148,7 +148,7 @@ def test_calls_are_positive_and_puts_negative() -> None:
     it and the chart says the opposite of what it means.
     """
     axis = [SPOT - 50.0, SPOT, SPOT + 50.0]
-    profile = strike_profile(_ladder(), spot=SPOT, lot_size=LOT, years=0.02, axis=axis)
+    profile = strike_profile(_ladder(), spot=SPOT, years=0.02, axis=axis)
 
     assert all(entry.call_gex > 0.0 for entry in profile.strikes)
     assert all(entry.put_gex < 0.0 for entry in profile.strikes)
@@ -163,7 +163,7 @@ def test_a_leg_without_a_quoted_volatility_contributes_nothing() -> None:
     axis = [SPOT]
     rows = (_row("CE", SPOT, 1_000, iv=None), _row("PE", SPOT, 1_000, iv=14.0))
 
-    profile = strike_profile(rows, spot=SPOT, lot_size=LOT, years=0.02, axis=axis)
+    profile = strike_profile(rows, spot=SPOT, years=0.02, axis=axis)
 
     assert profile.strikes[0].call_gex == 0.0
     assert profile.strikes[0].put_gex < 0.0
@@ -173,7 +173,7 @@ def test_a_leg_without_a_quoted_volatility_contributes_nothing() -> None:
 def test_coverage_is_one_when_every_leg_is_priced() -> None:
     axis = [SPOT - 50.0, SPOT, SPOT + 50.0]
 
-    profile = strike_profile(_ladder(), spot=SPOT, lot_size=LOT, years=0.02, axis=axis)
+    profile = strike_profile(_ladder(), spot=SPOT, years=0.02, axis=axis)
 
     assert profile.iv_coverage == 1.0
 
@@ -193,7 +193,7 @@ def test_the_axis_is_honoured_even_where_the_chain_is_silent() -> None:
     axis = [SPOT - 50.0, SPOT, SPOT + 50.0, SPOT + 100.0]
     rows = (_row("CE", SPOT, 1_000), _row("PE", SPOT, 1_000))
 
-    profile = strike_profile(rows, spot=SPOT, lot_size=LOT, years=0.02, axis=axis)
+    profile = strike_profile(rows, spot=SPOT, years=0.02, axis=axis)
 
     assert [entry.strike for entry in profile.strikes] == axis
     assert profile.strikes[3].call_gex == 0.0
@@ -206,7 +206,7 @@ def test_the_walls_land_on_the_heaviest_strike_on_each_side() -> None:
     axis = [SPOT + 50.0 * offset for offset in range(-5, 6)]
     rows = _ladder(call_oi={SPOT + 100.0: 90_000}, put_oi={SPOT - 100.0: 90_000})
 
-    entries = strike_profile(rows, spot=SPOT, lot_size=LOT, years=0.02, axis=axis).strikes
+    entries = strike_profile(rows, spot=SPOT, years=0.02, axis=axis).strikes
 
     assert call_wall(entries) == SPOT + 100.0
     assert put_wall(entries) == SPOT - 100.0
@@ -221,26 +221,33 @@ def test_a_one_sided_book_has_no_wall() -> None:
     assert put_wall(entries) is None
 
 
-def test_the_flip_is_interpolated_not_snapped_to_a_strike() -> None:
-    """The flip is a price, not a listed strike.
+def test_the_flip_is_the_repriced_zero_gamma_level() -> None:
+    """The flip is a re-priced price, not a strike read off today's profile.
 
-    Rounding it to the nearest strike moves it by up to half an interval, which
-    is enough to put it on the wrong side of spot — and which side of the flip
-    spot sits on is the entire reading.
+    A book with the puts stacked below and the calls above is net short gamma
+    low and net long gamma high, so re-pricing finds a zero-gamma level between
+    the two — and, on a book symmetric about 24650, right at it. It is a price,
+    not a listed strike, so bisection lands it off the grid.
     """
-    # Cumulative net runs -2, -1, +1: it crosses halfway between 24700 and
-    # 24750, at a price that is not a listed strike.
-    entries = _entries([(24_650.0, -2.0), (24_700.0, 1.0), (24_750.0, 2.0)])
+    axis = [SPOT + 50.0 * offset for offset in range(-5, 6)]
+    rows = _ladder(
+        call_oi={SPOT + 100.0: 90_000, SPOT + 150.0: 90_000},
+        put_oi={SPOT - 100.0: 90_000, SPOT - 150.0: 90_000},
+    )
 
-    level = gamma_flip(entries)
+    level = zero_gamma(rows, spot=SPOT, years=0.02, axis=axis)
 
-    assert level == 24_725.0
+    assert level is not None
+    assert abs(level - SPOT) < 50.0
 
 
-def test_a_book_that_never_turns_has_no_flip() -> None:
-    entries = _entries([(24_650.0, 1.0), (24_700.0, 2.0), (24_750.0, 3.0)])
+def test_a_one_sided_book_never_flips() -> None:
+    # Calls only: net gamma is positive at every level and never crosses zero,
+    # so there is no flip — `None`, not a marker planted at the edge.
+    axis = [SPOT + 50.0 * offset for offset in range(-5, 6)]
+    rows = tuple(_row("CE", strike, 1_000) for strike in axis)
 
-    assert gamma_flip(entries) is None
+    assert zero_gamma(rows, spot=SPOT, years=0.02, axis=axis) is None
 
 
 def test_the_net_cross_takes_the_crossing_nearest_spot() -> None:
@@ -268,13 +275,24 @@ def test_the_net_cross_takes_the_crossing_nearest_spot() -> None:
 def test_the_flip_and_the_cross_are_different_levels() -> None:
     """They answer different questions and are drawn as separate markers.
 
-    The flip is where the book as a whole turns net long gamma; the cross is
-    where the per-strike profile changes sign. Collapsing one into the other
-    loses the distinction the page exists to show.
+    The flip is the re-priced level where the book as a whole turns net long
+    gamma; the cross is where today's per-strike profile changes sign. On the
+    same skewed book they land at different prices, and collapsing one into the
+    other loses the distinction the page exists to show.
     """
-    entries = _entries([(24_600.0, -3.0), (24_650.0, 1.0), (24_700.0, 3.0)])
+    axis = [SPOT + 50.0 * offset for offset in range(-5, 6)]
+    rows = _ladder(
+        call_oi={SPOT + 100.0: 90_000, SPOT + 50.0: 60_000},
+        put_oi={SPOT - 100.0: 150_000},
+    )
+    entries = strike_profile(rows, spot=SPOT, years=0.02, axis=axis).strikes
 
-    assert net_cross(entries, SPOT) != gamma_flip(entries)
+    flip = zero_gamma(rows, spot=SPOT, years=0.02, axis=axis)
+    cross = net_cross(entries, SPOT)
+
+    assert flip is not None
+    assert cross is not None
+    assert flip != cross
 
 
 # -- the payload ------------------------------------------------------------

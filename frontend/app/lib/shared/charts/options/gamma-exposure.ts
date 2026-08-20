@@ -66,6 +66,13 @@ export function buildGammaExposureOption(
   const vertical = input.layout === 'vertical';
   const categories = input.bars.map((bar) => String(bar.strike));
 
+  // Reserve top room for the tallest chip stack actually drawn, not a fixed
+  // two rows. Spot sits at slot 0 and each derived level climbs a slot above
+  // it; with both walls shown the stack reaches slot 4, and a fixed two-row
+  // margin clipped the Call and Put wall chips off the top of the plot.
+  const maxSlot = input.markers.reduce((slot, marker) => Math.max(slot, marker.slot), 0);
+  const topMargin = 24 + CHIP_PITCH * Math.max(2, maxSlot);
+
   const categoryAxis = {
     type: 'category' as const,
     data: categories,
@@ -96,7 +103,7 @@ export function buildGammaExposureOption(
     backgroundColor: 'transparent',
     // Room at the top for the stacked marker chips, and on both flanks for the
     // two axes' names.
-    grid: { left: 8, right: 16, top: 24 + CHIP_PITCH * 2, bottom: 8, containLabel: true },
+    grid: { left: 8, right: 16, top: topMargin, bottom: 8, containLabel: true },
     tooltip: tooltip(input, theme),
     xAxis: vertical ? [netAxis, absAxis] : categoryAxis,
     yAxis: vertical ? categoryAxis : [netAxis, absAxis],

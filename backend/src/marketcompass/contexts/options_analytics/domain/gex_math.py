@@ -14,6 +14,10 @@ convention used across the codebase.
 **Units.** ``leg_gex`` returns *rupee gamma per 1% move in spot* — the figure
 market participants mean by "GEX". Gamma alone is per unit of spot and is
 unreadable at index levels; scaling by ``spot^2 * 0.01`` puts it in money.
+Open interest enters in *underlying units*, the way the feed and the rest of
+this context carry it — not in lots. There is no separate lot multiplier: a
+100k-unit OI is already 100k shares of exposure, and multiplying by the lot
+size on top would inflate every figure by one contract's worth of shares.
 
 **Sign.** The dealer convention: dealers are assumed long calls and short puts,
 so call exposure is positive and put exposure negative. Net exposure is
@@ -24,7 +28,7 @@ negative below it, which is the shape the profile is read for.
 from __future__ import annotations
 
 import math
-from collections.abc import Iterable, Sequence
+from collections.abc import Callable, Iterable, Sequence
 from dataclasses import dataclass
 from itertools import pairwise
 
@@ -44,6 +48,14 @@ _IV_PERCENT = 100.0
 # Below this a quote is noise rather than a volatility, and d1 explodes.
 _MIN_VOL = 1e-6
 
+# The zero-gamma scan needs at least two axis points to have an interval to
+# bracket a crossing in.
+_MIN_FLIP_STRIKES = 2
+# Bisection stops when the bracket is finer than this in points, or after this
+# many halvings — either is far below a tick of the strike ladder.
+_FLIP_TOLERANCE = 1e-3
+_BISECT_STEPS = 60
+
 
 def bs_gamma(*, spot: float, strike: float, years: float, rate: float, vol: float) -> float:
     """Black-Scholes gamma: ``pdf(d1) / (spot * vol * sqrt(years))``.
@@ -59,17 +71,17 @@ def bs_gamma(*, spot: float, strike: float, years: float, rate: float, vol: floa
     return _norm_pdf(d1) / (spot * vol * sqrt_t)
 
 
-def leg_gex(*, gamma: float, oi: int, lot_size: int, spot: float) -> float:
+def leg_gex(*, gamma: float, oi: int, spot: float) -> float:
     """One leg's exposure in rupees per 1% move in spot.
 
-    ``gamma * oi * lot * spot^2 * 0.01``: gamma is the change in delta per unit
-    of spot, so multiplying by contract size and by one percent of spot gives
-    the delta in shares that a 1% move forces, and by spot again gives it in
-    money.
+    ``gamma * oi * spot^2 * 0.01``: gamma is the change in delta per unit of
+    spot, so multiplying by open interest — already in underlying units, not
+    lots — and by one percent of spot gives the delta in shares that a 1% move
+    forces, and by spot again gives it in money.
     """
-    if lot_size <= 0 or spot <= 0.0:
+    if spot <= 0.0:
         return 0.0
-    return gamma * oi * lot_size * spot * spot * 0.01
+    return gamma * oi * spot * spot * 0.01
 
 
 @dataclass(frozen=True, slots=True)
@@ -124,7 +136,6 @@ def strike_profile(
     rows: Iterable[ChainRow],
     *,
     spot: float,
-    lot_size: int,
     years: float,
     axis: Sequence[float],
     rate: float = DEFAULT_RISK_FREE_RATE,
@@ -163,7 +174,7 @@ def strike_profile(
             gamma = bs_gamma(
                 spot=spot, strike=strike, years=years, rate=rate, vol=leg.iv / _IV_PERCENT
             )
-            sides.append(sign * leg_gex(gamma=gamma, oi=leg.oi, lot_size=lot_size, spot=spot))
+            sides.append(sign * leg_gex(gamma=gamma, oi=leg.oi, spot=spot))
 
         entries.append(StrikeGex(strike=strike, call_gex=sides[0], put_gex=sides[1]))
 
@@ -173,7 +184,7 @@ def strike_profile(
 
 # -- the four reference levels ----------------------------------------------
 #
-# `gamma_flip` and `net_cross` are different levels and are both drawn. The flip
+# `zero_gamma` and `net_cross` are different levels and are both drawn. The flip
 # is where the *book as a whole* turns from net short to net long gamma — the
 # level below which dealer hedging amplifies moves instead of damping them. The
 # cross is where the *per-strike* profile changes sign, which is roughly where
@@ -198,29 +209,71 @@ def put_wall(entries: Sequence[StrikeGex]) -> float | None:
     return min(candidates, key=lambda entry: entry.put_gex).strike
 
 
-def gamma_flip(entries: Sequence[StrikeGex]) -> float | None:
-    """Where *cumulative* net exposure crosses zero, scanned from the low strike.
+def zero_gamma(
+    rows: Iterable[ChainRow],
+    *,
+    spot: float,
+    years: float,
+    axis: Sequence[float],
+    rate: float = DEFAULT_RISK_FREE_RATE,
+) -> float | None:
+    """The spot level at which the book's net dealer gamma is zero — the flip.
 
-    Interpolated between the two strikes that bracket the crossing: the flip is
-    a price, not a listed strike, and rounding it to the nearest strike would
-    move it by up to half a strike interval — enough to put it on the wrong side
-    of spot.
+    Not a strike read off the current profile: gamma depends on where spot is,
+    so the flip is the *price at which the whole book would be gamma-neutral*,
+    and finding it means re-pricing every strike's gamma at candidate levels.
+    Below the flip dealers are net short gamma and hedging amplifies moves;
+    above it they are long and damp them.
 
-    ``None`` when the running total never changes sign, which is the honest
-    answer for a one-sided book.
+    The book's net gamma is scanned across ``axis`` and bisected on the sign
+    change nearest ``spot`` — the money is where the flip is traded, and a noisy
+    chain can also cross far out in the wings. Money scaling (the lot and
+    ``level^2 * 0.01`` that turn gamma into rupees) is common to every strike at
+    a given level and so cannot move the crossing, and is left out.
+
+    ``None`` when net gamma keeps one sign across the whole range — a book that
+    never flips, which is the honest answer for a one-sided chain and for an
+    expired one whose gamma is zero everywhere.
     """
-    running = 0.0
-    previous: tuple[float, float] | None = None
+    call_by: dict[float, ChainRow] = {}
+    put_by: dict[float, ChainRow] = {}
+    for row in rows:
+        (call_by if row.is_call else put_by)[row.strike] = row
 
-    for entry in entries:
-        running += entry.net
-        if previous is not None:
-            prior_strike, prior_total = previous
-            if _straddles_zero(prior_total, running):
-                return _interpolate(prior_strike, prior_total, entry.strike, running)
-        previous = (entry.strike, running)
+    strikes = list(axis)
+    if len(strikes) < _MIN_FLIP_STRIKES:
+        return None
 
-    return None
+    def net_gamma(level: float) -> float:
+        total = 0.0
+        for strike in strikes:
+            call = call_by.get(strike)
+            if call is not None and call.iv is not None:
+                total += (
+                    bs_gamma(
+                        spot=level, strike=strike, years=years, rate=rate, vol=call.iv / _IV_PERCENT
+                    )
+                    * call.oi
+                )
+            put = put_by.get(strike)
+            if put is not None and put.iv is not None:
+                total -= (
+                    bs_gamma(
+                        spot=level, strike=strike, years=years, rate=rate, vol=put.iv / _IV_PERCENT
+                    )
+                    * put.oi
+                )
+        return total
+
+    samples = [(strike, net_gamma(strike)) for strike in strikes]
+    brackets = [
+        (k0, g0, k1) for (k0, g0), (k1, g1) in pairwise(samples) if _straddles_zero(g0, g1)
+    ]
+    if not brackets:
+        return None
+
+    k0, g0, k1 = min(brackets, key=lambda b: abs(0.5 * (b[0] + b[2]) - spot))
+    return _bisect(net_gamma, k0, g0, k1)
 
 
 def net_cross(entries: Sequence[StrikeGex], spot: float) -> float | None:
@@ -261,6 +314,25 @@ def _interpolate(x0: float, y0: float, x1: float, y1: float) -> float:
     if span == 0.0:
         return x1
     return x0 + (x1 - x0) * (-y0 / span)
+
+
+def _bisect(f: Callable[[float], float], lo: float, f_lo: float, hi: float) -> float:
+    """The root of ``f`` in ``[lo, hi]``, given ``f(lo) = f_lo`` brackets zero.
+
+    A linear interpolant would place the flip well if ``f`` were straight, but
+    net gamma bows between strikes, so the level is bisected — halving the
+    bracket to sub-point precision the axis grid could never resolve on its own.
+    """
+    for _ in range(_BISECT_STEPS):
+        mid = 0.5 * (lo + hi)
+        f_mid = f(mid)
+        if f_mid == 0.0 or hi - lo < _FLIP_TOLERANCE:
+            return mid
+        if _straddles_zero(f_lo, f_mid):
+            hi = mid
+        else:
+            lo, f_lo = mid, f_mid
+    return 0.5 * (lo + hi)
 
 
 def _norm_pdf(x: float) -> float:
