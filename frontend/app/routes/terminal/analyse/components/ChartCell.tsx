@@ -2,8 +2,11 @@ import { useQuery } from '@tanstack/react-query';
 import { useCallback, useEffect, useMemo, useRef, useState, type RefObject } from 'react';
 import LwChart, { type Candle, type LwChartHandle } from '$shared/charts/tv/LwChart';
 import { useChartTheme } from '$shared/charts/theme/use-chart-theme';
-import type { DrawingTool } from '$shared/charts/tv/drawings/types';
-import { useDrawingController } from '$shared/charts/tv/drawings/useDrawingController';
+import {
+  useDrawings,
+  type DrawSelection,
+  type DrawStats
+} from '$shared/charts/tv/drawings/useDrawings';
 import { preservesBars, transformCandles } from '$shared/charts/tv/series-transforms';
 import { cx } from '$shared/ui/cx';
 import { OI_INSTRUMENTS, REFETCH_MS } from '../../options/open-interest/oi-data';
@@ -11,16 +14,26 @@ import { getHistory, INTERVALS, toCandles, toVolume, type HistoryView } from '..
 import { buildOverlays } from '../indicators';
 import { REPLAY_SPEEDS, type CellConfig, type ReplaySpeed } from '../workspace';
 import ChartLegend from './ChartLegend';
-import MeasureReadout from './MeasureReadout';
+import DrawingStyleBar from './DrawingStyleBar';
+import DrawingTextDialog from './DrawingTextDialog';
 import ReplayBar from './ReplayBar';
 import s from './ChartCell.module.css';
 
 /** Stable stand-in for an omitted callback, so it never re-identifies the controller's options. */
 const noop = () => undefined;
 
-/** What the route hands each cell to command its drawings — see `route.tsx`'s `drawingHandles`. */
+/**
+ * What the route can do to this cell's drawings.
+ *
+ * The rail is shared across a grid of cells, so the actions it fires have to
+ * reach whichever cell was last drawn in — a ref rather than props, because the
+ * route holds one of these per cell and only ever calls into the active one.
+ */
 export interface DrawingHandle {
-  clear: () => void;
+  undo: () => void;
+  redo: () => void;
+  remove: (all: boolean) => void;
+  armByShortcut: (event: KeyboardEvent) => string | null;
 }
 
 /**
@@ -37,14 +50,18 @@ interface Props {
   onFocus: () => void;
   onExitReplay: () => void;
   handleRef?: RefObject<LwChartHandle | null> | undefined;
-  /** `null` is the plain cursor — no drawing tool selected. */
-  tool?: DrawingTool | null | undefined;
+  /** Registry tool id, or `null` for the plain cursor. */
+  tool?: string | null | undefined;
   /** Every drawing tool is single-shot; this lands the toolbar back on the cursor. */
   onToolDone?: (() => void) | undefined;
   magnet?: boolean | undefined;
   locked?: boolean | undefined;
   drawingsVisible?: boolean | undefined;
   drawingHandleRef?: RefObject<DrawingHandle | null> | undefined;
+  /** Reports this cell's drawing state up, so the shared rail can show it. */
+  onDrawStats?: ((stats: DrawStats) => void) | undefined;
+  /** Distinguishes this cell's saved drawings from its neighbours'. */
+  storageKey: string;
 }
 
 export default function ChartCell({
@@ -58,7 +75,9 @@ export default function ChartCell({
   magnet = false,
   locked = false,
   drawingsVisible = true,
-  drawingHandleRef
+  drawingHandleRef,
+  onDrawStats,
+  storageKey
 }: Props) {
   const theme = useChartTheme();
   // A cell always needs its own handle to attach drawings to, whether or not
@@ -66,6 +85,8 @@ export default function ChartCell({
   // optional for callers that don't.
   const ownHandleRef = useRef<LwChartHandle | null>(null);
   const chartHandleRef = handleRef ?? ownHandleRef;
+  // The element the drawing host puts its pointer listeners on.
+  const plotRef = useRef<HTMLDivElement>(null);
   const instrument =
     OI_INSTRUMENTS.find((entry) => entry.symbol === config.symbol) ?? OI_INSTRUMENTS[0]!;
   const timeframe = INTERVALS.find((entry) => entry.value === config.interval) ?? INTERVALS[1]!;
@@ -159,34 +180,44 @@ export default function ChartCell({
 
   // -- drawings ---------------------------------------------------------------
   // Whichever cell the reader actually clicks in draws on itself — there is no
-  // need to gate this on `active`, since each cell subscribes to its own
-  // chart's own clicks independently.
+  // need to gate this on `active`, since each cell listens to its own plot's
+  // own pointer events independently.
   // Bumped when `LwChart` rebuilds its series (a chart-type switch), which is
-  // what tells the controller its primitives went down with the old one.
+  // what tells the host its chart and series went away.
   const [chartEpoch, setChartEpoch] = useState(0);
   const onChartReady = useCallback(() => setChartEpoch((n) => n + 1), []);
 
-  const drawing = useDrawingController({
+  const drawing = useDrawings({
     handleRef: chartHandleRef,
+    containerRef: plotRef,
     // The bars actually on screen: the magnet has to snap to the candle the
     // reader can see, not the feed's version of it.
     candles: drawnCandles,
+    theme,
+    chartEpoch,
+    storageKey,
     tool,
-    onToolDone: onToolDone ?? noop,
     magnet,
     locked,
     visible: drawingsVisible,
-    color: theme.accent,
-    chartEpoch
+    onToolDone: onToolDone ?? noop
   });
+
+  const { stats, selection, textRequest, undo, redo, remove, armByShortcut } = drawing;
 
   useEffect(() => {
     if (!drawingHandleRef) return;
-    drawingHandleRef.current = { clear: drawing.clearAll };
+    drawingHandleRef.current = { undo, redo, remove, armByShortcut };
     return () => {
       drawingHandleRef.current = null;
     };
-  }, [drawingHandleRef, drawing.clearAll]);
+  }, [drawingHandleRef, undo, redo, remove, armByShortcut]);
+
+  // Only the focused cell drives the shared rail, or four cells would fight
+  // over one set of counts.
+  useEffect(() => {
+    if (active) onDrawStats?.(stats);
+  }, [active, stats, onDrawStats]);
 
   return (
     <div
@@ -195,7 +226,7 @@ export default function ChartCell({
       role="group"
       aria-label={`${instrument.short} ${config.interval}`}
     >
-      <div className={s.plot}>
+      <div ref={plotRef} className={s.plot}>
         {query.isError ? (
           <div className={s.banner} role="alert">
             <span>Couldn’t load {instrument.short}.</span>
@@ -225,7 +256,19 @@ export default function ChartCell({
               resetKey={`${config.symbol}:${config.interval}:${config.chartType}`}
               className={s.chart}
             />
-            {drawing.measurement ? <MeasureReadout stats={drawing.measurement} /> : null}
+            <DrawingStyleBar
+              selection={selection}
+              onStyle={drawing.style}
+              onEditText={drawing.editSelectedText}
+              onDelete={() => remove(false)}
+            />
+            {textRequest ? (
+              <DrawingTextDialog
+                request={textRequest}
+                onSubmit={drawing.applyText}
+                onClose={drawing.closeText}
+              />
+            ) : null}
             {config.replay ? (
               <ReplayBar
                 head={head}
@@ -265,3 +308,5 @@ export default function ChartCell({
     </div>
   );
 }
+
+export type { DrawSelection };

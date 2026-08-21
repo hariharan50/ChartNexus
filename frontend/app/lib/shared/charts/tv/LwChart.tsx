@@ -191,7 +191,7 @@ interface Props {
    * they have been thrown away: the old series is gone and whatever was attached
    * to it went with it. Without this signal a caller cannot tell a rebuild from
    * an ordinary re-render, and its attachments silently stop being drawn — see
-   * `drawings/useDrawingController`, which re-attaches on this.
+   * `drawings/useDrawings`, which rebuilds its host on this.
    */
   onReady?: (() => void) | undefined;
   /**

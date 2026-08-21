@@ -1,10 +1,10 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { ChartType, LwChartHandle } from '$shared/charts/tv/LwChart';
-import type { DrawingTool } from '$shared/charts/tv/drawings/types';
+import { EMPTY_STATS, type DrawStats } from '$shared/charts/tv/drawings/useDrawings';
 import { cx } from '$shared/ui/cx';
 import { OI_INSTRUMENTS } from '../options/open-interest/oi-data';
 import ChartCell, { type DrawingHandle } from './components/ChartCell';
-import DrawingToolbar from './components/DrawingToolbar';
+import DrawingRail from './components/DrawingRail';
 import SymbolPicker from './components/SymbolPicker';
 import TopToolbar from './components/TopToolbar';
 import { type Interval } from './analyse-data';
@@ -13,7 +13,7 @@ import { cellsInLayout, defaultCell, type CellConfig, type LayoutId } from './wo
 import s from './route.module.css';
 import type { Route } from './+types/route';
 
-/** Per-cell drawing state that isn't part of `CellConfig` — see `DrawingToolbar`'s docstring for why. */
+/** Per-cell drawing state that isn't part of `CellConfig` — see `DrawingRail`'s docstring for why. */
 interface DrawState {
   locked: boolean;
   visible: boolean;
@@ -50,9 +50,12 @@ export default function Analyse() {
   // of any one cell, so they're uniform across the workspace. Lock/visible are
   // the opposite — properties of a cell's own drawings — so they're per cell,
   // parallel to `cells` but kept separate from `CellConfig`: see
-  // `DrawingToolbar`'s docstring for why drawings aren't workspace config.
-  const [tool, setTool] = useState<DrawingTool | null>(null);
+  // `DrawingRail`'s docstring for why drawings aren't workspace config.
+  const [tool, setTool] = useState<string | null>(null);
   const [magnet, setMagnet] = useState(false);
+  // Reported up by whichever cell is focused, so the rail's counts and its
+  // undo/redo enablement describe the chart the actions will land on.
+  const [cellStats, setCellStats] = useState<DrawStats>(EMPTY_STATS);
   const [drawState, setDrawState] = useState<DrawState[]>(() =>
     cells.map(() => DEFAULT_DRAW_STATE)
   );
@@ -121,6 +124,31 @@ export default function Analyse() {
     else void workspace.current?.requestFullscreen().catch(() => undefined);
   }, []);
 
+  // Tool and magnet are page-owned — arming a tool arms every pane, so whichever
+  // one the reader clicks next receives the shape. Everything else in the rail
+  // describes the focused pane.
+  const railStats = useMemo<DrawStats>(
+    () => ({ ...cellStats, tool, magnet }),
+    [cellStats, tool, magnet]
+  );
+
+  const onShortcut = useCallback(
+    (event: KeyboardEvent): boolean => {
+      if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'z') {
+        const handle = drawingHandles[activeIdx]?.current;
+        if (!handle) return false;
+        if (event.shiftKey) handle.redo();
+        else handle.undo();
+        return true;
+      }
+      const armed = drawingHandles[activeIdx]?.current?.armByShortcut(event) ?? null;
+      if (armed === null) return false;
+      setTool(armed);
+      return true;
+    },
+    [drawingHandles, activeIdx]
+  );
+
   const snapshot = useCallback(() => {
     const canvas = handles[activeIdx]?.current?.screenshot();
     if (!canvas) return;
@@ -151,16 +179,19 @@ export default function Analyse() {
       />
 
       <div className={s.body}>
-        <DrawingToolbar
-          tool={tool}
-          onTool={setTool}
-          magnet={magnet}
-          onMagnet={() => setMagnet((on) => !on)}
+        <DrawingRail
+          stats={railStats}
+          onPick={setTool}
+          onUndo={() => drawingHandles[activeIdx]?.current?.undo()}
+          onRedo={() => drawingHandles[activeIdx]?.current?.redo()}
+          onRemove={(all) => drawingHandles[activeIdx]?.current?.remove(all)}
+          onMagnet={setMagnet}
           locked={activeDraw.locked}
-          onLocked={() => patchDrawState({ locked: !activeDraw.locked })}
+          onLocked={(on) => patchDrawState({ locked: on })}
           visible={activeDraw.visible}
-          onVisible={() => patchDrawState({ visible: !activeDraw.visible })}
-          onClear={() => drawingHandles[activeIdx]?.current?.clear()}
+          onVisible={(on) => patchDrawState({ visible: on })}
+          portalHost={workspace.current}
+          onShortcut={onShortcut}
         />
 
         <div className={cx(s.grid, s[`grid${layout}`])}>
@@ -182,6 +213,8 @@ export default function Analyse() {
               locked={drawState[index]?.locked ?? false}
               drawingsVisible={drawState[index]?.visible ?? true}
               drawingHandleRef={drawingHandles[index]}
+              onDrawStats={setCellStats}
+              storageKey={`mc:analyse:cell${index}`}
             />
           ))}
         </div>
