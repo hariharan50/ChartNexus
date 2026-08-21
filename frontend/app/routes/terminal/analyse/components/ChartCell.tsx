@@ -4,6 +4,7 @@ import LwChart, { type Candle, type LwChartHandle } from '$shared/charts/tv/LwCh
 import { useChartTheme } from '$shared/charts/theme/use-chart-theme';
 import type { DrawingTool } from '$shared/charts/tv/drawings/types';
 import { useDrawingController } from '$shared/charts/tv/drawings/useDrawingController';
+import { preservesBars, transformCandles } from '$shared/charts/tv/series-transforms';
 import { cx } from '$shared/ui/cx';
 import { OI_INSTRUMENTS, REFETCH_MS } from '../../options/open-interest/oi-data';
 import { getHistory, INTERVALS, toCandles, toVolume, type HistoryView } from '../analyse-data';
@@ -126,17 +127,33 @@ export default function ChartCell({
     [config.replay, allVolume, head]
   );
 
+  // Heikin Ashi, Renko, Range Bars and Line Break redraw the series from the
+  // feed's candles rather than restyling them — see `series-transforms.ts`.
+  // Everything downstream works from the result, so the legend reads the bar
+  // that is actually under the pointer and an indicator is computed from the
+  // prices the reader can see. Every other type passes straight through.
+  const drawnCandles = useMemo(
+    () => transformCandles(config.chartType, visibleCandles),
+    [config.chartType, visibleCandles]
+  );
+
+  // Renko and friends emit a bar per unit of *price movement*, so there is no
+  // longer one bar per minute for a volume bar to sit under. Dropping the pane
+  // is the honest answer; leaving it would draw turnover against bars it does
+  // not belong to.
+  const drawnVolume = preservesBars(config.chartType) ? visibleVolume : undefined;
+
   const overlays = useMemo(
-    () => buildOverlays(new Set(config.indicators), visibleCandles, visibleVolume),
-    [config.indicators, visibleCandles, visibleVolume]
+    () => buildOverlays(new Set(config.indicators), drawnCandles, drawnVolume),
+    [config.indicators, drawnCandles, drawnVolume]
   );
 
   const [hovered, setHovered] = useState<Candle | null>(null);
-  const shownBar = hovered ?? visibleCandles[visibleCandles.length - 1] ?? null;
+  const shownBar = hovered ?? drawnCandles[drawnCandles.length - 1] ?? null;
   const shownVolume = useMemo(() => {
-    if (!visibleVolume || !shownBar) return null;
-    return visibleVolume.find((bar) => bar.time === shownBar.time)?.value ?? null;
-  }, [visibleVolume, shownBar]);
+    if (!drawnVolume || !shownBar) return null;
+    return drawnVolume.find((bar) => bar.time === shownBar.time)?.value ?? null;
+  }, [drawnVolume, shownBar]);
 
   const source = view?.provenance.source;
 
@@ -151,7 +168,9 @@ export default function ChartCell({
 
   const drawing = useDrawingController({
     handleRef: chartHandleRef,
-    candles: visibleCandles,
+    // The bars actually on screen: the magnet has to snap to the candle the
+    // reader can see, not the feed's version of it.
+    candles: drawnCandles,
     tool,
     onToolDone: onToolDone ?? noop,
     magnet,
@@ -195,8 +214,8 @@ export default function ChartCell({
               volume={shownVolume}
             />
             <LwChart
-              candles={visibleCandles}
-              volume={visibleVolume}
+              candles={drawnCandles}
+              volume={drawnVolume}
               overlays={overlays}
               theme={theme}
               type={config.chartType}

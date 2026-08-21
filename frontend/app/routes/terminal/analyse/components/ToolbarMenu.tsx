@@ -1,5 +1,6 @@
-import { useLayoutEffect, useState, type ReactNode, type RefObject } from 'react';
+import { useLayoutEffect, useRef, useState, type ReactNode, type RefObject } from 'react';
 import { createPortal } from 'react-dom';
+import { cx } from '$shared/ui/cx';
 import s from './TopToolbar.module.css';
 
 /**
@@ -16,17 +17,28 @@ import s from './TopToolbar.module.css';
  * Positioned in viewport (`fixed`) coordinates read from the trigger on open,
  * not CSS anchoring, since the trigger can sit inside the scrolled strip.
  */
-/** `.menu`'s `min-width: 10rem`, in px — enough to keep the panel on screen. */
-const MENU_WIDTH = 160;
+/**
+ * `.menu`'s `min-width: 10rem`, in px — the assumed width for the very first
+ * measurement, before the panel exists to be measured. Panels are free to be
+ * wider (the Indicators one is), which is why every measurement after that one
+ * reads the real width off the rendered element instead.
+ */
+const MENU_MIN_WIDTH = 160;
 
 interface Props {
   anchorRef: RefObject<HTMLElement | null>;
   open: boolean;
+  /** Extra class on the panel, for a menu that needs to be wider than the default. */
+  className?: string | undefined;
   children: ReactNode;
 }
 
-export default function ToolbarMenu({ anchorRef, open, children }: Props) {
+export default function ToolbarMenu({ anchorRef, open, className, children }: Props) {
   const [rect, setRect] = useState<{ top: number; left: number } | null>(null);
+  const panel = useRef<HTMLDivElement>(null);
+  // The panel renders only once `rect` exists, so this is also "the panel is in
+  // the DOM and can be measured".
+  const mounted = rect !== null;
 
   useLayoutEffect(() => {
     if (!open) {
@@ -40,7 +52,12 @@ export default function ToolbarMenu({ anchorRef, open, children }: Props) {
       const r = anchor!.getBoundingClientRect();
       // Kept on screen: a trigger near the right edge would otherwise hang a
       // fixed panel off the viewport with nothing to scroll it back into view.
-      const left = Math.max(4, Math.min(r.left, window.innerWidth - MENU_WIDTH - 4));
+      // Measured from the panel itself once it exists, since panels differ in
+      // width and a clamp against the wrong one is no clamp at all. The pass
+      // that mounts it runs against the minimum, and the layout effect below
+      // immediately re-runs this with the real number.
+      const width = panel.current?.getBoundingClientRect().width ?? MENU_MIN_WIDTH;
+      const left = Math.max(4, Math.min(r.left, window.innerWidth - width - 4));
       setRect((current) =>
         current && current.top === r.bottom + 6 && current.left === left
           ? current
@@ -71,13 +88,18 @@ export default function ToolbarMenu({ anchorRef, open, children }: Props) {
       window.removeEventListener('scroll', schedule, true);
       window.removeEventListener('resize', schedule);
     };
-  }, [open, anchorRef]);
+    // `mounted` is listed so this runs a second time the moment the panel is on
+    // screen, to re-clamp against its true width. It settles there: `update`
+    // returns the identical state object when nothing moved, and this dependency
+    // is a boolean that has already finished changing.
+  }, [open, anchorRef, mounted]);
 
   if (!open || !rect) return null;
 
   return createPortal(
     <div
-      className={s.menu}
+      ref={panel}
+      className={cx(s.menu, className)}
       role="menu"
       // Marks this subtree as "inside the toolbar" for the outside-click
       // detector in `TopToolbar`, which otherwise only knows about `.bar` and

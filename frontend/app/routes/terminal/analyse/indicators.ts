@@ -16,16 +16,6 @@ export interface LinePoint {
   value: number;
 }
 
-/** Every indicator the menu offers, in display order. */
-export const INDICATORS: { id: IndicatorId; label: string; pane: 'price' | 'rsi' }[] = [
-  { id: 'sma20', label: 'SMA 20', pane: 'price' },
-  { id: 'sma50', label: 'SMA 50', pane: 'price' },
-  { id: 'ema20', label: 'EMA 20', pane: 'price' },
-  { id: 'boll', label: 'Bollinger 20', pane: 'price' },
-  { id: 'vwap', label: 'VWAP', pane: 'price' },
-  { id: 'rsi', label: 'RSI 14', pane: 'rsi' }
-];
-
 export type IndicatorId = 'sma20' | 'sma50' | 'ema20' | 'boll' | 'vwap' | 'rsi';
 
 /** The pane RSI draws into — below price (0) and the volume pane (1). */
@@ -41,6 +31,52 @@ const COLORS = {
   vwap: '#eab308',
   rsi: '#a855f7'
 } as const;
+
+/**
+ * What an indicator *is*, which is how the menu groups them.
+ *
+ * A flat alphabet of six names needs no grouping; a catalogue that grows past
+ * that does, and the reader looking for a band is not helped by scanning past
+ * every oscillator to find it.
+ */
+export type IndicatorCategory = 'trend' | 'volatility' | 'volume' | 'momentum';
+
+/** Category order in the menu — broadest and most-reached-for first. */
+export const INDICATOR_CATEGORIES: { id: IndicatorCategory; label: string }[] = [
+  { id: 'trend', label: 'Trend' },
+  { id: 'volatility', label: 'Volatility' },
+  { id: 'volume', label: 'Volume' },
+  { id: 'momentum', label: 'Momentum' }
+];
+
+export interface IndicatorEntry {
+  id: IndicatorId;
+  label: string;
+  pane: 'price' | 'rsi';
+  category: IndicatorCategory;
+  /**
+   * The colour this indicator draws in, so the menu can show the same swatch
+   * the reader is looking at on the chart. Bollinger names its band colour —
+   * the mid-line is deliberately grey and would identify nothing.
+   */
+  color: string;
+}
+
+/** Every indicator the menu offers, in display order. */
+export const INDICATORS: IndicatorEntry[] = [
+  { id: 'sma20', label: 'SMA 20', pane: 'price', category: 'trend', color: COLORS.sma20 },
+  { id: 'sma50', label: 'SMA 50', pane: 'price', category: 'trend', color: COLORS.sma50 },
+  { id: 'ema20', label: 'EMA 20', pane: 'price', category: 'trend', color: COLORS.ema20 },
+  {
+    id: 'boll',
+    label: 'Bollinger 20',
+    pane: 'price',
+    category: 'volatility',
+    color: COLORS.bollUpper
+  },
+  { id: 'vwap', label: 'VWAP', pane: 'price', category: 'volume', color: COLORS.vwap },
+  { id: 'rsi', label: 'RSI 14', pane: 'rsi', category: 'momentum', color: COLORS.rsi }
+];
 
 /** Simple moving average of the close. */
 export function sma(candles: Candle[], period: number): LinePoint[] {

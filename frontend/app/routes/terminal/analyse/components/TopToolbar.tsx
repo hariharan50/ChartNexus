@@ -1,9 +1,21 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { cx } from '$shared/ui/cx';
 import IconArea from '$shared/ui/icons/IconArea';
+import IconBars from '$shared/ui/icons/IconBars';
+import IconBaseline from '$shared/ui/icons/IconBaseline';
 import IconCamera from '$shared/ui/icons/IconCamera';
 import IconCandles from '$shared/ui/icons/IconCandles';
 import IconChevronDown from '$shared/ui/icons/IconChevronDown';
+import IconHeikinAshi from '$shared/ui/icons/IconHeikinAshi';
+import IconHighLow from '$shared/ui/icons/IconHighLow';
+import IconHlcArea from '$shared/ui/icons/IconHlcArea';
+import IconHollowCandles from '$shared/ui/icons/IconHollowCandles';
+import IconLineBreak from '$shared/ui/icons/IconLineBreak';
+import IconLineMarkers from '$shared/ui/icons/IconLineMarkers';
+import IconRangeBars from '$shared/ui/icons/IconRangeBars';
+import IconRenko from '$shared/ui/icons/IconRenko';
+import IconStep from '$shared/ui/icons/IconStep';
+import IconVolumeCandles from '$shared/ui/icons/IconVolumeCandles';
 import IconExpand from '$shared/ui/icons/IconExpand';
 import IconFx from '$shared/ui/icons/IconFx';
 import IconGrid from '$shared/ui/icons/IconGrid';
@@ -17,8 +29,9 @@ import IconSettings from '$shared/ui/icons/IconSettings';
 import IconUndo from '$shared/ui/icons/IconUndo';
 import type { ChartType } from '$shared/charts/tv/LwChart';
 import { INTERVALS, type Interval } from '../analyse-data';
-import { INDICATORS, type IndicatorId } from '../indicators';
+import { type IndicatorId } from '../indicators';
 import { LAYOUTS, type LayoutId } from '../workspace';
+import IndicatorMenu from './IndicatorMenu';
 import ToolbarMenu from './ToolbarMenu';
 import s from './TopToolbar.module.css';
 
@@ -49,11 +62,61 @@ interface Props {
   isFullscreen: boolean;
 }
 
-const CHART_TYPES: { value: ChartType; label: string; icon: ReactNode }[] = [
-  { value: 'candle', label: 'Candles', icon: <IconCandles /> },
-  { value: 'line', label: 'Line', icon: <IconLine /> },
-  { value: 'area', label: 'Area', icon: <IconArea /> }
+/**
+ * One row of the chart-type menu. `value: null` is a type that is drawn in the
+ * list but cannot be picked yet — see `soon`, and the note in this component's
+ * docstring about why they are shown rather than omitted.
+ */
+interface ChartTypeEntry {
+  value: ChartType | null;
+  label: string;
+  icon: ReactNode;
+  soon?: string;
+}
+
+/**
+ * The chart types, in three families: bar-shaped, line-shaped, and the ones
+ * that redraw the series from the bars rather than restyling them.
+ *
+ * Grouped because the choice is really two choices — "how much of each bar do I
+ * want to see" and "do I want the real bars at all" — and a flat list of
+ * thirteen makes the second one invisible.
+ */
+const CHART_TYPE_GROUPS: ChartTypeEntry[][] = [
+  [
+    { value: 'bar', label: 'Bars (OHLC)', icon: <IconBars /> },
+    { value: 'candle', label: 'Candles', icon: <IconCandles /> },
+    { value: 'hollow', label: 'Hollow Candles', icon: <IconHollowCandles /> },
+    {
+      value: null,
+      label: 'Volume Candles',
+      icon: <IconVolumeCandles />,
+      soon: 'Volume Candles — needs a custom series renderer, not built yet'
+    },
+    { value: 'highlow', label: 'High-Low', icon: <IconHighLow /> }
+  ],
+  [
+    { value: 'line', label: 'Line', icon: <IconLine /> },
+    { value: 'markers', label: 'Line + Markers', icon: <IconLineMarkers /> },
+    { value: 'step', label: 'Step', icon: <IconStep /> },
+    { value: 'area', label: 'Area', icon: <IconArea /> },
+    {
+      value: null,
+      label: 'HLC Area',
+      icon: <IconHlcArea />,
+      soon: 'HLC Area — needs a custom series renderer, not built yet'
+    },
+    { value: 'baseline', label: 'Baseline', icon: <IconBaseline /> }
+  ],
+  [
+    { value: 'heikin', label: 'Heikin Ashi', icon: <IconHeikinAshi /> },
+    { value: 'renko', label: 'Renko', icon: <IconRenko /> },
+    { value: 'range', label: 'Range Bars', icon: <IconRangeBars /> },
+    { value: 'linebreak', label: 'Line Break', icon: <IconLineBreak /> }
+  ]
 ];
+
+const CHART_TYPES = CHART_TYPE_GROUPS.flat();
 
 export default function TopToolbar({
   interval,
@@ -159,21 +222,29 @@ export default function TopToolbar({
           <span className={s.ico}>{activeType.icon}</span>
         </button>
         <ToolbarMenu anchorRef={typeBtn} open={openMenu === 'type'}>
-          {CHART_TYPES.map((entry) => (
-            <button
-              key={entry.value}
-              type="button"
-              role="menuitemradio"
-              aria-checked={entry.value === chartType}
-              className={cx(s.menuItem, entry.value === chartType && s.menuItemOn)}
-              onClick={() => {
-                onChartType(entry.value);
-                setOpenMenu(null);
-              }}
-            >
-              <span className={s.ico}>{entry.icon}</span>
-              <span>{entry.label}</span>
-            </button>
+          {CHART_TYPE_GROUPS.map((group, index) => (
+            <div key={group[0]?.label ?? index} className={s.menuGroup} role="group">
+              {index > 0 ? <span className={s.menuDivider} aria-hidden="true" /> : null}
+              {group.map((entry) => (
+                <button
+                  key={entry.label}
+                  type="button"
+                  role="menuitemradio"
+                  aria-checked={entry.value !== null && entry.value === chartType}
+                  disabled={entry.value === null}
+                  {...(entry.soon ? { title: entry.soon } : {})}
+                  className={cx(s.menuItem, s.checkItem, entry.value === chartType && s.menuItemOn)}
+                  onClick={() => {
+                    if (entry.value === null) return;
+                    onChartType(entry.value);
+                    setOpenMenu(null);
+                  }}
+                >
+                  <span className={s.ico}>{entry.icon}</span>
+                  <span>{entry.label}</span>
+                </button>
+              ))}
+            </div>
           ))}
         </ToolbarMenu>
       </div>
@@ -193,29 +264,22 @@ export default function TopToolbar({
           <span className={s.ico}>
             <IconFx />
           </span>
-          <span className={s.btnText}>
-            Indicators{indicators.length ? ` (${indicators.length})` : ''}
+          <span className={s.btnText}>Indicators</span>
+          {indicators.length > 0 ? (
+            <span className={s.badge} aria-label={`${indicators.length} active`}>
+              {indicators.length}
+            </span>
+          ) : null}
+          <span className={s.caret} aria-hidden="true">
+            <IconChevronDown />
           </span>
         </button>
-        <ToolbarMenu anchorRef={indicatorsBtn} open={openMenu === 'indicators'}>
-          {INDICATORS.map((entry) => {
-            const on = indicators.includes(entry.id);
-            return (
-              <button
-                key={entry.id}
-                type="button"
-                role="menuitemcheckbox"
-                aria-checked={on}
-                className={cx(s.menuItem, s.checkItem, on && s.menuItemOn)}
-                onClick={() => onToggleIndicator(entry.id)}
-              >
-                <span className={s.check} aria-hidden="true">
-                  {on ? '✓' : ''}
-                </span>
-                <span>{entry.label}</span>
-              </button>
-            );
-          })}
+        <ToolbarMenu
+          anchorRef={indicatorsBtn}
+          open={openMenu === 'indicators'}
+          className={s.menuWide}
+        >
+          <IndicatorMenu active={indicators} onToggle={onToggleIndicator} />
         </ToolbarMenu>
       </div>
       <button type="button" className={s.btn} disabled title="Templates — not built yet">

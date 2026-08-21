@@ -4,6 +4,7 @@ import { cx } from '$shared/ui/cx';
 // compile time, so this costs nothing at runtime and — critically — does not
 // pull the library into the server bundle. See the note on SSR below.
 import type { IChartApi, ISeriesApi, SeriesType, UTCTimestamp } from 'lightweight-charts';
+import { withAlpha } from '../theme/tokens';
 import type { ChartTheme } from '../theme/types';
 import s from './LwChart.module.css';
 
@@ -44,7 +45,63 @@ export interface VolumeBar {
   rising: boolean;
 }
 
-export type ChartType = 'candle' | 'line' | 'area';
+/**
+ * How the price series is drawn.
+ *
+ * **Appearance only.** Several of these — Heikin Ashi, Renko, Range Bars, Line
+ * Break — are not different *pictures* of the candles, they are different
+ * *candles*, derived from the originals by `series-transforms.ts`. Doing that
+ * arithmetic here would mean the indicators drawn on top were still computed
+ * from the untransformed bars and would no longer line up with what is on
+ * screen, so the caller transforms first and this component only ever renders
+ * what it is handed. `ChartCell` is the caller that does it.
+ */
+export type ChartType =
+  | 'bar'
+  | 'candle'
+  | 'hollow'
+  | 'highlow'
+  | 'heikin'
+  | 'renko'
+  | 'range'
+  | 'linebreak'
+  | 'line'
+  | 'markers'
+  | 'step'
+  | 'area'
+  | 'baseline';
+
+/**
+ * Which library series actually draws each type — several share one.
+ *
+ * Everything OHLC-shaped is a candlestick or a bar; everything else plots the
+ * close as a single number. Keeping this as one table rather than a chain of
+ * conditionals is what keeps "add a chart type" from meaning "edit four
+ * `if`s in three functions".
+ */
+const SERIES_KIND: Record<ChartType, 'bar' | 'candlestick' | 'line' | 'area' | 'baseline'> = {
+  bar: 'bar',
+  highlow: 'bar',
+  candle: 'candlestick',
+  hollow: 'candlestick',
+  heikin: 'candlestick',
+  renko: 'candlestick',
+  range: 'candlestick',
+  linebreak: 'candlestick',
+  line: 'line',
+  markers: 'line',
+  step: 'line',
+  area: 'area',
+  baseline: 'baseline'
+};
+
+/**
+ * `LineType.WithSteps`, as a number.
+ *
+ * The enum is a value import and would pull the library into the server bundle
+ * — the same reason `TICK_TIME` below is a bare number.
+ */
+const LINE_TYPE_STEPS = 1;
 
 /** What the parent can ask of a mounted chart. */
 export interface LwChartHandle {
@@ -316,7 +373,15 @@ export default function LwChart({
       });
       if (lib === null) return;
 
-      const { createChart, CandlestickSeries, LineSeries, AreaSeries, HistogramSeries } = lib;
+      const {
+        createChart,
+        BarSeries,
+        BaselineSeries,
+        CandlestickSeries,
+        LineSeries,
+        AreaSeries,
+        HistogramSeries
+      } = lib;
       // The component can unmount while the import is in flight.
       if (disposed || !container.current) return;
       setFailed(false);
@@ -356,19 +421,54 @@ export default function LwChart({
         }
       });
 
-      const price =
-        type === 'line'
-          ? chart.addSeries(LineSeries, { color: theme.accent, lineWidth: 2 })
-          : type === 'area'
-            ? chart.addSeries(AreaSeries, { lineColor: theme.accent, lineWidth: 2 })
-            : chart.addSeries(CandlestickSeries, {
-                upColor: theme.call,
-                downColor: theme.put,
-                borderUpColor: theme.call,
-                borderDownColor: theme.put,
-                wickUpColor: theme.call,
-                wickDownColor: theme.put
-              });
+      const price = ((): ISeriesApi<SeriesType> => {
+        switch (SERIES_KIND[type]) {
+          case 'bar':
+            return chart.addSeries(BarSeries, {
+              upColor: theme.call,
+              downColor: theme.put,
+              // High-Low is a bar stripped of its open tick — the range on its
+              // own, which is what that type is for.
+              openVisible: type !== 'highlow'
+            });
+          case 'line':
+            return chart.addSeries(LineSeries, {
+              color: theme.accent,
+              lineWidth: 2,
+              // Markers make each bar's own close findable on a line that
+              // otherwise hides where one bar ends and the next starts.
+              pointMarkersVisible: type === 'markers',
+              ...(type === 'step' ? { lineType: LINE_TYPE_STEPS } : {})
+            });
+          case 'area':
+            return chart.addSeries(AreaSeries, { lineColor: theme.accent, lineWidth: 2 });
+          case 'baseline':
+            // The base price is only knowable once there is data, so `paint`
+            // sets it; without one the library would flatten every bar against
+            // zero and colour the whole series "above".
+            return chart.addSeries(BaselineSeries, {
+              topLineColor: theme.call,
+              topFillColor1: withAlpha(theme.call, 0.28),
+              topFillColor2: withAlpha(theme.call, 0.05),
+              bottomLineColor: theme.put,
+              bottomFillColor1: withAlpha(theme.put, 0.05),
+              bottomFillColor2: withAlpha(theme.put, 0.28),
+              lineWidth: 2
+            });
+          default:
+            return chart.addSeries(CandlestickSeries, {
+              // Hollow candles outline a rising bar instead of filling it, so an
+              // up bar reads as "unfilled" and a down bar as "filled" without
+              // relying on the two hues being distinguishable.
+              upColor: type === 'hollow' ? 'rgba(0,0,0,0)' : theme.call,
+              downColor: theme.put,
+              borderUpColor: theme.call,
+              borderDownColor: theme.put,
+              wickUpColor: theme.call,
+              wickDownColor: theme.put
+            });
+        }
+      })();
 
       // Pane 1, not an overlay on the price scale: overlaid volume rescales the
       // candles every time turnover spikes.
@@ -442,7 +542,8 @@ export default function LwChart({
     const sortedCandles = sortAscending(candles);
     const sortedVolume = volume ? sortAscending(volume) : undefined;
 
-    if (type === 'candle') {
+    const kind = SERIES_KIND[type];
+    if (kind === 'candlestick' || kind === 'bar') {
       current.price.setData(
         sortedCandles.map((candle) => ({
           time: candle.time as UTCTimestamp,
@@ -453,10 +554,19 @@ export default function LwChart({
         }))
       );
     } else {
-      // Line and area plot one number a bar; the close is the one anyone means.
+      // Line, area and baseline plot one number a bar; the close is the one
+      // anyone means.
       current.price.setData(
         sortedCandles.map((candle) => ({ time: candle.time as UTCTimestamp, value: candle.close }))
       );
+    }
+
+    // A baseline is meaningless without something to be above and below. The
+    // opening close is the reading anyone wants — "up or down on the period" —
+    // and it is only knowable here, once there is data.
+    const first = sortedCandles[0];
+    if (kind === 'baseline' && first) {
+      current.price.applyOptions({ baseValue: { type: 'price', price: first.close } });
     }
 
     if (current.volume && sortedVolume) {
@@ -658,14 +768,28 @@ export default function LwChart({
       rightPriceScale: { borderColor: theme.grid },
       timeScale: { borderColor: theme.grid }
     });
-    if (type === 'candle') {
+    // The same split `SERIES_KIND` drives everywhere else: OHLC series are
+    // themed by direction, single-value ones by the one accent they draw in.
+    const kind = SERIES_KIND[type];
+    if (kind === 'candlestick') {
       current.price.applyOptions({
-        upColor: theme.call,
+        upColor: type === 'hollow' ? 'rgba(0,0,0,0)' : theme.call,
         downColor: theme.put,
         borderUpColor: theme.call,
         borderDownColor: theme.put,
         wickUpColor: theme.call,
         wickDownColor: theme.put
+      });
+    } else if (kind === 'bar') {
+      current.price.applyOptions({ upColor: theme.call, downColor: theme.put });
+    } else if (kind === 'baseline') {
+      current.price.applyOptions({
+        topLineColor: theme.call,
+        topFillColor1: withAlpha(theme.call, 0.28),
+        topFillColor2: withAlpha(theme.call, 0.05),
+        bottomLineColor: theme.put,
+        bottomFillColor1: withAlpha(theme.put, 0.05),
+        bottomFillColor2: withAlpha(theme.put, 0.28)
       });
     } else {
       current.price.applyOptions({ color: theme.accent, lineColor: theme.accent });

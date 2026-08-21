@@ -117,6 +117,12 @@
   box-shadow: var(--mc-shadow-lg, var(--mc-shadow));
 }
 
+/* The Indicators panel: two stacked sections and a scroll region, which needs
+   more room than a single column of interval labels. */
+.menu-wide {
+  min-width: 15rem;
+}
+
 .menu-item {
   display: flex;
   align-items: center;
@@ -143,6 +149,28 @@
   color: var(--mc-accent);
 }
 
+/* The chart-type menu's families. The divider is what makes "these three are a
+   different kind of thing" visible without a heading for each. */
+.menu-group {
+  display: flex;
+  flex-direction: column;
+}
+
+.menu-divider {
+  height: 1px;
+  margin: var(--mc-space-2) 0;
+  background: var(--mc-border);
+}
+
+.menu-item:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.menu-item:disabled:hover {
+  background: transparent;
+}
+
 .menu-hint {
   color: var(--mc-text-subtle);
   font-weight: 500;
@@ -154,6 +182,25 @@
 .btn-on {
   background: var(--mc-accent-weak);
   color: var(--mc-accent);
+}
+
+/* How many indicators are on the chart, as a chip rather than "(2)" in the
+   label: it survives the `.btn-text` being hidden on a narrow bar, where the
+   parenthesised count went with the word it was attached to. */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 1.125rem;
+  height: 1.125rem;
+  padding: 0 0.25rem;
+  border-radius: 999px;
+  background: var(--mc-accent);
+  color: var(--mc-on-brand);
+  font-size: var(--mc-text-xs);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  flex: none;
 }
 
 /* Checkbox rows are read left-to-right (tick, then label), not split apart. */
