@@ -15,9 +15,12 @@
 
 .layout {
   display: grid;
-  /* The price column takes what is left; the side column is fixed so the two
-     stacked charts in it keep a readable aspect at any window width. */
-  grid-template-columns: minmax(0, 1fr) 30rem;
+  /* An even split. The side column carries two charts of its own — OI change
+     and the ratios — and at a quarter of the width their series were being
+     squeezed into a few hundred pixels while the price chart had room it was
+     not using. `minmax(0, …)` on both tracks so neither can be pushed wider
+     than its half by its own content. */
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
   gap: var(--mc-space-4);
   align-items: start;
 }
@@ -104,12 +107,9 @@
   color: var(--mc-text);
 }
 
-@media (max-width: 90rem) {
-  .layout {
-    grid-template-columns: minmax(0, 1fr) 26rem;
-  }
-}
-
+/* No intermediate step any more: an even split is already fluid, so the two
+   columns shrink together until there is not enough room for either, and then
+   they stack. */
 @media (max-width: 72rem) {
   .layout {
     grid-template-columns: 1fr;

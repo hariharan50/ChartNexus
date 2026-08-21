@@ -477,11 +477,15 @@ function markerSeries(reference: { value: number; label: string }, theme: ChartT
       silent: true,
       symbol: 'none',
       data: [{ yAxis: reference.value }],
-      lineStyle: { color: withAlpha(theme.marker, 0.7), type: 'dashed', width: 1 },
+      // Red rather than the marker amber. `--mc-warning` is tuned to sit on a
+      // dark surface; on the light and warm themes a 70%-alpha amber hairline
+      // all but disappeared, and a reference line nobody can see is worse than
+      // no reference line — every ratio on the chart is read against it.
+      lineStyle: { color: withAlpha(theme.put, 0.7), type: 'dashed', width: 1 },
       label: {
         formatter: reference.label,
         position: 'insideEndTop',
-        color: theme.marker,
+        color: theme.put,
         fontSize: 10,
         fontWeight: 600
       }
