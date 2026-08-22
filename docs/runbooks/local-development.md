@@ -159,6 +159,25 @@ Notes:
 The design decisions behind this flow are recorded in
 [ADR 0001](../adr/0001-fyers-broker-integration.md).
 
+## 7b. Optional: enable the AI Console (Hella / STRYX)
+
+The AI Console runs on a **per-user** LLM key — there is no shared server key.
+
+1. Install the model SDK once: `cd backend && uv sync --extra llm` (and run the
+   API with `--extra agent --extra llm`, see [RUNNING.md](../RUNNING.md)).
+2. In MarketCompass, go to **Settings → AI**, pick **Claude**, paste your own
+   Anthropic API key, choose a model, and save.
+
+The key is stored encrypted at rest (AES-256-GCM, HKDF purpose `ai-settings`),
+bound to your user row so it cannot be lifted into another user's row. Until you
+save one, your AI Console tabs show an "offline" notice and
+`GET /api/v1/copilot/availability` returns `{"available": false}`; after saving
+it flips to `true`. Remove the key any time with **Remove key** on the same page.
+
+If the encryption secret (`MC_SECURITY_ENCRYPTION_KEY`) changes, a stored key
+becomes undecryptable and is reported as absent — just re-enter it, or set the old
+value in `MC_SECURITY_PREVIOUS_ENCRYPTION_KEYS` when rotating.
+
 ## 8. Everything in containers
 
 An alternative to terminals 2 and 3, at the cost of slower reloads:

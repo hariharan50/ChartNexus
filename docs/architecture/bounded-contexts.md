@@ -22,8 +22,28 @@ direction dependency inversion requires. It may not import `bootstrap/` or
 | Context | Owns |
 | --- | --- |
 | `identity` | users, credentials, sessions, Google sign-in |
+| `tenancy` | tenants/organizations and membership |
+| `entitlements` | plan-based feature gating |
+| `billing` | subscriptions and billing |
+| `preferences` | per-user workspace and display preferences |
+| `instrument_catalog` | instruments/symbols reference data |
 | `broker_connections` | a tenant's broker API credentials and OAuth token lifecycle |
+| `ai_settings` | a user's own LLM provider, API key (encrypted at rest), and model |
+| `market_ingestion` | snapshot capture and archival for the market feed |
 | `market_data` | canonical quotes, option chains, expiries, and data provenance |
+| `options_analytics` | OI, PCR, max-pain, gamma, vega, smart-OI analytics |
+| `futures_analytics` | futures heatmap, intraday, and market-movers analytics |
+| `signals` | Nifty analysis / guidance (calibrated multi-horizon ensemble) |
+| `outcomes` | signal outcome tracking and grading |
+| `content_intelligence` | market content/news intelligence |
+| `copilot` | the AI Console analyst agent (Hella) |
+| `stryx` | the aggressive trade-caller agent (STRYX) |
+| `realtime_delivery` | realtime/websocket delivery |
+| `audit` | audit trail of sensitive actions |
+
+The set of contexts is enforced by the `independence` contract in
+`backend/pyproject.toml` and by `tests/architecture/`. Keep all three (this table,
+the contract, the tests) in step when adding or removing a context.
 
 ## Contexts must not import each other
 
@@ -35,6 +55,16 @@ Two integration seams exist. Use one of them rather than reaching across.
 import it. It declares a `MarketDataProvider` port, and
 `infrastructure/brokers/provider_resolver.py` reads the broker repository and
 builds the right provider. Neither context knows the other exists.
+
+The AI agents work the same way. `copilot` (Hella) and `stryx` each need live
+market data they do not own and an LLM key they do not own. Their per-request
+wiring imports only a sanctioned bridge in infrastructure —
+`agent/langgraph/build.py` and `build_stryx.py` — which reads the
+`market_data`/`options_analytics` services and loads the caller's key from
+`ai_settings` (via `agent/langgraph/user_llm.py`, decrypting with the
+per-purpose cipher), then returns an `AgentPort`. Those bridge edges are the two
+`ignore_imports` entries on the independence contract. LLM keys are per-user:
+with none saved, the agent's `available` is false and the tab is offline.
 
 **2. Domain events**, once the message bus is in use.
 

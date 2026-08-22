@@ -132,6 +132,11 @@ type = "independence"
 # so the transitive reach isn't counted as copilot depending on them.
 ignore_imports = [
     "marketcompass.contexts.copilot.api.dependencies -> marketcompass.infrastructure.agent.langgraph.build",
+    # STRYX uses the same sanctioned bridge as copilot: its dependency imports
+    # only `build_stryx`, which reads market_data/options_analytics services (and
+    # the shared agent tools) and returns a stryx `AgentPort`. Exempt the bridge
+    # edge so the transitive reach isn't counted as stryx depending on them.
+    "marketcompass.contexts.stryx.api.dependencies -> marketcompass.infrastructure.agent.langgraph.build_stryx",
 ]
 modules = [
     "marketcompass.contexts.identity",
