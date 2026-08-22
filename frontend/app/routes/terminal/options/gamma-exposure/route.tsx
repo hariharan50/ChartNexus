@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import EChart from '$shared/charts/EChart';
 import { buildGammaExposureOption, type GexMarker } from '$shared/charts/options/gamma-exposure';
 import { useChartTheme } from '$shared/charts/theme/use-chart-theme';
@@ -10,6 +10,7 @@ import IconEye from '$shared/ui/icons/IconEye';
 import IconEyeOff from '$shared/ui/icons/IconEyeOff';
 import { lastTradingDayIST } from '$shared/formatting/ist-clock';
 import GexLevels from './components/GexLevels';
+import GexReadout from './components/GexReadout';
 import HistoryMode, { type Mode } from '../components/HistoryMode';
 import {
   csvFilename,
@@ -20,6 +21,7 @@ import {
   getGex,
   gexCsv,
   LAYOUTS,
+  readoutRows,
   STRIKE_FILTERS,
   type GexLayout,
   type GexView
@@ -184,6 +186,52 @@ export default function GammaExposure() {
         theme
       ),
     [bars, layout, frame, markers, showNet, showAbs, theme]
+  );
+
+  // -- hovered strike -------------------------------------------------------
+  /** Index into `bars`, or `null` when the pointer is off the plot. */
+  const [hoverIdx, setHoverIdx] = useState<number | null>(null);
+  const onAxisHover = useCallback((index: number | null) => setHoverIdx(index), []);
+
+  /**
+   * What the panel falls back to: the strike nearest spot.
+   *
+   * A readout that is blank until hovered reads as a broken box. The strike
+   * beside spot is also the one a reader would have pointed at first, so the
+   * fallback is rarely the wrong guess.
+   */
+  const defaultIdx = useMemo(() => {
+    if (bars.length === 0 || !frame) return null;
+    let best = 0;
+    let gap = Infinity;
+    bars.forEach((bar, i) => {
+      const distance = Math.abs(bar.strike - frame.spot);
+      if (distance < gap) {
+        gap = distance;
+        best = i;
+      }
+    });
+    return best;
+  }, [bars, frame]);
+
+  // A stale hover index outlives the bars it pointed into — the strike filter
+  // and the time scrub both rebuild `bars` underneath it.
+  const activeIdx = hoverIdx !== null && hoverIdx < bars.length ? hoverIdx : defaultIdx;
+  const activeBar = activeIdx === null ? undefined : bars[activeIdx];
+
+  const readout = useMemo(
+    () =>
+      activeBar
+        ? readoutRows(activeBar, {
+            layout,
+            showNet,
+            showAbs,
+            callColor: CALL_COLOR,
+            putColor: PUT_COLOR,
+            absColor: theme.marker
+          })
+        : [],
+    [activeBar, layout, showNet, showAbs, theme.marker]
   );
 
   // -- live clock -----------------------------------------------------------
@@ -390,14 +438,22 @@ export default function GammaExposure() {
               {bars.length === 0 ? (
                 <p className={s.empty}>No strikes in this window.</p>
               ) : (
-                <EChart
-                  option={option}
-                  // The axes swap wholesale between layouts and the series list
-                  // changes with the toggles; a merge would leave the previous
-                  // shape's axes and series behind.
-                  resetKey={`${layout}-${showNet}-${showAbs}`}
-                  className={s.chart}
-                />
+                <div className={s.plotRow}>
+                  <EChart
+                    option={option}
+                    // The axes swap wholesale between layouts and the series list
+                    // changes with the toggles; a merge would leave the previous
+                    // shape's axes and series behind.
+                    resetKey={`${layout}-${showNet}-${showAbs}`}
+                    className={s.chart}
+                    onAxisHover={onAxisHover}
+                  />
+                  <GexReadout
+                    strike={activeBar?.strike ?? null}
+                    rows={readout}
+                    isDefault={hoverIdx === null}
+                  />
+                </div>
               )}
 
               <GexLevels levels={levels} shown={shownIds} colors={LEVEL_COLORS} />
@@ -443,8 +499,12 @@ export default function GammaExposure() {
                 Exposure is in crore per 1% move in spot, from the dealer’s side of the book — call
                 gamma positive, put gamma negative. Positive net means dealers hedge against the
                 move and damp it; negative means they hedge with it.{' '}
-                {view.iv_coverage < 1
-                  ? `The broker quoted no volatility on ${Math.round((1 - view.iv_coverage) * 100)}% of legs, which contribute nothing to these figures.`
+                {/* Open interest, not legs. The IV solver fails on strikes
+                    nobody holds, so a leg count reported a fifth of the book
+                    missing when the exposure that missing fifth carried was
+                    nil — see `gex_math.strike_profile`. */}
+                {view.iv_coverage < 0.995
+                  ? `The broker quoted no volatility on ${Math.round((1 - view.iv_coverage) * 100)}% of open interest, which contributes nothing to these figures.`
                   : ''}{' '}
                 {/* Names the empty stretch at the left of the track. Gamma has no
                     reconstructable open — restating open interest from the day-change

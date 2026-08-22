@@ -212,7 +212,9 @@ function applyEvent(
       patch(agentId, (msg) => ({ ...msg, streaming: false }));
       break;
     case 'error':
-      patch(agentId, (msg) => ({ ...msg, text: event.message, streaming: false }));
+      // Keep whatever already streamed — the error is only the whole message
+      // when the turn produced nothing at all.
+      patch(agentId, (msg) => ({ ...msg, text: msg.text || event.message, streaming: false }));
       break;
   }
 }

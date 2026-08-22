@@ -7,6 +7,8 @@ import {
   frameBars,
   frameLevels,
   gexCsv,
+  readoutRows,
+  type GexBar,
   type GexFrame
 } from '../../app/routes/terminal/options/gamma-exposure/gex-data';
 
@@ -167,5 +169,48 @@ describe('csvFilename', () => {
 describe('expiryLabel', () => {
   it('says when there is no expiry rather than printing an invalid date', () => {
     expect(expiryLabel(null)).toBe('Nearest expiry');
+  });
+});
+
+describe('readoutRows', () => {
+  const bar: GexBar = { strike: 24_300, callGex: 17_830, putGex: -18_730, net: -900, abs: 36_560 };
+  const palette = { callColor: '#22c55e', putColor: '#ef4444', absColor: '#f59e0b' };
+  const base = { layout: 'horizontal' as const, showNet: true, showAbs: true, ...palette };
+
+  it('names each row the way its toggle does, so the two cannot drift', () => {
+    expect(readoutRows(bar, base).map((row) => row.label)).toEqual([
+      'Net GEX (Cr)',
+      'ABS GEX (Cr)'
+    ]);
+  });
+
+  it('drops a row when its series is hidden', () => {
+    expect(readoutRows(bar, { ...base, showAbs: false }).map((r) => r.label)).toEqual([
+      'Net GEX (Cr)'
+    ]);
+    expect(readoutRows(bar, { ...base, showNet: false }).map((r) => r.label)).toEqual([
+      'ABS GEX (Cr)'
+    ]);
+    expect(readoutRows(bar, { ...base, showNet: false, showAbs: false })).toEqual([]);
+  });
+
+  it('splits the sides in the call-put layout, matching what that layout draws', () => {
+    const rows = readoutRows(bar, { ...base, layout: 'callPut' });
+    expect(rows.map((row) => row.label)).toEqual(['Call GEX (Cr)', 'Put GEX (Cr)', 'ABS GEX (Cr)']);
+    expect(rows[0]!.value).toBe(17_830);
+    expect(rows[1]!.value).toBe(-18_730);
+  });
+
+  it('colours the net swatch by the sign, because the bar is coloured that way', () => {
+    // A green dot beside a negative number is worse than no dot at all.
+    expect(readoutRows(bar, base)[0]!.color).toBe(palette.putColor);
+    const positive = { ...bar, net: 900 };
+    expect(readoutRows(positive, base)[0]!.color).toBe(palette.callColor);
+  });
+
+  it('carries the values through untouched, formatting being the caller’s job', () => {
+    const rows = readoutRows(bar, base);
+    expect(rows[0]!.value).toBe(-900);
+    expect(rows[1]!.value).toBe(36_560);
   });
 });

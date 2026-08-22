@@ -16,6 +16,7 @@ sequences the discipline around it.
 from __future__ import annotations
 
 from collections.abc import AsyncIterator
+from contextlib import suppress
 from dataclasses import dataclass
 
 from marketcompass.contexts.stryx.application.ports import (
@@ -59,7 +60,10 @@ class StryxService:
         history: list[Turn] | None = None,
     ) -> AsyncIterator[AgentEvent]:
         """Stream STRYX's call, enforcing the cap up front and journaling at the end."""
-        live_today = await self._journal.live_call_count_today(tenant_id)
+        try:
+            live_today = await self._journal.live_call_count_today(tenant_id)
+        except Exception:  # a journal read must not block the call
+            live_today = 0
         cap_reached = live_today >= discipline.MAX_LIVE_CALLS_PER_DAY
 
         parts: list[str] = []
@@ -80,13 +84,16 @@ class StryxService:
         # NO TRADE and must not fill the journal or touch the daily budget.
         if answer and call_template.is_call(answer):
             call = call_template.parse(answer)
-            await self._journal.append(
-                tenant_id,
-                call,
-                question=question,
-                raw_answer=answer,
-                source=_source_of(answer),
-            )
+            # A journal write failing is a discipline problem, not a reason to
+            # throw away the answer the user is already reading.
+            with suppress(Exception):
+                await self._journal.append(
+                    tenant_id,
+                    call,
+                    question=question,
+                    raw_answer=answer,
+                    source=_source_of(answer),
+                )
 
     async def __call__(self, tenant_id: TenantId, symbol: str, question: str) -> Answer:
         """Collect the stream into one :class:`Answer` (non-streaming callers)."""

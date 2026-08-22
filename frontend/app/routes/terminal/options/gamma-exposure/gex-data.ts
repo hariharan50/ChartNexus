@@ -117,6 +117,56 @@ export function frameBars(strikes: number[], frame: GexFrame, visible: Set<numbe
   return bars;
 }
 
+/** One line of the readout panel: what it is, what it reads, and the colour it is drawn in. */
+export interface GexReadoutRow {
+  label: string;
+  value: number;
+  color: string;
+}
+
+/**
+ * The rows the readout panel shows for one strike.
+ *
+ * Derived from the same three inputs the chart's series list is built from, so
+ * the panel can never name a series that is not on screen: hide ABS GEX and its
+ * row goes with it. Pure, and colour-agnostic — the caller passes the palette
+ * it actually painted with rather than this module guessing at it.
+ */
+export function readoutRows(
+  bar: GexBar,
+  input: {
+    layout: GexLayout;
+    showNet: boolean;
+    showAbs: boolean;
+    callColor: string;
+    putColor: string;
+    absColor: string;
+  }
+): GexReadoutRow[] {
+  const rows: GexReadoutRow[] = [];
+
+  if (input.showNet && input.layout === 'callPut') {
+    rows.push(
+      { label: 'Call GEX (Cr)', value: bar.callGex, color: input.callColor },
+      { label: 'Put GEX (Cr)', value: bar.putGex, color: input.putColor }
+    );
+  } else if (input.showNet) {
+    // The net bar is coloured by its own sign, so the swatch has to be too —
+    // a green dot beside a negative number is worse than no dot.
+    rows.push({
+      label: 'Net GEX (Cr)',
+      value: bar.net,
+      color: bar.net >= 0 ? input.callColor : input.putColor
+    });
+  }
+
+  if (input.showAbs) {
+    rows.push({ label: 'ABS GEX (Cr)', value: bar.abs, color: input.absColor });
+  }
+
+  return rows;
+}
+
 /**
  * Compact exposure for an axis or a headline: `6.22 Cr`, `44.09 L Cr`.
  *

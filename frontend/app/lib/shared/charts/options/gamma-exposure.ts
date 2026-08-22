@@ -104,7 +104,7 @@ export function buildGammaExposureOption(
     // Room at the top for the stacked marker chips, and on both flanks for the
     // two axes' names.
     grid: { left: 8, right: 16, top: topMargin, bottom: 8, containLabel: true },
-    tooltip: tooltip(input, theme),
+    tooltip: tooltip(),
     xAxis: vertical ? [netAxis, absAxis] : categoryAxis,
     yAxis: vertical ? categoryAxis : [netAxis, absAxis],
     series: series(input, theme)
@@ -246,30 +246,19 @@ function markers(input: GammaExposureInput, theme: ChartTheme) {
   return { silent: true, symbol: 'none', data: lines };
 }
 
-function tooltip(input: GammaExposureInput, theme: ChartTheme) {
-  const { bars, formatGex, callColor, putColor } = input;
-
+/**
+ * The axis pointer only — the readout itself lives beside the plot.
+ *
+ * `showContent: false` keeps the shadow band that says which strike is under
+ * the cursor, and keeps the `updateAxisPointer` event that drives the panel,
+ * while suppressing the floating box. A tooltip over this chart covered the
+ * very bars it was describing, and on the strikes nearest spot — the ones
+ * anyone is actually reading — it covered the ones either side too.
+ */
+function tooltip() {
   return {
     trigger: 'axis' as const,
     axisPointer: { type: 'shadow' as const },
-    appendTo: 'body',
-    backgroundColor: theme.tooltipBg,
-    borderColor: theme.grid,
-    textStyle: { color: theme.tooltipText, fontSize: 12 },
-    padding: [8, 12],
-    formatter: (params: unknown) => {
-      const entries = params as Array<{ dataIndex: number }>;
-      const bar = entries.length ? bars[entries[0]!.dataIndex] : undefined;
-      if (!bar) return '';
-      // Every figure at once, whichever layout asked. The four are read
-      // against each other — a net of nearly zero means one thing beside a
-      // small total and the opposite beside a large one.
-      return `
-        <div style="font-weight:700;margin-bottom:4px">Strike: ${bar.strike}</div>
-        <div style="color:${callColor}">Call GEX: ${formatGex(bar.callGex)}</div>
-        <div style="color:${putColor}">Put GEX: ${formatGex(bar.putGex)}</div>
-        <div style="color:${bar.net >= 0 ? callColor : putColor}">Net: ${formatGex(bar.net)}</div>
-        <div>Total: ${formatGex(bar.abs)}</div>`;
-    }
+    showContent: false
   };
 }

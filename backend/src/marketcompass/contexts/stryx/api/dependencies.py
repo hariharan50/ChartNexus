@@ -43,7 +43,9 @@ def build_stryx_services(
 ) -> StryxServices:
     container = get_container(request)
     agent = build_stryx_agent(request, session)
-    journal = SqlAlchemyStryxCallRepository(session)
+    # The journal manages its own sessions: it is written from the streaming
+    # response body, after this request's session has finished its unit of work.
+    journal = SqlAlchemyStryxCallRepository(container.database)
     sessions = StryxRedisSessionStore(container.redis, principal.tenant_id)
     return StryxServices(
         agent=StryxService(agent=agent, journal=journal),

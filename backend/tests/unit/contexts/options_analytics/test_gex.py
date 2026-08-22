@@ -178,6 +178,54 @@ def test_coverage_is_one_when_every_leg_is_priced() -> None:
     assert profile.iv_coverage == 1.0
 
 
+def test_coverage_ignores_unpriced_legs_that_nobody_holds() -> None:
+    """Dead strikes must not raise the alarm.
+
+    The IV solver fails on exactly the legs that carry no exposure — far-OTM
+    strikes with no bid and no open interest. Counted by leg, a wall of those
+    reported a fifth of the book missing on a profile whose every meaningful
+    strike had priced, which is a false warning on the one caption a reader
+    uses to decide whether to trust the figures.
+    """
+    axis = [SPOT, SPOT + 500.0]
+    rows = (
+        _row("CE", SPOT, 100_000),
+        _row("PE", SPOT, 100_000),
+        # Listed, quoted at nothing, held by nobody.
+        _row("CE", SPOT + 500.0, 0, iv=None),
+        _row("PE", SPOT + 500.0, 0, iv=None),
+    )
+
+    profile = strike_profile(rows, spot=SPOT, years=0.02, axis=axis)
+
+    assert profile.iv_coverage == 1.0
+
+
+def test_coverage_is_weighted_by_the_exposure_actually_missing() -> None:
+    # One unpriced leg holding three quarters of the open interest is a real
+    # hole, and has to read as one however few legs it is.
+    axis = [SPOT, SPOT + 50.0]
+    rows = (
+        _row("CE", SPOT, 300_000, iv=None),
+        _row("PE", SPOT, 100_000),
+        _row("CE", SPOT + 50.0, 0),
+        _row("PE", SPOT + 50.0, 0),
+    )
+
+    profile = strike_profile(rows, spot=SPOT, years=0.02, axis=axis)
+
+    assert profile.iv_coverage == 0.25
+
+
+def test_coverage_is_zero_on_an_axis_nobody_holds() -> None:
+    # No exposure to have covered. Zero keeps the "cannot vouch for this"
+    # reading, which is the right one for an axis of empty strikes.
+    axis = [SPOT]
+    rows = (_row("CE", SPOT, 0), _row("PE", SPOT, 0))
+
+    assert strike_profile(rows, spot=SPOT, years=0.02, axis=axis).iv_coverage == 0.0
+
+
 def test_abs_exposure_sees_a_strike_that_nets_to_zero() -> None:
     # A strike with equal call and put gamma is not a quiet strike, and the
     # net series alone would draw it as one.

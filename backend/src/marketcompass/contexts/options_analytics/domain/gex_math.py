@@ -116,8 +116,16 @@ class GexProfile:
     ``iv_coverage`` is not diagnostics. A chain whose broker quoted no implied
     volatility produces a profile of exact zeros, which renders as a flat line
     indistinguishable from a genuinely balanced book. The page needs to be able
-    to tell the two apart, so the fraction of legs that carried a usable IV
-    travels with the numbers.
+    to tell the two apart, so how much of the book carried a usable IV travels
+    with the numbers.
+
+    **Weighted by open interest, not by leg count.** The IV solver fails on
+    exactly the legs that do not matter: far-OTM strikes with no bid, no trade
+    and no open interest. Counting legs let a wall of dead strikes report "22%
+    missing" on a profile whose every meaningful strike had priced — an alarm
+    about numbers that were fine, on a caption readers use to decide whether to
+    trust the figures. A leg with no open interest contributes no gamma whether
+    or not it priced, so it is weightless here too.
     """
 
     strikes: tuple[StrikeGex, ...]
@@ -147,16 +155,17 @@ def strike_profile(
     shifted between frames would slide the whole chart sideways when scrubbed.
 
     A leg with no quoted ``iv`` contributes ``0.0`` and is counted against
-    coverage. It is never assigned a fallback volatility: a made-up 20% would
-    produce a confident bar indistinguishable from a real one.
+    coverage, in proportion to the open interest it was carrying. It is never
+    assigned a fallback volatility: a made-up 20% would produce a confident bar
+    indistinguishable from a real one.
     """
     call_by: dict[float, ChainRow] = {}
     put_by: dict[float, ChainRow] = {}
     for row in rows:
         (call_by if row.is_call else put_by)[row.strike] = row
 
-    quoted = 0
-    total = 0
+    quoted_oi = 0
+    total_oi = 0
     entries: list[StrikeGex] = []
 
     for strike in axis:
@@ -166,11 +175,14 @@ def strike_profile(
             if leg is None:
                 sides.append(0.0)
                 continue
-            total += 1
+            # Negative open interest is not a thing, but a bad feed row must not
+            # be able to drag the ratio below zero or above one.
+            weight = max(0, leg.oi)
+            total_oi += weight
             if leg.iv is None:
                 sides.append(0.0)
                 continue
-            quoted += 1
+            quoted_oi += weight
             gamma = bs_gamma(
                 spot=spot, strike=strike, years=years, rate=rate, vol=leg.iv / _IV_PERCENT
             )
@@ -178,7 +190,10 @@ def strike_profile(
 
         entries.append(StrikeGex(strike=strike, call_gex=sides[0], put_gex=sides[1]))
 
-    coverage = (quoted / total) if total else 0.0
+    # A chain with no open interest anywhere has no exposure to have covered.
+    # Reporting 0.0 keeps the "we cannot vouch for this" reading, which is the
+    # right one for an axis of empty strikes.
+    coverage = (quoted_oi / total_oi) if total_oi else 0.0
     return GexProfile(strikes=tuple(entries), iv_coverage=coverage)
 
 

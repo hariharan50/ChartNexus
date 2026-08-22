@@ -453,11 +453,29 @@
   height: 0.875rem;
 }
 
+/* The plot and the hovered-strike readout, side by side. The readout is a
+   fixed strip, so the chart keeps every pixel that is left. */
+.plot-row {
+  display: flex;
+  align-items: stretch;
+  gap: var(--mc-space-4);
+}
+
 /* Qualified by `.panel`. `EChart.module.css` also defines a `.chart`
    (`height: 100%`), and with equal specificity the winner depends on emit
    order — which resolved to 100% of an auto-height parent, i.e. nothing. */
 .panel .chart {
   height: 460px;
+  /* `min-width: 0` or the chart's own intrinsic width keeps the flex row from
+     ever shrinking it, and the readout gets pushed out of the panel instead. */
+  flex: 1;
+  min-width: 0;
+}
+
+@media (max-width: 64rem) {
+  .plot-row {
+    flex-direction: column;
+  }
 }
 
 /* -- time scrub -- */

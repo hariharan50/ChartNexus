@@ -179,8 +179,12 @@ async def _events(
                 answer = event.text or answer
     except Exception as exc:  # a stream must not 500 mid-flight
         log.warning("stryx_stream_failed", error=repr(exc))
-        yield _frame({"type": "error", "message": "Couldn't get a read just now — try again."})
-        return
+        # Only surface the error when the turn produced nothing. A failure *after*
+        # the call has streamed (journaling, say) must not throw the call away —
+        # the client renders an `error` frame in place of the answer.
+        if not answer:
+            yield _frame({"type": "error", "message": "Couldn't get a read just now — try again."})
+            return
 
     # Remember this exchange so the next question carries context; skip empties.
     if answer:

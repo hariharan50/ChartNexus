@@ -1,0 +1,88 @@
+.panel {
+  display: flex;
+  flex-direction: column;
+  gap: var(--mc-space-1);
+  width: 12.5rem;
+  flex: none;
+  align-self: flex-start;
+  padding: var(--mc-space-3);
+  border: 1px solid var(--mc-border);
+  border-radius: var(--mc-radius);
+  background: var(--mc-surface-raised);
+}
+
+.caption {
+  margin: 0;
+  color: var(--mc-text-subtle);
+  font-size: 0.625rem;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.strike {
+  margin: 0 0 var(--mc-space-2);
+  color: var(--mc-text);
+  font-size: var(--mc-text-lg);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.rows {
+  display: flex;
+  flex-direction: column;
+  gap: var(--mc-space-2);
+  margin: 0;
+}
+
+.row {
+  display: flex;
+  flex-direction: column;
+  gap: 0.125rem;
+}
+
+.label {
+  display: flex;
+  align-items: center;
+  gap: 0.4375rem;
+  color: var(--mc-text-subtle);
+  font-size: var(--mc-text-xs);
+}
+
+.swatch {
+  width: 0.5rem;
+  height: 0.5rem;
+  border-radius: 50%;
+  flex: none;
+}
+
+.value {
+  /* Overrides the browser's default `dd` indent, which would step every figure
+     in from the label it belongs to. */
+  margin: 0;
+  padding-left: 0.9375rem;
+  color: var(--mc-text);
+  font-size: var(--mc-text-sm);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.empty {
+  margin: 0;
+  color: var(--mc-text-subtle);
+  font-size: var(--mc-text-xs);
+}
+
+/* Below the chart rather than beside it once the plot has no width to spare. */
+@media (max-width: 64rem) {
+  .panel {
+    width: 100%;
+    align-self: stretch;
+  }
+
+  .rows {
+    flex-direction: row;
+    flex-wrap: wrap;
+    gap: var(--mc-space-4);
+  }
+}
