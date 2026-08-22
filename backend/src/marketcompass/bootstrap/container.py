@@ -37,6 +37,10 @@ class Container:
     # Encrypts broker credentials at rest with AES-256-GCM. Key derivation runs
     # once here rather than on every repository construction.
     token_cipher: AesGcmCipher
+    # Encrypts users' own LLM API keys at rest. Derived from the same configured
+    # secret but under a distinct HKDF purpose, so an AI-key ciphertext can never
+    # be decrypted in the broker context, or vice versa.
+    ai_settings_cipher: AesGcmCipher
     # None when no Google credentials are configured; only the two Google
     # routes care, and they fail with a clear message.
     google_oauth: GoogleOAuthClient | None
@@ -58,6 +62,11 @@ class Container:
             access_tokens=JwtAccessTokenIssuer(resolved.auth, resolved.security),
             token_cipher=AesGcmCipher.derive(
                 resolved.security.encryption_key.get_secret_value(),
+                previous_secrets=resolved.security.retired_encryption_keys,
+            ),
+            ai_settings_cipher=AesGcmCipher.derive(
+                resolved.security.encryption_key.get_secret_value(),
+                purpose="ai-settings",
                 previous_secrets=resolved.security.retired_encryption_keys,
             ),
             google_oauth=(

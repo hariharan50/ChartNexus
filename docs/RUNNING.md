@@ -35,16 +35,16 @@ The `--extra agent --extra llm` flags pull in the AI Console's LangGraph +
 Anthropic stack. Without them the API still runs, but the **AI Console → AI
 Analysis Agent** tab shows an "offline" notice (it is LLM-only, by design).
 
-### Enable the AI Console (Hella)
+### Enable the AI Console (Hella / STRYX)
 
-The agent is disabled until an LLM is configured. In `backend/.env`:
+LLM keys are **per-user**, not a backend env var. With the extras installed, sign
+in and go to **Settings → AI**: pick a provider (Claude), paste your own API key,
+choose a model, and save. The key is stored encrypted at rest and the agents read
+it per request.
 
-    MC_LLM_PROVIDER=anthropic
-    MC_LLM_ANTHROPIC_API_KEY=sk-ant-...
-    MC_LLM_MODEL=claude-sonnet-5          # optional; a good chat default
-
-With a key set and the extras installed, `GET /api/v1/copilot/availability`
-returns `{"available": true}` and the tab goes live. Hella reads the live market
+Until *that user* saves a key, their AI Console tab shows an "offline" notice and
+`GET /api/v1/copilot/availability` returns `{"available": false}`. Once saved it
+flips to `true` and the tab goes live. Hella reads the live market
 through read-only tools (spot/futures/OHLC/option-chain/OI/PCR/max-pain/gamma/
 indicators) — so the ingest worker below keeps her OI reads fresh, just like the
 charts.

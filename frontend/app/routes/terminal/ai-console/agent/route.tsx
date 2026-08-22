@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState, type MutableRefObject, type ReactNode } from 'react';
+import { Link } from 'react-router';
 import { streamAgent, type AgentStreamEvent } from '$contexts/signals/api';
 import { loadChat, saveChat } from '$contexts/signals/chat-store';
 import { useAgentAvailabilityQuery } from '$contexts/signals/queries';
@@ -47,9 +48,8 @@ export default function AiAnalysisAgent() {
           <div className={cx(s.panel, s.notice)}>
             <div className={s.noticeTitle}>{AGENT_NAME} is offline</div>
             <p className={s.noticeBody}>
-              The AI Console needs a language model to run. Configure an LLM key (
-              <code>MC_LLM_PROVIDER=anthropic</code> and <code>MC_LLM_ANTHROPIC_API_KEY</code>) on
-              the backend, then reload.
+              The AI Console runs on your own LLM key. Add one in{' '}
+              <Link to="/settings/ai">Settings → AI</Link>, then reload.
             </p>
           </div>
         ) : (

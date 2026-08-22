@@ -8,6 +8,7 @@ from __future__ import annotations
 
 from fastapi import APIRouter, FastAPI
 
+from marketcompass.contexts.ai_settings.api.router import router as ai_settings_router
 from marketcompass.contexts.broker_connections.api.router import router as broker_router
 from marketcompass.contexts.copilot.api.router import router as copilot_router
 from marketcompass.contexts.identity.api.router import router as identity_router
@@ -21,6 +22,7 @@ API_PREFIX = "/api/v1"
 _ROUTERS: tuple[APIRouter, ...] = (
     identity_router,
     broker_router,
+    ai_settings_router,
     market_router,
     options_lab_router,
     signals_router,

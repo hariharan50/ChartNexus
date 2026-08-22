@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState, type MutableRefObject, type ReactNode } from 'react';
+import { Link } from 'react-router';
 import { streamStryx, type StryxStreamEvent } from '$contexts/signals/api';
 import { loadChat, saveChat } from '$contexts/signals/stryx-chat-store';
 import { useStryxAvailabilityQuery, useStryxJournalTodayQuery } from '$contexts/signals/queries';
@@ -52,9 +53,8 @@ export default function StryxAgent() {
           <div className={cx(s.panel, s.notice)}>
             <div className={s.noticeTitle}>{AGENT_NAME} is offline</div>
             <p className={s.noticeBody}>
-              STRYX needs a language model to run. Configure an LLM key (
-              <code>MC_LLM_PROVIDER=anthropic</code> and <code>MC_LLM_ANTHROPIC_API_KEY</code>) on
-              the backend, then reload.
+              STRYX runs on your own LLM key. Add one in{' '}
+              <Link to="/settings/ai">Settings → AI</Link>, then reload.
             </p>
           </div>
         ) : (

@@ -105,7 +105,8 @@ export default [
       route('global', 'routes/terminal/settings/global.tsx'),
       route('help', 'routes/terminal/settings/help.tsx'),
       route('broker', 'routes/terminal/settings/broker/route.tsx'),
-      route('broker/callback', 'routes/terminal/settings/broker/callback.tsx')
+      route('broker/callback', 'routes/terminal/settings/broker/callback.tsx'),
+      route('ai', 'routes/terminal/settings/ai/route.tsx')
     ])
   ])
 ] satisfies RouteConfig;

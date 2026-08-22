@@ -32,13 +32,13 @@ class CopilotServices:
     sessions: SessionStorePort
 
 
-def build_copilot_services(
+async def build_copilot_services(
     request: Request,
     principal: CurrentPrincipal,
     session: Annotated[AsyncSession, Depends(get_session)],
 ) -> CopilotServices:
     container = get_container(request)
-    agent = build_langgraph_agent(request, session)
+    agent = await build_langgraph_agent(request, session, principal.user_id)
     sessions = RedisSessionStore(container.redis, principal.tenant_id)
     return CopilotServices(agent=AgentService(agent=agent), sessions=sessions)
 

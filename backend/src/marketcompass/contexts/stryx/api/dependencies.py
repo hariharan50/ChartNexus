@@ -36,13 +36,13 @@ class StryxServices:
     journal: TradeJournalPort
 
 
-def build_stryx_services(
+async def build_stryx_services(
     request: Request,
     principal: CurrentPrincipal,
     session: Annotated[AsyncSession, Depends(get_session)],
 ) -> StryxServices:
     container = get_container(request)
-    agent = build_stryx_agent(request, session)
+    agent = await build_stryx_agent(request, session, principal.user_id)
     # The journal manages its own sessions: it is written from the streaming
     # response body, after this request's session has finished its unit of work.
     journal = SqlAlchemyStryxCallRepository(container.database)

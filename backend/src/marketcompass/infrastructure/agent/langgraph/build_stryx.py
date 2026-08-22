@@ -18,23 +18,19 @@ from fastapi import Request
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from marketcompass.contexts.stryx.application.ports import AgentPort
-from marketcompass.infrastructure.agent.langgraph.llm import build_chat_model
+from marketcompass.infrastructure.agent.langgraph.user_llm import build_user_chat_model
+from marketcompass.shared_kernel.types.identifiers import UserId
 
 
-def build_stryx_agent(request: Request, session: AsyncSession) -> AgentPort:
+async def build_stryx_agent(
+    request: Request, session: AsyncSession, user_id: UserId
+) -> AgentPort:
     container = request.app.state.container
-    llm = container.settings.llm
-    model = build_chat_model(
-        provider=llm.provider,
-        api_key=llm.anthropic_api_key.get_secret_value(),
-        model=llm.resolved_model,
-        max_output_tokens=llm.max_output_tokens,
-        request_timeout_seconds=llm.request_timeout_seconds,
-    )
+    model = await build_user_chat_model(container, session, user_id)
     if model is None:
-        # No key, or the 'agent' extra isn't installed. Return the import-safe
-        # unavailable agent so /stryx/availability answers without pulling in the
-        # LangChain stack.
+        # The user has no saved key (or the 'agent' extra isn't installed).
+        # Return the import-safe unavailable agent so /stryx/availability answers
+        # without pulling in the LangChain stack.
         from marketcompass.infrastructure.agent.langgraph.stryx_unavailable import (  # noqa: PLC0415
             UnavailableStryxAgent,
         )
@@ -56,5 +52,8 @@ def build_stryx_agent(request: Request, session: AsyncSession) -> AgentPort:
     market = build_market_services(request, session)
     options = build_options_analytics_services(request, session)
     return StryxLangGraphAgent(
-        model=model, market=market, options=options, disclaimer=llm.agent_disclaimer
+        model=model,
+        market=market,
+        options=options,
+        disclaimer=container.settings.llm.agent_disclaimer,
     )

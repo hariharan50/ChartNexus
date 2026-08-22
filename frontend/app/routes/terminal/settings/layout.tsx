@@ -3,6 +3,7 @@ import { Link, Outlet, useLocation } from 'react-router';
 import { cx } from '$shared/ui/cx';
 import IconAlert from '$shared/ui/icons/IconAlert';
 import IconBank from '$shared/ui/icons/IconBank';
+import IconBrain from '$shared/ui/icons/IconBrain';
 import IconChart from '$shared/ui/icons/IconChart';
 import IconChevronDown from '$shared/ui/icons/IconChevronDown';
 import IconLayout from '$shared/ui/icons/IconLayout';
@@ -49,6 +50,12 @@ const nav: NavItem[] = [
     desc: 'Live market data via Fyers',
     href: '/settings/broker',
     icon: IconBank
+  },
+  {
+    label: 'AI Settings',
+    desc: 'LLM provider & API key',
+    href: '/settings/ai',
+    icon: IconBrain
   },
   {
     label: 'Account & Security',

@@ -132,14 +132,15 @@ a live one, and only that field distinguishes them.
 ## Working without a broker account
 
 The whole application runs with no external credentials. A deterministic mock
-provider serves generated quotes and option chains, and
-`MC_LLM_PROVIDER=rule_based` makes the copilot deterministic. Everything is
-labelled `source: "mock"`.
+provider serves generated quotes and option chains, everything labelled
+`source: "mock"`. The AI Console (Hella, STRYX) simply stays offline until a key
+is added — no server key is required to run the rest of the app.
 
-To make the copilot generative, set `MC_LLM_PROVIDER` to `anthropic`, `openai`,
-or `openrouter` (after `uv sync --extra llm`) and supply the matching key.
-OpenRouter uses namespaced model IDs via `MC_LLM_OPENROUTER_MODEL`
-(e.g. `anthropic/claude-3.7-sonnet`), not `MC_LLM_MODEL`.
+The AI Console runs on **per-user** LLM keys, not a backend env var. To turn it
+on, install the model SDK (`uv sync --extra llm`), then in the app go to
+**Settings → AI**, pick Claude, and paste your own API key. The key is stored
+encrypted at rest and each user's agents run on their own key. (OpenAI and
+OpenRouter are reserved for a later release.)
 
 To use live NSE data, connect a FYERS account under **Settings → Broker**. Each
 tenant connects their own broker application; credentials and tokens are stored

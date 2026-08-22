@@ -141,6 +141,7 @@ modules = [
     "marketcompass.contexts.preferences",
     "marketcompass.contexts.instrument_catalog",
     "marketcompass.contexts.broker_connections",
+    "marketcompass.contexts.ai_settings",
     "marketcompass.contexts.market_ingestion",
     "marketcompass.contexts.market_data",
     "marketcompass.contexts.options_analytics",
@@ -149,6 +150,7 @@ modules = [
     "marketcompass.contexts.outcomes",
     "marketcompass.contexts.content_intelligence",
     "marketcompass.contexts.copilot",
+    "marketcompass.contexts.stryx",
     "marketcompass.contexts.realtime_delivery",
     "marketcompass.contexts.audit",
 ]
