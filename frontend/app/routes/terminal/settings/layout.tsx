@@ -64,6 +64,12 @@ const nav: NavItem[] = [
     icon: IconBrain
   },
   {
+    label: 'Messaging Channels',
+    desc: 'Telegram alerts & briefings',
+    href: '/settings/channels',
+    icon: IconMessage
+  },
+  {
     label: 'Account & Security',
     desc: 'Sessions & sign-out',
     href: '/settings/security',

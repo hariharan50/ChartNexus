@@ -173,7 +173,7 @@ function ChatPanel({ userId, symbol }: { userId: string; symbol: string }) {
             concrete levels.
           </p>
         ) : (
-          messages.map((msg) => <Bubble key={msg.id} msg={msg} />)
+          messages.map((msg) => <Bubble key={msg.id} msg={msg} symbol={symbol} />)
         )}
       </div>
 
@@ -363,12 +363,15 @@ function renderRich(text: string): ReactNode {
   return blocks;
 }
 
-function Bubble({ msg }: { msg: ChatMessage }) {
+function Bubble({ msg, symbol }: { msg: ChatMessage; symbol: string }) {
   const isAgent = msg.role === 'agent';
   const empty = msg.text.length === 0;
   const noTools = !msg.tools || msg.tools.length === 0;
   const noSkills = !msg.skills || msg.skills.length === 0;
   const thinking = isAgent && msg.streaming && empty && noTools && noSkills;
+  // A finished, non-empty agent answer can be exported to PDF.
+  const exportable = isAgent && !msg.streaming && !empty;
+  const contentRef = useRef<HTMLDivElement>(null);
 
   return (
     <div className={cx(s.bubble, s[msg.role], thinking && s.thinking)}>
@@ -399,11 +402,153 @@ function Bubble({ msg }: { msg: ChatMessage }) {
       {thinking ? (
         <div className={s.bubbleText}>{AGENT_NAME} is on it…</div>
       ) : (
-        <div className={s.bubbleText}>
+        <div className={s.bubbleText} ref={isAgent ? contentRef : null}>
           {isAgent ? renderRich(msg.text) : msg.text}
           {isAgent && msg.streaming ? <span className={s.caret} aria-hidden="true" /> : null}
         </div>
       )}
+
+      {exportable ? (
+        <div className={s.pdfActions}>
+          <button
+            type="button"
+            className={s.pdfBtn}
+            title="Download this answer as a PDF"
+            onClick={() => {
+              const html = contentRef.current?.innerHTML;
+              if (html) downloadResponsePdf(html, symbol);
+            }}
+          >
+            ⭳ Download PDF
+          </button>
+        </div>
+      ) : null}
     </div>
   );
+}
+
+/** IST date as YYYY-MM-DD — the app's convention, also used for the filename. */
+function istDate(): string {
+  return new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Kolkata' }).format(new Date());
+}
+
+/**
+ * Export a single MME100 answer to PDF, entirely client-side: write the
+ * already-rendered (React-escaped) answer HTML into a hidden iframe with a print
+ * stylesheet, then open the browser's print dialog (→ "Save as PDF"). Nothing
+ * leaves the browser and no markup beyond our own `renderRich` output is used, so
+ * there is no injection or network surface.
+ */
+function downloadResponsePdf(contentHtml: string, symbol: string): void {
+  if (typeof document === 'undefined') return;
+  const date = istDate();
+  const title = `MME100-${symbol}-${date}`;
+  const doc = `<!doctype html><html><head><meta charset="utf-8" />
+<title>${title}</title>
+<style>
+  @page { margin: 0; }
+  * { box-sizing: border-box; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  html, body { margin: 0; padding: 0; }
+  body { font-family: -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
+    color: #1f2733; line-height: 1.6; font-size: 11.5pt; }
+
+  /* -- Header band -- */
+  .hero { position: relative; overflow: hidden; padding: 34px 44px 40px;
+    color: #fff; background: linear-gradient(120deg, #0ea5e9 0%, #10b981 100%); }
+  .hero-brand { font-size: 30pt; font-weight: 800; letter-spacing: 3px; margin: 0; }
+  .hero-brand span { font-weight: 300; }
+  .hero-slogan { margin: 6px 0 0; font-size: 8.5pt; letter-spacing: 7px;
+    text-transform: uppercase; opacity: 0.92; }
+  /* decorative shapes */
+  .sh { position: absolute; border-radius: 50%; opacity: 0.18; background: #fff; }
+  .sh1 { width: 190px; height: 190px; top: -70px; right: -40px; }
+  .sh2 { width: 90px; height: 90px; bottom: -34px; right: 150px; opacity: 0.12; }
+  .dot { position: absolute; width: 16px; height: 16px; border-radius: 50%;
+    background: #f59e0b; top: 30px; right: 44px; opacity: 0.95; }
+  .ring { position: absolute; width: 54px; height: 54px; border-radius: 50%;
+    border: 6px solid rgba(255,255,255,0.5); left: 44px; bottom: -20px; }
+
+  /* -- Title block -- */
+  .titlewrap { padding: 30px 44px 6px; }
+  .title { margin: 0; font-size: 17pt; font-weight: 800; letter-spacing: 1px; color: #0b7a5b;
+    text-transform: uppercase; }
+  .subtitle { margin: 6px 0 0; font-size: 10pt; letter-spacing: 4px; color: #64748b;
+    text-transform: uppercase; }
+  .rule { height: 3px; width: 64px; background: #f59e0b; margin: 14px 44px 0; border-radius: 2px; }
+
+  /* -- Body -- */
+  .body { padding: 16px 44px 26px; }
+  .body strong { font-weight: 700; color: #0f172a; }
+  .body code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 0.9em;
+    background: #eef2f6; border: 1px solid #e2e8f0; border-radius: 3px; padding: 0 3px; }
+  .body ul { padding-left: 1.1em; margin: 0.3em 0 0.7em; }
+  .body li { margin: 2px 0; }
+  .body p { margin: 0 0 0.6em; }
+  .body hr { border: 0; border-top: 1px solid #e2e8f0; margin: 1em 0; }
+
+  /* -- Footer band -- */
+  .foot { position: relative; overflow: hidden; margin-top: 12px; padding: 18px 44px;
+    color: #fff; background: linear-gradient(120deg, #10b981 0%, #0ea5e9 100%); }
+  .foot-brand { font-weight: 800; letter-spacing: 1px; font-size: 11pt; margin: 0; }
+  .foot-note { margin: 4px 0 0; font-size: 8pt; line-height: 1.5; opacity: 0.95; max-width: 78%; }
+  .foot .dot { top: 18px; right: 44px; background: #f59e0b; }
+</style></head>
+<body>
+  <div class="hero">
+    <div class="sh sh1"></div>
+    <div class="sh sh2"></div>
+    <div class="ring"></div>
+    <span class="dot"></span>
+    <p class="hero-brand">MME<span>100</span></p>
+    <p class="hero-slogan">Market Made Easy 100%</p>
+  </div>
+
+  <div class="titlewrap">
+    <h1 class="title">Pre-Market Analysis · ${symbol}</h1>
+    <p class="subtitle">${date}</p>
+  </div>
+  <div class="rule"></div>
+
+  <div class="body">${contentHtml}</div>
+
+  <div class="foot">
+    <span class="dot"></span>
+    <p class="foot-brand">MarketCompass</p>
+    <p class="foot-note">Educational and informational purposes only — not investment advice.
+      Consult a SEBI-registered adviser before investing. Generated ${date}.</p>
+  </div>
+</body></html>`;
+
+  const frame = document.createElement('iframe');
+  frame.setAttribute('aria-hidden', 'true');
+  frame.style.position = 'fixed';
+  frame.style.right = '0';
+  frame.style.bottom = '0';
+  frame.style.width = '0';
+  frame.style.height = '0';
+  frame.style.border = '0';
+  document.body.appendChild(frame);
+
+  const win = frame.contentWindow;
+  const idoc = frame.contentDocument ?? win?.document;
+  if (!win || !idoc) {
+    frame.remove();
+    return;
+  }
+
+  const cleanup = () => {
+    // Give the print dialog a beat to open before removing the frame.
+    window.setTimeout(() => frame.remove(), 1000);
+  };
+  win.addEventListener('afterprint', cleanup, { once: true });
+
+  idoc.open();
+  idoc.write(doc);
+  idoc.close();
+
+  // Let the iframe lay out before printing.
+  window.setTimeout(() => {
+    win.focus();
+    win.print();
+  }, 150);
 }

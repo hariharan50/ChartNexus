@@ -391,6 +391,35 @@
   animation: pulse 1s step-start infinite;
 }
 
+/* -- Per-answer PDF export ------------------------------------------------- */
+.pdfActions {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 8px;
+}
+
+.pdfBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--mc-text-muted);
+  background: var(--mc-surface);
+  border: 1px solid var(--mc-border);
+  border-radius: 999px;
+  padding: 4px 11px;
+  cursor: pointer;
+  transition:
+    color var(--mc-duration-fast, 120ms) ease,
+    border-color var(--mc-duration-fast, 120ms) ease;
+}
+
+.pdfBtn:hover {
+  color: var(--mc-accent);
+  border-color: var(--mc-accent);
+}
+
 .suggestions {
   display: flex;
   flex-wrap: wrap;

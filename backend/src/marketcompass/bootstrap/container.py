@@ -41,6 +41,9 @@ class Container:
     # secret but under a distinct HKDF purpose, so an AI-key ciphertext can never
     # be decrypted in the broker context, or vice versa.
     ai_settings_cipher: AesGcmCipher
+    # Encrypts users' messaging-channel secrets (e.g. Telegram bot tokens) at rest,
+    # under its own HKDF purpose so it is isolated from the broker/AI ciphers.
+    messaging_cipher: AesGcmCipher
     # None when no Google credentials are configured; only the two Google
     # routes care, and they fail with a clear message.
     google_oauth: GoogleOAuthClient | None
@@ -67,6 +70,11 @@ class Container:
             ai_settings_cipher=AesGcmCipher.derive(
                 resolved.security.encryption_key.get_secret_value(),
                 purpose="ai-settings",
+                previous_secrets=resolved.security.retired_encryption_keys,
+            ),
+            messaging_cipher=AesGcmCipher.derive(
+                resolved.security.encryption_key.get_secret_value(),
+                purpose="messaging-credentials",
                 previous_secrets=resolved.security.retired_encryption_keys,
             ),
             google_oauth=(

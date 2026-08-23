@@ -1,7 +1,7 @@
 import type { ComponentType } from 'react';
 import { Link } from 'react-router';
 import IconChart from '$shared/ui/icons/IconChart';
-import IconWallet from '$shared/ui/icons/IconWallet';
+import IconMessage from '$shared/ui/icons/IconMessage';
 import s from './QuickActionsCard.module.css';
 import Panel from './Panel';
 
@@ -13,7 +13,7 @@ interface Action {
 
 const actions: Action[] = [
   { label: 'Options Chain', href: '/option-chain', icon: IconChart },
-  { label: 'Smart Money', href: '/smart-insights', icon: IconWallet }
+  { label: 'Advance Tools', href: '/advance-tool', icon: IconMessage }
 ];
 
 export default function QuickActionsCard() {

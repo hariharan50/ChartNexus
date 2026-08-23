@@ -24,9 +24,12 @@ from datetime import UTC, datetime
 
 from marketcompass.bootstrap.container import Container
 from marketcompass.bootstrap.settings import Mme100Settings, Settings
+from marketcompass.contexts.messaging.application.deliver import DeliverText
 from marketcompass.contexts.mme100.application.ports import BriefingStorePort, TenantDirectoryPort
 from marketcompass.contexts.mme100.application.run_briefing import RunMme100Briefing
+from marketcompass.contexts.mme100.domain.briefing import Briefing
 from marketcompass.contexts.mme100.domain.schedule import next_briefing_wake, parse_hhmm
+from marketcompass.infrastructure.messaging.build_messaging import build_text_delivery
 from marketcompass.infrastructure.mme100.build_mme100 import (
     build_mme100_briefing_store,
     build_mme100_directory,
@@ -35,6 +38,8 @@ from marketcompass.infrastructure.mme100.build_mme100 import (
 from marketcompass.infrastructure.observability.structured_logging import get_logger
 
 log = get_logger(__name__)
+
+_DELIVERY_SOURCE = "mme100_briefing"
 
 
 async def run_mme100_loop(
@@ -52,6 +57,10 @@ async def run_mme100_loop(
     briefing_time = parse_hhmm(mme100.briefing_time_ist)
     directory = build_mme100_directory(container)
     store = build_mme100_briefing_store(container)
+    # Reuse the messaging context's delivery entry point to push each briefing to
+    # the owner's connected channels (Telegram). Composed here in the entrypoint so
+    # the mme100 and messaging contexts never import each other.
+    deliver = build_text_delivery(container)
     log.info(
         "mme100_loop_starting",
         briefing_time_ist=mme100.briefing_time_ist,
@@ -66,7 +75,7 @@ async def run_mme100_loop(
                 await asyncio.wait_for(stop.wait(), timeout=delay)
             if stop.is_set():
                 break
-            await _run_tick(container, directory, store, mme100, tick_at=datetime.now(UTC))
+            await _run_tick(container, directory, store, deliver, mme100, tick_at=datetime.now(UTC))
     finally:
         log.info("mme100_loop_stopping")
 
@@ -75,6 +84,7 @@ async def _run_tick(
     container: Container,
     directory: TenantDirectoryPort,
     store: BriefingStorePort,
+    deliver: DeliverText,
     mme100: Mme100Settings,
     *,
     tick_at: datetime,
@@ -89,7 +99,9 @@ async def _run_tick(
         return
 
     written = 0
+    delivered = 0
     for tenant in tenants[: mme100.max_tenants_per_tick]:
+        result: Briefing | None = None
         try:
             # One committing session for the whole tenant's briefing: the agent
             # calls tools ad hoc across all instruments, so the session must stay
@@ -114,9 +126,50 @@ async def _run_tick(
             )
             continue
 
+        # Deliver after the DB session closes — DeliverText owns its own sessions
+        # and does HTTP. Delivery failure must never affect the stored briefing.
+        if result is not None:
+            try:
+                count = await deliver(
+                    tenant.owner_user_id,
+                    format_briefing_text(result),
+                    source=_DELIVERY_SOURCE,
+                )
+                delivered += count
+            except Exception as exc:  # defensive — DeliverText already swallows
+                log.warning(
+                    "mme100_briefing_delivery_failed",
+                    tenant_id=str(tenant.tenant_id),
+                    error=repr(exc),
+                )
+
     log.info(
         "mme100_tick",
         tenants=len(tenants),
         written=written,
+        delivered=delivered,
         tick_at=tick_at.isoformat(),
     )
+
+
+def format_briefing_text(briefing: Briefing) -> str:
+    """Render a stored briefing as plain text suitable for a chat channel.
+
+    The briefing markdown uses ``#``/``**``/``---``; chat channels send with no
+    parse mode, so those would render literally. Strip them to clean text, keep
+    bullets, and add a dated header.
+    """
+    header = f"📊 MME100 Pre-Market Briefing — {briefing.trading_day.isoformat()}"
+    body_lines: list[str] = []
+    for raw in briefing.markdown.split("\n"):
+        line = raw.rstrip()
+        stripped = line.strip()
+        if stripped.startswith("#"):
+            line = stripped.lstrip("#").strip()
+        elif stripped.startswith("---") and set(stripped) == {"-"}:
+            line = "———"  # a markdown horizontal rule → a short divider
+        line = line.replace("**", "").replace("__", "")
+        body_lines.append(line)
+    if briefing.source == "mock":
+        body_lines.append("\n(Data was simulated — illustrative only.)")
+    return f"{header}\n\n" + "\n".join(body_lines).strip()

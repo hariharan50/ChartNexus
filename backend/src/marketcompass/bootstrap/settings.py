@@ -353,6 +353,19 @@ class Mme100Settings(_Section):
     web_search_max_uses: int = Field(default=5, ge=0)
 
 
+class MessagingSettings(_Section):
+    """Outbound messaging channels (Telegram now; WhatsApp later).
+
+    Credentials are per-user (encrypted via ``messaging_cipher``), so there is no
+    key here — only the provider endpoints and transport knobs.
+    """
+
+    model_config = _section_config("MESSAGING_")
+
+    telegram_api_base: str = "https://api.telegram.org"
+    request_timeout_seconds: float = Field(default=10.0, gt=0)
+
+
 class Settings(BaseSettings):
     """Root settings object. Build it once per process via :func:`get_settings`."""
 
@@ -381,6 +394,7 @@ class Settings(BaseSettings):
     market: MarketSettings = Field(default_factory=MarketSettings)
     hugin: HuginSettings = Field(default_factory=HuginSettings)
     mme100: Mme100Settings = Field(default_factory=Mme100Settings)
+    messaging: MessagingSettings = Field(default_factory=MessagingSettings)
 
     def assert_deployment_safe(self) -> None:
         """Fail fast when a deployed environment still holds development defaults."""

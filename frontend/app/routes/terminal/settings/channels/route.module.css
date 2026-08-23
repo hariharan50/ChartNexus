@@ -1,0 +1,267 @@
+.page {
+  display: flex;
+  flex-direction: column;
+  gap: var(--mc-space-4);
+  max-width: 720px;
+}
+
+.head {
+  display: flex;
+  flex-direction: column;
+  gap: var(--mc-space-2);
+}
+
+.title {
+  margin: 0;
+  font-size: var(--mc-text-lg, 1.125rem);
+  font-weight: 700;
+  color: var(--mc-text);
+}
+
+.sub {
+  margin: 0;
+  font-size: var(--mc-text-sm);
+  color: var(--mc-text-muted);
+  line-height: 1.6;
+}
+
+.sub a,
+.hint a {
+  color: var(--mc-accent);
+}
+
+/* -- banners --------------------------------------------------------------- */
+.banner {
+  display: flex;
+  align-items: center;
+  gap: var(--mc-space-2);
+  border: 1px solid var(--mc-border);
+  border-radius: var(--mc-radius-md, 0.5rem);
+  padding: var(--mc-space-3);
+  font-size: var(--mc-text-sm);
+  line-height: 1.5;
+}
+
+.banner p {
+  margin: 0;
+}
+
+.error {
+  border-color: color-mix(in srgb, #dc2626 45%, var(--mc-border));
+  background: color-mix(in srgb, #dc2626 8%, transparent);
+  color: var(--mc-text);
+}
+
+.ok {
+  border-color: color-mix(in srgb, #059669 45%, var(--mc-border));
+  background: color-mix(in srgb, #059669 8%, transparent);
+  color: var(--mc-text);
+}
+
+/* -- channel card ---------------------------------------------------------- */
+.card {
+  --agent-accent: #229ed9; /* Telegram blue by default; overridden per card */
+  border: 1px solid var(--mc-border);
+  border-radius: var(--mc-radius-lg);
+  background: var(--mc-surface);
+  box-shadow: var(--mc-shadow);
+  padding: var(--mc-space-4);
+  display: flex;
+  flex-direction: column;
+  gap: var(--mc-space-4);
+}
+
+.cardHead {
+  display: flex;
+  align-items: center;
+  gap: var(--mc-space-3);
+}
+
+.mark {
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  flex: none;
+  border-radius: 9px;
+  color: #fff;
+  font-weight: 800;
+  font-size: 15px;
+  background: var(--agent-accent);
+  box-shadow: 0 4px 14px -6px var(--agent-accent);
+}
+
+.cardTitle {
+  margin: 0;
+  font-size: var(--mc-text-sm);
+  font-weight: 700;
+  color: var(--mc-text);
+}
+
+.cardKicker {
+  font-size: var(--mc-text-xs);
+  color: var(--mc-text-muted);
+}
+
+.statusPill {
+  margin-left: auto;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  border-radius: 999px;
+  padding: 3px 10px;
+  border: 1px solid var(--mc-border);
+  color: var(--mc-text-muted);
+  background: var(--mc-surface-raised, var(--mc-surface));
+  white-space: nowrap;
+}
+
+.statusReady {
+  color: #fff;
+  background: var(--agent-accent);
+  border-color: var(--agent-accent);
+}
+
+.statusPartial {
+  color: var(--agent-accent);
+  background: color-mix(in srgb, var(--agent-accent) 12%, transparent);
+  border-color: color-mix(in srgb, var(--agent-accent) 35%, transparent);
+}
+
+/* -- guided steps ---------------------------------------------------------- */
+.step {
+  display: flex;
+  gap: var(--mc-space-3);
+  padding-top: var(--mc-space-3);
+  border-top: 1px solid var(--mc-border);
+}
+
+.stepNum {
+  display: grid;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  flex: none;
+  border-radius: 50%;
+  font-size: 11px;
+  font-weight: 800;
+  color: var(--agent-accent);
+  border: 1px solid color-mix(in srgb, var(--agent-accent) 45%, transparent);
+  background: color-mix(in srgb, var(--agent-accent) 10%, transparent);
+}
+
+.stepBody {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: var(--mc-space-2);
+  min-width: 0;
+}
+
+.stepTitle {
+  font-size: var(--mc-text-sm);
+  font-weight: 600;
+  color: var(--mc-text);
+}
+
+.hint {
+  margin: 0;
+  font-size: var(--mc-text-xs);
+  color: var(--mc-text-muted);
+  line-height: 1.55;
+}
+
+.code {
+  font-family: var(--mc-font-mono, ui-monospace, monospace);
+  font-size: 0.85em;
+  background: var(--mc-surface-raised, var(--mc-surface));
+  border: 1px solid var(--mc-border);
+  border-radius: 4px;
+  padding: 1px 5px;
+}
+
+.row {
+  display: flex;
+  gap: var(--mc-space-2);
+  align-items: flex-end;
+  flex-wrap: wrap;
+}
+
+.grow {
+  flex: 1;
+  min-width: 180px;
+}
+
+.actions {
+  display: flex;
+  gap: var(--mc-space-2);
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.linkedTarget {
+  font-size: var(--mc-text-xs);
+  color: var(--mc-text-muted);
+}
+
+/* -- enable toggle --------------------------------------------------------- */
+.toggleRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--mc-space-4);
+}
+
+.switch {
+  position: relative;
+  width: 46px;
+  height: 26px;
+  flex: none;
+  border: 1px solid var(--mc-border);
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--mc-text-muted) 22%, transparent);
+  cursor: pointer;
+  transition: background 0.15s ease;
+  padding: 0;
+}
+
+.switch:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.switchOn {
+  background: var(--agent-accent);
+  border-color: var(--agent-accent);
+}
+
+.knob {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.25);
+  transition: transform 0.15s ease;
+}
+
+.switchOn .knob {
+  transform: translateX(20px);
+}
+
+/* -- dormant (WhatsApp) ---------------------------------------------------- */
+.soon {
+  opacity: 0.7;
+}
+
+.soonBadge {
+  margin-left: auto;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--mc-text-subtle);
+  border: 1px solid var(--mc-border);
+  border-radius: 999px;
+  padding: 3px 10px;
+}

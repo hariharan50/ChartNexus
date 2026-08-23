@@ -158,7 +158,7 @@ const nav: NavItem[] = [
     ]
   },
   { label: 'Chart Tools', href: '/analyse' },
-  { label: 'Smart Insights', href: '/smart-insights' },
+  { label: 'Advance Tools', href: '/advance-tool' },
   { label: 'Option Chain', href: '/option-chain' },
   { label: 'Tools', href: '/tools' }
 ];
@@ -353,12 +353,7 @@ function TerminalShell({ user }: { user: User }) {
             <span className={s.searchIco} aria-hidden="true">
               <IconSearch />
             </span>
-            <input
-              type="search"
-              placeholder="Search symbol…"
-              aria-label="Search symbol"
-              defaultValue="NIFTY50"
-            />
+            <input type="search" placeholder="Search symbol…" aria-label="Search symbol" />
           </form>
 
           <button

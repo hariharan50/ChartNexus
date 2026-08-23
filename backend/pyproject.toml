@@ -150,6 +150,10 @@ ignore_imports = [
     # edge so the transitive reach isn't counted as mme100 depending on other
     # contexts or infrastructure.
     "marketcompass.contexts.mme100.api.dependencies -> marketcompass.infrastructure.mme100.build_mme100",
+    # Messaging uses the same sanctioned-bridge pattern: its API dependency imports
+    # only `build_messaging`, which assembles the channel repository + adapters from
+    # the container. Exempt that single edge.
+    "marketcompass.contexts.messaging.api.dependencies -> marketcompass.infrastructure.messaging.build_messaging",
 ]
 modules = [
     "marketcompass.contexts.identity",
@@ -171,6 +175,7 @@ modules = [
     "marketcompass.contexts.stryx",
     "marketcompass.contexts.hugin",
     "marketcompass.contexts.mme100",
+    "marketcompass.contexts.messaging",
     "marketcompass.contexts.realtime_delivery",
     "marketcompass.contexts.audit",
 ]

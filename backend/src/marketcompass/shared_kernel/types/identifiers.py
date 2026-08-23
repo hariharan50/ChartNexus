@@ -18,6 +18,7 @@ OrganizationId = NewType("OrganizationId", uuid.UUID)
 InstrumentId = NewType("InstrumentId", uuid.UUID)
 BrokerConnectionId = NewType("BrokerConnectionId", uuid.UUID)
 AiSettingsId = NewType("AiSettingsId", uuid.UUID)
+MessagingChannelId = NewType("MessagingChannelId", uuid.UUID)
 SignalId = NewType("SignalId", uuid.UUID)
 AuditEntryId = NewType("AuditEntryId", uuid.UUID)
 

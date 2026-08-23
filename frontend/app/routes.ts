@@ -47,8 +47,13 @@ export default [
     route('advanced-dashboard', 'routes/terminal/advanced-dashboard/route.tsx'),
     route('option-chain', 'routes/terminal/option-chain/route.tsx'),
     route('analyse', 'routes/terminal/analyse/route.tsx'),
-    route('smart-insights', 'routes/terminal/smart-insights.tsx'),
     route('tools', 'routes/terminal/tools.tsx'),
+
+    // Advance Tools — a main-nav home for power tools, each on its own page.
+    ...prefix('advance-tool', [
+      index('routes/terminal/advance-tool/route.tsx'),
+      route('channels', 'routes/terminal/advance-tool/channels.tsx')
+    ]),
 
     // The AI Console is two pages: the guidance read-out and the Hella chat.
     // `/ai-console` keeps resolving to the analysis page it always was.
@@ -110,7 +115,8 @@ export default [
       route('broker', 'routes/terminal/settings/broker/route.tsx'),
       route('broker/callback', 'routes/terminal/settings/broker/callback.tsx'),
       route('ai', 'routes/terminal/settings/ai/route.tsx'),
-      route('power-agents', 'routes/terminal/settings/power-agents/route.tsx')
+      route('power-agents', 'routes/terminal/settings/power-agents/route.tsx'),
+      route('channels', 'routes/terminal/settings/channels/route.tsx')
     ])
   ])
 ] satisfies RouteConfig;

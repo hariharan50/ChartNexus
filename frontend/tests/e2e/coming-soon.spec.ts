@@ -7,8 +7,6 @@ import { expect, test } from '@playwright/test';
  */
 
 const PAGES: Array<{ path: string; heading: string; title?: string }> = [
-  { path: '/smart-insights', heading: 'Smart Insights' },
-
   { path: '/future-lab', heading: 'Future Lab' },
   {
     path: '/future-lab/dashboard',
