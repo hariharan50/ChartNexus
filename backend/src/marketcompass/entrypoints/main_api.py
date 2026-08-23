@@ -23,6 +23,7 @@ from marketcompass.bootstrap.route_registry import API_PREFIX, register_routes
 from marketcompass.bootstrap.settings import Environment, Settings, get_settings
 from marketcompass.entrypoints.hugin_runtime import run_hugin_loop
 from marketcompass.entrypoints.ingest_runtime import run_capture_loop
+from marketcompass.entrypoints.mme100_runtime import run_mme100_loop
 from marketcompass.infrastructure.cache.redis.client import redis_check
 from marketcompass.infrastructure.observability.structured_logging import get_logger
 from marketcompass.infrastructure.persistence.postgresql.health import postgres_check
@@ -91,9 +92,31 @@ def create_app(settings: Settings | None = None) -> FastAPI:
             )
             log.info("api_hugin_in_process", interval_seconds=resolved.hugin.interval_seconds)
 
+        # Local-only, same rationale: run MME100's pre-market briefing worker
+        # in-process so a developer on just the API gets the morning briefing.
+        # Deployed environments run the standalone ``marketcompass-mme100`` process;
+        # ``task dev`` sets the flag false so the separate worker does not double up.
+        mme100_stop = asyncio.Event()
+        mme100_task: asyncio.Task[None] | None = None
+        if (
+            resolved.environment == Environment.LOCAL
+            and resolved.mme100.enabled
+            and resolved.mme100.in_process
+        ):
+            mme100_task = asyncio.create_task(
+                run_mme100_loop(container, resolved, stop=mme100_stop),
+                name="mme100-briefing-loop",
+            )
+            log.info("api_mme100_in_process", briefing_time_ist=resolved.mme100.briefing_time_ist)
+
         try:
             yield
         finally:
+            if mme100_task is not None:
+                mme100_stop.set()
+                mme100_task.cancel()
+                with contextlib.suppress(asyncio.CancelledError):
+                    await mme100_task
             if hugin_task is not None:
                 hugin_stop.set()
                 hugin_task.cancel()

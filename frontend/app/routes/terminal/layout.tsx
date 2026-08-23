@@ -123,7 +123,7 @@ const nav: NavItem[] = [
     label: 'AI Console',
     href: '/ai-console',
     menuTitle: 'AI Console',
-    menuSub: 'Signal analysis, HELLA, STRYX & HUGIN',
+    menuSub: 'Signal analysis, HELLA, STRYX, HUGIN & MME100',
     children: [
       {
         label: 'Market Analysis',
@@ -148,6 +148,12 @@ const nav: NavItem[] = [
         href: '/ai-console/hugin',
         icon: IconChart,
         desc: 'Hourly reads, graded against what happened'
+      },
+      {
+        label: 'MME100 — Market Analysis',
+        href: '/ai-console/mme100',
+        icon: IconChart,
+        desc: 'Pre-market analysis with live global cues'
       }
     ]
   },

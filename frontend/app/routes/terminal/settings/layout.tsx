@@ -58,10 +58,10 @@ const nav: NavItem[] = [
     icon: IconBrain
   },
   {
-    label: 'HUGIN Automation',
-    desc: 'Hourly market memory · off by default',
-    href: '/settings/hugin',
-    icon: IconChart
+    label: 'Power AI Agents',
+    desc: 'HUGIN & MME100 automation · off by default',
+    href: '/settings/power-agents',
+    icon: IconBrain
   },
   {
     label: 'Account & Security',

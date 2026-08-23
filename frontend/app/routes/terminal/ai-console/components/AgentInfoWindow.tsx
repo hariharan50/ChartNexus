@@ -4,7 +4,7 @@ import { cx } from '$shared/ui/cx';
 import w from './AgentInfoWindow.module.css';
 
 /** Which agent's documentation to show. Tones and content follow from this. */
-export type AgentKey = 'hella' | 'stryx' | 'hugin';
+export type AgentKey = 'hella' | 'stryx' | 'hugin' | 'mme100';
 
 type DocTab = 'about' | 'usage' | 'architecture';
 
@@ -182,8 +182,8 @@ const AGENT_DOCS: Record<AgentKey, AgentDoc> = {
     about: (
       <div className={w.section}>
         <p className={w.lead}>
-          Hella is an <strong>independent markets analyst</strong> that reads the live tape for you —
-          open interest, price action, key levels and risk — and walks you through it in plain
+          Hella is an <strong>independent markets analyst</strong> that reads the live tape for you
+          — open interest, price action, key levels and risk — and walks you through it in plain
           language. She explains what she sees; she doesn&apos;t hand out orders.
         </p>
         <h3 className={w.h3}>Where she fits</h3>
@@ -194,12 +194,12 @@ const AGENT_DOCS: Record<AgentKey, AgentDoc> = {
         <h3 className={w.h3}>Use cases</h3>
         <ul className={w.list}>
           <li>
-            <strong>Understand the tape.</strong> Ask what OI, price and levels are saying for NIFTY,
-            SENSEX or BANK NIFTY right now.
+            <strong>Understand the tape.</strong> Ask what OI, price and levels are saying for
+            NIFTY, SENSEX or BANK NIFTY right now.
           </li>
           <li>
-            <strong>Make sense of a call.</strong> Have her explain the reasoning, the risk and which
-            levels actually matter.
+            <strong>Make sense of a call.</strong> Have her explain the reasoning, the risk and
+            which levels actually matter.
           </li>
           <li>
             <strong>Learn as you go.</strong> A calm, jargon-light second opinion that teaches while
@@ -251,9 +251,9 @@ const AGENT_DOCS: Record<AgentKey, AgentDoc> = {
     arch: {
       intro: (
         <>
-          A question is passed to a planner that picks which read-only market tools to use; the tools
-          return live OI, price and levels; the model synthesises them into an answer streamed back to
-          you — with the conversation kept in a short-lived session memory.
+          A question is passed to a planner that picks which read-only market tools to use; the
+          tools return live OI, price and levels; the model synthesises them into an answer streamed
+          back to you — with the conversation kept in a short-lived session memory.
         </>
       ),
       nodes: [
@@ -299,13 +299,14 @@ const AGENT_DOCS: Record<AgentKey, AgentDoc> = {
         <p className={w.lead}>
           STRYX is an <strong>aggressive trade-caller</strong>. It scans the flow for an edge and
           hands you a concrete call — entry, stop, target and conviction — or says{' '}
-          <strong>NO TRADE</strong> just as fast when there isn&apos;t one. Discipline is built in: a
-          daily journal caps how many LIVE calls it will make.
+          <strong>NO TRADE</strong> just as fast when there isn&apos;t one. Discipline is built in:
+          a daily journal caps how many LIVE calls it will make.
         </p>
         <h3 className={w.h3}>Where it fits</h3>
         <p className={w.p}>
-          One of three sibling agents: <strong>Hella</strong> reads the tape, <strong>STRYX acts</strong>{' '}
-          on setups, and <strong>HUGIN</strong> remembers and grades itself over time.
+          One of three sibling agents: <strong>Hella</strong> reads the tape,{' '}
+          <strong>STRYX acts</strong> on setups, and <strong>HUGIN</strong> remembers and grades
+          itself over time.
         </p>
         <h3 className={w.h3}>Use cases</h3>
         <ul className={w.list}>
@@ -321,7 +322,8 @@ const AGENT_DOCS: Record<AgentKey, AgentDoc> = {
             <strong>Read the flow.</strong> OI, structure and momentum distilled into a decision.
           </li>
           <li>
-            <strong>Stay disciplined.</strong> The 2-LIVE-calls-a-day cap keeps it from over-trading.
+            <strong>Stay disciplined.</strong> The 2-LIVE-calls-a-day cap keeps it from
+            over-trading.
           </li>
         </ul>
       </div>
@@ -350,8 +352,8 @@ const AGENT_DOCS: Record<AgentKey, AgentDoc> = {
             <strong>WATCHING</strong> or <strong>NO TRADE</strong>.
           </li>
           <li>
-            <strong>LIVE-call budget</strong> — the chip in the header shows how many of the day&apos;s
-            calls remain (2 by default).
+            <strong>LIVE-call budget</strong> — the chip in the header shows how many of the
+            day&apos;s calls remain (2 by default).
           </li>
           <li>
             <strong>Defined risk</strong> — a LIVE call always carries an entry, stop and target.
@@ -366,8 +368,8 @@ const AGENT_DOCS: Record<AgentKey, AgentDoc> = {
       intro: (
         <>
           Your question is classified for intent, the flow is scanned for an edge, and the model
-          decides between a defined call and NO TRADE — every LIVE call logged to a daily journal that
-          caps how many it will make.
+          decides between a defined call and NO TRADE — every LIVE call logged to a daily journal
+          that caps how many it will make.
         </>
       ),
       nodes: [
@@ -411,10 +413,10 @@ const AGENT_DOCS: Record<AgentKey, AgentDoc> = {
     about: (
       <div className={w.section}>
         <p className={w.lead}>
-          HUGIN is an autonomous agent that builds a <strong>memory of the market</strong>. Every hour
-          the market is open it records a short read — a bias, an expectation and the key levels — then
-          the following hour it grades how right that read turned out and keeps the lesson. Over time
-          it learns which of its own reads to trust.
+          HUGIN is an autonomous agent that builds a <strong>memory of the market</strong>. Every
+          hour the market is open it records a short read — a bias, an expectation and the key
+          levels — then the following hour it grades how right that read turned out and keeps the
+          lesson. Over time it learns which of its own reads to trust.
         </p>
         <h3 className={w.h3}>Where it fits</h3>
         <p className={w.p}>
@@ -425,8 +427,8 @@ const AGENT_DOCS: Record<AgentKey, AgentDoc> = {
         <h3 className={w.h3}>Use cases</h3>
         <ul className={w.list}>
           <li>
-            <strong>Hourly market read.</strong> A running, timestamped log of what HUGIN expected for
-            NIFTY, SENSEX or BANK NIFTY through the session.
+            <strong>Hourly market read.</strong> A running, timestamped log of what HUGIN expected
+            for NIFTY, SENSEX or BANK NIFTY through the session.
           </li>
           <li>
             <strong>Self-graded accuracy.</strong> Each read is marked hit / partial / miss the next
@@ -437,12 +439,13 @@ const AGENT_DOCS: Record<AgentKey, AgentDoc> = {
             reliability score, sharpening the reads over days.
           </li>
           <li>
-            <strong>Calls weighed against its record.</strong> Ask for a call and HUGIN turns its reads
-            and lessons into an actionable view — conviction discounted by its measured hit-rate.
+            <strong>Calls weighed against its record.</strong> Ask for a call and HUGIN turns its
+            reads and lessons into an actionable view — conviction discounted by its measured
+            hit-rate.
           </li>
           <li>
-            <strong>Ask its memory.</strong> The Analysis Agent answers questions about the day using
-            only what HUGIN has observed and learned.
+            <strong>Ask its memory.</strong> The Analysis Agent answers questions about the day
+            using only what HUGIN has observed and learned.
           </li>
         </ul>
       </div>
@@ -456,8 +459,8 @@ const AGENT_DOCS: Record<AgentKey, AgentDoc> = {
             <Link to="/settings/ai">Settings → AI</Link>.
           </li>
           <li>
-            <strong>Turn it on.</strong> It is off by default (it spends tokens each hour). Enable it
-            in <Link to="/settings/hugin">Settings → HUGIN Automation</Link>.
+            <strong>Turn it on.</strong> It is off by default (it spends tokens each hour). Enable
+            it in <Link to="/settings/power-agents">Settings → Power AI Agents</Link>.
           </li>
           <li>
             <strong>Pick an instrument.</strong> Use the NIFTY / SENSEX / BANK NIFTY switcher — each
@@ -467,9 +470,9 @@ const AGENT_DOCS: Record<AgentKey, AgentDoc> = {
         <h3 className={w.h3}>Reading the console</h3>
         <ul className={w.list}>
           <li>
-            <strong>AI Dashboard.</strong> The scoreboard shows today&apos;s and all-time hit-rate; the
-            hourly timeline lists each read and its grade; lessons and the track record show how it is
-            sharpening.
+            <strong>AI Dashboard.</strong> The scoreboard shows today&apos;s and all-time hit-rate;
+            the hourly timeline lists each read and its grade; lessons and the track record show how
+            it is sharpening.
           </li>
           <li>
             <strong>Get a call.</strong> In the Calls panel, generate an actionable call built from
@@ -489,9 +492,9 @@ const AGENT_DOCS: Record<AgentKey, AgentDoc> = {
     arch: {
       intro: (
         <>
-          An hourly worker snapshots the market, asks the LLM for a read, and the next hour grades the
-          previous read against what actually happened — writing observations, grades and lessons into
-          HUGIN&apos;s per-user, per-instrument memory that the console reads from.
+          An hourly worker snapshots the market, asks the LLM for a read, and the next hour grades
+          the previous read against what actually happened — writing observations, grades and
+          lessons into HUGIN&apos;s per-user, per-instrument memory that the console reads from.
         </>
       ),
       nodes: [
@@ -516,13 +519,134 @@ const AGENT_DOCS: Record<AgentKey, AgentDoc> = {
             levels.
           </li>
           <li>
-            <strong>Grade.</strong> The next hour, an LLM judge scores the earlier read with evidence.
+            <strong>Grade.</strong> The next hour, an LLM judge scores the earlier read with
+            evidence.
           </li>
           <li>
             <strong>Learn.</strong> Grades roll up into lessons and a daily track-record.
           </li>
           <li>
             <strong>Serve.</strong> The dashboard, calls and chat agent read from this memory.
+          </li>
+        </ol>
+      )
+    }
+  },
+
+  mme100: {
+    mark: 'M',
+    title: 'About MME100',
+    kicker: 'Market Made Easy 100% — the pre-market desk.',
+    about: (
+      <div className={w.section}>
+        <p className={w.lead}>
+          MME100 is a <strong>pre-market analyst</strong> that reads like an institutional research
+          desk. Ask it for the outlook and it works through six sections — global cues, the
+          day&apos;s India setup, key sectors, stocks to watch, the event calendar and the risks —
+          grounded in live market data and, for the global cues, live web search.
+        </p>
+        <h3 className={w.h3}>Where it fits</h3>
+        <p className={w.p}>
+          A sibling to the intraday agents: <strong>HELLA reads</strong> the live tape,{' '}
+          <strong>STRYX acts</strong> on setups, <strong>HUGIN remembers</strong>, and{' '}
+          <strong>MME100 frames the day</strong> before it starts.
+        </p>
+        <h3 className={w.h3}>Use cases</h3>
+        <ul className={w.list}>
+          <li>
+            <strong>Pre-market outlook.</strong> A structured read of the whole setup for NIFTY,
+            SENSEX or BANK NIFTY before the open.
+          </li>
+          <li>
+            <strong>Global cues, live.</strong> US markets, GIFT Nifty, crude, USD-INR and yields
+            fetched from the web and folded into the India read.
+          </li>
+          <li>
+            <strong>Sectors &amp; stocks.</strong> The sectors in focus and specific names with
+            levels, a bias and a stop.
+          </li>
+          <li>
+            <strong>An automatic morning briefing.</strong> Turn it on and MME100 prepares the
+            day&apos;s analysis for you before the open.
+          </li>
+        </ul>
+      </div>
+    ),
+    usage: (
+      <div className={w.section}>
+        <h3 className={w.h3}>Getting started</h3>
+        <ol className={w.steps}>
+          <li>
+            <strong>Add your LLM key.</strong> MME100 runs on your own key — set one in{' '}
+            <Link to="/settings/ai">Settings → AI</Link>.
+          </li>
+          <li>
+            <strong>Ask for a read.</strong> Type a question or tap a chip like &ldquo;Pre-market
+            outlook?&rdquo; — each instrument keeps its own conversation.
+          </li>
+          <li>
+            <strong>Automate it (optional).</strong> Turn on the morning briefing in{' '}
+            <Link to="/settings/power-agents">Settings → Power AI Agents</Link> to get it prepared
+            before the open.
+          </li>
+        </ol>
+        <h3 className={w.h3}>Tips</h3>
+        <ul className={w.list}>
+          <li>
+            <strong>Six sections</strong> — chips show the framework it works through: global cues →
+            India outlook → sectors → stocks → events → risks.
+          </li>
+          <li>
+            <strong>It shows its work</strong> — tool chips reveal the market reads and web searches
+            behind the numbers.
+          </li>
+          <li>
+            <strong>Today&apos;s briefing</strong> sits at the top of the tab once the morning run
+            has produced it.
+          </li>
+        </ul>
+        <p className={w.note}>
+          MME100 is an analyst, not an adviser — it frames the day; the decision stays yours.
+        </p>
+      </div>
+    ),
+    arch: {
+      intro: (
+        <>
+          A request is classified for intent, then MME100 reads the live India market through the
+          same read-only tools the other agents use and fetches global cues via web search; the
+          model synthesises them into the six-section analysis, streamed back — with the
+          conversation kept in a short-lived session memory.
+        </>
+      ),
+      nodes: [
+        { x: 15, y: 20, label: 'You ask', sub: 'for the outlook' },
+        { x: 195, y: 20, label: 'Intent · LLM', sub: 'analysis?', accent: true },
+        { x: 375, y: 20, label: 'Tools + web', sub: 'India · global cues' },
+        { x: 375, y: 110, label: 'Synthesize · LLM', sub: 'six sections', accent: true },
+        { x: 195, y: 110, label: 'Session memory', sub: 'Redis · per chat' },
+        { x: 15, y: 110, label: 'Streamed read', sub: 'back to you' }
+      ],
+      edges: LOOP_EDGES,
+      steps: (
+        <ol className={w.steps}>
+          <li>
+            <strong>You ask</strong> for the pre-market read on an instrument.
+          </li>
+          <li>
+            <strong>Intent is classified</strong> — a full analysis, or just conversation.
+          </li>
+          <li>
+            <strong>Tools + web search</strong> return live India data and global cues.
+          </li>
+          <li>
+            <strong>The model synthesises</strong> them into the six-section framework.
+          </li>
+          <li>
+            <strong>The answer streams</strong> back token by token.
+          </li>
+          <li>
+            <strong>Session memory</strong> keeps the thread so follow-ups have context.
           </li>
         </ol>
       )

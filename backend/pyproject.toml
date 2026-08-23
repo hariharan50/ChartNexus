@@ -68,6 +68,7 @@ marketcompass-ingest = "marketcompass.entrypoints.main_ingest:run"
 marketcompass-oi = "marketcompass.entrypoints.main_oi_data:run"
 marketcompass-signals = "marketcompass.entrypoints.main_signals:run"
 marketcompass-hugin = "marketcompass.entrypoints.main_hugin:run"
+marketcompass-mme100 = "marketcompass.entrypoints.main_mme100:run"
 
 [dependency-groups]
 dev = [
@@ -143,6 +144,12 @@ ignore_imports = [
     # ports) from the container. Exempt that single edge so the transitive reach
     # isn't counted as hugin depending on other contexts or infrastructure.
     "marketcompass.contexts.hugin.api.dependencies -> marketcompass.infrastructure.hugin.build_hugin",
+    # MME100 uses the same sanctioned-bridge pattern: its API dependency imports
+    # only `build_mme100`, which assembles the chat/read services (and the worker's
+    # agent + directory + briefing store) from the container. Exempt that single
+    # edge so the transitive reach isn't counted as mme100 depending on other
+    # contexts or infrastructure.
+    "marketcompass.contexts.mme100.api.dependencies -> marketcompass.infrastructure.mme100.build_mme100",
 ]
 modules = [
     "marketcompass.contexts.identity",
@@ -163,6 +170,7 @@ modules = [
     "marketcompass.contexts.copilot",
     "marketcompass.contexts.stryx",
     "marketcompass.contexts.hugin",
+    "marketcompass.contexts.mme100",
     "marketcompass.contexts.realtime_delivery",
     "marketcompass.contexts.audit",
 ]

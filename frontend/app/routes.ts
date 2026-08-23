@@ -56,7 +56,8 @@ export default [
       index('routes/terminal/ai-console/analysis/route.tsx'),
       route('agent', 'routes/terminal/ai-console/agent/route.tsx'),
       route('stryx', 'routes/terminal/ai-console/stryx/route.tsx'),
-      route('hugin', 'routes/terminal/ai-console/hugin/route.tsx')
+      route('hugin', 'routes/terminal/ai-console/hugin/route.tsx'),
+      route('mme100', 'routes/terminal/ai-console/mme100/route.tsx')
     ]),
 
     ...prefix('options', [
@@ -109,7 +110,7 @@ export default [
       route('broker', 'routes/terminal/settings/broker/route.tsx'),
       route('broker/callback', 'routes/terminal/settings/broker/callback.tsx'),
       route('ai', 'routes/terminal/settings/ai/route.tsx'),
-      route('hugin', 'routes/terminal/settings/hugin/route.tsx')
+      route('power-agents', 'routes/terminal/settings/power-agents/route.tsx')
     ])
   ])
 ] satisfies RouteConfig;

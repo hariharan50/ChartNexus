@@ -100,8 +100,8 @@ export default function HuginConsole() {
             <div className={s.noticeTitle}>{AGENT_NAME} is turned off</div>
             <p className={s.noticeBody}>
               HUGIN is off by default because it uses your AI tokens every hour. Turn it on in{' '}
-              <Link to="/settings/hugin">Settings → HUGIN Automation</Link> to start building the
-              hourly memory.
+              <Link to="/settings/power-agents">Settings → Power AI Agents</Link> to start building
+              the hourly memory.
             </p>
           </div>
         ) : view === 'agent' ? (
@@ -152,11 +152,33 @@ function DashboardPanel({ symbol }: { symbol: string }) {
     <div className={s.dash}>
       {/* Insight strip — the whole picture at a glance. */}
       <section className={s.kpiRow} aria-label="HUGIN at a glance">
-        <KpiTile label="Hit rate today" value={pctText(hitToday)} sub={gradedSub(hitsToday, gradedToday)} tone="accent" />
-        <KpiTile label="All-time hit rate" value={pctText(overall)} sub={`${history.data?.overall_hits ?? 0}/${overallGraded} graded`} tone="mint" />
-        <KpiTile label="Reads today" value={String(observations.length)} sub={`${gradedToday} graded`} />
-        <KpiTile label="Lessons learned" value={String(lessons.length)} sub={avgReliability == null ? 'none yet' : `${pctText(avgReliability)} avg reliability`} />
-        <KpiTile label="Days tracked" value={String(daysTracked)} sub={`over ${HISTORY_WINDOW_DAYS} days`} />
+        <KpiTile
+          label="Hit rate today"
+          value={pctText(hitToday)}
+          sub={gradedSub(hitsToday, gradedToday)}
+          tone="accent"
+        />
+        <KpiTile
+          label="All-time hit rate"
+          value={pctText(overall)}
+          sub={`${history.data?.overall_hits ?? 0}/${overallGraded} graded`}
+          tone="mint"
+        />
+        <KpiTile
+          label="Reads today"
+          value={String(observations.length)}
+          sub={`${gradedToday} graded`}
+        />
+        <KpiTile
+          label="Lessons learned"
+          value={String(lessons.length)}
+          sub={avgReliability == null ? 'none yet' : `${pctText(avgReliability)} avg reliability`}
+        />
+        <KpiTile
+          label="Days tracked"
+          value={String(daysTracked)}
+          sub={`over ${HISTORY_WINDOW_DAYS} days`}
+        />
         <KpiTile label="Reads graded" value={String(overallGraded)} sub="all-time" />
       </section>
 
@@ -182,8 +204,8 @@ function DashboardPanel({ symbol }: { symbol: string }) {
               <p className={s.empty}>Loading HUGIN&apos;s memory…</p>
             ) : observations.length === 0 ? (
               <p className={s.empty}>
-                No reads yet today. HUGIN records one each hour the market is open, then grades it the
-                following hour.
+                No reads yet today. HUGIN records one each hour the market is open, then grades it
+                the following hour.
               </p>
             ) : (
               <ol className={s.timeline}>
@@ -198,7 +220,9 @@ function DashboardPanel({ symbol }: { symbol: string }) {
             <section className={cx(s.panel, s.miniPanel)}>
               <h2 className={s.h2}>Grade breakdown · today</h2>
               {gradedToday === 0 && grades.pending === 0 ? (
-                <p className={s.empty}>Nothing graded yet. Each read is scored the following hour.</p>
+                <p className={s.empty}>
+                  Nothing graded yet. Each read is scored the following hour.
+                </p>
               ) : (
                 <SegBar
                   segments={[
@@ -364,8 +388,7 @@ function HeroStat({
   label: string;
   value: string;
 }) {
-  const dot =
-    swatch === 'mint' ? s.dotMint : swatch === 'amber' ? s.dotAmber : s.dotAccent;
+  const dot = swatch === 'mint' ? s.dotMint : swatch === 'amber' ? s.dotAmber : s.dotAccent;
   return (
     <div className={s.heroStat}>
       <span className={s.heroStatKey}>
