@@ -1,0 +1,278 @@
+/* The floating "about this agent" window, shared by HELLA, STRYX and HUGIN.
+   It inherits --mc-accent from the page it is opened on, so it tones to each
+   agent automatically; --mc-brand-2 falls back to a violet that suits HELLA
+   (which sets no secondary), while STRYX and HUGIN override it. */
+
+.overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--mc-space-5);
+  background: color-mix(in srgb, #000 55%, transparent);
+  backdrop-filter: blur(3px);
+  animation: aiw-fade 140ms ease;
+}
+
+@keyframes aiw-fade {
+  from {
+    opacity: 0;
+  }
+}
+
+/* A full-bleed, transparent button behind the window — click-to-close that is
+   keyboard-reachable, without hanging a handler on a non-interactive div. */
+.backdrop {
+  position: absolute;
+  inset: 0;
+  border: 0;
+  padding: 0;
+  background: transparent;
+  cursor: default;
+}
+
+.window {
+  position: relative;
+  z-index: 1;
+  width: min(760px, 100%);
+  max-height: min(86vh, 720px);
+  display: flex;
+  flex-direction: column;
+  border: 1px solid var(--mc-border);
+  border-radius: var(--mc-radius-lg);
+  background: var(--mc-surface-raised, var(--mc-surface));
+  box-shadow: 0 24px 60px -20px rgba(0, 0, 0, 0.6);
+  overflow: hidden;
+  animation: aiw-pop 160ms ease;
+}
+
+@keyframes aiw-pop {
+  from {
+    opacity: 0;
+    transform: translateY(8px) scale(0.98);
+  }
+}
+
+.head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--mc-space-3);
+  padding: var(--mc-space-4);
+  border-bottom: 1px solid var(--mc-border);
+  background: linear-gradient(
+    120deg,
+    color-mix(in srgb, var(--mc-accent, #6366f1) 14%, transparent),
+    color-mix(in srgb, var(--mc-brand-2, #8b5cf6) 10%, transparent)
+  );
+}
+
+.titleWrap {
+  display: flex;
+  align-items: center;
+  gap: var(--mc-space-3);
+}
+
+.mark {
+  display: grid;
+  place-items: center;
+  width: 38px;
+  height: 38px;
+  flex: none;
+  border-radius: 50%;
+  color: #fff;
+  font-weight: 800;
+  background: linear-gradient(140deg, var(--mc-accent, #6366f1), var(--mc-brand-2, #8b5cf6));
+  box-shadow: 0 6px 16px -6px var(--mc-accent, #6366f1);
+}
+
+.title {
+  margin: 0;
+  font-size: var(--mc-text-base, 1rem);
+  font-weight: 700;
+  color: var(--mc-text);
+}
+
+.kicker {
+  margin: 2px 0 0;
+  font-size: var(--mc-text-xs);
+  color: var(--mc-text-muted);
+}
+
+.close {
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  flex: none;
+  border-radius: 8px;
+  border: 1px solid var(--mc-border);
+  background: var(--mc-surface);
+  color: var(--mc-text-muted);
+  font-size: 1.35rem;
+  line-height: 1;
+  cursor: pointer;
+  transition:
+    color var(--mc-duration-fast, 120ms) ease,
+    border-color var(--mc-duration-fast, 120ms) ease;
+}
+
+.close:hover {
+  color: var(--mc-text);
+  border-color: var(--mc-accent, #6366f1);
+}
+
+.tabs {
+  display: flex;
+  gap: 0.125rem;
+  padding: var(--mc-space-2) var(--mc-space-4) 0;
+  border-bottom: 1px solid var(--mc-border);
+}
+
+.tab {
+  border: 0;
+  border-bottom: 2px solid transparent;
+  background: transparent;
+  color: var(--mc-text-muted);
+  font-size: var(--mc-text-sm);
+  font-weight: 700;
+  padding: var(--mc-space-2) var(--mc-space-3);
+  cursor: pointer;
+  transition: color var(--mc-duration-fast, 120ms) ease;
+}
+
+.tab:hover {
+  color: var(--mc-text);
+}
+
+.tabActive {
+  color: var(--mc-accent, #6366f1);
+  border-bottom-color: var(--mc-accent, #6366f1);
+}
+
+.body {
+  padding: var(--mc-space-4);
+  overflow-y: auto;
+}
+
+.section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--mc-space-3);
+}
+
+.lead {
+  margin: 0;
+  font-size: var(--mc-text-sm);
+  line-height: 1.6;
+  color: var(--mc-text);
+}
+
+.h3 {
+  margin: var(--mc-space-2) 0 0;
+  font-size: var(--mc-text-xs);
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--mc-accent, #6366f1);
+}
+
+.p {
+  margin: 0;
+  font-size: var(--mc-text-sm);
+  line-height: 1.6;
+  color: var(--mc-text-muted);
+}
+
+.list,
+.steps {
+  margin: 0;
+  padding-left: 1.15rem;
+  display: flex;
+  flex-direction: column;
+  gap: var(--mc-space-2);
+}
+
+.list {
+  list-style: disc;
+}
+
+.steps {
+  list-style: decimal;
+}
+
+.list li,
+.steps li {
+  font-size: var(--mc-text-sm);
+  line-height: 1.55;
+  color: var(--mc-text-muted);
+}
+
+.list strong,
+.steps strong,
+.lead strong,
+.p strong {
+  color: var(--mc-text);
+  font-weight: 700;
+}
+
+.note {
+  margin: var(--mc-space-2) 0 0;
+  padding: var(--mc-space-3);
+  border-left: 3px solid var(--mc-accent, #6366f1);
+  border-radius: 0 var(--mc-radius-sm) var(--mc-radius-sm) 0;
+  background: color-mix(in srgb, var(--mc-accent, #6366f1) 8%, transparent);
+  font-size: var(--mc-text-sm);
+  line-height: 1.55;
+  color: var(--mc-text);
+}
+
+/* -- Architecture diagram (SVG) -------------------------------------------- */
+.archWrap {
+  border: 1px solid var(--mc-border);
+  border-radius: var(--mc-radius-md, 0.5rem);
+  background: var(--mc-surface);
+  padding: var(--mc-space-3);
+  overflow-x: auto;
+}
+
+.arch {
+  display: block;
+  width: 100%;
+  min-width: 480px;
+  height: auto;
+}
+
+.archBox {
+  fill: var(--mc-surface-raised, var(--mc-surface));
+  stroke: var(--mc-border);
+  stroke-width: 1;
+}
+
+.archBoxAccent {
+  fill: color-mix(in srgb, var(--mc-accent, #6366f1) 14%, var(--mc-surface));
+  stroke: color-mix(in srgb, var(--mc-accent, #6366f1) 55%, var(--mc-border));
+  stroke-width: 1;
+}
+
+.archLabel {
+  fill: var(--mc-text);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.archSub {
+  fill: var(--mc-text-muted);
+  font-size: 10px;
+}
+
+.archLine {
+  stroke: color-mix(in srgb, var(--mc-accent, #6366f1) 60%, var(--mc-text-muted));
+  stroke-width: 1.6;
+}
+
+.archArrowHead {
+  fill: color-mix(in srgb, var(--mc-accent, #6366f1) 60%, var(--mc-text-muted));
+}

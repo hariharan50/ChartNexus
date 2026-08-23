@@ -67,6 +67,7 @@ marketcompass-api = "marketcompass.entrypoints.main_api:run"
 marketcompass-ingest = "marketcompass.entrypoints.main_ingest:run"
 marketcompass-oi = "marketcompass.entrypoints.main_oi_data:run"
 marketcompass-signals = "marketcompass.entrypoints.main_signals:run"
+marketcompass-hugin = "marketcompass.entrypoints.main_hugin:run"
 
 [dependency-groups]
 dev = [
@@ -137,6 +138,11 @@ ignore_imports = [
     # the shared agent tools) and returns a stryx `AgentPort`. Exempt the bridge
     # edge so the transitive reach isn't counted as stryx depending on them.
     "marketcompass.contexts.stryx.api.dependencies -> marketcompass.infrastructure.agent.langgraph.build_stryx",
+    # HUGIN uses the same sanctioned-bridge pattern: its API dependency imports
+    # only `build_hugin`, which assembles the read services (and, later, the cycle
+    # ports) from the container. Exempt that single edge so the transitive reach
+    # isn't counted as hugin depending on other contexts or infrastructure.
+    "marketcompass.contexts.hugin.api.dependencies -> marketcompass.infrastructure.hugin.build_hugin",
 ]
 modules = [
     "marketcompass.contexts.identity",
@@ -156,6 +162,7 @@ modules = [
     "marketcompass.contexts.content_intelligence",
     "marketcompass.contexts.copilot",
     "marketcompass.contexts.stryx",
+    "marketcompass.contexts.hugin",
     "marketcompass.contexts.realtime_delivery",
     "marketcompass.contexts.audit",
 ]

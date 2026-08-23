@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Annotated
+from typing import Annotated, Any
 
 from fastapi import Depends, Request
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -47,7 +47,17 @@ def build_options_analytics_services(
     request: Request,
     session: Annotated[AsyncSession, Depends(get_session)],
 ) -> OptionsAnalyticsServices:
-    container = get_container(request)
+    return build_options_analytics_services_from(get_container(request), session)
+
+
+def build_options_analytics_services_from(
+    container: Any, session: AsyncSession
+) -> OptionsAnalyticsServices:
+    """Assemble the OI services from a container + session, with no request.
+
+    Mirrors ``build_market_services_from``: the request-scoped builder wraps this,
+    and a worker with a ``Container`` but no request uses it directly.
+    """
     provider = build_oi_chain_provider(session=session, container=container)
     snapshots = SqlAlchemySnapshotReader(session)
     return OptionsAnalyticsServices(

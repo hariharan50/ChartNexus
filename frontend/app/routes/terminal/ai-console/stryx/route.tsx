@@ -7,6 +7,7 @@ import type { ChatMessage, ChatTool } from '$contexts/signals/types';
 import { useUser } from '$contexts/identity/use-session';
 import { cx } from '$shared/ui/cx';
 import { INSTRUMENTS, nextId } from '../ai-console-data';
+import AgentInfoWindow from '../components/AgentInfoWindow';
 import ConsoleHeader from '../components/ConsoleHeader';
 import s from './route.module.css';
 import type { Route } from './+types/route';
@@ -26,6 +27,7 @@ const SUGGESTIONS = [
 
 export default function StryxAgent() {
   const [instIdx, setInstIdx] = useState(0);
+  const [infoOpen, setInfoOpen] = useState(false);
   const instrument = INSTRUMENTS[instIdx] ?? INSTRUMENTS[0];
   const availability = useStryxAvailabilityQuery();
   const userId = useUser()?.id ?? 'anon';
@@ -46,7 +48,10 @@ export default function StryxAgent() {
         }
         instIdx={instIdx}
         onSelect={setInstIdx}
+        onInfo={() => setInfoOpen(true)}
       />
+
+      {infoOpen ? <AgentInfoWindow agent="stryx" onClose={() => setInfoOpen(false)} /> : null}
 
       <div className={s.wrap}>
         {disabled ? (

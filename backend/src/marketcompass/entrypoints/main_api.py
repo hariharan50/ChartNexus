@@ -21,6 +21,7 @@ from marketcompass.bootstrap.container import Container
 from marketcompass.bootstrap.logging import configure_logging
 from marketcompass.bootstrap.route_registry import API_PREFIX, register_routes
 from marketcompass.bootstrap.settings import Environment, Settings, get_settings
+from marketcompass.entrypoints.hugin_runtime import run_hugin_loop
 from marketcompass.entrypoints.ingest_runtime import run_capture_loop
 from marketcompass.infrastructure.cache.redis.client import redis_check
 from marketcompass.infrastructure.observability.structured_logging import get_logger
@@ -72,9 +73,32 @@ def create_app(settings: Settings | None = None) -> FastAPI:
                 interval_seconds=resolved.market.snapshot_interval_seconds,
             )
 
+        # Local-only, same rationale as the ingest loop: run HUGIN's hourly
+        # market-memory worker in-process so a developer on just the API sees its
+        # memory accrue. Deployed environments run the standalone
+        # ``marketcompass-hugin`` process; ``task dev`` sets the flag false so the
+        # separate worker does not double up.
+        hugin_stop = asyncio.Event()
+        hugin_task: asyncio.Task[None] | None = None
+        if (
+            resolved.environment == Environment.LOCAL
+            and resolved.hugin.enabled
+            and resolved.hugin.in_process
+        ):
+            hugin_task = asyncio.create_task(
+                run_hugin_loop(container, resolved, stop=hugin_stop),
+                name="hugin-memory-loop",
+            )
+            log.info("api_hugin_in_process", interval_seconds=resolved.hugin.interval_seconds)
+
         try:
             yield
         finally:
+            if hugin_task is not None:
+                hugin_stop.set()
+                hugin_task.cancel()
+                with contextlib.suppress(asyncio.CancelledError):
+                    await hugin_task
             if ingest_task is not None:
                 ingest_stop.set()
                 ingest_task.cancel()

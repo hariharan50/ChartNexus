@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Annotated
+from typing import Annotated, Any
 
 from fastapi import Depends, Request
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -48,7 +48,16 @@ def build_market_services(
     request: Request,
     session: Annotated[AsyncSession, Depends(get_session)],
 ) -> MarketServices:
-    container = get_container(request)
+    return build_market_services_from(get_container(request), session)
+
+
+def build_market_services_from(container: Any, session: AsyncSession) -> MarketServices:
+    """Assemble the market services from a container + session, with no request.
+
+    The request-scoped ``build_market_services`` above is a thin wrapper over this.
+    A background worker (e.g. HUGIN) that has a ``Container`` but no request builds
+    the same services through here, so both paths stay identical.
+    """
     settings = container.settings
     clock = SystemClock()
 

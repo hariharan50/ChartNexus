@@ -11,6 +11,7 @@ from fastapi import APIRouter, FastAPI
 from marketcompass.contexts.ai_settings.api.router import router as ai_settings_router
 from marketcompass.contexts.broker_connections.api.router import router as broker_router
 from marketcompass.contexts.copilot.api.router import router as copilot_router
+from marketcompass.contexts.hugin.api.router import router as hugin_router
 from marketcompass.contexts.identity.api.router import router as identity_router
 from marketcompass.contexts.market_data.api.router import router as market_router
 from marketcompass.contexts.options_analytics.api.router import router as options_lab_router
@@ -28,6 +29,7 @@ _ROUTERS: tuple[APIRouter, ...] = (
     signals_router,
     copilot_router,
     stryx_router,
+    hugin_router,
 )
 
 

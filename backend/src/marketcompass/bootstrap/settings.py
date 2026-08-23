@@ -300,6 +300,33 @@ class MarketSettings(_Section):
     candle_cache_retention_days: int = Field(default=3, ge=1)
 
 
+class HuginSettings(_Section):
+    """The autonomous market-memory worker (HUGIN).
+
+    HUGIN wakes on the hour during the IST session, snapshots each instrument per
+    tenant, judges last hour's read and records a new one to durable memory. The
+    LLM key is per-user (the tenant owner's saved ``ai_settings`` key), so there is
+    deliberately no key setting here — only cadence and fan-out controls.
+    """
+
+    model_config = _section_config("HUGIN_")
+
+    #: Master switch for the worker. Off leaves the read API returning empty memory.
+    enabled: bool = True
+    #: LOCAL-only auto-start inside the API lifespan, like ``market.ingest_in_process``.
+    in_process: bool = True
+    #: Tick cadence. Default hourly; drop to e.g. 60 locally to watch memory accrue.
+    interval_seconds: int = Field(default=3600, ge=1)
+    #: Snap ticks to the :15 session boundaries rather than free-running from start.
+    align_to_open: bool = True
+    #: Which instruments HUGIN tracks each tick.
+    instruments: tuple[str, ...] = ("NIFTY", "BANKNIFTY", "SENSEX")
+    #: Fan-out guard: at most this many tenants processed per tick.
+    max_tenants_per_tick: int = Field(default=50, ge=1)
+    #: How many top lessons (by reliability) are fed back into the reflect prompt.
+    lessons_top_k: int = Field(default=8, ge=0)
+
+
 class Settings(BaseSettings):
     """Root settings object. Build it once per process via :func:`get_settings`."""
 
@@ -326,6 +353,7 @@ class Settings(BaseSettings):
     llm: LLMSettings = Field(default_factory=LLMSettings)
     observability: ObservabilitySettings = Field(default_factory=ObservabilitySettings)
     market: MarketSettings = Field(default_factory=MarketSettings)
+    hugin: HuginSettings = Field(default_factory=HuginSettings)
 
     def assert_deployment_safe(self) -> None:
         """Fail fast when a deployed environment still holds development defaults."""

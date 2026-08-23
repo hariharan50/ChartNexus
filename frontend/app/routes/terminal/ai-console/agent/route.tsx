@@ -7,6 +7,7 @@ import type { ChatMessage, ChatTool } from '$contexts/signals/types';
 import { useUser } from '$contexts/identity/use-session';
 import { cx } from '$shared/ui/cx';
 import { INSTRUMENTS, SUGGESTIONS, nextId } from '../ai-console-data';
+import AgentInfoWindow from '../components/AgentInfoWindow';
 import ConsoleHeader from '../components/ConsoleHeader';
 import s from './route.module.css';
 import type { Route } from './+types/route';
@@ -20,6 +21,7 @@ const AGENT_NAME = 'Hella';
 
 export default function AiAnalysisAgent() {
   const [instIdx, setInstIdx] = useState(0);
+  const [infoOpen, setInfoOpen] = useState(false);
   const instrument = INSTRUMENTS[instIdx] ?? INSTRUMENTS[0];
   const availability = useAgentAvailabilityQuery();
   // Scopes the persisted chat to this user so a shared browser never crosses
@@ -41,7 +43,10 @@ export default function AiAnalysisAgent() {
         }
         instIdx={instIdx}
         onSelect={setInstIdx}
+        onInfo={() => setInfoOpen(true)}
       />
+
+      {infoOpen ? <AgentInfoWindow agent="hella" onClose={() => setInfoOpen(false)} /> : null}
 
       <div className={s.wrap}>
         {disabled ? (

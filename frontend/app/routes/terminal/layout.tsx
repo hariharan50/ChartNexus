@@ -123,7 +123,7 @@ const nav: NavItem[] = [
     label: 'AI Console',
     href: '/ai-console',
     menuTitle: 'AI Console',
-    menuSub: 'Signal analysis, the Hella agent & STRYX',
+    menuSub: 'Signal analysis, HELLA, STRYX & HUGIN',
     children: [
       {
         label: 'Market Analysis',
@@ -142,6 +142,12 @@ const nav: NavItem[] = [
         href: '/ai-console/stryx',
         icon: IconTarget,
         desc: 'Aggressive setup hunter with a defined stop'
+      },
+      {
+        label: 'HUGIN — Market Memory',
+        href: '/ai-console/hugin',
+        icon: IconChart,
+        desc: 'Hourly reads, graded against what happened'
       }
     ]
   },
