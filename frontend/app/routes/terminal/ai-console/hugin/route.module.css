@@ -24,35 +24,49 @@
   }
 }
 
-.grid {
+/* -- Dashboard layout ------------------------------------------------------ */
+.dash {
+  display: flex;
+  flex-direction: column;
+  gap: var(--mc-space-4);
+}
+
+.insightCols {
+  display: flex;
+  flex-direction: column;
+  gap: var(--mc-space-4);
+}
+
+.colMain,
+.colSide {
+  display: flex;
+  flex-direction: column;
+  gap: var(--mc-space-4);
+  min-width: 0;
+}
+
+.miniRow {
   display: grid;
   grid-template-columns: 1fr;
   gap: var(--mc-space-4);
 }
 
+@media (min-width: 40rem) {
+  .miniRow {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
 @media (min-width: 60rem) {
-  .grid {
-    grid-template-columns: 1.6fr 1fr;
-    grid-template-areas:
-      'score score'
-      'timeline lessons'
-      'track track'
-      'calls calls';
+  .insightCols {
+    flex-direction: row;
+    align-items: flex-start;
   }
-  .scoreboard {
-    grid-area: score;
+  .colMain {
+    flex: 1.6;
   }
-  .timelinePanel {
-    grid-area: timeline;
-  }
-  .lessonsPanel {
-    grid-area: lessons;
-  }
-  .trackPanel {
-    grid-area: track;
-  }
-  .callsPanel {
-    grid-area: calls;
+  .colSide {
+    flex: 1;
   }
 }
 
@@ -106,41 +120,281 @@
   line-height: 1.6;
 }
 
-/* -- Scoreboard ------------------------------------------------------------ */
-.scoreboard {
+/* -- KPI tiles ------------------------------------------------------------- */
+.kpiRow {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: var(--mc-space-3);
+}
+
+@media (min-width: 40rem) {
+  .kpiRow {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+@media (min-width: 60rem) {
+  .kpiRow {
+    grid-template-columns: repeat(6, 1fr);
+  }
+}
+
+.kpi {
   display: flex;
-  align-items: baseline;
-  gap: var(--mc-space-4);
+  flex-direction: column;
+  gap: 4px;
+  padding: var(--mc-space-3);
+  border: 1px solid var(--mc-border);
+  border-radius: var(--mc-radius-md, 0.5rem);
+  background: linear-gradient(180deg, var(--mc-surface-raised, var(--mc-surface)), var(--mc-surface));
+  box-shadow: var(--mc-shadow);
+  min-width: 0;
+}
+
+.kpiLabel {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.66rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--mc-text-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.kpiDot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  flex: none;
+}
+.dotAccent { background: var(--mc-accent); }
+.dotMint { background: #059669; }
+.dotAmber { background: #d97706; }
+
+.kpiValue {
+  font-size: 1.55rem;
+  font-weight: 800;
+  line-height: 1.05;
+  color: var(--mc-text);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.01em;
+}
+.kpiAccent { color: var(--mc-accent); }
+.kpiMint { color: #059669; }
+
+.kpiSub {
+  font-size: 0.7rem;
+  color: var(--mc-text-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+/* -- Accuracy hero + ring gauge -------------------------------------------- */
+.heroPanel {
+  display: flex;
+  align-items: center;
+  gap: var(--mc-space-5, 1.25rem);
   flex-wrap: wrap;
 }
 
-.score {
+.gauge {
+  position: relative;
+  width: 148px;
+  height: 148px;
+  flex: none;
+}
+
+.gaugeSvg {
+  width: 148px;
+  height: 148px;
+  transform: rotate(-90deg);
+}
+
+.gaugeTrack,
+.gaugeTrackInner {
+  fill: none;
+  stroke: color-mix(in srgb, var(--mc-text-muted) 16%, transparent);
+}
+
+.gaugeArc {
+  fill: none;
+  stroke: var(--mc-accent);
+  stroke-linecap: round;
+  stroke-dasharray: 100;
+  transition: stroke-dashoffset 1.1s cubic-bezier(0.22, 0.8, 0.3, 1);
+}
+
+.gaugeArcInner {
+  fill: none;
+  stroke: color-mix(in srgb, var(--mc-text) 55%, transparent);
+  stroke-linecap: round;
+  stroke-dasharray: 100;
+  transition: stroke-dashoffset 1.1s cubic-bezier(0.22, 0.8, 0.3, 1) 0.1s;
+}
+
+.gaugeCenter {
+  position: absolute;
+  inset: 0;
   display: flex;
-  align-items: baseline;
-  gap: var(--mc-space-2);
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
 }
 
-.scoreValue {
-  font-size: 1.9rem;
+.gaugePct {
+  font-size: 2.1rem;
   font-weight: 800;
-  color: var(--mc-accent);
   line-height: 1;
-}
-
-.scoreLabel {
-  font-size: var(--mc-text-sm);
-  color: var(--mc-text-muted);
-}
-
-.scoreValueMuted {
+  letter-spacing: -0.02em;
   color: var(--mc-text);
-  opacity: 0.75;
+  font-variant-numeric: tabular-nums;
 }
 
-.scoreMeta {
-  font-size: var(--mc-text-sm);
+.gaugeCaption {
+  font-size: 0.62rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
   color: var(--mc-text-muted);
-  margin-left: auto;
+}
+
+.heroBody {
+  flex: 1;
+  min-width: 220px;
+}
+
+.statusLine {
+  margin: 0 0 var(--mc-space-4);
+  font-size: var(--mc-text-base, 1rem);
+  font-weight: 600;
+  line-height: 1.45;
+  color: var(--mc-text);
+  text-wrap: balance;
+}
+
+.heroStats {
+  display: flex;
+  gap: var(--mc-space-5, 1.5rem);
+  flex-wrap: wrap;
+}
+
+.heroStat {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.heroStatKey {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.66rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--mc-text-muted);
+}
+
+.heroStatValue {
+  font-size: 1.4rem;
+  font-weight: 800;
+  color: var(--mc-text);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.01em;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .gaugeArc,
+  .gaugeArcInner {
+    transition: none;
+  }
+}
+
+/* -- Mini panels: grade breakdown + bias mix ------------------------------- */
+.miniPanel {
+  min-width: 0;
+}
+
+.seg {
+  display: flex;
+  flex-direction: column;
+  gap: var(--mc-space-3);
+}
+
+.segBar {
+  display: flex;
+  height: 10px;
+  border-radius: 999px;
+  overflow: hidden;
+  background: color-mix(in srgb, var(--mc-text-muted) 16%, transparent);
+}
+
+.segFill {
+  height: 100%;
+}
+
+.segHit { background: #059669; }
+.segPartial { background: #d97706; }
+.segMiss { background: #dc2626; }
+.segPending { background: color-mix(in srgb, var(--mc-text-muted) 55%, transparent); }
+
+.segLegend {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--mc-space-2) var(--mc-space-4);
+}
+
+.segLegendItem {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.75rem;
+  color: var(--mc-text-muted);
+}
+
+.segSwatch {
+  width: 9px;
+  height: 9px;
+  border-radius: 3px;
+  flex: none;
+}
+
+.segCount {
+  font-weight: 700;
+  color: var(--mc-text);
+  font-variant-numeric: tabular-nums;
+}
+
+/* -- Track record header + trend chip -------------------------------------- */
+.trackHead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--mc-space-3);
+  margin-bottom: var(--mc-space-3);
+}
+.trackHead .h2 {
+  margin: 0;
+}
+
+.trendChip {
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  padding: 0.15rem 0.5rem;
+  border-radius: 999px;
+  white-space: nowrap;
+  flex: none;
+}
+.trendUp { color: #059669; background: color-mix(in srgb, #059669 16%, transparent); }
+.trendDown { color: #dc2626; background: color-mix(in srgb, #dc2626 16%, transparent); }
+.trendFlat {
+  color: var(--mc-text-muted);
+  background: color-mix(in srgb, var(--mc-text-muted) 14%, transparent);
 }
 
 /* -- Track record ---------------------------------------------------------- */

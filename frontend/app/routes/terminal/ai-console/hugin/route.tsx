@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router';
 import { streamHuginChat } from '$contexts/hugin/api';
 import {
@@ -116,70 +116,354 @@ export default function HuginConsole() {
   );
 }
 
+/** HUGIN's history over a wide window, so "all-time" and "days tracked" mean
+ *  something rather than reflecting only the last week. */
+const HISTORY_WINDOW_DAYS = 90;
+
+function pctText(v: number | null | undefined): string {
+  return v == null ? '—' : `${Math.round(v * 100)}%`;
+}
+
 function DashboardPanel({ symbol }: { symbol: string }) {
   const memory = useHuginMemoryTodayQuery(symbol);
-  const history = useHuginHistoryQuery(symbol);
+  const history = useHuginHistoryQuery(symbol, HISTORY_WINDOW_DAYS);
   const data = memory.data;
   const observations = data?.observations ?? [];
   const lessons = data?.lessons ?? [];
   const days = history.data?.days ?? [];
 
+  const hitToday = data?.hit_rate ?? null;
+  const gradedToday = data?.graded_count ?? 0;
+  const hitsToday = data?.hit_count ?? 0;
+  const overall = history.data?.overall_hit_rate ?? null;
+  const overallGraded = history.data?.overall_graded ?? 0;
+
+  // Derived insights — everything below is aggregated client-side from the two
+  // queries above; there is no dedicated stats endpoint.
+  const daysTracked = days.filter((d) => d.graded_count > 0).length;
+  const avgReliability = lessons.length
+    ? lessons.reduce((sum, l) => sum + l.reliability, 0) / lessons.length
+    : null;
+  const grades = countGrades(observations);
+  const biases = countBiases(observations);
+  const trend = dayTrend(days);
+
   return (
-    <div className={s.grid}>
-      <Scoreboard
-        hitRate={data?.hit_rate ?? null}
-        graded={data?.graded_count ?? 0}
-        hits={data?.hit_count ?? 0}
-        overall={history.data?.overall_hit_rate ?? null}
-      />
-
-      <section className={cx(s.panel, s.timelinePanel)}>
-        <h2 className={s.h2}>Hourly timeline · {symbol}</h2>
-        {memory.isLoading ? (
-          <p className={s.empty}>Loading HUGIN&apos;s memory…</p>
-        ) : observations.length === 0 ? (
-          <p className={s.empty}>
-            No reads yet today. HUGIN records one each hour the market is open, then grades it the
-            following hour.
-          </p>
-        ) : (
-          <ol className={s.timeline}>
-            {[...observations].reverse().map((obs, idx) => (
-              <TimelineCard key={`${obs.tick_at}-${idx}`} obs={obs} />
-            ))}
-          </ol>
-        )}
+    <div className={s.dash}>
+      {/* Insight strip — the whole picture at a glance. */}
+      <section className={s.kpiRow} aria-label="HUGIN at a glance">
+        <KpiTile label="Hit rate today" value={pctText(hitToday)} sub={gradedSub(hitsToday, gradedToday)} tone="accent" />
+        <KpiTile label="All-time hit rate" value={pctText(overall)} sub={`${history.data?.overall_hits ?? 0}/${overallGraded} graded`} tone="mint" />
+        <KpiTile label="Reads today" value={String(observations.length)} sub={`${gradedToday} graded`} />
+        <KpiTile label="Lessons learned" value={String(lessons.length)} sub={avgReliability == null ? 'none yet' : `${pctText(avgReliability)} avg reliability`} />
+        <KpiTile label="Days tracked" value={String(daysTracked)} sub={`over ${HISTORY_WINDOW_DAYS} days`} />
+        <KpiTile label="Reads graded" value={String(overallGraded)} sub="all-time" />
       </section>
 
-      <section className={cx(s.panel, s.lessonsPanel)}>
-        <h2 className={s.h2}>Lessons learned</h2>
-        {lessons.length === 0 ? (
-          <p className={s.empty}>No lessons yet — they accrue as HUGIN grades its own reads.</p>
-        ) : (
-          <ul className={s.lessons}>
-            {lessons.map((lesson, idx) => (
-              <LessonRow key={`${lesson.text}-${idx}`} lesson={lesson} />
-            ))}
-          </ul>
-        )}
+      {/* Accuracy hero. */}
+      <section className={cx(s.panel, s.heroPanel)} aria-label="Accuracy">
+        <RingGauge today={hitToday} overall={overall} />
+        <div className={s.heroBody}>
+          <p className={s.statusLine}>{statusText(hitToday, overall, hitsToday, gradedToday)}</p>
+          <div className={s.heroStats}>
+            <HeroStat swatch="accent" label="hit rate today" value={pctText(hitToday)} />
+            <HeroStat swatch="mint" label="all-time hit rate" value={pctText(overall)} />
+            <HeroStat swatch="amber" label="reads graded" value={`${hitsToday}/${gradedToday}`} />
+          </div>
+        </div>
       </section>
 
-      <section className={cx(s.panel, s.trackPanel)}>
-        <h2 className={s.h2}>Track record · how HUGIN is sharpening</h2>
-        {days.length === 0 ? (
-          <p className={s.empty}>
-            No days recorded yet. Each trading day HUGIN runs adds a row here, so you can watch its
-            hit-rate improve over time.
-          </p>
-        ) : (
-          <ul className={s.days}>
-            {days.map((day) => (
-              <DayRow key={day.trading_day} day={day} />
-            ))}
-          </ul>
-        )}
-      </section>
+      {/* Insight grid. */}
+      <div className={s.insightCols}>
+        <div className={s.colMain}>
+          <section className={cx(s.panel, s.timelinePanel)}>
+            <h2 className={s.h2}>Hourly timeline · {symbol}</h2>
+            {memory.isLoading ? (
+              <p className={s.empty}>Loading HUGIN&apos;s memory…</p>
+            ) : observations.length === 0 ? (
+              <p className={s.empty}>
+                No reads yet today. HUGIN records one each hour the market is open, then grades it the
+                following hour.
+              </p>
+            ) : (
+              <ol className={s.timeline}>
+                {[...observations].reverse().map((obs, idx) => (
+                  <TimelineCard key={`${obs.tick_at}-${idx}`} obs={obs} />
+                ))}
+              </ol>
+            )}
+          </section>
+
+          <div className={s.miniRow}>
+            <section className={cx(s.panel, s.miniPanel)}>
+              <h2 className={s.h2}>Grade breakdown · today</h2>
+              {gradedToday === 0 && grades.pending === 0 ? (
+                <p className={s.empty}>Nothing graded yet. Each read is scored the following hour.</p>
+              ) : (
+                <SegBar
+                  segments={[
+                    { key: 'hit', label: 'Hit', value: grades.hit, cls: s.segHit },
+                    { key: 'partial', label: 'Partial', value: grades.partial, cls: s.segPartial },
+                    { key: 'miss', label: 'Miss', value: grades.miss, cls: s.segMiss },
+                    { key: 'pending', label: 'Pending', value: grades.pending, cls: s.segPending }
+                  ]}
+                />
+              )}
+            </section>
+
+            <section className={cx(s.panel, s.miniPanel)}>
+              <h2 className={s.h2}>Bias mix · today</h2>
+              {observations.length === 0 ? (
+                <p className={s.empty}>No reads yet — the mix appears once HUGIN starts logging.</p>
+              ) : (
+                <SegBar
+                  segments={[
+                    { key: 'bullish', label: 'Bullish', value: biases.bullish, cls: s.segHit },
+                    { key: 'bearish', label: 'Bearish', value: biases.bearish, cls: s.segMiss },
+                    { key: 'neutral', label: 'Neutral', value: biases.neutral, cls: s.segPartial }
+                  ]}
+                />
+              )}
+            </section>
+          </div>
+        </div>
+
+        <div className={s.colSide}>
+          <section className={cx(s.panel, s.lessonsPanel)}>
+            <h2 className={s.h2}>Lessons learned</h2>
+            {lessons.length === 0 ? (
+              <p className={s.empty}>No lessons yet — they accrue as HUGIN grades its own reads.</p>
+            ) : (
+              <ul className={s.lessons}>
+                {lessons.map((lesson, idx) => (
+                  <LessonRow key={`${lesson.text}-${idx}`} lesson={lesson} />
+                ))}
+              </ul>
+            )}
+          </section>
+
+          <section className={cx(s.panel, s.trackPanel)}>
+            <div className={s.trackHead}>
+              <h2 className={s.h2}>Track record · how HUGIN is sharpening</h2>
+              {trend ? <TrendChip trend={trend} /> : null}
+            </div>
+            {days.length === 0 ? (
+              <p className={s.empty}>
+                No days recorded yet. Each trading day HUGIN runs adds a row here, so you can watch
+                its hit-rate improve over time.
+              </p>
+            ) : (
+              <ul className={s.days}>
+                {days.map((day) => (
+                  <DayRow key={day.trading_day} day={day} />
+                ))}
+              </ul>
+            )}
+          </section>
+        </div>
+      </div>
     </div>
+  );
+}
+
+function gradedSub(hits: number, graded: number): string {
+  return graded === 0 ? 'none graded yet' : `${hits}/${graded} hit`;
+}
+
+function statusText(
+  hitToday: number | null,
+  overall: number | null,
+  hits: number,
+  graded: number
+): string {
+  if (graded === 0) {
+    return 'Nothing graded yet today. HUGIN logs a read each hour the market is open and grades it the following hour.';
+  }
+  const plural = graded === 1 ? '' : 's';
+  if (hitToday != null && overall != null) {
+    const rel = hitToday >= overall ? 'tracking above' : 'tracking below';
+    return `${hits} of ${graded} graded read${plural} hit today — ${rel} HUGIN's all-time line.`;
+  }
+  return `${hits} of ${graded} graded read${plural} hit today.`;
+}
+
+type GradeCounts = { hit: number; partial: number; miss: number; pending: number };
+function countGrades(observations: HuginObservation[]): GradeCounts {
+  const c: GradeCounts = { hit: 0, partial: 0, miss: 0, pending: 0 };
+  for (const o of observations) {
+    const g = o.grade?.toLowerCase() ?? null;
+    if (g === 'hit') c.hit += 1;
+    else if (g === 'partial') c.partial += 1;
+    else if (g === 'miss') c.miss += 1;
+    else c.pending += 1;
+  }
+  return c;
+}
+
+type BiasCounts = { bullish: number; bearish: number; neutral: number };
+function countBiases(observations: HuginObservation[]): BiasCounts {
+  const c: BiasCounts = { bullish: 0, bearish: 0, neutral: 0 };
+  for (const o of observations) {
+    const b = o.bias.toLowerCase();
+    if (b.includes('bull')) c.bullish += 1;
+    else if (b.includes('bear')) c.bearish += 1;
+    else c.neutral += 1;
+  }
+  return c;
+}
+
+type Trend = 'up' | 'down' | 'flat';
+/** Compare the most recent graded days against the ones before them. Returns
+ *  null until there are enough graded days on both sides to compare. */
+function dayTrend(days: HuginDay[]): Trend | null {
+  const graded = days.filter((d) => d.hit_rate != null); // already newest-first
+  if (graded.length < 4) return null;
+  const half = Math.min(3, Math.floor(graded.length / 2));
+  const recent = graded.slice(0, half);
+  const prior = graded.slice(half, half * 2);
+  const avg = (xs: HuginDay[]) => xs.reduce((s, d) => s + (d.hit_rate ?? 0), 0) / xs.length;
+  const delta = avg(recent) - avg(prior);
+  if (delta > 0.05) return 'up';
+  if (delta < -0.05) return 'down';
+  return 'flat';
+}
+
+function KpiTile({
+  label,
+  value,
+  sub,
+  tone
+}: {
+  label: string;
+  value: string;
+  sub: string;
+  tone?: 'accent' | 'mint';
+}) {
+  return (
+    <div className={s.kpi}>
+      <span className={s.kpiLabel}>
+        {tone ? <span className={cx(s.kpiDot, tone === 'mint' ? s.dotMint : s.dotAccent)} /> : null}
+        {label}
+      </span>
+      <span
+        className={cx(s.kpiValue, tone === 'accent' && s.kpiAccent, tone === 'mint' && s.kpiMint)}
+      >
+        {value}
+      </span>
+      <span className={s.kpiSub}>{sub}</span>
+    </div>
+  );
+}
+
+function HeroStat({
+  swatch,
+  label,
+  value
+}: {
+  swatch: 'accent' | 'mint' | 'amber';
+  label: string;
+  value: string;
+}) {
+  const dot =
+    swatch === 'mint' ? s.dotMint : swatch === 'amber' ? s.dotAmber : s.dotAccent;
+  return (
+    <div className={s.heroStat}>
+      <span className={s.heroStatKey}>
+        <span className={cx(s.kpiDot, dot)} />
+        {label}
+      </span>
+      <span className={s.heroStatValue}>{value}</span>
+    </div>
+  );
+}
+
+/** A ring gauge: today's hit-rate as the thick accent arc, all-time as a thin
+ *  inner track. Animates in on mount; the CSS transition is dropped under
+ *  prefers-reduced-motion. */
+function RingGauge({ today, overall }: { today: number | null; overall: number | null }) {
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => {
+    const id = requestAnimationFrame(() => setMounted(true));
+    return () => cancelAnimationFrame(id);
+  }, []);
+  const arcOffset = mounted ? 100 - Math.round((today ?? 0) * 100) : 100;
+  const innerOffset = mounted ? 100 - Math.round((overall ?? 0) * 100) : 100;
+  return (
+    <div className={s.gauge}>
+      <svg viewBox="0 0 148 148" aria-hidden="true" className={s.gaugeSvg}>
+        <circle className={s.gaugeTrack} cx="74" cy="74" r="62" strokeWidth="12" />
+        <circle
+          className={s.gaugeArc}
+          cx="74"
+          cy="74"
+          r="62"
+          strokeWidth="12"
+          pathLength={100}
+          style={{ strokeDashoffset: arcOffset }}
+        />
+        <circle className={s.gaugeTrackInner} cx="74" cy="74" r="44" strokeWidth="3" />
+        <circle
+          className={s.gaugeArcInner}
+          cx="74"
+          cy="74"
+          r="44"
+          strokeWidth="3"
+          pathLength={100}
+          style={{ strokeDashoffset: innerOffset }}
+        />
+      </svg>
+      <div className={s.gaugeCenter}>
+        <span className={s.gaugePct}>{pctText(today)}</span>
+        <span className={s.gaugeCaption}>hit rate today</span>
+      </div>
+    </div>
+  );
+}
+
+type Seg = { key: string; label: string; value: number; cls: string | undefined };
+/** A stacked proportional bar with a small legend — used for grade and bias mix. */
+function SegBar({ segments }: { segments: Seg[] }) {
+  const total = segments.reduce((sum, seg) => sum + seg.value, 0);
+  return (
+    <div className={s.seg}>
+      <div className={s.segBar}>
+        {total === 0
+          ? null
+          : segments
+              .filter((seg) => seg.value > 0)
+              .map((seg) => (
+                <span
+                  key={seg.key}
+                  className={cx(s.segFill, seg.cls)}
+                  style={{ width: `${(seg.value / total) * 100}%` }}
+                  title={`${seg.label}: ${seg.value}`}
+                />
+              ))}
+      </div>
+      <ul className={s.segLegend}>
+        {segments.map((seg) => (
+          <li key={seg.key} className={s.segLegendItem}>
+            <span className={cx(s.segSwatch, seg.cls)} />
+            {seg.label}
+            <span className={s.segCount}>{seg.value}</span>
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}
+
+function TrendChip({ trend }: { trend: Trend }) {
+  const meta =
+    trend === 'up'
+      ? { cls: s.trendUp, text: 'Sharpening', arrow: '↑' }
+      : trend === 'down'
+        ? { cls: s.trendDown, text: 'Cooling', arrow: '↓' }
+        : { cls: s.trendFlat, text: 'Steady', arrow: '→' };
+  return (
+    <span className={cx(s.trendChip, meta.cls)} title="Recent days vs. the days before">
+      {meta.arrow} {meta.text}
+    </span>
   );
 }
 
@@ -364,38 +648,6 @@ function DayRow({ day }: { day: HuginDay }) {
         {day.graded_count === 0 ? 'ungraded' : `${day.hit_count}/${day.graded_count}`}
       </span>
     </li>
-  );
-}
-
-function Scoreboard({
-  hitRate,
-  graded,
-  hits,
-  overall
-}: {
-  hitRate: number | null;
-  graded: number;
-  hits: number;
-  overall: number | null;
-}) {
-  const pct = hitRate == null ? '—' : `${Math.round(hitRate * 100)}%`;
-  const overallPct = overall == null ? '—' : `${Math.round(overall * 100)}%`;
-  return (
-    <section className={cx(s.panel, s.scoreboard)}>
-      <div className={s.score}>
-        <span className={s.scoreValue}>{pct}</span>
-        <span className={s.scoreLabel}>hit rate today</span>
-      </div>
-      <div className={s.score}>
-        <span className={cx(s.scoreValue, s.scoreValueMuted)}>{overallPct}</span>
-        <span className={s.scoreLabel}>all-time hit rate</span>
-      </div>
-      <div className={s.scoreMeta}>
-        {graded === 0
-          ? 'Nothing graded yet today'
-          : `${hits} of ${graded} graded read${graded === 1 ? '' : 's'} hit today`}
-      </div>
-    </section>
   );
 }
 

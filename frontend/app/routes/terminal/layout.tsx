@@ -153,7 +153,8 @@ const nav: NavItem[] = [
   },
   { label: 'Chart Tools', href: '/analyse' },
   { label: 'Smart Insights', href: '/smart-insights' },
-  { label: 'Option Chain', href: '/option-chain' }
+  { label: 'Option Chain', href: '/option-chain' },
+  { label: 'Tools', href: '/tools' }
 ];
 
 function TerminalShell({ user }: { user: User }) {

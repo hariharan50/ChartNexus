@@ -10,10 +10,18 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: var(--mc-space-5);
+  /* Extra top room so the window clears the fixed top navbar rather than
+     hugging it; symmetric-ish otherwise, keeping it centred. */
+  padding: 84px 20px 28px;
   background: color-mix(in srgb, #000 55%, transparent);
   backdrop-filter: blur(3px);
   animation: aiw-fade 140ms ease;
+}
+
+@media (max-width: 640px) {
+  .overlay {
+    padding: 72px 14px 16px;
+  }
 }
 
 @keyframes aiw-fade {
@@ -36,8 +44,9 @@
 .window {
   position: relative;
   z-index: 1;
-  width: min(760px, 100%);
-  max-height: min(86vh, 720px);
+  width: min(820px, 100%);
+  /* Fills the padded overlay region up to a cap; the body scrolls inside. */
+  max-height: 100%;
   display: flex;
   flex-direction: column;
   border: 1px solid var(--mc-border);
@@ -56,6 +65,7 @@
 }
 
 .head {
+  flex: none;
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
@@ -125,6 +135,7 @@
 }
 
 .tabs {
+  flex: none;
   display: flex;
   gap: 0.125rem;
   padding: var(--mc-space-2) var(--mc-space-4) 0;
@@ -153,6 +164,8 @@
 }
 
 .body {
+  flex: 1;
+  min-height: 0;
   padding: var(--mc-space-4);
   overflow-y: auto;
 }

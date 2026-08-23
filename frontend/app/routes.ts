@@ -48,6 +48,7 @@ export default [
     route('option-chain', 'routes/terminal/option-chain/route.tsx'),
     route('analyse', 'routes/terminal/analyse/route.tsx'),
     route('smart-insights', 'routes/terminal/smart-insights.tsx'),
+    route('tools', 'routes/terminal/tools.tsx'),
 
     // The AI Console is two pages: the guidance read-out and the Hella chat.
     // `/ai-console` keeps resolving to the analysis page it always was.
