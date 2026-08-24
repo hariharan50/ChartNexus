@@ -67,6 +67,16 @@ export class DrawingController {
   private destroyed = false;
   /** Guards `_pushUndo` to once per drag gesture rather than once per move. */
   private draggingId: string | null = null;
+  /**
+   * The dragged drawing's points as they were when the gesture began.
+   *
+   * A body drag translates by (cursor - grab-point), and that delta is measured
+   * from the fixed grab point every move. It must therefore be applied to the
+   * *original* points, not to the drawing as already moved this gesture — adding
+   * a from-origin delta to already-shifted points compounds it every frame, so
+   * the shape accelerates away instead of tracking the cursor one-to-one.
+   */
+  private dragOrigin: Point[] | null = null;
 
   constructor(chart: HostChart, options: ControllerOptions = {}) {
     registerBuiltins();
@@ -340,17 +350,21 @@ export class DrawingController {
     if (this.draggingId !== id) {
       this.pushUndo();
       this.draggingId = id;
+      // Snapshot the points once, at grab time, so the from-origin delta below
+      // is measured against a fixed base rather than a base that moves with it.
+      this.dragOrigin = drawing.points;
       this.select(id);
     }
 
+    const base = this.dragOrigin ?? drawing.points;
     const handle = handleOf(externalId);
     const points =
       handle === null
-        ? drawing.points.map((p) => ({
+        ? base.map((p) => ({
             time: p.time + (e.time! - e.fromTime),
             price: p.price + (e.price! - e.fromPrice)
           }))
-        : drawing.points.map((p, i) =>
+        : base.map((p, i) =>
             i === handle ? { time: e.time!, price: this.snap(e.price!, e.paneIndex) } : p
           );
 
@@ -376,6 +390,7 @@ export class DrawingController {
 
     const id = this.draggingId;
     this.draggingId = null;
+    this.dragOrigin = null;
     if (!id) return;
     const drawing = this.drawings.find((d) => d.id === id);
     this.sync();

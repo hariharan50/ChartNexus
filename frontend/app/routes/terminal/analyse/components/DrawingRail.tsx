@@ -250,7 +250,7 @@ function RailButton({
       onClick={onClick}
       {...(onContextMenu ? { onContextMenu } : {})}
     >
-      {drawToolIcon(icon)}
+      {drawToolIcon(icon, 22)}
       {/* Not the native `title` attribute: it waits about a second before
           appearing and cannot be styled, and a column of near-identical glyphs
           needs its names immediately. */}

@@ -35,12 +35,25 @@ _RULES = (
     "Rules:\n"
     "- Ground EVERY number in the snapshot provided below. Never invent a figure. If a "
     "reading says the source is mock/simulated, treat it as illustrative.\n"
+    "- BIAS DISCIPLINE — anchor the directional bias in PRICE STRUCTURE and TREND first, and "
+    "treat OI walls / key levels as secondary context, not the primary signal:\n"
+    "    * A sequence of LOWER highs and LOWER lows is a DOWNTREND — the bias is BEARISH (or "
+    "NEUTRAL if genuinely two-sided), NOT bullish, even if a support or put wall has not "
+    "broken yet. A level that has merely 'held so far' is not itself bullish.\n"
+    "    * A sequence of HIGHER highs and HIGHER lows is an UPTREND — bias BULLISH — even if a "
+    "resistance or call wall has not broken yet.\n"
+    "    * Weigh price vs VWAP/EMA and their slope, the last few candles' direction, and where "
+    "price sits within the day's range. Call the trend as the tape actually prints it; do not "
+    "default to bullish just because price is above a support number.\n"
     "- Your expectation for the next hour must be FALSIFIABLE: a concrete, checkable claim "
     "about direction and level (e.g. 'holds above 23,500 and tags 23,620' or 'loses 23,400 "
     "and tests 23,300'), not a vague lean.\n"
     "- When judging the prior read, decide HIT / PARTIAL / MISS and cite the evidence: what "
     "was expected vs what actually happened, whether the call/put wall held, whether the key "
-    "level was respected. Score 0..1 (HIT high, MISS low).\n"
+    "level was respected. Grade the BIAS DIRECTION honestly against price action: if you read "
+    "bullish and price made lower highs and lower lows, that is a MISS on direction even if a "
+    "support level technically held — do not reward a wrong-direction read just because a wall "
+    "or level survived. Score 0..1 (HIT high, MISS low).\n"
     "- Distil at most 3 NEW lessons, only when the judged outcome actually taught something "
     "durable and reusable (a pattern, not a one-off). Give each a short stable dedup_key "
     "(snake_case) so the same lesson folds together over time.\n"
@@ -79,7 +92,9 @@ _CALL_RULES = (
     "Produce a two-part call:\n"
     "1) An analytical read: a directional bias, a target zone (levels from memory), and a "
     "conviction 0..1 that reflects how strong the setup AND your track record are — be honest, a "
-    "weak or thin record means lower conviction.\n"
+    "weak or thin record means lower conviction. Respect the trend in your recorded reads: if the "
+    "recent reads show lower highs and lower lows, the bias is BEARISH (or NEUTRAL), not bullish "
+    "just because a support level has not broken.\n"
     "2) A concrete trade structure: entry, stop, target1 and (optionally) target2 as price zones.\n"
     "Ground the rationale in specific reads and lessons. If memory is empty, return a NEUTRAL call "
     "with conviction 0 and say you haven't learned enough yet. Educational only, not advice."
@@ -116,7 +131,10 @@ def _render_snapshot(snapshot: dict[str, object]) -> str:
     for key, value in snapshot.items():
         if key == "_meta":
             continue
-        lines.append(f"- {value}")
+        # Label each reading with its tool name so the trend/price-action reads
+        # (OHLC, previous-day OHLC, indicators) are legible against the OI numbers
+        # and the model can weigh structure over a bare support level.
+        lines.append(f"- {key}: {value}")
     return "\n".join(lines) if lines else "(no readings available)"
 
 

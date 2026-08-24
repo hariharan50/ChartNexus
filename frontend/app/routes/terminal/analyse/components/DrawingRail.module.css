@@ -6,7 +6,7 @@
   flex-direction: column;
   align-items: center;
   gap: 0.125rem;
-  width: 2.5rem;
+  width: 2.75rem;
   flex: none;
   padding: 0.25rem 0;
   border-right: 1px solid var(--mc-border);
@@ -17,7 +17,7 @@
 }
 
 .rule {
-  width: 1.25rem;
+  width: 1.5rem;
   height: 1px;
   margin: 0.125rem 0;
   background: var(--mc-border);
@@ -35,8 +35,8 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 2rem;
-  height: 2rem;
+  width: 2.25rem;
+  height: 2.25rem;
   border: 1px solid transparent;
   border-radius: var(--mc-radius-sm);
   background: transparent;

@@ -265,6 +265,23 @@ export class LightweightHost implements HostChart {
     el.removeEventListener('dblclick', this.onDoubleClick);
   }
 
+  /**
+   * Whether an event originated inside a drawing-UI overlay (the style bar or the
+   * text editor), which sit *inside* the chart container this host listens on.
+   *
+   * Those overlays' buttons fire pointer events that bubble to this container's
+   * native listeners. Left unguarded, clicking "Delete" (or a colour swatch, the
+   * lock, etc.) reads as an empty-space click on the chart and deselects the very
+   * drawing the button is about to act on — so the button's own handler then runs
+   * with nothing selected and does nothing. React's `stopPropagation` cannot help:
+   * the native container listener fires during bubbling before React's delegated
+   * root listener, so the guard has to live here.
+   */
+  private fromOverlay(event: Event): boolean {
+    const target = event.target;
+    return target instanceof Element && target.closest('[data-mc-chart-overlay]') !== null;
+  }
+
   /** Container coordinates, plus what they mean in chart space. */
   private locate(event: PointerEvent | MouseEvent): ChartPointerEvent {
     const rect = this.deps.container.getBoundingClientRect();
@@ -300,7 +317,7 @@ export class LightweightHost implements HostChart {
   }
 
   private onPointerDown = (event: PointerEvent): void => {
-    if (this.destroyed || event.button !== 0) return;
+    if (this.destroyed || event.button !== 0 || this.fromOverlay(event)) return;
     const at = this.locate(event);
     if (at.time === null || at.price === null) return;
     this.downAt = { x: at.x, y: at.y, time: at.time, price: at.price };
@@ -316,6 +333,9 @@ export class LightweightHost implements HostChart {
 
   private onPointerMove = (event: PointerEvent): void => {
     if (this.destroyed) return;
+    // Ignore hovering over an overlay, but never abandon a drag already in
+    // flight (the pointer may cross the style bar while moving a drawing).
+    if (this.downAt === null && this.fromOverlay(event)) return;
     const at = this.locate(event);
     const down = this.downAt;
 
@@ -341,6 +361,19 @@ export class LightweightHost implements HostChart {
 
   private onPointerUp = (event: PointerEvent): void => {
     if (this.destroyed || event.button !== 0) return;
+    // A release on a drawing-UI overlay must not read as an empty-space click
+    // (which would deselect). Still clean up any gesture state so a press that
+    // began on the chart and ended on the overlay does not leave the host armed.
+    if (this.fromOverlay(event)) {
+      this.downAt = null;
+      this.dragging = false;
+      this.grabbedId = null;
+      if (this.gestureLock) {
+        this.gestureLock = false;
+        this.applyGestures();
+      }
+      return;
+    }
     const at = this.locate(event);
     const down = this.downAt;
     this.downAt = null;
@@ -383,7 +416,7 @@ export class LightweightHost implements HostChart {
   };
 
   private onDoubleClick = (event: MouseEvent): void => {
-    if (this.destroyed) return;
+    if (this.destroyed || this.fromOverlay(event)) return;
     this.dispatch('dblclick', this.locate(event));
   };
 

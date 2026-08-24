@@ -375,6 +375,7 @@ export default function LwChart({
 
       const {
         createChart,
+        CrosshairMode,
         BarSeries,
         BaselineSeries,
         CandlestickSeries,
@@ -416,6 +417,10 @@ export default function LwChart({
             tickLabel(Number(time), tickMarkType)
         },
         crosshair: {
+          // Normal (not the library default Magnet): the crosshair follows the
+          // pointer freely instead of snapping the price line to each candle's
+          // OHLC, so the reader can read the exact price under the cursor.
+          mode: CrosshairMode.Normal,
           vertLine: { color: theme.axis, labelBackgroundColor: theme.maxPainLabelBg },
           horzLine: { color: theme.axis, labelBackgroundColor: theme.maxPainLabelBg }
         }

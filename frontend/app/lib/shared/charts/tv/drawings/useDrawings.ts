@@ -281,9 +281,24 @@ export function useDrawings(options: Options): DrawingsApi {
     }
   }, [locked, visible]);
 
-  // A committed tool lands the toolbar back on the cursor.
+  // A committed tool lands the toolbar back on the cursor — but only once the
+  // controller has actually *taken* the armed tool and then cleared it (a real
+  // placement). `stats.tool` mirrors the controller, and it lags the page's
+  // `tool` by at least one render on every arm — and by the whole async engine
+  // load on the first one. Without this confirmation guard the effect sees
+  // `stats.tool === null` while `tool` is freshly set and disarms the tool
+  // before it was ever placed, so no drawing tool ever engages.
+  const toolConfirmed = useRef(false);
   useEffect(() => {
-    if (stats.tool === null && tool !== null) latest.current.onToolDone();
+    // A fresh arm: forget any previous confirmation until the controller reports
+    // it has this tool in hand.
+    toolConfirmed.current = false;
+  }, [tool]);
+  useEffect(() => {
+    if (tool !== null && stats.tool === tool) toolConfirmed.current = true;
+    if (toolConfirmed.current && stats.tool === null && tool !== null) {
+      latest.current.onToolDone();
+    }
   }, [stats.tool, tool]);
 
   // -- actions ---------------------------------------------------------------
