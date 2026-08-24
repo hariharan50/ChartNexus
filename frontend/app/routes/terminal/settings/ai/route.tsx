@@ -72,6 +72,7 @@ export default function SettingsAi() {
     void queryClient.invalidateQueries({ queryKey: ['stryx', 'availability'] });
     void queryClient.invalidateQueries({ queryKey: ['hugin', 'availability'] });
     void queryClient.invalidateQueries({ queryKey: ['mme100', 'availability'] });
+    void queryClient.invalidateQueries({ queryKey: ['report', 'availability'] });
   }
 
   async function run<T>(kind: Busy, action: () => Promise<T>): Promise<T | undefined> {

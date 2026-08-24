@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState, type MutableRefObject, type ReactNode } from 'react';
 import { Link } from 'react-router';
 import { streamMme100 } from '$contexts/mme100/api';
+import { downloadReport } from '$contexts/report/api';
 import { loadChat, saveChat } from '$contexts/mme100/chat-store';
 import { useMme100AvailabilityQuery, useMme100BriefingTodayQuery } from '$contexts/mme100/queries';
 import type { Mme100Briefing, Mme100StreamEvent } from '$contexts/mme100/types';
@@ -67,6 +68,7 @@ export default function Mme100Agent() {
           </div>
         ) : (
           <>
+            <ReportDownload symbol={instrument.symbol} />
             <BriefingCard />
             <ChatPanel
               key={`${userId}:${instrument.symbol}`}
@@ -76,6 +78,40 @@ export default function Mme100Agent() {
           </>
         )}
       </div>
+    </div>
+  );
+}
+
+/** On-demand: generate today's full report for the instrument and download the PDF. */
+function ReportDownload({ symbol }: { symbol: string }) {
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState(false);
+
+  async function run() {
+    setBusy(true);
+    setError(false);
+    try {
+      await downloadReport(symbol);
+    } catch {
+      setError(true);
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <div className={cx(s.panel, s.reportBar)}>
+      <div className={s.reportText}>
+        <span className={s.reportTitle}>Daily Report - PDF</span>
+        <span className={s.reportSub}>
+          {error
+            ? "Couldn't generate the report just now - try again."
+            : `A branded PDF for ${symbol}: summary, technicals, options & PCR, sentiment and outlook.`}
+        </span>
+      </div>
+      <button type="button" className={s.reportBtn} disabled={busy} onClick={() => void run()}>
+        {busy ? 'Generating…' : '⭳ Download PDF'}
+      </button>
     </div>
   );
 }

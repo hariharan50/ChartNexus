@@ -391,6 +391,59 @@
   animation: pulse 1s step-start infinite;
 }
 
+/* -- Daily report download bar --------------------------------------------- */
+.reportBar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--mc-space-4);
+  padding: var(--mc-space-4);
+}
+
+.reportText {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+}
+
+.reportTitle {
+  font-size: var(--mc-text-sm);
+  font-weight: 700;
+  color: var(--mc-text);
+}
+
+.reportSub {
+  font-size: var(--mc-text-xs);
+  color: var(--mc-text-muted);
+  line-height: 1.5;
+}
+
+.reportBtn {
+  flex: none;
+  height: var(--mc-control-h);
+  padding: 0 var(--mc-space-4);
+  border: 0;
+  border-radius: var(--mc-radius);
+  background: linear-gradient(135deg, var(--mc-accent), var(--mme-accent-2, #0ea5e9));
+  color: #fff;
+  font-weight: 700;
+  font-size: var(--mc-text-sm);
+  cursor: pointer;
+  transition:
+    opacity var(--mc-duration-fast, 120ms) ease,
+    transform var(--mc-duration-fast, 120ms) ease;
+}
+
+.reportBtn:hover:not(:disabled) {
+  transform: translateY(-1px);
+}
+
+.reportBtn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
 /* -- Per-answer PDF export ------------------------------------------------- */
 .pdfActions {
   display: flex;

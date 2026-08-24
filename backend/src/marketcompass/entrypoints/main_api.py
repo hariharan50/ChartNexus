@@ -9,8 +9,10 @@ from __future__ import annotations
 
 import asyncio
 import contextlib
-from collections.abc import AsyncIterator
+from collections.abc import AsyncIterator, Callable, Coroutine
 from contextlib import asynccontextmanager
+from dataclasses import dataclass
+from typing import Any
 
 import uvicorn
 from fastapi import FastAPI
@@ -24,6 +26,7 @@ from marketcompass.bootstrap.settings import Environment, Settings, get_settings
 from marketcompass.entrypoints.hugin_runtime import run_hugin_loop
 from marketcompass.entrypoints.ingest_runtime import run_capture_loop
 from marketcompass.entrypoints.mme100_runtime import run_mme100_loop
+from marketcompass.entrypoints.report_runtime import run_report_loop
 from marketcompass.infrastructure.cache.redis.client import redis_check
 from marketcompass.infrastructure.observability.structured_logging import get_logger
 from marketcompass.infrastructure.persistence.postgresql.health import postgres_check
@@ -36,6 +39,44 @@ from marketcompass.infrastructure.transport.http.request_id import RequestIdMidd
 API_VERSION = "0.1.0"
 
 log = get_logger(__name__)
+
+
+@dataclass(slots=True)
+class _LocalWorker:
+    """A background loop the API runs in-process (local dev only)."""
+
+    task: asyncio.Task[None]
+    stop: asyncio.Event
+
+
+def _maybe_start(
+    *,
+    enabled: bool,
+    name: str,
+    make_loop: Callable[[asyncio.Event], Coroutine[Any, Any, None]],
+) -> _LocalWorker | None:
+    """Start ``make_loop`` as a named background task, or return ``None`` if disabled.
+
+    Each in-process worker (ingest, HUGIN, MME100, report) is local-only: deployed
+    environments run the equivalent standalone process, and ``task dev`` disables
+    the in-process copy so the two do not double up.
+    """
+    if not enabled:
+        return None
+    stop = asyncio.Event()
+    task = asyncio.create_task(make_loop(stop), name=name)
+    log.info("api_worker_in_process", worker=name)
+    return _LocalWorker(task=task, stop=stop)
+
+
+async def _stop_worker(worker: _LocalWorker | None) -> None:
+    """Signal, cancel, and await a background worker (no-op if it never started)."""
+    if worker is None:
+        return
+    worker.stop.set()
+    worker.task.cancel()
+    with contextlib.suppress(asyncio.CancelledError):
+        await worker.task
 
 
 def create_app(settings: Settings | None = None) -> FastAPI:
@@ -54,79 +95,45 @@ def create_app(settings: Settings | None = None) -> FastAPI:
             llm=resolved.llm.provider,
         )
 
-        # Local-only: run the snapshot capture loop as a background task so a
-        # developer who starts just the API still gets a populated archive. The
-        # Options Lab charts (Multi OI, PCR, Gamma, Vega) read that archive; with
-        # no writer they show a two-point straight-line estimate, or nothing.
-        # Never enabled outside local — deployed environments run the standalone
-        # ``marketcompass-ingest`` worker, and ``task dev`` sets the flag false so
-        # its separate worker does not double up with this one. ``allow_mock`` is
-        # forced on so the charts populate even on a day the broker never answers.
-        ingest_stop = asyncio.Event()
-        ingest_task: asyncio.Task[None] | None = None
-        if resolved.environment == Environment.LOCAL and resolved.market.ingest_in_process:
-            ingest_task = asyncio.create_task(
-                run_capture_loop(container, resolved, stop=ingest_stop, allow_mock=True),
+        # Local-only background workers. Each has a standalone process for deployed
+        # environments (``marketcompass-ingest`` / ``-hugin`` / ``-mme100`` / the
+        # report worker); running them in-process lets a developer on just the API
+        # get a populated snapshot archive, accruing HUGIN memory, the morning
+        # briefing, and the daily PDF. ``task dev`` disables the in-process copies
+        # so they never double up with their separate workers. Ingest forces
+        # ``allow_mock`` on so the charts populate even when the broker never
+        # answers. Shut down in reverse start order in the ``finally``.
+        local = resolved.environment == Environment.LOCAL
+        workers = (
+            _maybe_start(
+                enabled=local and resolved.market.ingest_in_process,
                 name="ingest-capture-loop",
-            )
-            log.info(
-                "api_ingest_in_process",
-                interval_seconds=resolved.market.snapshot_interval_seconds,
-            )
-
-        # Local-only, same rationale as the ingest loop: run HUGIN's hourly
-        # market-memory worker in-process so a developer on just the API sees its
-        # memory accrue. Deployed environments run the standalone
-        # ``marketcompass-hugin`` process; ``task dev`` sets the flag false so the
-        # separate worker does not double up.
-        hugin_stop = asyncio.Event()
-        hugin_task: asyncio.Task[None] | None = None
-        if (
-            resolved.environment == Environment.LOCAL
-            and resolved.hugin.enabled
-            and resolved.hugin.in_process
-        ):
-            hugin_task = asyncio.create_task(
-                run_hugin_loop(container, resolved, stop=hugin_stop),
+                make_loop=lambda stop: run_capture_loop(
+                    container, resolved, stop=stop, allow_mock=True
+                ),
+            ),
+            _maybe_start(
+                enabled=local and resolved.hugin.enabled and resolved.hugin.in_process,
                 name="hugin-memory-loop",
-            )
-            log.info("api_hugin_in_process", interval_seconds=resolved.hugin.interval_seconds)
-
-        # Local-only, same rationale: run MME100's pre-market briefing worker
-        # in-process so a developer on just the API gets the morning briefing.
-        # Deployed environments run the standalone ``marketcompass-mme100`` process;
-        # ``task dev`` sets the flag false so the separate worker does not double up.
-        mme100_stop = asyncio.Event()
-        mme100_task: asyncio.Task[None] | None = None
-        if (
-            resolved.environment == Environment.LOCAL
-            and resolved.mme100.enabled
-            and resolved.mme100.in_process
-        ):
-            mme100_task = asyncio.create_task(
-                run_mme100_loop(container, resolved, stop=mme100_stop),
+                make_loop=lambda stop: run_hugin_loop(container, resolved, stop=stop),
+            ),
+            _maybe_start(
+                enabled=local and resolved.mme100.enabled and resolved.mme100.in_process,
                 name="mme100-briefing-loop",
-            )
-            log.info("api_mme100_in_process", briefing_time_ist=resolved.mme100.briefing_time_ist)
+                make_loop=lambda stop: run_mme100_loop(container, resolved, stop=stop),
+            ),
+            _maybe_start(
+                enabled=local and resolved.report.enabled and resolved.report.in_process,
+                name="daily-report-loop",
+                make_loop=lambda stop: run_report_loop(container, resolved, stop=stop),
+            ),
+        )
 
         try:
             yield
         finally:
-            if mme100_task is not None:
-                mme100_stop.set()
-                mme100_task.cancel()
-                with contextlib.suppress(asyncio.CancelledError):
-                    await mme100_task
-            if hugin_task is not None:
-                hugin_stop.set()
-                hugin_task.cancel()
-                with contextlib.suppress(asyncio.CancelledError):
-                    await hugin_task
-            if ingest_task is not None:
-                ingest_stop.set()
-                ingest_task.cancel()
-                with contextlib.suppress(asyncio.CancelledError):
-                    await ingest_task
+            for worker in reversed(workers):
+                await _stop_worker(worker)
             log.info("api_stopping")
             await container.aclose()
 

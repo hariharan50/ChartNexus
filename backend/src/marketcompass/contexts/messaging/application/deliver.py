@@ -55,3 +55,49 @@ class DeliverText:
                     exc,
                 )
         return sent
+
+
+@dataclass(frozen=True, slots=True)
+class DeliverDocument:
+    """Push a file (e.g. a PDF report) to every ready channel for a user.
+
+    Same swallow-and-log contract as :class:`DeliverText`; used by the report
+    worker to deliver the daily PDF.
+    """
+
+    repository: ChannelConnectionRepository
+    senders: Mapping[Channel, MessageSenderPort]
+
+    async def __call__(
+        self, user_id: UserId, *, filename: str, content: bytes, caption: str, source: str
+    ) -> int:
+        try:
+            connections = await self.repository.find_all(user_id)
+        except Exception as exc:
+            log.warning("messaging_document_load_failed", exc_info=exc)
+            return 0
+
+        sent = 0
+        for connection in connections:
+            if not connection.ready or connection.target is None:
+                continue
+            sender = self.senders.get(connection.channel)
+            if sender is None:
+                continue
+            try:
+                await sender.send_document(
+                    connection.secret,
+                    connection.target,
+                    filename=filename,
+                    content=content,
+                    caption=caption,
+                )
+                sent += 1
+            except Exception as exc:
+                log.warning(
+                    "messaging_document_failed channel=%s source=%s error=%r",
+                    connection.channel.value,
+                    source,
+                    exc,
+                )
+        return sent

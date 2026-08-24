@@ -210,8 +210,9 @@ class LLMSettings(_Section):
     openai_api_key: SecretStr = SecretStr("")
     model: str = "claude-sonnet-5"
     # Room for a full agent answer plus any model-side thinking. 2048 truncated
-    # multi-part trade calls mid-sentence; raise via MC_LLM_MAX_OUTPUT_TOKENS.
-    max_output_tokens: int = Field(default=4096, ge=1)
+    # multi-part trade calls mid-sentence; 4096 truncated MME100's detailed
+    # six-section pre-market read. Raise further via MC_LLM_MAX_OUTPUT_TOKENS.
+    max_output_tokens: int = Field(default=8192, ge=1)
     request_timeout_seconds: float = Field(default=30.0, gt=0)
     daily_token_budget: int = Field(default=1_000_000, ge=0)
     # Appends the "educational, not investment advice" line to analytical agent
@@ -366,6 +367,28 @@ class MessagingSettings(_Section):
     request_timeout_seconds: float = Field(default=10.0, gt=0)
 
 
+class ReportSettings(_Section):
+    """The daily market-report worker.
+
+    Once each trading morning (default 08:35 IST, just after the MME100 briefing so
+    it can reuse it) it renders the branded PDF per enrolled tenant and delivers it
+    to their channels. Per-user LLM key, so no key setting here — only cadence and
+    which instruments the scheduled report covers.
+    """
+
+    model_config = _section_config("REPORT_")
+
+    enabled: bool = True
+    #: LOCAL-only auto-start inside the API lifespan, like the other workers.
+    in_process: bool = True
+    #: IST wall-clock time the report runs (after the 08:30 briefing).
+    report_time_ist: str = "08:35"
+    #: Instruments the scheduled report covers (one by default to stay token-light;
+    #: users can generate others on demand).
+    instruments: tuple[str, ...] = ("NIFTY",)
+    max_tenants_per_tick: int = Field(default=50, ge=1)
+
+
 class Settings(BaseSettings):
     """Root settings object. Build it once per process via :func:`get_settings`."""
 
@@ -395,6 +418,7 @@ class Settings(BaseSettings):
     hugin: HuginSettings = Field(default_factory=HuginSettings)
     mme100: Mme100Settings = Field(default_factory=Mme100Settings)
     messaging: MessagingSettings = Field(default_factory=MessagingSettings)
+    report: ReportSettings = Field(default_factory=ReportSettings)
 
     def assert_deployment_safe(self) -> None:
         """Fail fast when a deployed environment still holds development defaults."""

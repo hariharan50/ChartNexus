@@ -76,6 +76,20 @@ class TelegramSender:
                 "Telegram is unavailable right now.", provider="telegram"
             ) from exc
 
+    async def send_document(
+        self, secret: str, target: str, *, filename: str, content: bytes, caption: str
+    ) -> None:
+        try:
+            await self._client.send_document(
+                secret, target, filename=filename, content=content, caption=caption
+            )
+        except TelegramRejectedError as exc:
+            raise MessageSendError(str(exc), provider="telegram") from exc
+        except TelegramUnavailableError as exc:
+            raise MessageSendError(
+                "Telegram is unavailable right now.", provider="telegram"
+            ) from exc
+
 
 def _chunk(text: str, *, limit: int = _MAX_CHARS) -> list[str]:
     """Split ``text`` into <=limit pieces, preferring to break on line breaks."""

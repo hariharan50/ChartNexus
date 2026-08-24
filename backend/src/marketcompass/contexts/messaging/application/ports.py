@@ -82,6 +82,12 @@ class MessageSenderPort(Protocol):
         """Deliver ``text`` to ``target``. Raises ``MessageSendError`` on failure."""
         ...
 
+    async def send_document(
+        self, secret: str, target: str, *, filename: str, content: bytes, caption: str
+    ) -> None:
+        """Deliver a file (e.g. a PDF report) to ``target``. Raises ``MessageSendError``."""
+        ...
+
 
 @runtime_checkable
 class Clock(Protocol):

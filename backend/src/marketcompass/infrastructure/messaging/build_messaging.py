@@ -15,7 +15,7 @@ from typing import Any
 
 from fastapi import Request
 
-from marketcompass.contexts.messaging.application.deliver import DeliverText
+from marketcompass.contexts.messaging.application.deliver import DeliverDocument, DeliverText
 from marketcompass.contexts.messaging.application.ports import (
     ChannelConnectionRepository,
     MessageSenderPort,
@@ -84,3 +84,8 @@ def build_messaging_services(request: Request) -> MessagingServices:
 def build_text_delivery(container: Any) -> DeliverText:
     """The reusable delivery entry point for background workers (no request scope)."""
     return DeliverText(repository=_repository(container), senders=_senders(container))
+
+
+def build_document_delivery(container: Any) -> DeliverDocument:
+    """Delivery of files (e.g. the daily PDF report) for background workers."""
+    return DeliverDocument(repository=_repository(container), senders=_senders(container))

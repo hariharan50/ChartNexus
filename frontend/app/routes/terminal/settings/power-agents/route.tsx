@@ -6,6 +6,7 @@ import {
   useMme100EnrollmentQuery,
   useSetMme100EnrollmentMutation
 } from '$contexts/mme100/queries';
+import { useReportEnrollmentQuery, useSetReportEnrollmentMutation } from '$contexts/report/queries';
 import { cx } from '$shared/ui/cx';
 import s from './route.module.css';
 import type { Route } from './+types/route';
@@ -51,6 +52,7 @@ export default function SettingsPowerAgents() {
 
       <HuginCard />
       <Mme100Card />
+      <ReportCard />
     </div>
   );
 }
@@ -94,6 +96,30 @@ function Mme100Card() {
       description="MME100 prepares a full six-section pre-market briefing — global cues, the India setup, sectors, stocks and risks — ready on the MME100 tab before the market opens."
       rowLabel="Daily pre-market briefing"
       onStateLabel="On — runs before the open"
+      enabled={enabled}
+      loading={enrollment.isLoading}
+      busy={toggle.isPending}
+      error={toggle.isError}
+      onToggle={() => toggle.mutate(!enabled)}
+    />
+  );
+}
+
+function ReportCard() {
+  const enrollment = useReportEnrollmentQuery();
+  const toggle = useSetReportEnrollmentMutation();
+  const enabled = enrollment.data?.enabled ?? false;
+
+  return (
+    <AgentCard
+      mark="R"
+      accent="#6366f1"
+      accent2="#0ea5e9"
+      title="Daily Report - PDF"
+      kicker="Each trading morning, delivered to your channel"
+      description="A branded multi-page PDF - summary, technicals, options & PCR, a sentiment score and the pre-market outlook - generated each morning and delivered to your connected Telegram."
+      rowLabel="Daily PDF report"
+      onStateLabel="On - delivered before the open"
       enabled={enabled}
       loading={enrollment.isLoading}
       busy={toggle.isPending}

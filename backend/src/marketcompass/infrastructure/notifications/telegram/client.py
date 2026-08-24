@@ -60,6 +60,20 @@ class TelegramClient:
         )
         return result if isinstance(result, dict) else {}
 
+    async def send_document(
+        self, token: str, chat_id: str, *, filename: str, content: bytes, caption: str
+    ) -> dict[str, Any]:
+        """Upload a document (multipart/form-data) to a chat."""
+        url = f"{self._api_base}/bot{token}/sendDocument"
+        files = {"document": (filename, content, "application/pdf")}
+        data = {"chat_id": chat_id, "caption": caption[:1024]}
+        try:
+            response = await self._http.post(url, data=data, files=files, timeout=self._timeout)
+        except httpx.HTTPError as exc:
+            raise TelegramUnavailableError(str(exc)) from exc
+        result = self._unwrap(response)
+        return result if isinstance(result, dict) else {}
+
     # -- transport ----------------------------------------------------------
 
     async def _call(

@@ -40,6 +40,7 @@ dependencies = [
     "opentelemetry-instrumentation-fastapi>=0.50b0",
     "opentelemetry-instrumentation-sqlalchemy>=0.50b0",
     "opentelemetry-instrumentation-redis>=0.50b0",
+    "fpdf2>=2.8",
 ]
 
 [project.optional-dependencies]
@@ -69,6 +70,7 @@ marketcompass-oi = "marketcompass.entrypoints.main_oi_data:run"
 marketcompass-signals = "marketcompass.entrypoints.main_signals:run"
 marketcompass-hugin = "marketcompass.entrypoints.main_hugin:run"
 marketcompass-mme100 = "marketcompass.entrypoints.main_mme100:run"
+marketcompass-report = "marketcompass.entrypoints.main_report:run"
 
 [dependency-groups]
 dev = [
@@ -154,6 +156,10 @@ ignore_imports = [
     # only `build_messaging`, which assembles the channel repository + adapters from
     # the container. Exempt that single edge.
     "marketcompass.contexts.messaging.api.dependencies -> marketcompass.infrastructure.messaging.build_messaging",
+    # Report uses the same sanctioned-bridge pattern: its API dependency imports
+    # only `build_report`, which assembles the data gatherer, narrator, renderer and
+    # enrollment store from the container. Exempt that single edge.
+    "marketcompass.contexts.report.api.dependencies -> marketcompass.infrastructure.report.build_report",
 ]
 modules = [
     "marketcompass.contexts.identity",
@@ -176,6 +182,7 @@ modules = [
     "marketcompass.contexts.hugin",
     "marketcompass.contexts.mme100",
     "marketcompass.contexts.messaging",
+    "marketcompass.contexts.report",
     "marketcompass.contexts.realtime_delivery",
     "marketcompass.contexts.audit",
 ]

@@ -146,7 +146,11 @@
   padding: var(--mc-space-3);
   border: 1px solid var(--mc-border);
   border-radius: var(--mc-radius-md, 0.5rem);
-  background: linear-gradient(180deg, var(--mc-surface-raised, var(--mc-surface)), var(--mc-surface));
+  background: linear-gradient(
+    180deg,
+    var(--mc-surface-raised, var(--mc-surface)),
+    var(--mc-surface)
+  );
   box-shadow: var(--mc-shadow);
   min-width: 0;
 }
@@ -170,9 +174,15 @@
   border-radius: 50%;
   flex: none;
 }
-.dotAccent { background: var(--mc-accent); }
-.dotMint { background: #059669; }
-.dotAmber { background: #d97706; }
+.dotAccent {
+  background: var(--mc-accent);
+}
+.dotMint {
+  background: #059669;
+}
+.dotAmber {
+  background: #d97706;
+}
 
 .kpiValue {
   font-size: 1.55rem;
@@ -182,8 +192,12 @@
   font-variant-numeric: tabular-nums;
   letter-spacing: -0.01em;
 }
-.kpiAccent { color: var(--mc-accent); }
-.kpiMint { color: #059669; }
+.kpiAccent {
+  color: var(--mc-accent);
+}
+.kpiMint {
+  color: #059669;
+}
 
 .kpiSub {
   font-size: 0.7rem;
@@ -334,10 +348,18 @@
   height: 100%;
 }
 
-.segHit { background: #059669; }
-.segPartial { background: #d97706; }
-.segMiss { background: #dc2626; }
-.segPending { background: color-mix(in srgb, var(--mc-text-muted) 55%, transparent); }
+.segHit {
+  background: #059669;
+}
+.segPartial {
+  background: #d97706;
+}
+.segMiss {
+  background: #dc2626;
+}
+.segPending {
+  background: color-mix(in srgb, var(--mc-text-muted) 55%, transparent);
+}
 
 .segLegend {
   list-style: none;
@@ -390,8 +412,14 @@
   white-space: nowrap;
   flex: none;
 }
-.trendUp { color: #059669; background: color-mix(in srgb, #059669 16%, transparent); }
-.trendDown { color: #dc2626; background: color-mix(in srgb, #dc2626 16%, transparent); }
+.trendUp {
+  color: #059669;
+  background: color-mix(in srgb, #059669 16%, transparent);
+}
+.trendDown {
+  color: #dc2626;
+  background: color-mix(in srgb, #dc2626 16%, transparent);
+}
 .trendFlat {
   color: var(--mc-text-muted);
   background: color-mix(in srgb, var(--mc-text-muted) 14%, transparent);
