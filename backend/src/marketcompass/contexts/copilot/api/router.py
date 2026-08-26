@@ -152,8 +152,8 @@ async def _events(
             elif isinstance(event, AgentDone):
                 answer = event.text or answer
     except Exception as exc:  # a stream must not 500 mid-flight
-        log.warning("copilot_stream_failed", error=repr(exc))
-        yield _frame({"type": "error", "message": "Sorry — I couldn't answer that just now."})
+        log.warning("copilot_stream_failed", error=repr(exc), exc_info=True)
+        yield _frame({"type": "error", "message": _error_message(exc)})
         return
 
     # Remember this exchange so the next question carries context; skip empties.
@@ -166,6 +166,30 @@ async def _events(
         await services.sessions.save(replace(session, turns=turns))
 
     yield _frame({"type": "done"})
+
+
+_GENERIC_ERROR = "Sorry — I couldn't answer that just now."
+
+
+def _error_message(exc: Exception) -> str:
+    """Turn a provider failure into a message the user can act on.
+
+    The common real-world cause is the user's own LLM key being out of credits,
+    invalid, or rate-limited — surfacing that plainly (rather than the generic
+    line) tells them to fix their key in Settings → AI instead of chasing a
+    phantom bug. Anything unrecognised stays generic.
+    """
+    text = str(exc).lower()
+    if "credit balance" in text or "billing" in text or "insufficient" in text:
+        return (
+            "Your Anthropic API key has run out of credits. Add credits or update "
+            "the key in Settings → AI, then try again."
+        )
+    if "authentication" in text or "invalid x-api-key" in text or "unauthorized" in text:
+        return "Your Anthropic API key looks invalid. Check it in Settings → AI, then try again."
+    if "rate limit" in text or "429" in text or "overloaded" in text:
+        return "The model is rate-limited right now. Wait a moment and try again."
+    return _GENERIC_ERROR
 
 
 def _frame(payload: dict[str, object]) -> str:
