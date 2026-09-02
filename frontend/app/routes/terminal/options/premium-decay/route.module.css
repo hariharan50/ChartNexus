@@ -364,6 +364,24 @@
   color: var(--mc-border-strong);
 }
 
+/* Matches the Price vs OI and Straddle panels' control of the same name. */
+.zoom-reset {
+  padding: 0.25rem 0.5rem;
+  border: 1px solid var(--mc-border);
+  border-radius: var(--mc-radius-sm);
+  background: var(--mc-surface-raised);
+  color: var(--mc-text-muted);
+  font-size: var(--mc-text-xs);
+  font-weight: 600;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.zoom-reset:hover {
+  border-color: var(--mc-border-strong);
+  color: var(--mc-text);
+}
+
 .download {
   padding: 0.3125rem 0.625rem;
   border: 1px solid var(--mc-border);

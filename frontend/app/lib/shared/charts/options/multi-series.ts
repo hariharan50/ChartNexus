@@ -85,6 +85,15 @@ export interface MultiSeriesInput {
    */
   compact?: boolean | undefined;
   /**
+   * Let the reader work the time axis: wheel to zoom, drag inside the plot to
+   * pan, drag the clock strip to stretch or squeeze the window.
+   *
+   * Opt-in, and off by default. A chart that takes the wheel stops the page
+   * scrolling over it, which is a bad trade on a panel someone only glances at;
+   * it earns its keep on a full-width chart people actually read into.
+   */
+  zoomable?: boolean | undefined;
+  /**
    * Override the blank right margin, in pixels, when the default is wrong for
    * this panel.
    *
@@ -122,6 +131,34 @@ export const SERIES_PALETTE = [
 /** The colour for the nth selected contract, wrapping past the palette's end. */
 export function seriesColor(index: number): string {
   return SERIES_PALETTE[index % SERIES_PALETTE.length]!;
+}
+
+/**
+ * The time-axis zoom: wheel over the plot to scale the window, drag inside it to
+ * pan, and drag the clock strip under the plot to stretch or squeeze the window
+ * against its right edge (see `installAxisDrag` in `use-echart.ts`).
+ *
+ * `filterMode: 'none'`: zooming must scale the axis, never drop the points
+ * outside it, or the lines would be redrawn from a truncated series and their
+ * ends would move as you zoom.
+ */
+function timeZoom(window: { start: number; end: number }) {
+  return [
+    {
+      type: 'inside' as const,
+      filterMode: 'none' as const,
+      // This chart carries two y axes; left to guess, the zoom binds the wrong
+      // one and the wheel moves nothing.
+      xAxisIndex: 0,
+      startValue: window.start,
+      endValue: window.end,
+      zoomOnMouseWheel: true,
+      moveOnMouseMove: true,
+      moveOnMouseWheel: false,
+      // Otherwise a drag-to-pan also selects the page text around the chart.
+      preventDefaultMouseMove: true
+    }
+  ];
 }
 
 /**
@@ -197,7 +234,7 @@ export function buildMultiSeriesOption(
   theme: ChartTheme
 ): EChartsCoreOption {
   const { timestamps, futures, lines, formatValue, formatPrice, valueAxisName } = input;
-  const { referenceLine, showFutures, compact, rightGutter } = input;
+  const { referenceLine, showFutures, compact, rightGutter, zoomable } = input;
   const axisName = { color: theme.axis, fontSize: 11, fontWeight: 600 as const };
 
   const ms = timestamps.map((iso) => Date.parse(iso));
@@ -207,11 +244,13 @@ export function buildMultiSeriesOption(
   // A single point has no span to take a share of; fall back to a few minutes
   // so the axis still has somewhere to put it.
   const pad = Math.max((last - first) * RIGHT_PAD, 5);
+  const max = last + pad;
 
   const latestFuture = [...futures].reverse().find((value) => value != null) ?? null;
 
   return {
     backgroundColor: 'transparent',
+    ...(zoomable ? { dataZoom: timeZoom({ start: first, end: max }) } : {}),
     // Generous top and bottom margins. The cramped version had labels touching
     // the plot edge, which is most of what separates a chart that looks
     // considered from one that looks emitted.
@@ -260,9 +299,10 @@ export function buildMultiSeriesOption(
       // A value axis of trading minutes, not `time`: the scale is the session,
       // so a pre-open or post-close instant cannot stretch it.
       type: 'value',
-      min: first,
-      // Blank track past the newest point — see RIGHT_PAD.
-      max: last + pad,
+      // Blank track past the newest point — see RIGHT_PAD. Bounded by `dataZoom`
+      // when the chart is zoomable and pinned here when it is not: a pinned axis
+      // WINS over `dataZoom`, so fixing both leaves the wheel moving nothing.
+      ...(zoomable ? {} : { min: first, max }),
       axisLine: { lineStyle: { color: theme.grid } },
       axisTick: { show: false },
       // Vertical rules as well as horizontal, as the reference has. Faint

@@ -64,15 +64,40 @@ export interface PriceVsOiInput {
  * plain wheel has to keep scrolling it rather than being swallowed to zoom the
  * chart under the pointer.
  */
-const TIME_ZOOM = [
-  {
-    type: 'inside' as const,
-    filterMode: 'none' as const,
-    zoomOnMouseWheel: 'shift' as const,
-    moveOnMouseMove: true,
-    moveOnMouseWheel: false
-  }
-];
+/**
+ * The time-axis zoom: wheel over the plot to scale the window, drag inside it to
+ * pan, and drag the clock strip under the plot to stretch or squeeze the window
+ * against its right edge (see `installAxisDrag` in `use-echart.ts`).
+ *
+ * The wheel zooms without a modifier. It used to need Shift — safer on a page of
+ * six stacked charts, since a plain wheel over one of them no longer scrolls the
+ * page — but a modifier nobody discovers is the same as no zoom at all, and this
+ * is how every charting tool a trader already uses behaves. The page still
+ * scrolls from the gaps, the headers and the sidebar; only the plot rectangle
+ * itself takes the wheel.
+ *
+ * `filterMode: 'none'`: zooming must scale the axis, never drop the points
+ * outside it, or the lines would be redrawn from a truncated series and their
+ * ends would move as you zoom.
+ */
+function timeZoom(window: { start: number; end: number }) {
+  return [
+    {
+      type: 'inside' as const,
+      filterMode: 'none' as const,
+      // Both charts carry two y axes; left to guess, the zoom binds the wrong
+      // one and the wheel moves nothing.
+      xAxisIndex: 0,
+      startValue: window.start,
+      endValue: window.end,
+      zoomOnMouseWheel: true,
+      moveOnMouseMove: true,
+      moveOnMouseWheel: false,
+      // Otherwise a drag-to-pan also selects the page text around the chart.
+      preventDefaultMouseMove: true
+    }
+  ];
+}
 
 /** The default line colour — the reference's blue, legible in both themes. */
 const PRICE_COLOR = '#3b82f6';
@@ -136,12 +161,13 @@ export function buildPriceVsOiOption(input: PriceVsOiInput, theme: ChartTheme): 
   const pad = Math.max((last - first) * RIGHT_PAD, 2);
   // The left edge: the whole session, or the last N trading minutes.
   const min = input.windowMinutes != null ? Math.max(first, last - input.windowMinutes) : first;
+  const max = last + pad;
 
   const latestPrice = [...price].reverse().find((value) => value != null) ?? null;
 
   return {
     backgroundColor: 'transparent',
-    ...(input.zoomable ? { dataZoom: TIME_ZOOM } : {}),
+    ...(input.zoomable ? { dataZoom: timeZoom({ start: min, end: max }) } : {}),
     // The right gutter used to hold the price pill, which hung outside the plot
     // and landed on the OI axis's own tick labels — a left-axis number sitting
     // on the right axis's scale. The pill now sits inside the frame (see
@@ -171,8 +197,10 @@ export function buildPriceVsOiOption(input: PriceVsOiInput, theme: ChartTheme): 
     },
     xAxis: {
       type: 'value',
-      min,
-      max: last + pad,
+      // Bounded by `dataZoom` when the chart is zoomable, and pinned here when it
+      // is not. A pinned axis WINS over `dataZoom`: fixing both is what made the
+      // wheel and the axis drag move nothing at all.
+      ...(input.zoomable ? {} : { min, max }),
       axisLine: { lineStyle: { color: theme.grid } },
       axisTick: { show: false },
       splitLine: { show: true, lineStyle: { color: withAlpha(theme.grid, 0.4), type: 'solid' } },

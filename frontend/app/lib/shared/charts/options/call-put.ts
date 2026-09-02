@@ -47,16 +47,40 @@ export interface CallPutInput {
   windowMinutes?: number | undefined;
 }
 
-/** The shared time-axis zoom — Shift+wheel to zoom, drag to pan. See price-vs-oi.ts. */
-const TIME_ZOOM = [
-  {
-    type: 'inside' as const,
-    filterMode: 'none' as const,
-    zoomOnMouseWheel: 'shift' as const,
-    moveOnMouseMove: true,
-    moveOnMouseWheel: false
-  }
-];
+/**
+ * The time-axis zoom: wheel over the plot to scale the window, drag inside it to
+ * pan, and drag the clock strip under the plot to stretch or squeeze the window
+ * against its right edge (see `installAxisDrag` in `use-echart.ts`).
+ *
+ * The wheel zooms without a modifier. It used to need Shift — safer on a page of
+ * six stacked charts, since a plain wheel over one of them no longer scrolls the
+ * page — but a modifier nobody discovers is the same as no zoom at all, and this
+ * is how every charting tool a trader already uses behaves. The page still
+ * scrolls from the gaps, the headers and the sidebar; only the plot rectangle
+ * itself takes the wheel.
+ *
+ * `filterMode: 'none'`: zooming must scale the axis, never drop the points
+ * outside it, or the lines would be redrawn from a truncated series and their
+ * ends would move as you zoom.
+ */
+function timeZoom(window: { start: number; end: number }) {
+  return [
+    {
+      type: 'inside' as const,
+      filterMode: 'none' as const,
+      // Both charts carry two y axes; left to guess, the zoom binds the wrong
+      // one and the wheel moves nothing.
+      xAxisIndex: 0,
+      startValue: window.start,
+      endValue: window.end,
+      zoomOnMouseWheel: true,
+      moveOnMouseMove: true,
+      moveOnMouseWheel: false,
+      // Otherwise a drag-to-pan also selects the page text around the chart.
+      preventDefaultMouseMove: true
+    }
+  ];
+}
 
 // A hair of blank track past the newest point — just enough that the end-pill
 // floats clear of the frame, no dead gutter.
@@ -112,6 +136,7 @@ export function buildCallPutOption(input: CallPutInput, theme: ChartTheme): ECha
   const pad = Math.max((last - first) * RIGHT_PAD, 2);
   // The left edge: the whole session, or the last N trading minutes.
   const min = input.windowMinutes != null ? Math.max(first, last - input.windowMinutes) : first;
+  const max = last + pad;
 
   // The right gutter holds only the end-pills, so size it to the actual pill
   // text — a 3-digit price needs far less than a "62.84L" OI. Fixed at 72 it
@@ -173,7 +198,7 @@ export function buildCallPutOption(input: CallPutInput, theme: ChartTheme): ECha
 
   return {
     backgroundColor: 'transparent',
-    ...(input.zoomable ? { dataZoom: TIME_ZOOM } : {}),
+    ...(input.zoomable ? { dataZoom: timeZoom({ start: min, end: max }) } : {}),
     // Trimmed to the minimum each edge needs — the pills (and the PCR axis when
     // shown) on the right, the tick labels elsewhere via `containLabel` — so the
     // plot itself takes the whole panel rather than sitting in a frame of gutter.
@@ -202,8 +227,10 @@ export function buildCallPutOption(input: CallPutInput, theme: ChartTheme): ECha
     },
     xAxis: {
       type: 'value',
-      min,
-      max: last + pad,
+      // Bounded by `dataZoom` when the chart is zoomable, and pinned here when it
+      // is not. A pinned axis WINS over `dataZoom`: fixing both is what made the
+      // wheel and the axis drag move nothing at all.
+      ...(input.zoomable ? {} : { min, max }),
       axisLine: { lineStyle: { color: theme.grid } },
       axisTick: { show: false },
       splitLine: { show: true, lineStyle: { color: withAlpha(theme.grid, 0.4), type: 'solid' } },

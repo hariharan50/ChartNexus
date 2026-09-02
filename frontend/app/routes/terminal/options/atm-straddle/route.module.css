@@ -46,6 +46,13 @@
   min-height: 0;
 }
 
+/* Tall enough that the plot, not its chrome, is what the panel is mostly made
+   of: the shapes this chart is for — the straddle bleeding off against the
+   future — need vertical room to be visible at all. */
+.main > .panel {
+  min-height: 34rem;
+}
+
 .panel {
   border: 1px solid var(--mc-border);
   border-radius: var(--mc-radius-lg);
@@ -323,15 +330,38 @@
 }
 
 /* -- chart panel top -- */
+/* Title, mode toggle, the indicator button and the series legend all sit on one
+   line, with the live status pushed to the far end. They were two stacked rows,
+   which cost ~40px of plot height and read as two unrelated toolbars —
+   everything here is the same kind of thing, what the chart is showing. */
 .chart-top {
   display: flex;
   align-items: center;
   gap: var(--mc-space-3);
-  flex-wrap: wrap;
   margin-bottom: var(--mc-space-3);
+  padding-bottom: var(--mc-space-3);
+  border-bottom: 1px solid var(--mc-border);
+}
+
+/* Wraps within itself on a narrow panel, so the live status keeps the first
+   line rather than being pushed under the legend — the least important thing in
+   the row is what a flat wrapping list dropped onto a line of its own. */
+.chart-top-left {
+  flex: 1 1 auto;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--mc-space-3);
+  row-gap: var(--mc-space-2);
 }
 
 .chart-top .p-title {
+  margin: 0;
+}
+
+/* Inside the header the legend is one more inline group, not a row of its own. */
+.chart-top .legend {
   margin: 0;
 }
 
@@ -408,7 +438,26 @@
   cursor: pointer;
 }
 
+/* Matches the Price vs OI panel's control of the same name. */
+.zoom-reset {
+  padding: 0.25rem 0.5rem;
+  border: 1px solid var(--mc-border);
+  border-radius: var(--mc-radius-sm);
+  background: var(--mc-surface-raised);
+  color: var(--mc-text-muted);
+  font-size: var(--mc-text-xs);
+  font-weight: 600;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.zoom-reset:hover {
+  border-color: var(--mc-border-strong);
+  color: var(--mc-text);
+}
+
 .chart-top-right {
+  flex: 0 0 auto;
   margin-left: auto;
   display: inline-flex;
   align-items: center;
@@ -522,12 +571,12 @@
    resolved to 100% of an auto-height parent, i.e. nothing. */
 .panel .chart {
   flex: 1;
-  min-height: 20rem;
+  min-height: 26rem;
   height: auto;
 }
 
 .caption {
-  margin: var(--mc-space-3) 0 0;
+  margin: var(--mc-space-2) 0 0;
   font-size: var(--mc-text-xs);
   color: var(--mc-text-subtle);
 }

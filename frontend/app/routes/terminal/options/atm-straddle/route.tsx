@@ -42,6 +42,16 @@ import type { Route } from './+types/route';
 
 export const meta: Route.MetaFunction = () => [{ title: 'ATM Straddle Chart · Options Lab' }];
 
+/**
+ * Blank margin right of the straddle axis labels.
+ *
+ * The shared option's 96px default is sized for value pills that hang *outside*
+ * the plot. This chart's pill sits inside it — the axis keeps a blank track past
+ * the newest point, wider than the tag — so the default left a finger-wide empty
+ * column between the axis labels and the panel border on a full-width chart.
+ */
+const CHART_RIGHT_GUTTER = 16;
+
 const STRADDLE_COLOR = '#3b82f6';
 const SMA_COLOR = '#f59e0b';
 const EMA_COLOR = '#a855f7';
@@ -76,6 +86,10 @@ export default function AtmStraddleChart() {
   });
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [settingsOpen, setSettingsOpen] = useState(false);
+  // Bumped by Reset zoom: it feeds `resetKey`, and a rebuild is what re-applies
+  // the option's own window — the merge path deliberately leaves the reader's
+  // zoom alone (see `use-echart.ts`).
+  const [zoomNonce, setZoomNonce] = useState(0);
 
   const theme = useChartTheme();
   const instrument = OI_INSTRUMENTS[instIdx] ?? OI_INSTRUMENTS[0]!;
@@ -155,7 +169,9 @@ export default function AtmStraddleChart() {
         formatValue: fmtStraddle,
         formatPrice: fmtPrice,
         valueAxisName: 'Straddle',
-        showFutures: showFuture
+        showFutures: showFuture,
+        rightGutter: CHART_RIGHT_GUTTER,
+        zoomable: true
       },
       theme
     );
@@ -358,78 +374,113 @@ export default function AtmStraddleChart() {
           <div className={s.main}>
             <section className={s.panel}>
               <div className={s.chartTop}>
-                <h2 className={s.pTitle}>
-                  <span className={s.ico} aria-hidden="true">
-                    <IconChart />
-                  </span>{' '}
-                  Straddle Chart
-                </h2>
+                <div className={s.chartTopLeft}>
+                  <h2 className={s.pTitle}>
+                    <span className={s.ico} aria-hidden="true">
+                      <IconChart />
+                    </span>{' '}
+                    Straddle Chart
+                  </h2>
 
-                <div className={s.viewToggle} role="tablist" aria-label="Chart mode">
-                  <button
-                    type="button"
-                    role="tab"
-                    aria-selected={!drawing}
-                    className={cx(s.seg, !drawing && s.active)}
-                    onClick={() => setDrawing(false)}
-                  >
-                    Simple
-                  </button>
-                  <button
-                    type="button"
-                    role="tab"
-                    aria-selected={false}
-                    className={cx(s.seg, s.disabled)}
-                    disabled
-                    title="Drawing tools — coming soon"
-                  >
-                    Drawing
-                  </button>
-                </div>
+                  <div className={s.viewToggle} role="tablist" aria-label="Chart mode">
+                    <button
+                      type="button"
+                      role="tab"
+                      aria-selected={!drawing}
+                      className={cx(s.seg, !drawing && s.active)}
+                      onClick={() => setDrawing(false)}
+                    >
+                      Simple
+                    </button>
+                    <button
+                      type="button"
+                      role="tab"
+                      aria-selected={false}
+                      className={cx(s.seg, s.disabled)}
+                      disabled
+                      title="Drawing tools — coming soon"
+                    >
+                      Drawing
+                    </button>
+                  </div>
 
-                <div className={s.settings} ref={settingsWrap}>
-                  <button
-                    type="button"
-                    className={s.settingsBtn}
-                    aria-expanded={settingsOpen}
-                    onClick={() => setSettingsOpen((v) => !v)}
-                  >
-                    ⚙ Add Indicator / Settings
-                  </button>
-                  {settingsOpen ? (
-                    <div className={s.popover}>
-                      <p className={s.popTitle}>Indicators</p>
-                      <Check
-                        label={`SMA ${SMA_PERIOD}`}
-                        on={indicators.sma}
-                        onToggle={() => setIndicators((i) => ({ ...i, sma: !i.sma }))}
-                      />
-                      <Check
-                        label={`EMA ${EMA_PERIOD}`}
-                        on={indicators.ema}
-                        onToggle={() => setIndicators((i) => ({ ...i, ema: !i.ema }))}
-                      />
-                      <Check
-                        label={`Bollinger ${BB_PERIOD}·${BB_K}`}
-                        on={indicators.bollinger}
-                        onToggle={() => setIndicators((i) => ({ ...i, bollinger: !i.bollinger }))}
-                      />
-                      <p className={s.popTitle}>Chart</p>
-                      <Check
-                        label="Show Future"
-                        on={showFuture}
-                        onToggle={() => setShowFuture((v) => !v)}
-                      />
-                      <Check
-                        label="Area fill"
-                        on={areaFill}
-                        onToggle={() => setAreaFill((v) => !v)}
-                      />
-                    </div>
-                  ) : null}
+                  <div className={s.settings} ref={settingsWrap}>
+                    <button
+                      type="button"
+                      className={s.settingsBtn}
+                      aria-expanded={settingsOpen}
+                      onClick={() => setSettingsOpen((v) => !v)}
+                    >
+                      ⚙ Add Indicator / Settings
+                    </button>
+                    {settingsOpen ? (
+                      <div className={s.popover}>
+                        <p className={s.popTitle}>Indicators</p>
+                        <Check
+                          label={`SMA ${SMA_PERIOD}`}
+                          on={indicators.sma}
+                          onToggle={() => setIndicators((i) => ({ ...i, sma: !i.sma }))}
+                        />
+                        <Check
+                          label={`EMA ${EMA_PERIOD}`}
+                          on={indicators.ema}
+                          onToggle={() => setIndicators((i) => ({ ...i, ema: !i.ema }))}
+                        />
+                        <Check
+                          label={`Bollinger ${BB_PERIOD}·${BB_K}`}
+                          on={indicators.bollinger}
+                          onToggle={() => setIndicators((i) => ({ ...i, bollinger: !i.bollinger }))}
+                        />
+                        <p className={s.popTitle}>Chart</p>
+                        <Check
+                          label="Show Future"
+                          on={showFuture}
+                          onToggle={() => setShowFuture((v) => !v)}
+                        />
+                        <Check
+                          label="Area fill"
+                          on={areaFill}
+                          onToggle={() => setAreaFill((v) => !v)}
+                        />
+                      </div>
+                    ) : null}
+                  </div>
+
+                  <div className={s.legend}>
+                    <span className={cx(s.entry, s.readonly)}>
+                      <span className={s.swatch} style={{ background: STRADDLE_COLOR }} />
+                      {plot.label}
+                    </span>
+                    <button
+                      type="button"
+                      className={cx(s.entry, !showFuture && s.off)}
+                      aria-pressed={showFuture}
+                      onClick={() => setShowFuture((v) => !v)}
+                    >
+                      <span className={s.dash} aria-hidden="true" />
+                      Future
+                    </button>
+                    {indicators.sma ? (
+                      <LegendTag label={`SMA ${SMA_PERIOD}`} color={SMA_COLOR} />
+                    ) : null}
+                    {indicators.ema ? (
+                      <LegendTag label={`EMA ${EMA_PERIOD}`} color={EMA_COLOR} />
+                    ) : null}
+                    {indicators.bollinger ? (
+                      <LegendTag label={`Bollinger ${BB_PERIOD}·${BB_K}`} color={BAND_COLOR} />
+                    ) : null}
+                  </div>
                 </div>
 
                 <div className={s.chartTopRight}>
+                  <button
+                    type="button"
+                    className={s.zoomReset}
+                    onClick={() => setZoomNonce((n) => n + 1)}
+                    title="Back to the whole session"
+                  >
+                    ⤢ Reset zoom
+                  </button>
                   <span className={cx(s.live, isStale && s.stale)}>
                     <span
                       className={cx(s.dot, dataMode === 'live' && query.isFetching && s.pulse)}
@@ -463,37 +514,12 @@ export default function AtmStraddleChart() {
                 </div>
               </div>
 
-              <div className={s.legend}>
-                <span className={cx(s.entry, s.readonly)}>
-                  <span className={s.swatch} style={{ background: STRADDLE_COLOR }} />
-                  {plot.label}
-                </span>
-                <button
-                  type="button"
-                  className={cx(s.entry, !showFuture && s.off)}
-                  aria-pressed={showFuture}
-                  onClick={() => setShowFuture((v) => !v)}
-                >
-                  <span className={s.dash} aria-hidden="true" />
-                  Future
-                </button>
-                {indicators.sma ? (
-                  <LegendTag label={`SMA ${SMA_PERIOD}`} color={SMA_COLOR} />
-                ) : null}
-                {indicators.ema ? (
-                  <LegendTag label={`EMA ${EMA_PERIOD}`} color={EMA_COLOR} />
-                ) : null}
-                {indicators.bollinger ? (
-                  <LegendTag label={`Bollinger ${BB_PERIOD}·${BB_K}`} color={BAND_COLOR} />
-                ) : null}
-              </div>
-
               {plot.timestamps.length === 0 || option === null ? (
                 <p className={s.empty}>No captures recorded for this session yet.</p>
               ) : (
                 <EChart
                   option={option}
-                  resetKey={`${selection}-${timeframe}-${showFuture}-${areaFill}-${indicators.sma}-${indicators.ema}-${indicators.bollinger}`}
+                  resetKey={`${selection}-${timeframe}-${showFuture}-${areaFill}-${indicators.sma}-${indicators.ema}-${indicators.bollinger}-${zoomNonce}`}
                   className={s.chart}
                 />
               )}
@@ -502,7 +528,9 @@ export default function AtmStraddleChart() {
                 {selection === 'auto'
                   ? 'ATM Straddle is the call + put premium at each capture’s at-the-money strike — it rolls as the money moves through the day.'
                   : `Showing the ${selection} straddle (call + put premium) held fixed at that strike through the session.`}{' '}
-                Future is the tradable current-month future on the left axis.
+                Future is the tradable current-month future on the left axis. Scroll over the plot
+                to zoom the clock, drag inside it to pan, or drag the time axis itself to stretch
+                and squeeze the window.
               </p>
             </section>
           </div>

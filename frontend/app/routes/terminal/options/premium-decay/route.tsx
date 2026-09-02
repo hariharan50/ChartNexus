@@ -57,6 +57,16 @@ import type { Route } from './+types/route';
 
 export const meta: Route.MetaFunction = () => [{ title: 'Premium Decay · Options Lab' }];
 
+/**
+ * The `echarts.connect` group the two stacked charts share.
+ *
+ * They plot the same session against the same clock, one above the other, so a
+ * zoom or a crosshair on either has to be a zoom or a crosshair on both — a
+ * window that reads 11:00–14:00 on top and the whole day underneath invites
+ * exactly the comparison it cannot support.
+ */
+const CHART_GROUP = 'premium-decay';
+
 const ATM_SPAN_MAX = 20;
 const FIXED_SPAN_MAX = 20;
 
@@ -83,6 +93,10 @@ export default function PremiumDecay() {
   const [showCe, setShowCe] = useState(true);
   const [showPe, setShowPe] = useState(true);
   const [sidebarOpen, setSidebarOpen] = useState(true);
+  // Bumped by Reset zoom: it feeds `resetKey`, and a rebuild is what re-applies
+  // the option's own window — the merge path deliberately leaves the reader's
+  // zoom alone (see `use-echart.ts`).
+  const [zoomNonce, setZoomNonce] = useState(0);
 
   // Strike selection — the three mutually-exclusive windows.
   const [mode, setMode] = useState<SelectionMode>('atm');
@@ -219,7 +233,8 @@ export default function PremiumDecay() {
         valueAxisName: 'Premium Δ',
         referenceLine: { value: 0, label: '0' },
         showFutures: showFuture,
-        rightGutter: CHART_RIGHT_GUTTER
+        rightGutter: CHART_RIGHT_GUTTER,
+        zoomable: true
       },
       theme
     );
@@ -239,7 +254,8 @@ export default function PremiumDecay() {
         formatPrice: fmtPrice,
         valueAxisName: 'Premium',
         showFutures: showFuture,
-        rightGutter: CHART_RIGHT_GUTTER
+        rightGutter: CHART_RIGHT_GUTTER,
+        zoomable: true
       },
       theme
     );
@@ -522,6 +538,14 @@ export default function PremiumDecay() {
                 <div className={s.chartTopRight}>
                   <button
                     type="button"
+                    className={s.zoomReset}
+                    onClick={() => setZoomNonce((n) => n + 1)}
+                    title="Back to the whole session — both charts"
+                  >
+                    ⤢ Reset zoom
+                  </button>
+                  <button
+                    type="button"
                     className={cx(s.switch, runningAvg && s.on)}
                     role="switch"
                     aria-checked={runningAvg}
@@ -574,7 +598,8 @@ export default function PremiumDecay() {
               ) : (
                 <EChart
                   option={decayOption}
-                  resetKey={`${mode}-${timeframe}-${baseline}-${runningAvg}-${showFuture}-${strikeCount}`}
+                  resetKey={`${mode}-${timeframe}-${baseline}-${runningAvg}-${showFuture}-${strikeCount}-${zoomNonce}`}
+                  group={CHART_GROUP}
                   className={s.chart}
                 />
               )}
@@ -585,7 +610,9 @@ export default function PremiumDecay() {
                   : derived.prevMissing
                     ? 'No prior session archived for the previous-close reference — showing change since today’s open instead.'
                     : 'Change in total call and put premium over the window since the previous session’s close — the overnight gap plus today’s move.'}{' '}
-                Future is the current-month future on the left axis.
+                Future is the current-month future on the left axis. Scroll over either plot to zoom
+                the clock, drag inside it to pan, or drag the time axis itself to stretch and
+                squeeze the window — both charts move together.
               </p>
             </section>
 
@@ -632,7 +659,8 @@ export default function PremiumDecay() {
               ) : (
                 <EChart
                   option={cvpOption}
-                  resetKey={`${mode}-${timeframe}-${runningAvg}-${showFuture}-${strikeCount}`}
+                  resetKey={`${mode}-${timeframe}-${runningAvg}-${showFuture}-${strikeCount}-${zoomNonce}`}
+                  group={CHART_GROUP}
                   className={s.chart}
                 />
               )}

@@ -434,8 +434,9 @@ export default function PriceVsOi() {
 
                 <p className={s.hint}>
                   All panels move together: pick a <strong>Time Range</strong> above, hover any
-                  panel for a shared crosshair, drag to pan, or hold{' '}
-                  <kbd className={s.kbd}>Shift</kbd> + scroll to zoom.
+                  panel for a shared crosshair, <strong>scroll</strong> over a plot to zoom the
+                  clock, drag inside it to pan, or drag the <strong>time axis</strong> itself to
+                  stretch and squeeze the window.
                 </p>
               </section>
             </aside>

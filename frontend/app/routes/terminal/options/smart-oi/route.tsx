@@ -62,6 +62,10 @@ export default function SmartOi() {
   const [custom, setCustom] = useState({ low: '', high: '' });
 
   const [replay, setReplay] = useState(false);
+  // Bumped by any panel's Reset zoom. Both side charts share a `group` and so
+  // share a window; rebuilding them together is what keeps the reset from
+  // clearing one and leaving the other zoomed in.
+  const [zoomEpoch, setZoomEpoch] = useState(0);
   const [head, setHead] = useState(0);
   const [playing, setPlaying] = useState(false);
   const [speed, setSpeed] = useState<ReplaySpeed>(REPLAY_SPEEDS[1]);
@@ -318,6 +322,9 @@ export default function SmartOi() {
             head={frameHead}
             empty="No option-chain captures recorded for this session yet."
             compact
+            zoomable
+            zoomEpoch={zoomEpoch}
+            onResetZoom={() => setZoomEpoch((n) => n + 1)}
           />
           <SeriesChart
             title="Put-Call Ratios"
@@ -334,6 +341,9 @@ export default function SmartOi() {
             head={frameHead}
             empty="No option-chain captures recorded for this session yet."
             compact
+            zoomable
+            zoomEpoch={zoomEpoch}
+            onResetZoom={() => setZoomEpoch((n) => n + 1)}
           />
         </div>
       </div>

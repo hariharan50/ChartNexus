@@ -48,6 +48,25 @@ interface Props {
   empty?: string;
   /** Give the plot the width back on a narrow panel — see `buildMultiSeriesOption`. */
   compact?: boolean | undefined;
+  /**
+   * Let the reader work the time axis: wheel to zoom, drag inside the plot to
+   * pan, drag the clock strip to stretch or squeeze the window. Adds a Reset
+   * zoom control beside the legend.
+   *
+   * Opt-in: a chart that takes the wheel stops the page scrolling over it, which
+   * is only worth it where people read into the chart rather than glance at it.
+   */
+  zoomable?: boolean | undefined;
+  /**
+   * Reset-zoom wiring, owned by the page rather than the panel.
+   *
+   * Panels sharing a `group` share a window, so a reset has to land on all of
+   * them: a rebuild only re-applies the option's own window to the chart being
+   * rebuilt, and the group syncs actions, not `setOption`. The page bumps
+   * `zoomEpoch` and every panel rebuilds together.
+   */
+  zoomEpoch?: number | undefined;
+  onResetZoom?: (() => void) | undefined;
 }
 
 export default function SeriesChart({
@@ -64,7 +83,10 @@ export default function SeriesChart({
   group,
   head,
   empty,
-  compact
+  compact,
+  zoomable,
+  zoomEpoch = 0,
+  onResetZoom
 }: Props) {
   const [hidden, setHidden] = useState<Set<string>>(() => new Set());
   const [futuresOn, setFuturesOn] = useState(true);
@@ -102,7 +124,8 @@ export default function SeriesChart({
           valueAxisName,
           referenceLine,
           showFutures: futuresOn,
-          compact
+          compact,
+          zoomable
         },
         theme
       ),
@@ -116,6 +139,7 @@ export default function SeriesChart({
       referenceLine,
       futuresOn,
       compact,
+      zoomable,
       theme
     ]
   );
@@ -157,12 +181,27 @@ export default function SeriesChart({
             </button>
           );
         })}
+        {zoomable && onResetZoom ? (
+          <button
+            type="button"
+            className={s.zoomReset}
+            onClick={onResetZoom}
+            title="Back to the whole session — every panel"
+          >
+            ⤢ Reset zoom
+          </button>
+        ) : null}
       </div>
 
       {shownTimes.length === 0 ? (
         <p className={s.empty}>{empty ?? 'No intraday history recorded yet.'}</p>
       ) : (
-        <EChart option={option} className={s.chart} group={group} />
+        <EChart
+          option={option}
+          className={s.chart}
+          group={group}
+          resetKey={zoomable ? `zoom-${zoomEpoch}` : undefined}
+        />
       )}
     </section>
   );
