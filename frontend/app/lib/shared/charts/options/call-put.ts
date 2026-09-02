@@ -125,9 +125,11 @@ export function buildCallPutOption(input: CallPutInput, theme: ChartTheme): ECha
     lpe != null ? formatAbs(lpe).length : 0,
     3
   );
-  // ~6.5px a glyph + the pill padding and its offset. The PCR axis, when shown,
-  // needs its own room on the right instead.
-  const rightGutter = withPcr ? 46 : Math.min(54, Math.round(pillChars * 6.5) + 12);
+  // ~6.5px a glyph + the pill padding and its offset. With the PCR axis shown
+  // there is nothing to reserve: the pills move inside the frame (they would
+  // otherwise overprint the PCR tick labels), and `containLabel` covers those
+  // labels itself.
+  const rightGutter = withPcr ? 12 : Math.min(54, Math.round(pillChars * 6.5) + 12);
 
   const yAxes: Record<string, unknown>[] = [
     {
@@ -165,8 +167,8 @@ export function buildCallPutOption(input: CallPutInput, theme: ChartTheme): ECha
   }
 
   const series: Record<string, unknown>[] = [];
-  if (showCe) series.push(legSeries('ce', xs, ce, formatAbs));
-  if (showPe) series.push(legSeries('pe', xs, pe, formatAbs));
+  if (showCe) series.push(legSeries('ce', xs, ce, formatAbs, withPcr));
+  if (showPe) series.push(legSeries('pe', xs, pe, formatAbs, withPcr));
   if (withPcr) series.push(pcrSeries(xs, pcr!.values, theme));
 
   return {
@@ -210,6 +212,13 @@ export function buildCallPutOption(input: CallPutInput, theme: ChartTheme): ECha
         fontSize: 11,
         margin: 12,
         hideOverlap: true,
+        // The first and last labels are pinned inside the axis instead of being
+        // centred on their ticks, where half of each hangs past the plot.
+        // `containLabel` budgets for that overhang, so a centred end label
+        // reserved ~28px of blank panel on each side — on a 2-across grid of six
+        // charts that is most of a chart's worth of dead space.
+        alignMinLabel: 'left',
+        alignMaxLabel: 'right',
         formatter: (value: number) => xToClock(value)
       }
     },
@@ -223,7 +232,9 @@ function legSeries(
   id: 'ce' | 'pe',
   xs: number[],
   leg: CallPutLeg,
-  formatAbs: (value: number) => string
+  formatAbs: (value: number) => string,
+  /** Draw the pill inside the frame — the PCR axis owns the space outside it. */
+  pillInside: boolean
 ) {
   return {
     id,
@@ -251,7 +262,9 @@ function legSeries(
       borderRadius: 3,
       fontSize: 10,
       fontWeight: 600,
-      distance: 4,
+      // Anchored at the last point: hanging off it by default, tucked back
+      // inside the frame when the right axis needs the outside.
+      ...(pillInside ? { align: 'right' as const, distance: -4 } : { distance: 4 }),
       formatter: (params: { dataIndex: number }) => {
         const value = leg.abs[params.dataIndex];
         return value == null ? '' : formatAbs(value);

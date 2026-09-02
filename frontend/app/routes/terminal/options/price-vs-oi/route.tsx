@@ -626,16 +626,21 @@ function ChartPanel({
 }) {
   return (
     <section className={s.panel}>
+      {/* Title and legend are the same kind of thing — what this panel is
+          showing — so they share one row, and only the zoom/live badge is set
+          apart at the far end. */}
       <div className={s.chartTop}>
-        <h2 className={s.pTitle}>
-          <span className={s.ico} aria-hidden="true">
-            <IconChart />
-          </span>{' '}
-          {title}
-        </h2>
+        <div className={s.chartTopLeft}>
+          <h2 className={s.pTitle}>
+            <span className={s.ico} aria-hidden="true">
+              <IconChart />
+            </span>{' '}
+            {title}
+          </h2>
+          <div className={s.legend}>{legend}</div>
+        </div>
         {badge ? <div className={s.chartTopRight}>{badge}</div> : null}
       </div>
-      <div className={s.legend}>{legend}</div>
       {option == null ? (
         <p className={s.empty}>No captures recorded for this session yet.</p>
       ) : (

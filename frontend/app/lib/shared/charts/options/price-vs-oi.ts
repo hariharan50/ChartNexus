@@ -142,7 +142,12 @@ export function buildPriceVsOiOption(input: PriceVsOiInput, theme: ChartTheme): 
   return {
     backgroundColor: 'transparent',
     ...(input.zoomable ? { dataZoom: TIME_ZOOM } : {}),
-    grid: { left: 2, right: 48, top: 16, bottom: 14, containLabel: true },
+    // The right gutter used to hold the price pill, which hung outside the plot
+    // and landed on the OI axis's own tick labels — a left-axis number sitting
+    // on the right axis's scale. The pill now sits inside the frame (see
+    // `priceSeries`), so all this reserves is the panel's own breathing room;
+    // `containLabel` adds the OI labels on top.
+    grid: { left: 2, right: 12, top: 16, bottom: 14, containLabel: true },
     tooltip: {
       trigger: 'axis',
       axisPointer: {
@@ -176,6 +181,13 @@ export function buildPriceVsOiOption(input: PriceVsOiInput, theme: ChartTheme): 
         fontSize: 11,
         margin: 12,
         hideOverlap: true,
+        // The first and last labels are pinned inside the axis instead of being
+        // centred on their ticks, where half of each hangs past the plot.
+        // `containLabel` budgets for that overhang, so a centred end label
+        // reserved ~28px of blank panel on each side — on a 2-across grid of six
+        // charts that is most of a chart's worth of dead space.
+        alignMinLabel: 'left',
+        alignMaxLabel: 'right',
         formatter: (value: number) => xToClock(value)
       }
     },
@@ -252,7 +264,10 @@ function priceSeries(
             lineStyle: { color: withAlpha(color, 0.35), type: 'dashed', width: 1 },
             label: {
               show: true,
-              position: 'end',
+              // Inside the frame, above the marker: outside it, the pill
+              // overprinted the OI axis's tick labels and forced a wide dead
+              // gutter to sit in.
+              position: 'insideEndTop',
               distance: 0,
               formatter: formatPrice(latest),
               backgroundColor: color,
