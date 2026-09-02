@@ -45,6 +45,13 @@ export interface SeriesLine {
    * straddle — reads better as a filled band, which is what the reference draws.
    */
   fill?: boolean;
+  /**
+   * Where the fill band closes to on the value axis. Left undefined the area
+   * runs to the axis floor (the straddle default); set to `0` for a signed
+   * series that should fill toward a zero baseline, so a positive stretch bands
+   * upward and a negative one downward — the Premium Decay change chart.
+   */
+  fillOrigin?: number | undefined;
 }
 
 export interface MultiSeriesInput {
@@ -431,7 +438,16 @@ function contractSeries(xs: number[], line: SeriesLine, formatValue: (value: num
     itemStyle: { color: line.color },
     // A faint fill under the line when the caller asks for one. Left off the
     // object entirely otherwise, so a stack of lines is never quietly banded.
-    ...(line.fill ? { areaStyle: { color: withAlpha(line.color, 0.18) } } : {}),
+    // `origin` closes the band to a fixed y (e.g. 0) rather than the axis floor,
+    // so a signed change series fills up above zero and down below it.
+    ...(line.fill
+      ? {
+          areaStyle: {
+            color: withAlpha(line.color, 0.18),
+            ...(line.fillOrigin !== undefined ? { origin: line.fillOrigin } : {})
+          }
+        }
+      : {}),
     // Hovering one line fades the rest. With five contracts crossing repeatedly
     // this is the difference between a readable chart and a tangle.
     emphasis: { focus: 'series', lineStyle: { width: 3 } },

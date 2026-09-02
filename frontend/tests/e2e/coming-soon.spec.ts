@@ -78,11 +78,6 @@ const PAGES: Array<{ path: string; heading: string; title?: string }> = [
     heading: 'PE-CE Difference',
     title: 'PE-CE Difference · MarketCompass'
   },
-  {
-    path: '/options/premium-decay',
-    heading: 'Premium Decay',
-    title: 'Premium Decay · MarketCompass'
-  },
   { path: '/options/price-vs-oi', heading: 'Price vs OI', title: 'Price vs OI · MarketCompass' },
   { path: '/options/smart-oi', heading: 'Smart OI', title: 'Smart OI · MarketCompass' },
   {
