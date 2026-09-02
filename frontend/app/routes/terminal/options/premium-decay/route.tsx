@@ -60,6 +60,18 @@ export const meta: Route.MetaFunction = () => [{ title: 'Premium Decay · Option
 const ATM_SPAN_MAX = 20;
 const FIXED_SPAN_MAX = 20;
 
+/**
+ * Blank margin right of the price axis labels.
+ *
+ * Both charts here run the full width of the page, and the shared option's
+ * 96px default — sized for value pills that hang *outside* the plot — left a
+ * finger-wide empty column between the axis labels and the panel border. These
+ * pills sit inside the plot (the axis keeps a 6% blank track past the newest
+ * point, which is wider than a tag), so all this has to cover is the gap the
+ * panel's own padding would want anyway.
+ */
+const CHART_RIGHT_GUTTER = 16;
+
 export default function PremiumDecay() {
   const [instIdx, setInstIdx] = useState(0);
   const [dataMode, setDataMode] = useState<Mode>('live');
@@ -206,7 +218,8 @@ export default function PremiumDecay() {
         formatPrice: fmtPrice,
         valueAxisName: 'Premium Δ',
         referenceLine: { value: 0, label: '0' },
-        showFutures: showFuture
+        showFutures: showFuture,
+        rightGutter: CHART_RIGHT_GUTTER
       },
       theme
     );
@@ -225,7 +238,8 @@ export default function PremiumDecay() {
         formatValue: fmtPremium,
         formatPrice: fmtPrice,
         valueAxisName: 'Premium',
-        showFutures: showFuture
+        showFutures: showFuture,
+        rightGutter: CHART_RIGHT_GUTTER
       },
       theme
     );
@@ -454,32 +468,55 @@ export default function PremiumDecay() {
             {/* Premium Decay (CE / PE change) */}
             <section className={s.panel}>
               <div className={s.chartTop}>
-                <h2 className={s.pTitle}>
-                  <span className={s.ico} aria-hidden="true">
-                    <IconChart />
-                  </span>{' '}
-                  Premium Decay
-                </h2>
+                <div className={s.chartTopLeft}>
+                  <h2 className={s.pTitle}>
+                    <span className={s.ico} aria-hidden="true">
+                      <IconChart />
+                    </span>{' '}
+                    Premium Decay
+                  </h2>
 
-                <div className={s.viewToggle} role="tablist" aria-label="Baseline">
-                  <button
-                    type="button"
-                    role="tab"
-                    aria-selected={baseline === 'min_close'}
-                    className={cx(s.seg, baseline === 'min_close' && s.active)}
-                    onClick={() => setBaseline('min_close')}
-                  >
-                    1m Close
-                  </button>
-                  <button
-                    type="button"
-                    role="tab"
-                    aria-selected={baseline === 'day_open'}
-                    className={cx(s.seg, baseline === 'day_open' && s.active)}
-                    onClick={() => setBaseline('day_open')}
-                  >
-                    Day Open
-                  </button>
+                  <div className={s.viewToggle} role="tablist" aria-label="Baseline">
+                    <button
+                      type="button"
+                      role="tab"
+                      aria-selected={baseline === 'min_close'}
+                      className={cx(s.seg, baseline === 'min_close' && s.active)}
+                      onClick={() => setBaseline('min_close')}
+                    >
+                      1m Close
+                    </button>
+                    <button
+                      type="button"
+                      role="tab"
+                      aria-selected={baseline === 'day_open'}
+                      className={cx(s.seg, baseline === 'day_open' && s.active)}
+                      onClick={() => setBaseline('day_open')}
+                    >
+                      Day Open
+                    </button>
+                  </div>
+
+                  <div className={s.legend}>
+                    <LegendToggle
+                      label="Future"
+                      dashed
+                      on={showFuture}
+                      onToggle={() => setShowFuture((v) => !v)}
+                    />
+                    <LegendToggle
+                      label="CE Change"
+                      color={CALL_COLOR}
+                      on={showCe}
+                      onToggle={() => setShowCe((v) => !v)}
+                    />
+                    <LegendToggle
+                      label="PE Change"
+                      color={PUT_COLOR}
+                      on={showPe}
+                      onToggle={() => setShowPe((v) => !v)}
+                    />
+                  </div>
                 </div>
 
                 <div className={s.chartTopRight}>
@@ -528,27 +565,6 @@ export default function PremiumDecay() {
                 </div>
               </div>
 
-              <div className={s.legend}>
-                <LegendToggle
-                  label="Future"
-                  dashed
-                  on={showFuture}
-                  onToggle={() => setShowFuture((v) => !v)}
-                />
-                <LegendToggle
-                  label="CE Change"
-                  color={CALL_COLOR}
-                  on={showCe}
-                  onToggle={() => setShowCe((v) => !v)}
-                />
-                <LegendToggle
-                  label="PE Change"
-                  color={PUT_COLOR}
-                  on={showPe}
-                  onToggle={() => setShowPe((v) => !v)}
-                />
-              </div>
-
               {decayOption === null ? (
                 <p className={s.empty}>
                   {strikeCount === 0
@@ -576,33 +592,35 @@ export default function PremiumDecay() {
             {/* Call vs Put Premium (absolute totals) */}
             <section className={s.panel}>
               <div className={s.chartTop}>
-                <h2 className={s.pTitle}>
-                  <span className={s.ico} aria-hidden="true">
-                    <IconChart />
-                  </span>{' '}
-                  Call vs Put Premium
-                </h2>
-              </div>
+                <div className={s.chartTopLeft}>
+                  <h2 className={s.pTitle}>
+                    <span className={s.ico} aria-hidden="true">
+                      <IconChart />
+                    </span>{' '}
+                    Call vs Put Premium
+                  </h2>
 
-              <div className={s.legend}>
-                <LegendToggle
-                  label="Future"
-                  dashed
-                  on={showFuture}
-                  onToggle={() => setShowFuture((v) => !v)}
-                />
-                <LegendToggle
-                  label="CE"
-                  color={CALL_COLOR}
-                  on={showCe}
-                  onToggle={() => setShowCe((v) => !v)}
-                />
-                <LegendToggle
-                  label="PE"
-                  color={PUT_COLOR}
-                  on={showPe}
-                  onToggle={() => setShowPe((v) => !v)}
-                />
+                  <div className={s.legend}>
+                    <LegendToggle
+                      label="Future"
+                      dashed
+                      on={showFuture}
+                      onToggle={() => setShowFuture((v) => !v)}
+                    />
+                    <LegendToggle
+                      label="CE"
+                      color={CALL_COLOR}
+                      on={showCe}
+                      onToggle={() => setShowCe((v) => !v)}
+                    />
+                    <LegendToggle
+                      label="PE"
+                      color={PUT_COLOR}
+                      on={showPe}
+                      onToggle={() => setShowPe((v) => !v)}
+                    />
+                  </div>
+                </div>
               </div>
 
               {cvpOption === null ? (

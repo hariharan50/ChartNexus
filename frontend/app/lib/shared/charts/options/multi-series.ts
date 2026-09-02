@@ -84,6 +84,18 @@ export interface MultiSeriesInput {
    * left most of a narrow side chart blank.
    */
   compact?: boolean | undefined;
+  /**
+   * Override the blank right margin, in pixels, when the default is wrong for
+   * this panel.
+   *
+   * The 96px default budgets for a value pill *outside* the plot. On a chart
+   * whose pills land inside it — the right axis is far enough in that the
+   * end-of-line tag still clears it — that budget is simply a blank column, and
+   * on a full-width panel it is a wide one. `containLabel` adds the right axis's
+   * own tick labels on top of whatever is set here, so this is the gap after the
+   * labels, not before them.
+   */
+  rightGutter?: number | undefined;
 }
 
 /**
@@ -185,7 +197,7 @@ export function buildMultiSeriesOption(
   theme: ChartTheme
 ): EChartsCoreOption {
   const { timestamps, futures, lines, formatValue, formatPrice, valueAxisName } = input;
-  const { referenceLine, showFutures, compact } = input;
+  const { referenceLine, showFutures, compact, rightGutter } = input;
   const axisName = { color: theme.axis, fontSize: 11, fontWeight: 600 as const };
 
   const ms = timestamps.map((iso) => Date.parse(iso));
@@ -212,7 +224,7 @@ export function buildMultiSeriesOption(
     // again, which is what left a third of a narrow side chart blank.
     grid: {
       left: 8,
-      right: compact ? 16 : 96,
+      right: rightGutter ?? (compact ? 16 : 96),
       top: compact ? 28 : 36,
       bottom: 24,
       containLabel: true

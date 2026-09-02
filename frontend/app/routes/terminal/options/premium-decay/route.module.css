@@ -5,6 +5,10 @@
    extended across route directories without hoisting it somewhere neither page
    owns. The blocks below the "-- premium decay specifics --" rule are new. */
 .page {
+  /* Clears the terminal's own sticky nav (4.5rem tall) — a pinned sidebar
+     offset only by the page padding slides under it and loses its first rows. */
+  --sticky-top: calc(4.5rem + var(--mc-space-4));
+
   padding: var(--mc-space-6);
   display: flex;
   flex-direction: column;
@@ -33,20 +37,29 @@
   min-height: 0;
 }
 
-/* The settings panel fills its column. The main column stacks two chart panels,
-   each of which grows to share the height evenly. */
+/* The settings panel is sized by its own content and pinned, rather than
+   stretched to whatever the chart column happens to be: now that the charts are
+   tall enough to scroll, a stretched sidebar would be mostly empty and its
+   controls would scroll away from the chart they are driving. */
 .sidebar > .panel {
   display: flex;
   flex-direction: column;
-  flex: 1;
+  flex: 0 0 auto;
+  position: sticky;
+  top: var(--sticky-top);
   min-height: 0;
 }
 
+/* Tall enough that the plot, not its chrome, is what the panel is mostly made
+   of. Two of these plus the gap overflow a laptop viewport, which is the point:
+   a 1400px-wide chart squeezed into 230px of height reads as a strip, and the
+   shapes these charts are for — a premium curve rolling over, the CE and PE
+   legs crossing — need vertical room to be visible at all. The page scrolls. */
 .main > .panel {
   display: flex;
   flex-direction: column;
   flex: 1;
-  min-height: 22rem;
+  min-height: 30rem;
 }
 
 .panel {
@@ -110,7 +123,7 @@
 
 .restore {
   position: sticky;
-  top: var(--mc-space-6);
+  top: var(--sticky-top);
 }
 
 .p-title {
@@ -242,15 +255,40 @@
 }
 
 /* -- chart panel top -- */
+/* Title, baseline toggle and series legend all sit on one line, with the live
+   status pushed to the far end. They were two stacked rows, which cost ~40px of
+   plot height per panel and read as two unrelated toolbars. Everything here is
+   the same kind of thing — what the chart is showing — so it belongs together,
+   and the row still wraps cleanly on a narrow viewport. */
 .chart-top {
   display: flex;
   align-items: center;
   gap: var(--mc-space-3);
-  flex-wrap: wrap;
   margin-bottom: var(--mc-space-3);
+  padding-bottom: var(--mc-space-3);
+  border-bottom: 1px solid var(--mc-border);
+}
+
+/* What the chart shows, grouped; the live status opposite it stays on the first
+   line whatever happens. Wrapping the header as one flat list instead let the
+   status drop below the legend on a mid-width viewport, which put the least
+   important thing in the row on a line of its own. */
+.chart-top-left {
+  flex: 1 1 auto;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--mc-space-3);
+  row-gap: var(--mc-space-2);
 }
 
 .chart-top .p-title {
+  margin: 0;
+}
+
+/* Inside the header the legend is one more inline group, not a row of its own. */
+.chart-top .legend {
   margin: 0;
 }
 
@@ -274,6 +312,7 @@
 }
 
 .chart-top-right {
+  flex: 0 0 auto;
   margin-left: auto;
   display: inline-flex;
   align-items: center;
@@ -402,12 +441,12 @@
    resolved to 100% of an auto-height parent, i.e. nothing. */
 .panel .chart {
   flex: 1;
-  min-height: 16rem;
+  min-height: 21rem;
   height: auto;
 }
 
 .caption {
-  margin: var(--mc-space-3) 0 0;
+  margin: var(--mc-space-2) 0 0;
   font-size: var(--mc-text-xs);
   color: var(--mc-text-subtle);
 }
