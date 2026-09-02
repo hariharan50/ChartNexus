@@ -182,6 +182,40 @@ class PcrSeriesResponse(_Schema):
         return cls.model_validate(payload)
 
 
+class StrikeSeriesResponse(_Schema):
+    """One strike's price/OI series behind the six Price vs OI charts."""
+
+    instrument_id: str
+    symbol: str
+    expiry_date: str | None
+    lot_size: int | None
+    spot: float
+    atm_strike: float | None
+    # The strike this payload plots, and the ladder the sidebar chooses from.
+    strike: float
+    strikes: list[float]
+    open_ts: str
+    now_ts: str
+    data_quality: str
+    open_is_estimated: bool = False
+    t: list[str]
+    # `None` where a leg was absent from the capture; a genuine 0 print is kept.
+    ce_price: list[float | None]
+    pe_price: list[float | None]
+    ce_oi: list[int | None]
+    pe_oi: list[int | None]
+    ce_oi_change: list[int | None]
+    pe_oi_change: list[int | None]
+    # Call + put price; `None` where either leg was unquoted.
+    straddle: list[float | None]
+    # Per-strike put/call ratio; `None`, never 0, at an empty call-OI denominator.
+    pcr: list[float | None]
+
+    @classmethod
+    def of(cls, payload: dict[str, Any]) -> StrikeSeriesResponse:
+        return cls.model_validate(payload)
+
+
 class GexFrameResponse(_Schema):
     """One capture's gamma profile, plus the levels read off it.
 

@@ -21,6 +21,7 @@ from marketcompass.contexts.options_analytics.api.schemas import (
     PriceOiSeriesResponse,
     SmartOiResponse,
     StraddleSeriesResponse,
+    StrikeSeriesResponse,
     VegaResponse,
 )
 from marketcompass.contexts.options_analytics.application.oi_series_service import (
@@ -332,6 +333,53 @@ async def straddle_series(
         principal.tenant_id, symbol, trade_date=_trade_date(date_)
     )
     response = StraddleSeriesResponse.of(payload)
+    await redis.client.set(cache_key, response.model_dump_json(), ex=_CACHE_TTL_SECONDS)
+    return response
+
+
+@router.get(
+    "/strike-series/{instrument_id}",
+    response_model=StrikeSeriesResponse,
+    summary="One strike's intraday price, OI and OI-change series",
+    description=(
+        "For a single strike: its call and put last price, open interest, day OI "
+        "change, the straddle (call + put price) and the per-strike put/call "
+        "ratio, on one shared time axis, plus the strike ladder for the sidebar. "
+        "Powers the Price vs OI tool's six charts."
+    ),
+    responses={422: {"description": "Unknown instrument"}},
+)
+async def strike_series(
+    request: Request,
+    principal: CurrentPrincipal,
+    services: Services,
+    instrument_id: InstrumentParam,
+    *,
+    strike: Annotated[
+        float | None, Query(gt=0, description="The strike to plot; omit for at-the-money")
+    ] = None,
+    date_: DateParam = None,
+) -> StrikeSeriesResponse:
+    symbol = instrument_id.strip().upper()
+    redis = get_container(request).redis
+    # Keyed by strike as well: it changes the payload, so sharing one entry across
+    # strikes would serve whichever arrived first. "atm" is the omitted default.
+    cache_key = redis.key(
+        "lab:strike-series",
+        str(principal.tenant_id),
+        symbol,
+        "atm" if strike is None else f"{strike:g}",
+        _day_key(date_),
+    )
+
+    cached = await redis.client.get(cache_key)
+    if cached is not None:
+        return StrikeSeriesResponse.model_validate_json(cached)
+
+    payload = await services.strike_series(
+        principal.tenant_id, symbol, strike=strike, trade_date=_trade_date(date_)
+    )
+    response = StrikeSeriesResponse.of(payload)
     await redis.client.set(cache_key, response.model_dump_json(), ex=_CACHE_TTL_SECONDS)
     return response
 

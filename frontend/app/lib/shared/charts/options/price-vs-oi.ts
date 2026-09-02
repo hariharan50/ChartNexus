@@ -21,15 +21,27 @@ export interface PriceVsOiInput {
   timestamps: string[];
   /** Tradable future price at each point, or `null` where none was recorded. */
   price: (number | null)[];
-  /** Total chain open interest at each point. */
-  oi: number[];
+  /** The context line at each point — open interest, or a ratio. `null` breaks it. */
+  oi: (number | null)[];
   formatPrice: (value: number) => string;
   formatOi: (value: number) => string;
   showPrice: boolean;
   showOi: boolean;
+  /**
+   * The solid line's colour and the two axis names.
+   *
+   * The Future-Lab chart this began as is always a blue future against total OI;
+   * the strike-centric Price vs OI tool reuses the same shape for a green CE
+   * price / dotted CE OI, a red PE, and a blue straddle against a dotted PCR, so
+   * the subject colour and both axis titles are caller-supplied. Left undefined
+   * they fall back to the original blue "Price" / "OI".
+   */
+  priceColor?: string | undefined;
+  priceName?: string | undefined;
+  oiName?: string | undefined;
 }
 
-/** The price line's colour — the reference's blue, legible in both themes. */
+/** The default line colour — the reference's blue, legible in both themes. */
 const PRICE_COLOR = '#3b82f6';
 
 /** Blank track past the newest reading, as a share of the plotted span. */
@@ -79,6 +91,9 @@ function pointsOf(xs: number[], values: (number | null)[]): [number, number | nu
 
 export function buildPriceVsOiOption(input: PriceVsOiInput, theme: ChartTheme): EChartsCoreOption {
   const { timestamps, price, oi, formatPrice, formatOi, showPrice, showOi } = input;
+  const priceColor = input.priceColor ?? PRICE_COLOR;
+  const priceName = input.priceName ?? 'Price';
+  const oiName = input.oiName ?? 'OI';
   const axisName = { color: theme.axis, fontSize: 11, fontWeight: 600 as const };
 
   const ms = timestamps.map((iso) => Date.parse(iso));
@@ -105,7 +120,8 @@ export function buildPriceVsOiOption(input: PriceVsOiInput, theme: ChartTheme): 
           formatter: (params: { value: number | string }) => xToClock(Number(params.value))
         }
       },
-      formatter: (params: unknown) => tooltipHtml(params, ms, theme, formatPrice, formatOi),
+      formatter: (params: unknown) =>
+        tooltipHtml(params, ms, theme, priceColor, formatPrice, formatOi),
       appendTo: 'body',
       backgroundColor: theme.tooltipBg,
       borderColor: theme.grid,
@@ -132,7 +148,7 @@ export function buildPriceVsOiOption(input: PriceVsOiInput, theme: ChartTheme): 
         type: 'value',
         scale: true,
         position: 'left',
-        name: 'Price',
+        name: priceName,
         nameLocation: 'end',
         nameGap: 14,
         nameTextStyle: { ...axisName, align: 'left' },
@@ -145,7 +161,7 @@ export function buildPriceVsOiOption(input: PriceVsOiInput, theme: ChartTheme): 
         type: 'value',
         scale: true,
         position: 'right',
-        name: 'OI',
+        name: oiName,
         nameLocation: 'end',
         nameGap: 14,
         nameTextStyle: { ...axisName, align: 'right' },
@@ -158,23 +174,26 @@ export function buildPriceVsOiOption(input: PriceVsOiInput, theme: ChartTheme): 
       }
     ],
     series: [
-      ...(showOi ? [oiSeries(xs, oi, theme)] : []),
-      ...(showPrice ? [priceSeries(xs, price, latestPrice, theme, formatPrice)] : [])
+      ...(showOi ? [oiSeries(xs, oi, oiName, theme)] : []),
+      ...(showPrice
+        ? [priceSeries(xs, price, latestPrice, priceColor, priceName, formatPrice)]
+        : [])
     ]
   };
 }
 
-/** The price line: solid blue, bold, on the left axis — the subject. */
+/** The price line: solid, bold, on the left axis — the subject. */
 function priceSeries(
   xs: number[],
   values: (number | null)[],
   latest: number | null,
-  theme: ChartTheme,
+  color: string,
+  name: string,
   formatPrice: (value: number) => string
 ) {
   return {
     id: 'price',
-    name: 'Price',
+    name,
     type: 'line',
     yAxisIndex: 0,
     z: 3,
@@ -185,8 +204,8 @@ function priceSeries(
     // Bridges the reconstructed 09:15 frame, which has no recorded price.
     connectNulls: true,
     smooth: false,
-    lineStyle: { width: 2, color: PRICE_COLOR },
-    itemStyle: { color: PRICE_COLOR },
+    lineStyle: { width: 2, color },
+    itemStyle: { color },
     ...(latest == null
       ? {}
       : {
@@ -194,13 +213,13 @@ function priceSeries(
             silent: true,
             symbol: 'none',
             data: [{ yAxis: latest }],
-            lineStyle: { color: withAlpha(PRICE_COLOR, 0.35), type: 'dashed', width: 1 },
+            lineStyle: { color: withAlpha(color, 0.35), type: 'dashed', width: 1 },
             label: {
               show: true,
               position: 'end',
               distance: 0,
               formatter: formatPrice(latest),
-              backgroundColor: PRICE_COLOR,
+              backgroundColor: color,
               color: '#fff',
               padding: [3, 5],
               borderRadius: 3,
@@ -213,10 +232,10 @@ function priceSeries(
 }
 
 /** The OI line: dotted, faint, on the right axis — the context. */
-function oiSeries(xs: number[], values: number[], theme: ChartTheme) {
+function oiSeries(xs: number[], values: (number | null)[], name: string, theme: ChartTheme) {
   return {
     id: 'oi',
-    name: 'OI',
+    name,
     type: 'line',
     yAxisIndex: 1,
     z: 2,
@@ -234,6 +253,7 @@ function tooltipHtml(
   params: unknown,
   ms: number[],
   theme: ChartTheme,
+  priceColor: string,
   formatPrice: (value: number) => string,
   formatOi: (value: number) => string
 ): string {
@@ -252,7 +272,7 @@ function tooltipHtml(
       const value = entry.value?.[1];
       if (value == null) return '';
       const text = entry.seriesId === 'price' ? formatPrice(value) : formatOi(value);
-      const swatch = entry.seriesId === 'price' ? PRICE_COLOR : (entry.color ?? theme.axis);
+      const swatch = entry.seriesId === 'price' ? priceColor : (entry.color ?? theme.axis);
       return (
         `<div style="display:flex;align-items:center;gap:8px;margin-top:4px">` +
         `<span style="width:8px;height:8px;border-radius:50%;background:${swatch}"></span>` +

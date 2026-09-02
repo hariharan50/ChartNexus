@@ -19,6 +19,9 @@ from marketcompass.contexts.options_analytics.application.smart_oi_service impor
 from marketcompass.contexts.options_analytics.application.straddle_series_service import (
     GetStraddleSeries,
 )
+from marketcompass.contexts.options_analytics.application.strike_series_service import (
+    GetStrikeSeries,
+)
 from marketcompass.contexts.options_analytics.application.vega_series_service import GetVega
 from marketcompass.infrastructure.analytics.oi_chain_source import SqlAlchemySnapshotReader
 from marketcompass.infrastructure.brokers.oi_chain_provider import (
@@ -40,6 +43,7 @@ class OptionsAnalyticsServices:
     gex: GetGex
     vega: GetVega
     straddle_series: GetStraddleSeries
+    strike_series: GetStrikeSeries
     smart_oi: GetSmartOi
 
 
@@ -80,6 +84,11 @@ def build_options_analytics_services_from(
             strike_span=container.settings.market.snapshot_max_series_strikes,
         ),
         straddle_series=GetStraddleSeries(
+            provider=provider,
+            snapshots=snapshots,
+            strike_span=container.settings.market.snapshot_max_series_strikes,
+        ),
+        strike_series=GetStrikeSeries(
             provider=provider,
             snapshots=snapshots,
             strike_span=container.settings.market.snapshot_max_series_strikes,
