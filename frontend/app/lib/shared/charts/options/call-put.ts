@@ -41,9 +41,26 @@ export interface CallPutInput {
   showPe: boolean;
   /** The optional PCR overlay: a dotted line on its own right axis. */
   pcr?: { values: (number | null)[]; show: boolean; format: (value: number) => string } | undefined;
+  /** Wheel-to-zoom and drag-to-pan the time axis, synced across the group. */
+  zoomable?: boolean | undefined;
+  /** Show only the last N trading minutes; undefined spans the whole session. */
+  windowMinutes?: number | undefined;
 }
 
-const RIGHT_PAD = 0.06;
+/** The shared time-axis zoom — Shift+wheel to zoom, drag to pan. See price-vs-oi.ts. */
+const TIME_ZOOM = [
+  {
+    type: 'inside' as const,
+    filterMode: 'none' as const,
+    zoomOnMouseWheel: 'shift' as const,
+    moveOnMouseMove: true,
+    moveOnMouseWheel: false
+  }
+];
+
+// A hair of blank track past the newest point — just enough that the end-pill
+// floats clear of the frame, no dead gutter.
+const RIGHT_PAD = 0.008;
 const IST = 'Asia/Kolkata';
 const IST_OFFSET_MS = 5.5 * 60 * 60 * 1000;
 const MINUTE_MS = 60_000;
@@ -92,7 +109,25 @@ export function buildCallPutOption(input: CallPutInput, theme: ChartTheme): ECha
   const xs = ms.map(axisX);
   const first = xs[0] ?? 0;
   const last = xs.at(-1) ?? 0;
-  const pad = Math.max((last - first) * RIGHT_PAD, 5);
+  const pad = Math.max((last - first) * RIGHT_PAD, 2);
+  // The left edge: the whole session, or the last N trading minutes.
+  const min = input.windowMinutes != null ? Math.max(first, last - input.windowMinutes) : first;
+
+  // The right gutter holds only the end-pills, so size it to the actual pill
+  // text — a 3-digit price needs far less than a "62.84L" OI. Fixed at 72 it
+  // left a wide band of dead space beside the small price pills.
+  const latestOf = (values: (number | null)[]) =>
+    [...values].reverse().find((value) => value != null) ?? null;
+  const lce = latestOf(ce.abs);
+  const lpe = latestOf(pe.abs);
+  const pillChars = Math.max(
+    lce != null ? formatAbs(lce).length : 0,
+    lpe != null ? formatAbs(lpe).length : 0,
+    3
+  );
+  // ~6.5px a glyph + the pill padding and its offset. The PCR axis, when shown,
+  // needs its own room on the right instead.
+  const rightGutter = withPcr ? 46 : Math.min(54, Math.round(pillChars * 6.5) + 12);
 
   const yAxes: Record<string, unknown>[] = [
     {
@@ -136,7 +171,11 @@ export function buildCallPutOption(input: CallPutInput, theme: ChartTheme): ECha
 
   return {
     backgroundColor: 'transparent',
-    grid: { left: 8, right: withPcr ? 56 : 72, top: 36, bottom: 24, containLabel: true },
+    ...(input.zoomable ? { dataZoom: TIME_ZOOM } : {}),
+    // Trimmed to the minimum each edge needs — the pills (and the PCR axis when
+    // shown) on the right, the tick labels elsewhere via `containLabel` — so the
+    // plot itself takes the whole panel rather than sitting in a frame of gutter.
+    grid: { left: 2, right: rightGutter, top: 16, bottom: 14, containLabel: true },
     tooltip: {
       trigger: 'axis',
       order: 'valueDesc',
@@ -161,7 +200,7 @@ export function buildCallPutOption(input: CallPutInput, theme: ChartTheme): ECha
     },
     xAxis: {
       type: 'value',
-      min: first,
+      min,
       max: last + pad,
       axisLine: { lineStyle: { color: theme.grid } },
       axisTick: { show: false },
@@ -208,11 +247,11 @@ function legSeries(
       show: true,
       color: '#fff',
       backgroundColor: leg.color,
-      padding: [3, 6],
+      padding: [2, 5],
       borderRadius: 3,
-      fontSize: 11,
+      fontSize: 10,
       fontWeight: 600,
-      distance: 6,
+      distance: 4,
       formatter: (params: { dataIndex: number }) => {
         const value = leg.abs[params.dataIndex];
         return value == null ? '' : formatAbs(value);

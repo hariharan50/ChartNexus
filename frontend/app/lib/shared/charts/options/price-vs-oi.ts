@@ -39,13 +39,46 @@ export interface PriceVsOiInput {
   priceColor?: string | undefined;
   priceName?: string | undefined;
   oiName?: string | undefined;
+  /**
+   * Wheel-to-zoom and drag-to-pan the time axis.
+   *
+   * Off by default so the single Future-Lab chart is unchanged; the Price vs OI
+   * grid turns it on and, because those panels share an `echarts.connect` group,
+   * zooming one zooms them all to the same window.
+   */
+  zoomable?: boolean | undefined;
+  /**
+   * Show only the last N trading minutes, instead of the whole session.
+   *
+   * The visible time window the Price vs OI range chips set. Left undefined the
+   * axis spans the full session; a number clamps the left edge to `now - N`,
+   * which in Live mode auto-scrolls forward as captures arrive.
+   */
+  windowMinutes?: number | undefined;
 }
+
+/**
+ * The shared time-axis zoom: Shift+wheel to zoom, drag to pan, no data dropped.
+ *
+ * Shift-gated on purpose — the Price vs OI grid is a tall, scrolling page, so a
+ * plain wheel has to keep scrolling it rather than being swallowed to zoom the
+ * chart under the pointer.
+ */
+const TIME_ZOOM = [
+  {
+    type: 'inside' as const,
+    filterMode: 'none' as const,
+    zoomOnMouseWheel: 'shift' as const,
+    moveOnMouseMove: true,
+    moveOnMouseWheel: false
+  }
+];
 
 /** The default line colour — the reference's blue, legible in both themes. */
 const PRICE_COLOR = '#3b82f6';
 
-/** Blank track past the newest reading, as a share of the plotted span. */
-const RIGHT_PAD = 0.06;
+/** A hair of blank track past the newest reading — the pill floats clear, no gutter. */
+const RIGHT_PAD = 0.008;
 
 const IST = 'Asia/Kolkata';
 /** India observes no DST, so a fixed offset is correct and needs no tzdata. */
@@ -100,13 +133,16 @@ export function buildPriceVsOiOption(input: PriceVsOiInput, theme: ChartTheme): 
   const xs = ms.map(axisX);
   const first = xs[0] ?? 0;
   const last = xs.at(-1) ?? 0;
-  const pad = Math.max((last - first) * RIGHT_PAD, 5);
+  const pad = Math.max((last - first) * RIGHT_PAD, 2);
+  // The left edge: the whole session, or the last N trading minutes.
+  const min = input.windowMinutes != null ? Math.max(first, last - input.windowMinutes) : first;
 
   const latestPrice = [...price].reverse().find((value) => value != null) ?? null;
 
   return {
     backgroundColor: 'transparent',
-    grid: { left: 8, right: 72, top: 36, bottom: 24, containLabel: true },
+    ...(input.zoomable ? { dataZoom: TIME_ZOOM } : {}),
+    grid: { left: 2, right: 48, top: 16, bottom: 14, containLabel: true },
     tooltip: {
       trigger: 'axis',
       axisPointer: {
@@ -130,7 +166,7 @@ export function buildPriceVsOiOption(input: PriceVsOiInput, theme: ChartTheme): 
     },
     xAxis: {
       type: 'value',
-      min: first,
+      min,
       max: last + pad,
       axisLine: { lineStyle: { color: theme.grid } },
       axisTick: { show: false },
@@ -221,9 +257,9 @@ function priceSeries(
               formatter: formatPrice(latest),
               backgroundColor: color,
               color: '#fff',
-              padding: [3, 5],
+              padding: [2, 4],
               borderRadius: 3,
-              fontSize: 11,
+              fontSize: 10,
               fontWeight: 700
             }
           }

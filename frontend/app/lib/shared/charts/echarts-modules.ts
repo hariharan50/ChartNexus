@@ -1,6 +1,7 @@
 import { BarChart, GaugeChart, LineChart } from 'echarts/charts';
 import {
   AxisPointerComponent,
+  DataZoomInsideComponent,
   GridComponent,
   MarkAreaComponent,
   MarkLineComponent,
@@ -50,6 +51,11 @@ echarts.use([
   // Lets `echarts.connect` drive one crosshair across the three stacked charts
   // on that page, so a reading at 11:30 is a reading at 11:30 on all of them.
   AxisPointerComponent,
+  // Wheel-to-zoom and drag-to-pan on the time axis. `echarts.connect` also syncs
+  // the zoom window across a group, so zooming one panel of the Price vs OI grid
+  // zooms all of them to the same window. Inside-only: no slider chrome, and the
+  // toolbox/select variants (and their extra components) are not needed.
+  DataZoomInsideComponent,
   MarkLineComponent,
   MarkAreaComponent,
   SVGRenderer
