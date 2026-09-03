@@ -28,7 +28,12 @@ from datetime import UTC, date, datetime, timedelta, timezone
 from marketcompass.bootstrap.container import Container
 from marketcompass.bootstrap.settings import Settings
 from marketcompass.contexts.market_ingestion.application.retention import PruneSnapshots
+from marketcompass.contexts.market_ingestion.application.rollup import RollupDailyIv
 from marketcompass.infrastructure.ingestion.chain_source import build_ingest_service
+from marketcompass.infrastructure.ingestion.daily_iv_rollup import (
+    SqlAlchemyDailyIvWriter,
+    SqlAlchemySessionIvSource,
+)
 from marketcompass.infrastructure.observability.structured_logging import get_logger
 from marketcompass.infrastructure.persistence.postgresql.repositories.market_data.option_chain_snapshot_repository import (
     SqlAlchemyOptionChainSnapshotRepository,
@@ -95,6 +100,36 @@ async def prune_once(container: Container, settings: Settings) -> None:
     log.info("ingest_prune", cutoff=result.cutoff.isoformat(), deleted=result.deleted)
 
 
+async def rollup_once(container: Container, settings: Settings) -> None:
+    """Persist one IV reading per archived session. Never propagates.
+
+    Must run **before** :func:`prune_once`. The prune is what deletes the oldest
+    session, and implied volatility cannot be recovered once it goes — the
+    broker never quoted it, so the only copy is the one this system back-solved
+    at capture time. A rollup that runs after the prune loses a day permanently,
+    every day.
+
+    Re-runs over the whole retained window rather than just yesterday, so it
+    backfills whatever is currently archived and keeps today's row current as
+    the session fills out. Upsert makes that idempotent.
+    """
+    try:
+        async with container.database.session() as session:
+            use_case = RollupDailyIv(
+                source=SqlAlchemySessionIvSource(session),
+                writer=SqlAlchemyDailyIvWriter(session),
+                clock=_SystemClock(),
+            )
+            result = await use_case(
+                list(settings.market.ingest_symbols),
+                lookback_days=settings.market.snapshot_retention_days,
+            )
+    except Exception as exc:
+        log.error("ingest_iv_rollup_failed", error=repr(exc))
+        return
+    log.info("ingest_iv_rollup", written=result.written, skipped=result.skipped)
+
+
 async def run_capture_loop(
     container: Container,
     settings: Settings,
@@ -109,9 +144,7 @@ async def run_capture_loop(
     broker never answers, matching what ``task dev`` does for the standalone
     worker.
     """
-    resolved_allow_mock = (
-        settings.market.ingest_allow_mock if allow_mock is None else allow_mock
-    )
+    resolved_allow_mock = settings.market.ingest_allow_mock if allow_mock is None else allow_mock
     interval = settings.market.snapshot_interval_seconds
     log.info(
         "ingest_loop_starting",
@@ -127,6 +160,9 @@ async def run_capture_loop(
             today = datetime.now(_IST).date()
             if pruned_on != today:
                 pruned_on = today
+                # Rollup first: the prune below is what deletes the oldest
+                # session, and its IV is unrecoverable once it is gone.
+                await rollup_once(container, settings)
                 await prune_once(container, settings)
 
             await capture_tick(container, settings, allow_mock=resolved_allow_mock)

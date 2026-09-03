@@ -15,7 +15,7 @@ any import of ``market_data`` or the persistence layer.
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from datetime import datetime
+from datetime import date, datetime
 from typing import Protocol, runtime_checkable
 
 from marketcompass.contexts.options_analytics.domain.oi_math import ChainRow
@@ -100,6 +100,37 @@ class CandleSource(Protocol):
         against option captures is already doing its own bucketing. One grid,
         aggregated once, beats two rounding rules that disagree at the edges.
         """
+        ...
+
+
+@dataclass(frozen=True, slots=True)
+class DailyIv:
+    """One session's closing at-the-money implied volatility.
+
+    The only cross-day volatility the system has. It exists because IV is quoted
+    only in the moment and the intraday archive is pruned after 30 days — see
+    ``market_ingestion``'s rollup, which writes these rows before that happens.
+    """
+
+    session_date: date
+    #: Volatility points, as stored and rendered everywhere (13.2 means 13.2%).
+    atm_iv: float
+    #: The tradable future at the same capture; `None` on older rows.
+    future_close: float | None
+    #: How many intraday captures backed the reading — a two-capture day is a
+    #: thinner number than a hundred-capture one, and a percentile computed over
+    #: both should be able to say so.
+    captures: int
+
+
+@runtime_checkable
+class DailyIvReader(Protocol):
+    """Reads the per-session IV archive. Never raises on absence — returns empty."""
+
+    async def daily_iv(
+        self, tenant_id: TenantId, symbol: str, *, start: date, end: date
+    ) -> list[DailyIv]:
+        """Every stored reading in an inclusive IST date range, oldest first."""
         ...
 
 

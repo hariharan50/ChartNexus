@@ -1,0 +1,573 @@
+/* Sidebar + main, the same two-column shell the other Options Lab tools use.
+   The shared control classes (.panel, .instrument, .seg, .switch, .legend,
+   .chart …) are copied from the sibling route modules deliberately: the pages'
+   controls should be the *same* control, and a CSS Module cannot be extended
+   across route directories without hoisting it somewhere neither page owns.
+   The blocks below the "-- skew specifics --" rule are new. */
+
+/* Fill the terminal content area so the one chart uses the whole screen rather
+   than sitting at a fixed height with a band of dead surface beneath it. */
+.page {
+  padding: var(--mc-space-6);
+  display: flex;
+  flex-direction: column;
+  min-height: calc(100dvh - 4.5rem);
+}
+
+.layout {
+  flex: 1;
+  min-height: 0;
+  display: grid;
+  grid-template-columns: 260px 1fr;
+  gap: var(--mc-space-5, 1.25rem);
+  align-items: stretch;
+}
+
+.layout.collapsed {
+  grid-template-columns: 2rem 1fr;
+}
+
+.sidebar,
+.main {
+  display: flex;
+  flex-direction: column;
+  gap: var(--mc-space-5, 1.25rem);
+  min-width: 0;
+  min-height: 0;
+}
+
+/* The settings panel is sized by its own content; the chart panel fills the
+   column so the plot gets every pixel the controls do not need. */
+.sidebar > .panel {
+  display: flex;
+  flex-direction: column;
+  flex: 0 0 auto;
+  /* Tighter than the default card padding: the settings controls are narrow and
+     the extra inset only ate into the chart column's width. */
+  padding: var(--mc-space-3);
+}
+
+.main > .panel {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 32rem;
+}
+
+.panel {
+  border: 1px solid var(--mc-border);
+  border-radius: var(--mc-radius-lg);
+  background: var(--mc-surface);
+  box-shadow: var(--mc-shadow);
+  padding: var(--mc-space-4);
+}
+
+.panel.muted {
+  color: var(--mc-text-muted);
+  text-align: center;
+}
+
+.banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--mc-space-3);
+  padding: var(--mc-space-4);
+  border: 1px solid var(--mc-bearish);
+  border-radius: var(--mc-radius-lg);
+  color: var(--mc-text);
+}
+
+.banner button {
+  padding: 0.375rem 0.75rem;
+  border: 1px solid var(--mc-border-strong);
+  border-radius: var(--mc-radius);
+  background: var(--mc-surface-raised);
+  color: var(--mc-text);
+  cursor: pointer;
+}
+
+.panel-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--mc-space-2);
+  /* The title's own bottom margin is zeroed inside the head row, so the row
+     carries the gap to the first control instead. */
+  margin-bottom: var(--mc-space-3);
+}
+
+.panel-head .p-title {
+  margin: 0;
+}
+
+.collapse-btn,
+.restore {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.75rem;
+  height: 1.75rem;
+  border: 1px solid var(--mc-border);
+  border-radius: var(--mc-radius-sm);
+  background: var(--mc-surface-raised);
+  color: var(--mc-text-muted);
+  font-size: var(--mc-text-sm);
+  cursor: pointer;
+}
+
+.restore {
+  position: sticky;
+  top: var(--mc-space-6);
+  align-self: start;
+}
+
+.p-title {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+  margin: 0 0 var(--mc-space-3);
+  font-size: var(--mc-text-base);
+  font-weight: 700;
+}
+
+.ico {
+  display: inline-flex;
+  color: var(--mc-text-muted);
+}
+
+.ico svg {
+  width: 1rem;
+  height: 1rem;
+}
+
+/* -- sidebar controls -- */
+.instrument {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 0.625rem;
+  border: 1px solid var(--mc-border);
+  border-radius: var(--mc-radius);
+  background: var(--mc-surface-raised);
+}
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.75rem;
+  height: 1.75rem;
+  border-radius: 999px;
+  background: var(--mc-accent-weak);
+  color: var(--mc-accent);
+  font-size: var(--mc-text-xs);
+  font-weight: 700;
+}
+
+.short {
+  font-weight: 700;
+}
+
+.cyclers {
+  margin-left: auto;
+  display: inline-flex;
+  gap: 0.25rem;
+}
+
+.cyclers button {
+  width: 1.75rem;
+  height: 1.75rem;
+  border: 1px solid var(--mc-border);
+  border-radius: var(--mc-radius-sm);
+  background: var(--mc-surface);
+  color: var(--mc-text-muted);
+  cursor: pointer;
+}
+
+.sub-label {
+  margin: var(--mc-space-3) 0 0.375rem;
+  font-size: var(--mc-text-xs);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--mc-text-subtle);
+}
+
+.select {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.25rem;
+  padding: 0.5rem 0.625rem;
+  border: 1px solid var(--mc-border);
+  border-radius: var(--mc-radius);
+  background: var(--mc-surface-raised);
+  font-size: var(--mc-text-xs);
+  font-weight: 600;
+}
+
+.caret svg {
+  width: 0.875rem;
+  height: 0.875rem;
+  opacity: 0.7;
+}
+
+.select-native {
+  width: 100%;
+  padding: 0.5rem 0.625rem;
+  border: 1px solid var(--mc-border);
+  border-radius: var(--mc-radius);
+  background: var(--mc-surface-raised);
+  color: var(--mc-text);
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.seg-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.5rem;
+}
+
+.seg {
+  padding: 0.4375rem 0.75rem;
+  border: 1px solid var(--mc-border);
+  border-radius: var(--mc-radius);
+  background: transparent;
+  color: var(--mc-text-muted);
+  font-size: var(--mc-text-xs);
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.seg.active {
+  border-color: color-mix(in srgb, var(--mc-accent) 45%, transparent);
+  background: var(--mc-accent-weak);
+  color: var(--mc-accent);
+}
+
+/* -- switches -- */
+.toggle {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  margin-top: var(--mc-space-3);
+  font-size: var(--mc-text-sm);
+  color: var(--mc-text-muted);
+  cursor: pointer;
+}
+
+.toggle input {
+  position: absolute;
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.switch {
+  position: relative;
+  flex: none;
+  width: 2.25rem;
+  height: 1.25rem;
+  border-radius: 999px;
+  background: var(--mc-border-strong);
+  transition: background var(--mc-duration-fast);
+}
+
+.switch.on {
+  background: var(--mc-accent);
+}
+
+.knob {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 1rem;
+  height: 1rem;
+  border-radius: 50%;
+  background: #fff;
+  transition: transform var(--mc-duration-fast);
+}
+
+.switch.on .knob {
+  transform: translateX(1rem);
+}
+
+/* Focus has to be visible on the switch itself — the input it belongs to is
+   the visually-hidden one above. */
+.toggle input:focus-visible + .switch {
+  outline: 2px solid var(--mc-accent);
+  outline-offset: 2px;
+}
+
+/* -- skew specifics -------------------------------------------------------- */
+
+/* The header carries a switch too, where the sidebar's full-width layout would
+   stretch the label away from its control across the whole toolbar. */
+.toggle.toggle-inline {
+  margin-top: 0;
+  gap: 0.4375rem;
+  font-size: var(--mc-text-xs);
+  font-weight: 600;
+  color: var(--mc-text);
+}
+
+.toggle.toggle-off {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* The ⓘ beside a control whose name does not say what it plots. */
+.info {
+  margin-left: 0.25rem;
+  color: var(--mc-text-subtle);
+  cursor: help;
+}
+
+/* -- the two scrub rows --
+   Label, Reset, the reading at each end, and the track between them — the same
+   row shape for time and for strikes, because they are the same gesture over
+   two different axes. */
+.slider-row {
+  display: flex;
+  align-items: center;
+  gap: var(--mc-space-3);
+  margin-top: var(--mc-space-3);
+}
+
+.slider-label {
+  flex: none;
+  width: 3.25rem;
+  font-size: var(--mc-text-xs);
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--mc-text-subtle);
+}
+
+.reset {
+  flex: none;
+  padding: 0.3125rem 0.75rem;
+  border: 1px solid color-mix(in srgb, var(--mc-bearish) 40%, transparent);
+  border-radius: var(--mc-radius);
+  background: color-mix(in srgb, var(--mc-bearish) 12%, transparent);
+  color: var(--mc-bearish);
+  font-size: var(--mc-text-xs);
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.reset:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+.end {
+  flex: none;
+  min-width: 3.5rem;
+  font-size: var(--mc-text-xs);
+  color: var(--mc-text-subtle);
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+
+/* -- chart panel top -- */
+.chart-top {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--mc-space-3);
+  row-gap: 0.375rem;
+  margin-bottom: var(--mc-space-2);
+  padding-bottom: var(--mc-space-2);
+  border-bottom: 1px solid var(--mc-border);
+}
+
+.chart-top-left {
+  flex: 1 1 auto;
+  min-width: min(100%, 26rem);
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--mc-space-3);
+  row-gap: 0.375rem;
+}
+
+.chart-top .p-title {
+  margin: 0;
+}
+
+.chart-top .legend {
+  margin: 0;
+}
+
+.chart-top-right {
+  flex: 0 0 auto;
+  margin-left: auto;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--mc-space-3);
+}
+
+.download {
+  padding: 0.25rem 0.5rem;
+  border: 1px solid var(--mc-border);
+  border-radius: var(--mc-radius-sm);
+  background: var(--mc-surface-raised);
+  color: var(--mc-text-muted);
+  font-size: var(--mc-text-xs);
+  font-weight: 600;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.download:hover {
+  border-color: var(--mc-border-strong);
+  color: var(--mc-text);
+}
+
+/* -- live badge -- */
+.live {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  font-size: var(--mc-text-sm);
+  color: var(--mc-text-muted);
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+
+.live.stale {
+  color: var(--mc-bearish);
+}
+
+.live.stale .dot {
+  background: var(--mc-bearish);
+}
+
+.dot {
+  width: 0.5rem;
+  height: 0.5rem;
+  border-radius: 50%;
+  background: var(--mc-bullish);
+}
+
+.dot.pulse {
+  animation: pulse 1.2s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  50% {
+    opacity: 0.35;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .dot.pulse {
+    animation: none;
+  }
+}
+
+.sep {
+  color: var(--mc-border-strong);
+}
+
+/* -- legend -- */
+.legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--mc-space-2);
+  margin-bottom: var(--mc-space-2);
+}
+
+.entry {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  padding: 0.25rem 0.5rem;
+  border: 1px solid var(--mc-border);
+  border-radius: var(--mc-radius);
+  background: var(--mc-surface-raised);
+  color: var(--mc-text);
+  font-size: var(--mc-text-xs);
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.entry:hover {
+  border-color: var(--mc-border-strong);
+}
+
+.entry.off {
+  color: var(--mc-text-subtle);
+}
+
+.entry.off .label {
+  text-decoration: line-through;
+}
+
+.eye {
+  display: inline-flex;
+  color: var(--mc-text-muted);
+}
+
+.eye svg {
+  width: 0.875rem;
+  height: 0.875rem;
+}
+
+.swatch {
+  width: 0.75rem;
+  height: 0.75rem;
+  border-radius: 3px;
+  flex: none;
+}
+
+/* Qualified by `.panel`. `EChart.module.css` also defines a `.chart`
+   (`height: 100%`); with equal specificity the winner is emit order, which
+   resolved to 100% of an auto-height parent, i.e. nothing. */
+.panel .chart {
+  flex: 1;
+  min-height: 26rem;
+  height: auto;
+}
+
+.caption {
+  margin: var(--mc-space-3) 0 0;
+  font-size: var(--mc-text-xs);
+  color: var(--mc-text-subtle);
+}
+
+.empty {
+  margin: 0;
+  padding: var(--mc-space-6) 0;
+  text-align: center;
+  color: var(--mc-text-muted);
+}
+
+/* Empty state that keeps the mode toggle reachable, so a picked date that
+   turns up empty is never a dead end. */
+.empty-panel {
+  display: flex;
+  flex-direction: column;
+  gap: var(--mc-space-3);
+  max-width: 24rem;
+  margin: var(--mc-space-6) auto;
+}
+
+.empty-panel .muted {
+  text-align: center;
+}
+
+@media (max-width: 72rem) {
+  .layout,
+  .layout.collapsed {
+    grid-template-columns: 1fr;
+  }
+
+  .restore {
+    position: static;
+    width: 100%;
+  }
+}

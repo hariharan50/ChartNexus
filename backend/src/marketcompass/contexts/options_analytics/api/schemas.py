@@ -323,6 +323,88 @@ class VegaResponse(_Schema):
         return cls.model_validate(payload)
 
 
+class IvSessionResponse(_Schema):
+    """One session's closing at-the-money implied volatility."""
+
+    #: IST trading date, `YYYY-MM-DD`.
+    d: str
+    #: Volatility points (13.2 means 13.2%).
+    iv: float
+    #: The tradable future at the same capture; `None` on older rows.
+    future_close: float | None
+    #: Intraday captures behind the reading.
+    captures: int
+
+
+class IvHistoryResponse(_Schema):
+    """Daily implied-volatility history behind the IV/HV/IVP Chart."""
+
+    instrument_id: str
+    symbol: str
+    #: The window asked for, after clamping to 1-365.
+    requested_days: int
+    # Sessions actually stored in that window. The archive only began accruing
+    # when the rollup landed, so this is routinely far short of `requested_days`
+    # — and a page that cannot tell a short history from a flat one draws a
+    # confident, wrong IV Percentile.
+    covered_sessions: int
+    start: str
+    end: str
+    sessions: list[IvSessionResponse]
+
+    @classmethod
+    def of(cls, payload: dict[str, Any]) -> IvHistoryResponse:
+        return cls.model_validate(payload)
+
+
+class SkewFrameResponse(_Schema):
+    """One capture's per-strike implied volatility and open interest.
+
+    All four arrays are aligned to the payload's ``strikes``. ``ce_iv`` /
+    ``pe_iv`` are volatility points as quoted, `None` where that leg carried no
+    IV — never `0.0`, which would read as a real (and impossible) volatility.
+    The two OI arrays are contracts, and `0` where the leg was not quoted: a leg
+    nobody quoted holds no position, which unlike volatility is a fact.
+    """
+
+    t: str
+    spot: float
+    #: `None` on captures taken before the ATM column was denormalised.
+    atm: float | None
+    ce_iv: list[float | None]
+    pe_iv: list[float | None]
+    call_oi: list[int]
+    put_oi: list[int]
+
+
+class SkewResponse(_Schema):
+    """Per-strike volatility and open interest behind the Volatility Skew tool."""
+
+    instrument_id: str
+    symbol: str
+    expiry_date: str | None
+    lot_size: int | None
+    spot: float
+    atm_strike: float | None
+    open_ts: str
+    now_ts: str
+    data_quality: str
+    #: Always `False` here — the skew has no reconstructable session open.
+    open_is_estimated: bool = False
+    # Fraction of legs that carried a quoted implied volatility, 0-1. Without
+    # it, a chain the broker priced no volatility on renders as an empty curve
+    # indistinguishable from a strike range nobody trades.
+    iv_coverage: float
+    #: The shared strike axis every frame's arrays are aligned to.
+    strikes: list[float]
+    t: list[str]
+    frames: list[SkewFrameResponse]
+
+    @classmethod
+    def of(cls, payload: dict[str, Any]) -> SkewResponse:
+        return cls.model_validate(payload)
+
+
 class StraddleFrameResponse(_Schema):
     """One capture's per-strike premiums, the rolling ATM straddle, the future.
 

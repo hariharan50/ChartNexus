@@ -72,8 +72,8 @@ export default [
       route('gamma-exposure', 'routes/terminal/options/gamma-exposure/route.tsx'),
       route('intraday-booster', 'routes/terminal/options/intraday-booster.tsx'),
       route('iv-grid', 'routes/terminal/options/iv-grid.tsx'),
-      route('iv-hv', 'routes/terminal/options/iv-hv.tsx'),
-      route('iv-hv-ivp', 'routes/terminal/options/iv-hv-ivp.tsx'),
+      route('iv-hv', 'routes/terminal/options/iv-hv/route.tsx'),
+      route('iv-hv-ivp', 'routes/terminal/options/iv-hv-ivp/route.tsx'),
       route('iv-intraday', 'routes/terminal/options/iv-intraday.tsx'),
       route('max-pain', 'routes/terminal/options/max-pain/route.tsx'),
       route('multi-oi-volume', 'routes/terminal/options/multi-oi-volume/route.tsx'),
@@ -89,7 +89,7 @@ export default [
       route('strategy-chart', 'routes/terminal/options/strategy-chart.tsx'),
       route('timeseries', 'routes/terminal/options/timeseries.tsx'),
       route('vega-analysis', 'routes/terminal/options/vega-analysis/route.tsx'),
-      route('volatility-skew', 'routes/terminal/options/volatility-skew.tsx')
+      route('volatility-skew', 'routes/terminal/options/volatility-skew/route.tsx')
     ]),
 
     ...prefix('future-lab', [

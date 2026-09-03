@@ -9,12 +9,16 @@ from fastapi import Depends, Request
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from marketcompass.contexts.options_analytics.application.gex_service import GetGex
+from marketcompass.contexts.options_analytics.application.iv_history_service import (
+    GetIvHistory,
+)
 from marketcompass.contexts.options_analytics.application.oi_series_service import GetOiSeries
 from marketcompass.contexts.options_analytics.application.oi_service import GetOiView
 from marketcompass.contexts.options_analytics.application.pcr_series_service import GetPcrSeries
 from marketcompass.contexts.options_analytics.application.price_oi_series_service import (
     GetPriceOiSeries,
 )
+from marketcompass.contexts.options_analytics.application.skew_series_service import GetSkew
 from marketcompass.contexts.options_analytics.application.smart_oi_service import GetSmartOi
 from marketcompass.contexts.options_analytics.application.straddle_series_service import (
     GetStraddleSeries,
@@ -23,6 +27,7 @@ from marketcompass.contexts.options_analytics.application.strike_series_service 
     GetStrikeSeries,
 )
 from marketcompass.contexts.options_analytics.application.vega_series_service import GetVega
+from marketcompass.infrastructure.analytics.daily_iv_source import SqlAlchemyDailyIvReader
 from marketcompass.infrastructure.analytics.oi_chain_source import SqlAlchemySnapshotReader
 from marketcompass.infrastructure.brokers.oi_chain_provider import (
     build_index_candle_source,
@@ -41,6 +46,8 @@ class OptionsAnalyticsServices:
     price_oi_series: GetPriceOiSeries
     pcr_series: GetPcrSeries
     gex: GetGex
+    iv_history: GetIvHistory
+    skew: GetSkew
     vega: GetVega
     straddle_series: GetStraddleSeries
     strike_series: GetStrikeSeries
@@ -74,6 +81,12 @@ def build_options_analytics_services_from(
         price_oi_series=GetPriceOiSeries(provider=provider, snapshots=snapshots),
         pcr_series=GetPcrSeries(provider=provider, snapshots=snapshots),
         gex=GetGex(
+            provider=provider,
+            snapshots=snapshots,
+            strike_span=container.settings.market.snapshot_max_series_strikes,
+        ),
+        iv_history=GetIvHistory(readings=SqlAlchemyDailyIvReader(session)),
+        skew=GetSkew(
             provider=provider,
             snapshots=snapshots,
             strike_span=container.settings.market.snapshot_max_series_strikes,

@@ -15,10 +15,12 @@ from fastapi import APIRouter, Path, Query, Request
 from marketcompass.contexts.options_analytics.api.dependencies import Services
 from marketcompass.contexts.options_analytics.api.schemas import (
     GexResponse,
+    IvHistoryResponse,
     OiSeriesResponse,
     OiViewResponse,
     PcrSeriesResponse,
     PriceOiSeriesResponse,
+    SkewResponse,
     SmartOiResponse,
     StraddleSeriesResponse,
     StrikeSeriesResponse,
@@ -295,6 +297,84 @@ async def vega(
 
     payload = await services.vega(principal.tenant_id, symbol, trade_date=_trade_date(date_))
     response = VegaResponse.of(payload)
+    await redis.client.set(cache_key, response.model_dump_json(), ex=_CACHE_TTL_SECONDS)
+    return response
+
+
+@router.get(
+    "/iv-history/{instrument_id}",
+    response_model=IvHistoryResponse,
+    summary="Daily at-the-money implied volatility",
+    description=(
+        "One closing IV reading per trading session, oldest first, from the "
+        "durable per-session archive. IV Rank and IV Percentile are left to the "
+        "client, which owns the lookback the reader picks. `covered_sessions` "
+        "says how much history actually exists — the archive accrues forward "
+        "and cannot be backfilled past the intraday retention window. Powers "
+        "the IV/HV/IVP Chart."
+    ),
+    responses={422: {"description": "Unknown instrument"}},
+)
+async def iv_history(
+    request: Request,
+    principal: CurrentPrincipal,
+    services: Services,
+    instrument_id: InstrumentParam,
+    *,
+    days: Annotated[int, Query(ge=1, le=365, description="Calendar days to cover")] = 365,
+) -> IvHistoryResponse:
+    symbol = instrument_id.strip().upper()
+    redis = get_container(request).redis
+    # Keyed by the window as well: it changes the payload, so sharing one entry
+    # across ranges would serve whichever arrived first.
+    cache_key = redis.key(
+        "lab:iv-history", str(principal.tenant_id), symbol, str(days), _day_key(None)
+    )
+
+    cached = await redis.client.get(cache_key)
+    if cached is not None:
+        return IvHistoryResponse.model_validate_json(cached)
+
+    payload = await services.iv_history(principal.tenant_id, symbol, days=days)
+    response = IvHistoryResponse.of(payload)
+    await redis.client.set(cache_key, response.model_dump_json(), ex=_CACHE_TTL_SECONDS)
+    return response
+
+
+@router.get(
+    "/skew/{instrument_id}",
+    response_model=SkewResponse,
+    summary="Intraday per-strike implied volatility and open interest",
+    description=(
+        "Each strike's call and put implied volatility through the session, "
+        "with the open interest sitting on each side, at every capture. The "
+        "client blends the two volatility arrays into the out-of-the-money "
+        "curve it draws, scrubs the captures and windows the strikes. Powers "
+        "Volatility Skew."
+    ),
+    responses={422: {"description": "Unknown instrument"}},
+)
+async def skew(
+    request: Request,
+    principal: CurrentPrincipal,
+    services: Services,
+    instrument_id: InstrumentParam,
+    *,
+    date_: DateParam = None,
+) -> SkewResponse:
+    symbol = instrument_id.strip().upper()
+    redis = get_container(request).redis
+    # The strike window, the frame and the curve blend are all applied on the
+    # client, so one entry per tenant/symbol/day serves every reader of that
+    # session.
+    cache_key = redis.key("lab:skew", str(principal.tenant_id), symbol, _day_key(date_))
+
+    cached = await redis.client.get(cache_key)
+    if cached is not None:
+        return SkewResponse.model_validate_json(cached)
+
+    payload = await services.skew(principal.tenant_id, symbol, trade_date=_trade_date(date_))
+    response = SkewResponse.of(payload)
     await redis.client.set(cache_key, response.model_dump_json(), ex=_CACHE_TTL_SECONDS)
     return response
 

@@ -46,12 +46,6 @@ const PAGES: Array<{ path: string; heading: string; title?: string }> = [
     title: 'Intraday Booster · MarketCompass'
   },
   { path: '/options/iv-grid', heading: 'IV Grid', title: 'IV Grid · MarketCompass' },
-  { path: '/options/iv-hv', heading: 'IV - HV', title: 'IV - HV · MarketCompass' },
-  {
-    path: '/options/iv-hv-ivp',
-    heading: 'IV/HV/IVP Chart',
-    title: 'IV/HV/IVP Chart · MarketCompass'
-  },
   {
     path: '/options/iv-intraday',
     heading: 'IV - Intraday',
@@ -84,11 +78,6 @@ const PAGES: Array<{ path: string; heading: string; title?: string }> = [
     path: '/options/vega-analysis',
     heading: 'Vega Analysis',
     title: 'Vega Analysis · MarketCompass'
-  },
-  {
-    path: '/options/volatility-skew',
-    heading: 'Volatility Skew',
-    title: 'Volatility Skew · MarketCompass'
   }
 ];
 

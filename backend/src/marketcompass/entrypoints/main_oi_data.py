@@ -37,6 +37,11 @@ from marketcompass.contexts.market_ingestion.application.retention import (
     PruneSnapshots,
     RetentionError,
 )
+from marketcompass.contexts.market_ingestion.application.rollup import RollupDailyIv
+from marketcompass.infrastructure.ingestion.daily_iv_rollup import (
+    SqlAlchemyDailyIvWriter,
+    SqlAlchemySessionIvSource,
+)
 from marketcompass.infrastructure.ingestion.synthetic_session import build_synthetic_session
 from marketcompass.infrastructure.observability.structured_logging import get_logger
 from marketcompass.infrastructure.persistence.postgresql.repositories.market_data.option_chain_snapshot_repository import (
@@ -136,6 +141,18 @@ async def _prune(container: Container, *, retention_days: int) -> int:
     return result.deleted
 
 
+async def _rollup(container: Container, *, symbols: tuple[str, ...], lookback_days: int) -> int:
+    async with container.database.session() as session:
+        use_case = RollupDailyIv(
+            source=SqlAlchemySessionIvSource(session),
+            writer=SqlAlchemyDailyIvWriter(session),
+            clock=_SystemClock(),
+        )
+        result = await use_case(list(symbols), lookback_days=lookback_days)
+    log.info("oi_iv_rollup", written=result.written, skipped=result.skipped)
+    return result.written
+
+
 class _SystemClock:
     def now(self) -> datetime:
         return datetime.now(UTC)
@@ -169,6 +186,14 @@ def _parser(default_retention: int) -> argparse.ArgumentParser:
     prune = sub.add_parser("prune", help="apply the retention window")
     prune.add_argument("--days", dest="retention_days", type=int, default=default_retention)
 
+    rollup = sub.add_parser(
+        "rollup-iv",
+        help="persist one closing IV reading per archived session (idempotent)",
+    )
+    rollup.add_argument("--symbol", action="append", dest="symbols", metavar="SYMBOL")
+    rollup.add_argument("--days", dest="lookback_days", type=int, default=default_retention)
+    rollup.set_defaults(symbols=None)
+
     return parser
 
 
@@ -198,6 +223,16 @@ async def _main(argv: list[str]) -> int:
                 print(
                     "note: today's session has not opened yet (09:15 IST). "
                     "Seed a past date to get a full day to scrub over.",
+                    file=sys.stderr,
+                )
+        elif args.command == "rollup-iv":
+            symbols = tuple(args.symbols) if args.symbols else tuple(settings.market.ingest_symbols)
+            written = await _rollup(container, symbols=symbols, lookback_days=args.lookback_days)
+            print(f"rolled up {written} sessions of IV ({', '.join(symbols)})")
+            if written == 0:
+                print(
+                    "note: nothing archived in the window, or no capture quoted IV "
+                    "at the money. Seed a session first.",
                     file=sys.stderr,
                 )
         else:
