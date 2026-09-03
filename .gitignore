@@ -204,3 +204,9 @@ scratch/
 # Documentation updates implementation reference
 # ---------------------------------------------------------------------------
 docupdateimp
+# ---------------------------------------------------------------------------
+# Screenshots pasted into the repo root while working (references, bug shots)
+# ---------------------------------------------------------------------------
+/image.png
+/img*.png
+/*.png
