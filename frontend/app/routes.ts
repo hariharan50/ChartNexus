@@ -78,7 +78,7 @@ export default [
       route('max-pain', 'routes/terminal/options/max-pain/route.tsx'),
       route('multi-oi-volume', 'routes/terminal/options/multi-oi-volume/route.tsx'),
       route('multi-straddle', 'routes/terminal/options/multi-straddle.tsx'),
-      route('multistrike', 'routes/terminal/options/multistrike.tsx'),
+      route('multistrike', 'routes/terminal/options/multistrike/route.tsx'),
       route('oi-crossover', 'routes/terminal/options/oi-crossover.tsx'),
       route('option-triggers', 'routes/terminal/options/option-triggers.tsx'),
       route('pcr', 'routes/terminal/options/pcr/route.tsx'),

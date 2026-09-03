@@ -62,11 +62,6 @@ const PAGES: Array<{ path: string; heading: string; title?: string }> = [
     heading: 'Multi-Straddle Chart',
     title: 'Multi-Straddle Chart · MarketCompass'
   },
-  {
-    path: '/options/multistrike',
-    heading: 'MultiStrike Chart',
-    title: 'MultiStrike Chart · MarketCompass'
-  },
   { path: '/options/oi-crossover', heading: 'OI Crossover', title: 'OI Crossover · MarketCompass' },
   {
     path: '/options/option-triggers',
