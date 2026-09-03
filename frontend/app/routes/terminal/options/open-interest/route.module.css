@@ -17,6 +17,12 @@
   align-items: start;
 }
 
+/* Collapsed: the sidebar folds away to a thin rail and the chart column takes
+   the width back. Same gesture as the other Options Lab tools. */
+.layout.collapsed {
+  grid-template-columns: 2rem 1fr;
+}
+
 .sidebar,
 .main {
   display: flex;
@@ -56,6 +62,40 @@
   background: var(--mc-surface-raised);
   color: var(--mc-text);
   cursor: pointer;
+}
+
+.panel-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--mc-space-2);
+  /* The title's own bottom margin is zeroed inside the head row, so the row
+     carries the gap to the first control instead. */
+  margin-bottom: var(--mc-space-3);
+}
+
+.panel-head .p-title {
+  margin: 0;
+}
+
+.collapse-btn,
+.restore {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.75rem;
+  height: 1.75rem;
+  border: 1px solid var(--mc-border);
+  border-radius: var(--mc-radius-sm);
+  background: var(--mc-surface-raised);
+  color: var(--mc-text-muted);
+  font-size: var(--mc-text-sm);
+  cursor: pointer;
+}
+
+.restore {
+  position: sticky;
+  top: var(--mc-space-6);
 }
 
 .p-title {
@@ -524,8 +564,14 @@
 }
 
 @media (max-width: 72rem) {
-  .layout {
+  .layout,
+  .layout.collapsed {
     grid-template-columns: 1fr;
+  }
+
+  .restore {
+    position: static;
+    width: 100%;
   }
 
   .summary {

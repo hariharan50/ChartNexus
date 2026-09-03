@@ -77,6 +77,9 @@
   align-items: center;
   justify-content: space-between;
   gap: var(--mc-space-2);
+  /* The title's own bottom margin is zeroed inside the head row, so the row
+     carries the gap to the first control instead. */
+  margin-bottom: var(--mc-space-3);
 }
 
 .panel-head .p-title {
@@ -127,7 +130,6 @@
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  margin-top: var(--mc-space-3);
   padding: 0.5rem 0.625rem;
   border: 1px solid var(--mc-border);
   border-radius: var(--mc-radius);

@@ -53,6 +53,8 @@ const SOURCES: { id: StrikeSourceId; title: string; hint: string }[] = [
 
 export default function MultiOiVolume() {
   const [instIdx, setInstIdx] = useState(0);
+  const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [zoomEpoch, setZoomEpoch] = useState(0);
   const [mode, setMode] = useState<Mode>('live');
   const [date, setDate] = useState(lastTradingDayIST);
   const [interval, setInterval] = useState<Interval>(DEFAULT_INTERVAL);
@@ -154,89 +156,112 @@ export default function MultiOiVolume() {
       ) : !view && query.isPending ? (
         <div className={cx(s.panel, s.muted)}>Loading Multi OI &amp; Volume…</div>
       ) : view ? (
-        <div className={s.layout}>
+        <div className={cx(s.layout, !sidebarOpen && s.collapsed)}>
           {/* LEFT SIDEBAR */}
-          <aside className={s.sidebar}>
-            <section className={s.panel}>
-              <h2 className={s.pTitle}>Settings</h2>
-
-              <div className={s.instrument}>
-                <span className={s.badge}>{instrument.badge}</span>
-                <span className={s.short}>{instrument.short}</span>
-                <span className={s.cyclers}>
-                  <button type="button" aria-label="Previous" onClick={() => cycle(-1)}>
-                    ‹
+          {sidebarOpen ? (
+            <aside className={s.sidebar}>
+              <section className={s.panel}>
+                <div className={s.panelHead}>
+                  <h2 className={s.pTitle}>Settings</h2>
+                  <button
+                    type="button"
+                    className={s.collapseBtn}
+                    aria-label="Collapse settings"
+                    aria-expanded={true}
+                    onClick={() => setSidebarOpen(false)}
+                  >
+                    «
                   </button>
-                  <button type="button" aria-label="Next" onClick={() => cycle(1)}>
-                    ›
-                  </button>
-                </span>
-              </div>
+                </div>
 
-              <HistoryMode mode={mode} date={date} onMode={setMode} onDate={setDate} />
+                <div className={s.instrument}>
+                  <span className={s.badge}>{instrument.badge}</span>
+                  <span className={s.short}>{instrument.short}</span>
+                  <span className={s.cyclers}>
+                    <button type="button" aria-label="Previous" onClick={() => cycle(-1)}>
+                      ‹
+                    </button>
+                    <button type="button" aria-label="Next" onClick={() => cycle(1)}>
+                      ›
+                    </button>
+                  </span>
+                </div>
 
-              <div className={s.twoUp}>
-                <div>
-                  <p className={s.subLabel}>Expiry</p>
-                  <div className={s.select}>
-                    <span>{expiryLabel(view.expiry_date)}</span>
-                    <span className={s.caret} aria-hidden="true">
-                      <IconChevronDown />
-                    </span>
+                <HistoryMode mode={mode} date={date} onMode={setMode} onDate={setDate} />
+
+                <div className={s.twoUp}>
+                  <div>
+                    <p className={s.subLabel}>Expiry</p>
+                    <div className={s.select}>
+                      <span>{expiryLabel(view.expiry_date)}</span>
+                      <span className={s.caret} aria-hidden="true">
+                        <IconChevronDown />
+                      </span>
+                    </div>
+                  </div>
+                  <div>
+                    <p className={s.subLabel}>Time</p>
+                    {/* Labelled on the control itself. A visually-hidden <span>
+                        would depend on a global utility class, which a CSS module
+                        cannot see — the first version rendered the label text. */}
+                    <select
+                      className={s.selectNative}
+                      aria-label="Time interval"
+                      value={interval}
+                      onChange={(e) => setInterval(e.currentTarget.value as Interval)}
+                    >
+                      {INTERVALS.map((option) => (
+                        <option key={option.value} value={option.value} disabled={option.disabled}>
+                          {option.label}
+                        </option>
+                      ))}
+                    </select>
                   </div>
                 </div>
-                <div>
-                  <p className={s.subLabel}>Time</p>
-                  {/* Labelled on the control itself. A visually-hidden <span>
-                      would depend on a global utility class, which a CSS module
-                      cannot see — the first version rendered the label text. */}
-                  <select
-                    className={s.selectNative}
-                    aria-label="Time interval"
-                    value={interval}
-                    onChange={(e) => setInterval(e.currentTarget.value as Interval)}
-                  >
-                    {INTERVALS.map((option) => (
-                      <option key={option.value} value={option.value} disabled={option.disabled}>
-                        {option.label}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-              </div>
 
-              <p className={s.subLabel}>Strike selection</p>
-              {SOURCES.map((entry) => (
-                <StrikeSource
-                  key={entry.id}
-                  title={entry.title}
-                  hint={entry.hint}
-                  active={source === entry.id}
-                  countable={entry.id !== 'custom'}
-                  count={topN}
-                  onCount={setTopN}
-                  picked={source === entry.id ? oiPicked : []}
-                  onActivate={() => {
-                    // Custom Strikes only goes live on Apply. Switching on the
-                    // way *into* the picker would empty the charts behind the
-                    // modal and leave them empty if you then cancelled.
-                    if (entry.id === 'custom') setPicking(true);
-                    else setSource(entry.id);
-                  }}
-                  onEdit={() => setPicking(true)}
-                />
-              ))}
+                <p className={s.subLabel}>Strike selection</p>
+                {SOURCES.map((entry) => (
+                  <StrikeSource
+                    key={entry.id}
+                    title={entry.title}
+                    hint={entry.hint}
+                    active={source === entry.id}
+                    countable={entry.id !== 'custom'}
+                    count={topN}
+                    onCount={setTopN}
+                    picked={source === entry.id ? oiPicked : []}
+                    onActivate={() => {
+                      // Custom Strikes only goes live on Apply. Switching on the
+                      // way *into* the picker would empty the charts behind the
+                      // modal and leave them empty if you then cancelled.
+                      if (entry.id === 'custom') setPicking(true);
+                      else setSource(entry.id);
+                    }}
+                    onEdit={() => setPicking(true)}
+                  />
+                ))}
 
-              <label className={s.netToggle}>
-                <input
-                  type="checkbox"
-                  checked={showNet}
-                  onChange={(e) => setShowNet(e.currentTarget.checked)}
-                />
-                <span>Show PE−CE net change</span>
-              </label>
-            </section>
-          </aside>
+                <label className={s.netToggle}>
+                  <input
+                    type="checkbox"
+                    checked={showNet}
+                    onChange={(e) => setShowNet(e.currentTarget.checked)}
+                  />
+                  <span>Show PE−CE net change</span>
+                </label>
+              </section>
+            </aside>
+          ) : (
+            <button
+              type="button"
+              className={s.restore}
+              aria-label="Show settings"
+              aria-expanded={false}
+              onClick={() => setSidebarOpen(true)}
+            >
+              »
+            </button>
+          )}
 
           {/* RIGHT MAIN */}
           <div className={s.main}>
@@ -269,6 +294,9 @@ export default function MultiOiVolume() {
               formatValue={formatValue}
               formatPrice={fmtPrice}
               group={CHART_GROUP}
+              zoomable
+              zoomEpoch={zoomEpoch}
+              onResetZoom={() => setZoomEpoch((n) => n + 1)}
             />
             <SeriesChart
               title="MultiStrike OI Change"
@@ -281,6 +309,9 @@ export default function MultiOiVolume() {
               formatValue={formatValue}
               formatPrice={fmtPrice}
               group={CHART_GROUP}
+              zoomable
+              zoomEpoch={zoomEpoch}
+              onResetZoom={() => setZoomEpoch((n) => n + 1)}
             />
 
             <p className={s.caption}>
@@ -292,7 +323,9 @@ export default function MultiOiVolume() {
                   ? 'Nothing archived for today yet — showing the 9:15 open against the live chain. The shape fills in as the ingest worker captures snapshots.'
                   : view.open_is_estimated
                     ? `The ${timeLabel(view.t[0]!)} baseline is derived from the day’s OI change; recorded history starts at ${timeLabel(view.t[1] ?? view.t[0]!)}.`
-                    : `Recorded from ${timeLabel(view.t[0]!)} at ${view.interval} buckets.`}
+                    : `Recorded from ${timeLabel(view.t[0]!)} at ${view.interval} buckets.`}{' '}
+              Scroll over either plot to zoom the clock, drag inside it to pan, or drag the time
+              axis itself to stretch and squeeze the window — both charts move together.
             </p>
           </div>
         </div>

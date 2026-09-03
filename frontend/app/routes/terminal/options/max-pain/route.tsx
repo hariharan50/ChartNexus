@@ -37,6 +37,7 @@ const STRIKE_FILTERS: { label: string; value: 'all' | number }[] = [
 
 export default function MaxPain() {
   const [instIdx, setInstIdx] = useState(0);
+  const [sidebarOpen, setSidebarOpen] = useState(true);
   const [mode, setMode] = useState<Mode>('live');
   const [date, setDate] = useState(lastTradingDayIST);
   const [strikeFilter, setStrikeFilter] = useState<'all' | number>(20);
@@ -130,60 +131,83 @@ export default function MaxPain() {
       ) : !view && query.isPending ? (
         <div className={cx(s.panel, s.muted)}>Loading Max Pain…</div>
       ) : view ? (
-        <div className={s.layout}>
+        <div className={cx(s.layout, !sidebarOpen && s.collapsed)}>
           {/* LEFT SIDEBAR */}
-          <aside className={s.sidebar}>
-            <section className={s.panel}>
-              <h2 className={s.pTitle}>Settings</h2>
-
-              <div className={s.instrument}>
-                <span className={s.badge}>{instrument.badge}</span>
-                <span className={s.short}>{instrument.short}</span>
-                <span className={s.cyclers}>
+          {sidebarOpen ? (
+            <aside className={s.sidebar}>
+              <section className={s.panel}>
+                <div className={s.panelHead}>
+                  <h2 className={s.pTitle}>Settings</h2>
                   <button
                     type="button"
-                    aria-label="Previous"
-                    onClick={() =>
-                      setInstIdx((i) => (i - 1 + OI_INSTRUMENTS.length) % OI_INSTRUMENTS.length)
-                    }
+                    className={s.collapseBtn}
+                    aria-label="Collapse settings"
+                    aria-expanded={true}
+                    onClick={() => setSidebarOpen(false)}
                   >
-                    ‹
+                    «
                   </button>
-                  <button
-                    type="button"
-                    aria-label="Next"
-                    onClick={() => setInstIdx((i) => (i + 1) % OI_INSTRUMENTS.length)}
-                  >
-                    ›
-                  </button>
-                </span>
-              </div>
+                </div>
 
-              <HistoryMode mode={mode} date={date} onMode={setMode} onDate={setDate} />
+                <div className={s.instrument}>
+                  <span className={s.badge}>{instrument.badge}</span>
+                  <span className={s.short}>{instrument.short}</span>
+                  <span className={s.cyclers}>
+                    <button
+                      type="button"
+                      aria-label="Previous"
+                      onClick={() =>
+                        setInstIdx((i) => (i - 1 + OI_INSTRUMENTS.length) % OI_INSTRUMENTS.length)
+                      }
+                    >
+                      ‹
+                    </button>
+                    <button
+                      type="button"
+                      aria-label="Next"
+                      onClick={() => setInstIdx((i) => (i + 1) % OI_INSTRUMENTS.length)}
+                    >
+                      ›
+                    </button>
+                  </span>
+                </div>
 
-              <p className={s.subLabel}>Expiry</p>
-              <div className={s.select}>
-                <span>{expiry}</span>
-                <span className={s.caret} aria-hidden="true">
-                  <IconChevronDown />
-                </span>
-              </div>
+                <HistoryMode mode={mode} date={date} onMode={setMode} onDate={setDate} />
 
-              <p className={s.subLabel}>Strikes above and below ATM</p>
-              <div className={s.filterRow}>
-                {STRIKE_FILTERS.map((filter) => (
-                  <button
-                    key={filter.label}
-                    type="button"
-                    className={cx(s.chip, strikeFilter === filter.value && s.active)}
-                    onClick={() => setStrikeFilter(filter.value)}
-                  >
-                    {filter.label}
-                  </button>
-                ))}
-              </div>
-            </section>
-          </aside>
+                <p className={s.subLabel}>Expiry</p>
+                <div className={s.select}>
+                  <span>{expiry}</span>
+                  <span className={s.caret} aria-hidden="true">
+                    <IconChevronDown />
+                  </span>
+                </div>
+
+                <p className={s.subLabel}>Strikes above and below ATM</p>
+                <div className={s.filterRow}>
+                  {STRIKE_FILTERS.map((filter) => (
+                    <button
+                      key={filter.label}
+                      type="button"
+                      className={cx(s.chip, strikeFilter === filter.value && s.active)}
+                      onClick={() => setStrikeFilter(filter.value)}
+                    >
+                      {filter.label}
+                    </button>
+                  ))}
+                </div>
+              </section>
+            </aside>
+          ) : (
+            <button
+              type="button"
+              className={s.restore}
+              aria-label="Show settings"
+              aria-expanded={false}
+              onClick={() => setSidebarOpen(true)}
+            >
+              »
+            </button>
+          )}
 
           {/* RIGHT MAIN */}
           <div className={s.main}>

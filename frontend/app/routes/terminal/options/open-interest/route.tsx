@@ -61,6 +61,7 @@ const QUICK_RANGES: { label: string; value: number | 'all' }[] = [
 
 export default function OpenInterest() {
   const [instIdx, setInstIdx] = useState(0);
+  const [sidebarOpen, setSidebarOpen] = useState(true);
   const [dataMode, setDataMode] = useState<Mode>('live');
   const [date, setDate] = useState(lastTradingDayIST);
   const [mode, setMode] = useState<OiMode>('change_total');
@@ -230,78 +231,101 @@ export default function OpenInterest() {
           </p>
         </div>
       ) : view && totals ? (
-        <div className={s.layout}>
+        <div className={cx(s.layout, !sidebarOpen && s.collapsed)}>
           {/* LEFT SIDEBAR */}
-          <aside className={s.sidebar}>
-            <section className={s.panel}>
-              <h2 className={s.pTitle}>Settings</h2>
-
-              <div className={s.instrument}>
-                <span className={s.badge}>{instrument.badge}</span>
-                <span className={s.short}>{instrument.short}</span>
-                <span className={s.cyclers}>
-                  <button type="button" aria-label="Previous" onClick={() => cycle(-1)}>
-                    ‹
-                  </button>
-                  <button type="button" aria-label="Next" onClick={() => cycle(1)}>
-                    ›
-                  </button>
-                </span>
-              </div>
-
-              <HistoryMode mode={dataMode} date={date} onMode={setDataMode} onDate={setDate} />
-
-              <p className={s.subLabel}>Expiry</p>
-              <div className={s.select}>
-                <span>{expiryLabel}</span>
-                <span className={s.caret} aria-hidden="true">
-                  <IconChevronDown />
-                </span>
-              </div>
-              <p className={s.hint}>Live chain is served for the nearest expiry.</p>
-
-              <p className={s.subLabel}>Strikes above-below ATM</p>
-              <div className={s.filterRow}>
-                {STRIKE_FILTERS.map((f) => (
+          {sidebarOpen ? (
+            <aside className={s.sidebar}>
+              <section className={s.panel}>
+                <div className={s.panelHead}>
+                  <h2 className={s.pTitle}>Settings</h2>
                   <button
-                    key={f.label}
                     type="button"
-                    className={cx(s.chip, strikeFilter === f.value && s.active)}
-                    onClick={() => setStrikeFilter(f.value)}
+                    className={s.collapseBtn}
+                    aria-label="Collapse settings"
+                    aria-expanded={true}
+                    onClick={() => setSidebarOpen(false)}
                   >
-                    {f.label}
+                    «
                   </button>
-                ))}
-              </div>
-            </section>
+                </div>
 
-            <section className={s.panel}>
-              <h2 className={s.pTitle}>
-                <span className={s.ico}>
-                  <IconChart />
-                </span>{' '}
-                Market Sentiment <span className={s.dim}>(based on OI)</span>
-              </h2>
-              <SentimentDonut label={view.sentiment.label} percent={view.sentiment.bullish_pct} />
+                <div className={s.instrument}>
+                  <span className={s.badge}>{instrument.badge}</span>
+                  <span className={s.short}>{instrument.short}</span>
+                  <span className={s.cyclers}>
+                    <button type="button" aria-label="Previous" onClick={() => cycle(-1)}>
+                      ‹
+                    </button>
+                    <button type="button" aria-label="Next" onClick={() => cycle(1)}>
+                      ›
+                    </button>
+                  </span>
+                </div>
 
-              <div className={s.pcrLine}>
-                PCR: <strong>{totals.pcr.toFixed(2)}</strong>{' '}
-                <span className={cx(totals.pcrChange >= 0 ? s.up : s.down)}>
-                  ({totals.pcrChange >= 0 ? '+' : ''}
-                  {totals.pcrChange.toFixed(2)})
-                </span>
-              </div>
+                <HistoryMode mode={dataMode} date={date} onMode={setDataMode} onDate={setDate} />
 
-              <div className={s.insightBox}>
-                <p className={s.ibTitle}>ⓘ Market Insight</p>
-                <p className={s.ibBody}>{view.sentiment.insight}</p>
-              </div>
-              <div className={s.analysisBox}>
-                <p className={s.abTitle}>ⓘ Analysis</p>
-                <p className={s.abBody}>{view.sentiment.analysis}</p>
-              </div>
-            </section>
-          </aside>
+                <p className={s.subLabel}>Expiry</p>
+                <div className={s.select}>
+                  <span>{expiryLabel}</span>
+                  <span className={s.caret} aria-hidden="true">
+                    <IconChevronDown />
+                  </span>
+                </div>
+                <p className={s.hint}>Live chain is served for the nearest expiry.</p>
+
+                <p className={s.subLabel}>Strikes above-below ATM</p>
+                <div className={s.filterRow}>
+                  {STRIKE_FILTERS.map((f) => (
+                    <button
+                      key={f.label}
+                      type="button"
+                      className={cx(s.chip, strikeFilter === f.value && s.active)}
+                      onClick={() => setStrikeFilter(f.value)}
+                    >
+                      {f.label}
+                    </button>
+                  ))}
+                </div>
+              </section>
+
+              <section className={s.panel}>
+                <h2 className={s.pTitle}>
+                  <span className={s.ico}>
+                    <IconChart />
+                  </span>{' '}
+                  Market Sentiment <span className={s.dim}>(based on OI)</span>
+                </h2>
+                <SentimentDonut label={view.sentiment.label} percent={view.sentiment.bullish_pct} />
+
+                <div className={s.pcrLine}>
+                  PCR: <strong>{totals.pcr.toFixed(2)}</strong>{' '}
+                  <span className={cx(totals.pcrChange >= 0 ? s.up : s.down)}>
+                    ({totals.pcrChange >= 0 ? '+' : ''}
+                    {totals.pcrChange.toFixed(2)})
+                  </span>
+                </div>
+
+                <div className={s.insightBox}>
+                  <p className={s.ibTitle}>ⓘ Market Insight</p>
+                  <p className={s.ibBody}>{view.sentiment.insight}</p>
+                </div>
+                <div className={s.analysisBox}>
+                  <p className={s.abTitle}>ⓘ Analysis</p>
+                  <p className={s.abBody}>{view.sentiment.analysis}</p>
+                </div>
+              </section>
+            </aside>
+          ) : (
+            <button
+              type="button"
+              className={s.restore}
+              aria-label="Show settings"
+              aria-expanded={false}
+              onClick={() => setSidebarOpen(true)}
+            >
+              »
+            </button>
+          )}
 
           {/* RIGHT MAIN */}
           <div className={s.main}>

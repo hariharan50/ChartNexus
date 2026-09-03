@@ -9,7 +9,7 @@
 
 .layout {
   display: grid;
-  grid-template-columns: 290px 1fr;
+  grid-template-columns: 260px 1fr;
   gap: var(--mc-space-5, 1.25rem);
   align-items: start;
 }
@@ -24,6 +24,13 @@
   flex-direction: column;
   gap: var(--mc-space-5, 1.25rem);
   min-width: 0;
+}
+
+/* Tighter than the default card padding: the settings controls are narrow and
+   the extra inset only ate into the chart column's width. Matches the other
+   Options Lab price tools. */
+.sidebar > .panel {
+  padding: var(--mc-space-3);
 }
 
 .panel {
@@ -64,6 +71,9 @@
   align-items: center;
   justify-content: space-between;
   gap: var(--mc-space-2);
+  /* The title's own bottom margin is zeroed inside the head row, so the row
+     carries the gap to the first control instead. */
+  margin-bottom: var(--mc-space-3);
 }
 
 .panel-head .p-title {
@@ -114,7 +124,6 @@
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  margin-top: var(--mc-space-3);
   padding: 0.5rem 0.625rem;
   border: 1px solid var(--mc-border);
   border-radius: var(--mc-radius);

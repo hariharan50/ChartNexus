@@ -42,6 +42,7 @@ const REPLAY_MS = 15_000;
 
 export default function PutCallRatio() {
   const [instIdx, setInstIdx] = useState(0);
+  const [sidebarOpen, setSidebarOpen] = useState(true);
   const [mode, setMode] = useState<Mode>('live');
   const [date, setDate] = useState(lastTradingDayIST);
   const [timeframe, setTimeframe] = useState<Timeframe>(DEFAULT_TIMEFRAME);
@@ -147,60 +148,83 @@ export default function PutCallRatio() {
       ) : !view && query.isPending ? (
         <div className={cx(s.panel, s.muted)}>Loading Put-Call Ratio…</div>
       ) : view ? (
-        <div className={s.layout}>
+        <div className={cx(s.layout, !sidebarOpen && s.collapsed)}>
           {/* LEFT SIDEBAR */}
-          <aside className={s.sidebar}>
-            <section className={s.panel}>
-              <h2 className={s.pTitle}>Settings</h2>
-
-              <div className={s.instrument}>
-                <span className={s.badge}>{instrument.badge}</span>
-                <span className={s.short}>{instrument.short}</span>
-                <span className={s.cyclers}>
+          {sidebarOpen ? (
+            <aside className={s.sidebar}>
+              <section className={s.panel}>
+                <div className={s.panelHead}>
+                  <h2 className={s.pTitle}>Settings</h2>
                   <button
                     type="button"
-                    aria-label="Previous"
-                    onClick={() =>
-                      setInstIdx((i) => (i - 1 + INSTRUMENTS.length) % INSTRUMENTS.length)
-                    }
+                    className={s.collapseBtn}
+                    aria-label="Collapse settings"
+                    aria-expanded={true}
+                    onClick={() => setSidebarOpen(false)}
                   >
-                    ‹
+                    «
                   </button>
-                  <button
-                    type="button"
-                    aria-label="Next"
-                    onClick={() => setInstIdx((i) => (i + 1) % INSTRUMENTS.length)}
-                  >
-                    ›
-                  </button>
-                </span>
-              </div>
+                </div>
 
-              <HistoryMode mode={mode} date={date} onMode={setMode} onDate={setDate} />
+                <div className={s.instrument}>
+                  <span className={s.badge}>{instrument.badge}</span>
+                  <span className={s.short}>{instrument.short}</span>
+                  <span className={s.cyclers}>
+                    <button
+                      type="button"
+                      aria-label="Previous"
+                      onClick={() =>
+                        setInstIdx((i) => (i - 1 + INSTRUMENTS.length) % INSTRUMENTS.length)
+                      }
+                    >
+                      ‹
+                    </button>
+                    <button
+                      type="button"
+                      aria-label="Next"
+                      onClick={() => setInstIdx((i) => (i + 1) % INSTRUMENTS.length)}
+                    >
+                      ›
+                    </button>
+                  </span>
+                </div>
 
-              <p className={s.subLabel}>Expiry</p>
-              <div className={s.select}>
-                <span>{expiryLabel(view.expiry_date)}</span>
-                <span className={s.caret} aria-hidden="true">
-                  <IconChevronDown />
-                </span>
-              </div>
+                <HistoryMode mode={mode} date={date} onMode={setMode} onDate={setDate} />
 
-              <p className={s.subLabel}>Timeframe</p>
-              <select
-                className={s.selectNative}
-                aria-label="Timeframe"
-                value={timeframe}
-                onChange={(e) => setTimeframe(e.currentTarget.value as Timeframe)}
-              >
-                {TIMEFRAMES.map((option) => (
-                  <option key={option.value} value={option.value} disabled={option.disabled}>
-                    {option.label}
-                  </option>
-                ))}
-              </select>
-            </section>
-          </aside>
+                <p className={s.subLabel}>Expiry</p>
+                <div className={s.select}>
+                  <span>{expiryLabel(view.expiry_date)}</span>
+                  <span className={s.caret} aria-hidden="true">
+                    <IconChevronDown />
+                  </span>
+                </div>
+
+                <p className={s.subLabel}>Timeframe</p>
+                <select
+                  className={s.selectNative}
+                  aria-label="Timeframe"
+                  value={timeframe}
+                  onChange={(e) => setTimeframe(e.currentTarget.value as Timeframe)}
+                >
+                  {TIMEFRAMES.map((option) => (
+                    <option key={option.value} value={option.value} disabled={option.disabled}>
+                      {option.label}
+                    </option>
+                  ))}
+                </select>
+              </section>
+            </aside>
+          ) : (
+            <button
+              type="button"
+              className={s.restore}
+              aria-label="Show settings"
+              aria-expanded={false}
+              onClick={() => setSidebarOpen(true)}
+            >
+              »
+            </button>
+          )}
 
           {/* RIGHT MAIN */}
           <div className={s.main}>
