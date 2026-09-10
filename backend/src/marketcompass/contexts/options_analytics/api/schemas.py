@@ -357,6 +357,38 @@ class IvHistoryResponse(_Schema):
         return cls.model_validate(payload)
 
 
+class TermPointResponse(_Schema):
+    """One expiry's at-the-money implied volatility."""
+
+    #: The expiry the broker actually answered with, `YYYY-MM-DD`.
+    expiry: str
+    #: Volatility points; `None` where that chain quoted none at the money —
+    #: never interpolated from a neighbour.
+    atm_iv: float | None
+    #: Calendar days from the IST trading date; `None` on an unparseable expiry.
+    days_to_expiry: int | None
+
+
+class TermStructureResponse(_Schema):
+    """Live at-the-money volatility across expiries.
+
+    Live only, and deliberately so: a term structure is several expiries priced
+    at one instant, and the snapshot archive holds a single expiry per session.
+    There is no historical term structure to serve, so there is no date param.
+    """
+
+    instrument_id: str
+    symbol: str
+    spot: float
+    as_of: str
+    #: Sorted by expiry, oldest first — a curve is read along the calendar.
+    points: list[TermPointResponse]
+
+    @classmethod
+    def of(cls, payload: dict[str, Any]) -> TermStructureResponse:
+        return cls.model_validate(payload)
+
+
 class SkewFrameResponse(_Schema):
     """One capture's per-strike implied volatility and open interest.
 
@@ -371,6 +403,9 @@ class SkewFrameResponse(_Schema):
     spot: float
     #: `None` on captures taken before the ATM column was denormalised.
     atm: float | None
+    #: The tradable future at this capture, falling back to spot on rows older
+    #: than that column; `None` when neither was recorded.
+    future: float | None
     ce_iv: list[float | None]
     pe_iv: list[float | None]
     call_oi: list[int]

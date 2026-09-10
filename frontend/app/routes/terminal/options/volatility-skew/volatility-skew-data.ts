@@ -46,6 +46,16 @@ export interface SkewFrame {
   spot: number;
   /** `null` on captures taken before the ATM column was denormalised. */
   atm: number | null;
+  /**
+   * The tradable future at this capture, falling back to spot on rows older
+   * than that column. `null` when neither was recorded.
+   *
+   * Unused by this page — the skew is read across strikes at one instant, not
+   * against price — but the IV Intraday page draws volatility against it, and
+   * one payload carrying both beats that page issuing a second query for one
+   * number per frame.
+   */
+  future: number | null;
   /** Aligned to {@link SkewView.strikes}; `null` where the leg carried no IV. */
   ce_iv: (number | null)[];
   pe_iv: (number | null)[];

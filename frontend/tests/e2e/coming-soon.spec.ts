@@ -47,11 +47,6 @@ const PAGES: Array<{ path: string; heading: string; title?: string }> = [
   },
   { path: '/options/iv-grid', heading: 'IV Grid', title: 'IV Grid · MarketCompass' },
   {
-    path: '/options/iv-intraday',
-    heading: 'IV - Intraday',
-    title: 'IV - Intraday · MarketCompass'
-  },
-  {
     path: '/options/multi-straddle',
     heading: 'Multi-Straddle Chart',
     title: 'Multi-Straddle Chart · MarketCompass'

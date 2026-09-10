@@ -74,7 +74,7 @@ export default [
       route('iv-grid', 'routes/terminal/options/iv-grid.tsx'),
       route('iv-hv', 'routes/terminal/options/iv-hv/route.tsx'),
       route('iv-hv-ivp', 'routes/terminal/options/iv-hv-ivp/route.tsx'),
-      route('iv-intraday', 'routes/terminal/options/iv-intraday.tsx'),
+      route('iv-intraday', 'routes/terminal/options/iv-intraday/route.tsx'),
       route('max-pain', 'routes/terminal/options/max-pain/route.tsx'),
       route('multi-oi-volume', 'routes/terminal/options/multi-oi-volume/route.tsx'),
       route('multi-straddle', 'routes/terminal/options/multi-straddle.tsx'),

@@ -24,6 +24,7 @@ from marketcompass.contexts.options_analytics.api.schemas import (
     SmartOiResponse,
     StraddleSeriesResponse,
     StrikeSeriesResponse,
+    TermStructureResponse,
     VegaResponse,
 )
 from marketcompass.contexts.options_analytics.application.oi_series_service import (
@@ -337,6 +338,48 @@ async def iv_history(
 
     payload = await services.iv_history(principal.tenant_id, symbol, days=days)
     response = IvHistoryResponse.of(payload)
+    await redis.client.set(cache_key, response.model_dump_json(), ex=_CACHE_TTL_SECONDS)
+    return response
+
+
+@router.get(
+    "/term-structure/{instrument_id}",
+    response_model=TermStructureResponse,
+    summary="Live at-the-money implied volatility across expiries",
+    description=(
+        "The volatility term structure as of now: one at-the-money reading per "
+        "requested expiry, taken from that expiry's live chain. Live only — a "
+        "term structure is several expiries priced at one instant, and the "
+        "snapshot archive holds a single expiry per session, so there is no "
+        "history to replay. Powers the IV Intraday page's Term Structure view."
+    ),
+    responses={422: {"description": "Unknown instrument"}},
+)
+async def term_structure(
+    request: Request,
+    principal: CurrentPrincipal,
+    services: Services,
+    instrument_id: InstrumentParam,
+    *,
+    expiries: Annotated[
+        str, Query(description="Comma-separated ISO expiry dates, at most five")
+    ] = "",
+) -> TermStructureResponse:
+    symbol = instrument_id.strip().upper()
+    wanted = [part for part in expiries.split(",") if part.strip()]
+    redis = get_container(request).redis
+    # The expiry list shapes the payload, so it belongs in the key; sorted so
+    # two readers asking for the same set in a different order share an entry.
+    cache_key = redis.key(
+        "lab:term-structure", str(principal.tenant_id), symbol, ",".join(sorted(wanted))
+    )
+
+    cached = await redis.client.get(cache_key)
+    if cached is not None:
+        return TermStructureResponse.model_validate_json(cached)
+
+    payload = await services.term_structure(principal.tenant_id, symbol, expiries=wanted)
+    response = TermStructureResponse.of(payload)
     await redis.client.set(cache_key, response.model_dump_json(), ex=_CACHE_TTL_SECONDS)
     return response
 

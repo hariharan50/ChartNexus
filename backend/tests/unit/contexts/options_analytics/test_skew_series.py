@@ -127,6 +127,29 @@ async def test_the_two_sides_keep_their_own_volatility() -> None:
 
 
 @pytest.mark.asyncio
+async def test_each_frame_carries_the_tradable_future() -> None:
+    """The IV Intraday page draws volatility against price from this one payload."""
+    service = _service([_snap(0, _ladder()), _snap(30, _ladder())])
+
+    frame = (await service(TENANT, "NIFTY"))["frames"][-1]
+
+    assert frame["future"] == 24_700.0
+
+
+@pytest.mark.asyncio
+async def test_the_future_falls_back_to_spot_on_a_capture_that_recorded_none() -> None:
+    older = ChainSnapshot(
+        captured_at=OPEN + timedelta(minutes=15), rows=_ladder(), spot=SPOT, atm_strike=SPOT
+    )
+    service = _service([_snap(0, _ladder()), older, _snap(30, _ladder())])
+
+    payload = await service(TENANT, "NIFTY")
+    middle = payload["frames"][1]
+
+    assert middle["future"] == SPOT
+
+
+@pytest.mark.asyncio
 async def test_an_unquoted_volatility_stays_null_rather_than_zero() -> None:
     """Zero is a real volatility, and a false one. The curve must break instead."""
     rows = _ladder(call_iv={SPOT: None})

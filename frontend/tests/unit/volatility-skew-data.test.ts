@@ -32,6 +32,7 @@ function frame(overrides: Partial<SkewFrame> = {}): SkewFrame {
     t: '2026-09-03T04:00:00Z',
     spot: SPOT,
     atm: 24_600,
+    future: 24_640,
     // A smile: lowest near the money, climbing into both wings.
     ce_iv: [18, 14, 11, 13, 17],
     pe_iv: [20, 16, 12, 14, 19],

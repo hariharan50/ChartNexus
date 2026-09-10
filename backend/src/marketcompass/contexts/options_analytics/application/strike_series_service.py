@@ -191,7 +191,9 @@ def _frame(
         # `None`, never 0, where there was no call interest to divide by — a ratio
         # with an empty denominator is undefined, and 0 would draw a false floor.
         "pcr": (
-            round(pe_oi / ce_oi, 4) if ce_oi is not None and ce_oi > 0 and pe_oi is not None else None
+            round(pe_oi / ce_oi, 4)
+            if ce_oi is not None and ce_oi > 0 and pe_oi is not None
+            else None
         ),
     }
 

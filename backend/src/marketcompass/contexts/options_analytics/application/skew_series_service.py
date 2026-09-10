@@ -39,6 +39,7 @@ from marketcompass.contexts.options_analytics.application.ports import (
 from marketcompass.contexts.options_analytics.application.session import (
     attach_utc,
     drop_future,
+    future_of,
     iso,
     session_open_utc,
 )
@@ -197,6 +198,9 @@ def _frame(snap: ChainSnapshot, *, axis: list[float]) -> tuple[dict[str, Any], f
         "t": iso(captured),
         "spot": round(spot, 2),
         "atm": snap.atm_strike,
+        # The tradable future, for a page that draws volatility against price.
+        # Spot is the fallback only for captures older than that column.
+        "future": future_of(snap),
         "ce_iv": ce_iv,
         "pe_iv": pe_iv,
         "call_oi": call_oi,

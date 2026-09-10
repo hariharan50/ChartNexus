@@ -26,6 +26,9 @@ from marketcompass.contexts.options_analytics.application.straddle_series_servic
 from marketcompass.contexts.options_analytics.application.strike_series_service import (
     GetStrikeSeries,
 )
+from marketcompass.contexts.options_analytics.application.term_structure_service import (
+    GetTermStructure,
+)
 from marketcompass.contexts.options_analytics.application.vega_series_service import GetVega
 from marketcompass.infrastructure.analytics.daily_iv_source import SqlAlchemyDailyIvReader
 from marketcompass.infrastructure.analytics.oi_chain_source import SqlAlchemySnapshotReader
@@ -48,6 +51,7 @@ class OptionsAnalyticsServices:
     gex: GetGex
     iv_history: GetIvHistory
     skew: GetSkew
+    term_structure: GetTermStructure
     vega: GetVega
     straddle_series: GetStraddleSeries
     strike_series: GetStrikeSeries
@@ -86,6 +90,7 @@ def build_options_analytics_services_from(
             strike_span=container.settings.market.snapshot_max_series_strikes,
         ),
         iv_history=GetIvHistory(readings=SqlAlchemyDailyIvReader(session)),
+        term_structure=GetTermStructure(provider=provider),
         skew=GetSkew(
             provider=provider,
             snapshots=snapshots,
