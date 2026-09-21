@@ -1,15 +1,21 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
+import type { Instrument } from '$contexts/instrument-catalog/types';
 import { cx } from '$shared/ui/cx';
 import IconSearch from '$shared/ui/icons/IconSearch';
-import type { Instrument } from '../../options/open-interest/oi-data';
 import s from './SymbolPicker.module.css';
 
 /**
- * Choose the instrument the workspace charts.
+ * Choose the instrument a page charts.
  *
  * A searchable dialog rather than the ‹ › cyclers it replaces: cycling makes
  * you step through instruments you did not want to see, and it does not scale
- * past the three there are today.
+ * past the three there were when this was written. There are now 219, which
+ * settles it — this is the only instrument affordance the terminal should use.
+ *
+ * Matching is over ticker *and* company name, because someone looking for
+ * Reliance may reasonably type either. The ticker is matched case-insensitively
+ * as a substring rather than a prefix, so "BANK" finds BANKNIFTY, BANKBARODA
+ * and FEDERALBNK alike.
  *
  * The focus handling — trap, Escape to close, restore to the opener — is the
  * same contract as `multi-oi-volume/components/ContractPicker`, deliberately.
@@ -21,9 +27,22 @@ interface Props {
   selected: string;
   onPick: (symbol: string) => void;
   onClose: () => void;
+  /** Shown in place of the list while the catalog is still loading. */
+  loading?: boolean;
 }
 
-export default function SymbolPicker({ instruments, selected, onPick, onClose }: Props) {
+/** A short tag for the row, standing in for the old hand-assigned badges. */
+function badgeFor(instrument: Instrument): string {
+  return instrument.kind === 'index' ? 'IDX' : instrument.exchange;
+}
+
+export default function SymbolPicker({
+  instruments,
+  selected,
+  onPick,
+  onClose,
+  loading = false
+}: Props) {
   const [query, setQuery] = useState('');
   const dialog = useRef<HTMLDivElement>(null);
   const search = useRef<HTMLInputElement>(null);
@@ -68,7 +87,10 @@ export default function SymbolPicker({ instruments, selected, onPick, onClose }:
   const visible = useMemo(() => {
     const needle = query.trim().toLowerCase();
     if (needle === '') return instruments;
-    return instruments.filter((entry) => entry.short.toLowerCase().includes(needle));
+    return instruments.filter(
+      (entry) =>
+        entry.symbol.toLowerCase().includes(needle) || entry.name.toLowerCase().includes(needle)
+    );
   }, [instruments, query]);
 
   return (
@@ -90,7 +112,7 @@ export default function SymbolPicker({ instruments, selected, onPick, onClose }:
             ref={search}
             className={s.search}
             type="text"
-            placeholder="Search instrument"
+            placeholder="Search ticker or company"
             aria-label="Search instrument"
             value={query}
             onChange={(event) => setQuery(event.currentTarget.value)}
@@ -109,12 +131,18 @@ export default function SymbolPicker({ instruments, selected, onPick, onClose }:
                   onClose();
                 }}
               >
-                <span className={s.badge}>{entry.badge}</span>
-                <span className={s.name}>{entry.short}</span>
+                <span className={s.badge}>{badgeFor(entry)}</span>
+                <span className={s.name}>{entry.symbol}</span>
+                <span className={s.company}>{entry.name}</span>
               </button>
             </li>
           ))}
-          {visible.length === 0 ? <li className={s.none}>Nothing matches “{query}”.</li> : null}
+          {loading && visible.length === 0 ? (
+            <li className={s.none}>Loading instruments…</li>
+          ) : null}
+          {!loading && visible.length === 0 ? (
+            <li className={s.none}>Nothing matches “{query}”.</li>
+          ) : null}
         </ul>
       </div>
     </div>

@@ -1,11 +1,12 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useInstruments } from '$contexts/instrument-catalog/queries';
+import { defaultInstrumentAt } from '$shared/config/instruments';
 import type { ChartType, LwChartHandle } from '$shared/charts/tv/LwChart';
 import { EMPTY_STATS, type DrawStats } from '$shared/charts/tv/drawings/useDrawings';
 import { cx } from '$shared/ui/cx';
-import { OI_INSTRUMENTS } from '../options/open-interest/oi-data';
 import ChartCell, { type DrawingHandle } from './components/ChartCell';
 import DrawingRail from './components/DrawingRail';
-import SymbolPicker from './components/SymbolPicker';
+import SymbolPicker from '$shared/ui/SymbolPicker';
 import TopToolbar from './components/TopToolbar';
 import { type Interval } from './analyse-data';
 import type { IndicatorId } from './indicators';
@@ -29,12 +30,15 @@ export default function Analyse() {
   // Always four configs; the layout decides how many are on screen. Keeping the
   // hidden ones means switching to a 4-up grid and back does not reset them.
   const [cells, setCells] = useState<CellConfig[]>(() => [
-    defaultCell(OI_INSTRUMENTS[0]!.symbol),
-    defaultCell(OI_INSTRUMENTS[1]?.symbol ?? OI_INSTRUMENTS[0]!.symbol),
-    defaultCell(OI_INSTRUMENTS[2]?.symbol ?? OI_INSTRUMENTS[0]!.symbol),
-    defaultCell(OI_INSTRUMENTS[0]!.symbol)
+    defaultCell(defaultInstrumentAt(0)),
+    defaultCell(defaultInstrumentAt(1)),
+    defaultCell(defaultInstrumentAt(2)),
+    defaultCell(defaultInstrumentAt(0))
   ]);
   const [picking, setPicking] = useState(false);
+  // The catalog is one cached fetch shared by the whole terminal, so asking
+  // for it here costs nothing beyond the first page that did.
+  const { instruments, isLoading: instrumentsLoading } = useInstruments();
   const [isFullscreen, setIsFullscreen] = useState(false);
 
   const workspace = useRef<HTMLDivElement>(null);
@@ -67,8 +71,6 @@ export default function Analyse() {
 
   const shown = cellsInLayout(layout);
   const active = cells[activeIdx] ?? cells[0]!;
-  const instrument =
-    OI_INSTRUMENTS.find((entry) => entry.symbol === active.symbol) ?? OI_INSTRUMENTS[0]!;
   const activeDraw = drawState[activeIdx] ?? DEFAULT_DRAW_STATE;
 
   const patchDrawState = useCallback(
@@ -163,7 +165,7 @@ export default function Analyse() {
       <TopToolbar
         interval={active.interval}
         onInterval={(value: Interval) => patchActive({ interval: value })}
-        symbol={instrument.short}
+        symbol={active.symbol}
         onOpenSymbols={() => setPicking(true)}
         chartType={active.chartType}
         onChartType={(value: ChartType) => patchActive({ chartType: value })}
@@ -222,7 +224,8 @@ export default function Analyse() {
 
       {picking ? (
         <SymbolPicker
-          instruments={OI_INSTRUMENTS}
+          instruments={instruments}
+          loading={instrumentsLoading}
           selected={active.symbol}
           onPick={(symbol) => patchActive({ symbol })}
           onClose={() => setPicking(false)}

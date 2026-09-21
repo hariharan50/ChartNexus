@@ -1,0 +1,256 @@
+.page {
+  display: flex;
+  flex-direction: column;
+  gap: var(--mc-space-5);
+  padding: var(--mc-space-6);
+}
+
+.header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--mc-space-4);
+}
+
+.title {
+  margin: 0;
+  font-size: var(--mc-text-xl);
+  font-weight: 600;
+}
+
+.subtitle {
+  margin: var(--mc-space-1) 0 0;
+  max-width: 62ch;
+  color: var(--mc-text-muted);
+  font-size: var(--mc-text-sm);
+}
+
+/* -- toolbar -------------------------------------------------------------- */
+
+.toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--mc-space-4);
+}
+
+.compare,
+.sector {
+  display: flex;
+  align-items: center;
+  gap: var(--mc-space-2);
+}
+
+.toolLabel {
+  color: var(--mc-text-muted);
+  font-size: var(--mc-text-xs);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.segmented,
+.viewToggle {
+  display: inline-flex;
+  padding: 2px;
+  border: 1px solid var(--mc-border);
+  border-radius: var(--mc-radius);
+  background: var(--mc-surface);
+}
+
+.segment,
+.toggleBtn {
+  height: var(--mc-control-h-sm);
+  padding: 0 var(--mc-space-3);
+  border: 0;
+  border-radius: var(--mc-radius-sm);
+  background: transparent;
+  color: var(--mc-text-muted);
+  font: inherit;
+  font-size: var(--mc-text-sm);
+  cursor: pointer;
+}
+
+.segment:hover:not(:disabled),
+.toggleBtn:hover {
+  color: var(--mc-text);
+}
+
+.segmentOn,
+.toggleOn {
+  background: var(--mc-accent-weak);
+  color: var(--mc-accent);
+  font-weight: 600;
+}
+
+/* Unavailable windows stay visible so the gap reads as a roadmap item rather
+   than a missing control. The title attribute carries the reason. */
+.segment:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.segment:focus-visible,
+.toggleBtn:focus-visible,
+.select:focus-visible {
+  outline: 2px solid var(--mc-accent);
+  outline-offset: 1px;
+}
+
+.select {
+  height: var(--mc-control-h-sm);
+  padding: 0 var(--mc-space-2);
+  border: 1px solid var(--mc-field-border);
+  border-radius: var(--mc-radius);
+  background: var(--mc-field-bg);
+  color: var(--mc-text);
+  font: inherit;
+  font-size: var(--mc-text-sm);
+}
+
+.coverage {
+  margin-left: auto;
+  color: var(--mc-text-muted);
+  font-size: var(--mc-text-xs);
+  font-variant-numeric: tabular-nums;
+}
+
+.partial {
+  color: var(--mc-warning);
+}
+
+.error {
+  margin: 0;
+  padding: var(--mc-space-3) var(--mc-space-4);
+  border: 1px solid var(--mc-bearish);
+  border-radius: var(--mc-radius);
+  background: var(--mc-bearish-weak);
+  font-size: var(--mc-text-sm);
+}
+
+/* -- panels --------------------------------------------------------------- */
+
+/*
+ * Two rows of three, not one row of six.
+ *
+ * `auto-fit` fitted all six across a wide monitor, which left every panel too
+ * narrow for its own columns and the bottom two-thirds of the page empty. A
+ * fixed three keeps the panels wide enough to read and gives the page a shape.
+ */
+.grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--mc-space-5);
+  align-items: start;
+}
+
+@media (width < 68rem) {
+  .grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (width < 44rem) {
+  .grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+.panel {
+  display: flex;
+  flex-direction: column;
+  gap: var(--mc-space-3);
+  padding: var(--mc-space-5);
+  border: 1px solid var(--mc-border);
+  border-radius: var(--mc-radius-lg);
+  background: var(--mc-surface);
+}
+
+.panelTitle {
+  display: flex;
+  align-items: center;
+  gap: var(--mc-space-2);
+  margin: 0;
+  font-size: var(--mc-text-sm);
+  font-weight: 600;
+}
+
+/*
+ * A marker in the panel's own direction, so the two rows read as "rising" and
+ * "falling" rather than as an arbitrary split. Never the only cue — the title
+ * beside it already names the state.
+ */
+.panelTitle::before {
+  content: '';
+  width: 3px;
+  height: 0.9em;
+  border-radius: 999px;
+  background: var(--mc-border-strong, var(--mc-border));
+}
+
+.panelUp .panelTitle::before {
+  background: var(--mc-bullish);
+}
+
+.panelDown .panelTitle::before {
+  background: var(--mc-bearish);
+}
+
+.panelEmpty {
+  margin: 0;
+  color: var(--mc-text-muted);
+  font-size: var(--mc-text-sm);
+}
+
+.panelTable {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--mc-text-sm);
+  font-variant-numeric: tabular-nums;
+}
+
+.panelTable th[scope='col'] {
+  padding-bottom: var(--mc-space-2);
+  border-bottom: 1px solid var(--mc-border);
+  color: var(--mc-text-muted);
+  font-size: var(--mc-text-xs);
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-align: left;
+  text-transform: uppercase;
+}
+
+.panelTable td,
+.panelTable th[scope='row'] {
+  padding: var(--mc-space-3) 0;
+  font-weight: 400;
+  text-align: left;
+}
+
+.panelTable tbody tr + tr td,
+.panelTable tbody tr + tr th {
+  border-top: 1px solid var(--mc-border);
+}
+
+.num {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.symbol {
+  font-weight: 600;
+}
+
+.state {
+  color: var(--mc-text-muted);
+  font-size: var(--mc-text-xs);
+}
+
+/* The two semantic directions, shared by panels and the board table. */
+.up {
+  color: var(--mc-bullish);
+}
+
+.down {
+  color: var(--mc-bearish);
+}

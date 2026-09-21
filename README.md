@@ -4,12 +4,16 @@ Options and futures market intelligence terminal for NSE instruments — option
 chain analytics, futures positioning, signal synthesis, and an explainable
 copilot over the resulting data.
 
-> **Status:** early construction. Three bounded contexts are implemented —
-> `identity` (email/password + Google sign-in), `broker_connections` (FYERS
-> OAuth), and `market_data` (spot prices and option chains). The application
-> runs end to end against a mock feed with no broker account; connecting FYERS
-> swaps in live NSE data. The remaining contexts under
-> `backend/src/marketcompass/contexts/` are still empty.
+> **Status:** under construction. Fifteen bounded contexts are implemented,
+> covering identity and broker connections, market data and ingestion, the
+> options and futures analytics, the signals engine, four AI agents (HELLA,
+> STRYX, HUGIN, MME100), outbound messaging and the daily report. A handful
+> under `backend/src/marketcompass/contexts/` are still empty placeholders.
+>
+> The instrument universe is the full NSE F&O list — 210 stocks plus the index
+> contracts — held in `instrument_catalog` and refreshed daily from the
+> exchange symbol master. The application runs end to end against a mock feed
+> with no broker account; connecting FYERS swaps in live NSE data.
 >
 > Market data is read-only. No order placement, positions, or funds.
 

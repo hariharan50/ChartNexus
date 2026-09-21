@@ -13,7 +13,6 @@ import IconEye from '$shared/ui/icons/IconEye';
 import IconEyeOff from '$shared/ui/icons/IconEyeOff';
 import HistoryMode, { type Mode } from '../components/HistoryMode';
 import {
-  atmIv,
   bucketIndices,
   clockLabel,
   csvFilename,
@@ -112,9 +111,7 @@ export default function IvIntradayChart() {
       {
         timestamps: plot.timestamps,
         futures: plot.futures,
-        lines: showIv
-          ? [{ id: 'iv', label: 'IV', color: IV_COLOR, values: plot.iv }]
-          : [],
+        lines: showIv ? [{ id: 'iv', label: 'IV', color: IV_COLOR, values: plot.iv }] : [],
         formatValue: fmtIv,
         formatPrice: fmtPrice,
         valueAxisName: 'IV',
@@ -455,16 +452,16 @@ export default function IvIntradayChart() {
               <p className={s.caption}>
                 {view === 'intraday' ? (
                   <>
-                    At-the-money implied volatility at every capture, against the tradable future
-                    on the left axis. The archive holds one expiry per session — the nearest — so
-                    this is that contract’s volatility. Scroll over the plot to zoom the clock,
-                    drag inside it to pan, or drag the time axis itself to stretch the window.
+                    At-the-money implied volatility at every capture, against the tradable future on
+                    the left axis. The archive holds one expiry per session — the nearest — so this
+                    is that contract’s volatility. Scroll over the plot to zoom the clock, drag
+                    inside it to pan, or drag the time axis itself to stretch the window.
                   </>
                 ) : (
                   <>
-                    At-the-money volatility across expiries, priced live. There is no history
-                    here and there cannot be: a term structure is several expiries quoted at one
-                    instant, and each archived session holds only the nearest.
+                    At-the-money volatility across expiries, priced live. There is no history here
+                    and there cannot be: a term structure is several expiries quoted at one instant,
+                    and each archived session holds only the nearest.
                     {isFlatCurve(points)
                       ? ' Every expiry is showing the same volatility, which means the data source is not varying its chain by expiry — expect this against mock data, not a live broker.'
                       : ''}
@@ -494,7 +491,12 @@ function Toggle({
   onToggle: () => void;
 }) {
   return (
-    <button type="button" className={cx(s.entry, !on && s.off)} aria-pressed={on} onClick={onToggle}>
+    <button
+      type="button"
+      className={cx(s.entry, !on && s.off)}
+      aria-pressed={on}
+      onClick={onToggle}
+    >
       <span className={s.eye} aria-hidden="true">
         {on ? <IconEye /> : <IconEyeOff />}
       </span>

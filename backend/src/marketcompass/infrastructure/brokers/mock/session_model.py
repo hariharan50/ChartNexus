@@ -35,6 +35,8 @@ from decimal import Decimal
 from functools import lru_cache
 
 from marketcompass.contexts.market_data.domain.instruments import InstrumentSymbol
+from marketcompass.infrastructure.catalog import registry
+from marketcompass.shared_kernel.domain.errors import ValidationError
 
 # India observes no DST, so a fixed +05:30 offset is correct and avoids needing
 # tzdata on the host — the same reasoning every other module here uses.
@@ -98,42 +100,51 @@ _UNWIND_FACTOR = -0.4
 CALL = "CE"
 PUT = "PE"
 
-# Index levels the walk seeds from, taken from a live FYERS capture on
-# 2026-08-06. Earlier values here were guesses scaled off NIFTY and were wrong by
-# 5,600 points on BANKNIFTY.
+# Contract geometry for the simulation comes from the instrument catalog, which
+# is populated from the exchange's own symbol master.
 #
-# They go stale as the market moves, and a stale level is the first thing anyone
-# notices when comparing this app against a real terminal. Re-anchor from
-# `option_chain_snapshots where source = 'live'` when it starts to look wrong.
-_BASE_LEVEL: dict[InstrumentSymbol, Decimal] = {
-    InstrumentSymbol.NIFTY: Decimal(24647),
-    InstrumentSymbol.BANKNIFTY: Decimal(57951),
-    InstrumentSymbol.SENSEX: Decimal(78839),
-}
-
-_STRIKE_STEP: dict[InstrumentSymbol, Decimal] = {
-    InstrumentSymbol.NIFTY: Decimal(50),
-    InstrumentSymbol.BANKNIFTY: Decimal(100),
-    InstrumentSymbol.SENSEX: Decimal(100),
-}
-
-_LOT_SIZE: dict[InstrumentSymbol, int] = {
-    InstrumentSymbol.NIFTY: 75,
-    InstrumentSymbol.BANKNIFTY: 30,
-    InstrumentSymbol.SENSEX: 20,
-}
+# It used to be three hand-written dicts, and the comment that stood here
+# recorded why that was a bad idea: "earlier values here were guesses scaled off
+# NIFTY and were wrong by 5,600 points on BANKNIFTY". Two hundred and nineteen
+# instruments make that failure mode a certainty rather than a risk, and the
+# lookups had no default, so a missing entry was a KeyError rather than a
+# degraded number.
+#
+# An unknown instrument still raises — but now it is a ValidationError saying
+# the symbol is not tradeable, which is the truth.
 
 
 def base_level(instrument: InstrumentSymbol) -> Decimal:
-    return _BASE_LEVEL[instrument]
+    """The level the day's walk starts from.
+
+    The catalog derives this from the middle of the listed strike ladder, so it
+    is in the right region without anyone re-anchoring it by hand. It is a
+    seed, not a price; everything built on it is stamped ``DataSource.MOCK``.
+    """
+    row = registry.current().get(instrument)
+    if row.reference_price is None:
+        # Every instrument the symbol master lists has a strike ladder, so this
+        # is only reachable for a hand-built catalog row in a test.
+        raise ValidationError(
+            f"{instrument.value} has no reference price to simulate from.",
+            field="instrument",
+        )
+    return row.reference_price
 
 
 def strike_step(instrument: InstrumentSymbol) -> Decimal:
-    return _STRIKE_STEP[instrument]
+    """The gap between adjacent strikes in the synthesised chain."""
+    row = registry.current().get(instrument)
+    if row.strike_step is None:
+        raise ValidationError(
+            f"{instrument.value} has no strike step to simulate from.",
+            field="instrument",
+        )
+    return row.strike_step
 
 
 def lot_size(instrument: InstrumentSymbol) -> int:
-    return _LOT_SIZE[instrument]
+    return registry.current().get(instrument).lot_size
 
 
 @dataclass(frozen=True, slots=True)

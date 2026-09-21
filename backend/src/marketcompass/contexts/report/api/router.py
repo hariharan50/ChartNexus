@@ -27,7 +27,12 @@ from marketcompass.infrastructure.transport.http.dependencies import CurrentPrin
 router = APIRouter(prefix="/report", tags=["report"])
 
 InstrumentParam = Annotated[
-    str, Path(description="NIFTY, BANKNIFTY, or SENSEX", examples=["NIFTY"])
+    str,
+    Path(
+        description="NIFTY, BANKNIFTY, or SENSEX. This surface is index-only;"
+        " the wider F&O catalog is not covered here yet.",
+        examples=["NIFTY"],
+    ),
 ]
 
 

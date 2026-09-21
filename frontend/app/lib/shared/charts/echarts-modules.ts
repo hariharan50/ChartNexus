@@ -1,4 +1,4 @@
-import { BarChart, GaugeChart, LineChart } from 'echarts/charts';
+import { BarChart, GaugeChart, LineChart, TreemapChart } from 'echarts/charts';
 import {
   AxisPointerComponent,
   DataZoomInsideComponent,
@@ -46,6 +46,10 @@ echarts.use([
   // ticks, the banded axis line and the rotated band labels in SVG would be a
   // few hundred lines of geometry that this draws for free.
   GaugeChart,
+  // The Future Lab heatmap: the F&O board as sector-grouped rectangles. A
+  // treemap is one series of ~220 nodes, which is well inside the SVG budget
+  // described above — do not switch the renderer for it.
+  TreemapChart,
   GridComponent,
   TooltipComponent,
   // Lets `echarts.connect` drive one crosshair across the three stacked charts

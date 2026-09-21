@@ -11,6 +11,7 @@ that layer can label the result honestly.
 
 from __future__ import annotations
 
+from collections.abc import Sequence
 from datetime import timedelta
 from typing import Protocol
 
@@ -22,11 +23,13 @@ from marketcompass.contexts.market_data.domain.market_data import (
     DataSource,
     ExpiryList,
     FuturesQuote,
+    OpenInterestReading,
     OptionChain,
     Provenance,
     Quote,
 )
 from marketcompass.infrastructure.brokers.futures_contract import (
+    front_month_for,
     resolve_front_month,
     to_futures_symbol,
 )
@@ -37,11 +40,17 @@ from marketcompass.infrastructure.brokers.fyers import (
     quote_mapper,
 )
 from marketcompass.infrastructure.brokers.fyers.circuit_breaker import CircuitBreaker
-from marketcompass.infrastructure.brokers.fyers.rest_client import FyersRestClient
+from marketcompass.infrastructure.brokers.fyers.rest_client import (
+    FyersRestClient,
+    batch_symbols,
+)
 from marketcompass.infrastructure.brokers.fyers.retry_policy import RetryPolicy, with_retry
 from marketcompass.infrastructure.brokers.fyers.symbol_mapper import to_broker_symbol
+from marketcompass.infrastructure.observability.structured_logging import get_logger
 from marketcompass.infrastructure.time.clock import SystemClock
-from marketcompass.shared_kernel.domain.errors import UpstreamError
+from marketcompass.shared_kernel.domain.errors import UpstreamError, ValidationError
+
+log = get_logger(__name__)
 
 PROVIDER_NAME = "fyers"
 
@@ -143,6 +152,132 @@ class FyersMarketDataProvider:
                 day_low=None,
                 provenance=Provenance(source=DataSource.LIVE, fetched_at=self._clock.now()),
             )
+
+    async def get_futures_board(
+        self, instruments: Sequence[InstrumentSymbol]
+    ) -> dict[InstrumentSymbol, FuturesQuote]:
+        """Front-month futures for many instruments, in batched requests.
+
+        Two things make this affordable where calling ``get_futures_quote`` two
+        hundred times would not:
+
+        * the active contract is resolved from the calendar rather than from
+          each instrument's expiry list, which removes one option-chain request
+          per instrument; and
+        * symbols are sent in batches of ``QUOTE_BATCH_SIZE``, turning
+          ~220 requests into ~5.
+
+        The calendar roll is the deliberate trade. ``resolve_front_month`` is
+        more accurate because it reads the broker's own expiries and so handles
+        a holiday-shifted expiry exactly; using it here would cost a request per
+        instrument. For a board of day-change percentages, being on the wrong
+        side of a roll for part of expiry day is a smaller error than not
+        being able to draw the board at all — and the single-instrument path
+        still uses the precise resolution.
+        """
+        today = self._clock.now().date()
+
+        by_symbol: dict[str, InstrumentSymbol] = {}
+        expiries: dict[InstrumentSymbol, str] = {}
+        for instrument in instruments:
+            try:
+                # Per instrument: most share a monthly expiry, but nothing
+                # guarantees it, and the catalog knows each one exactly.
+                contract_date = front_month_for(instrument, today)
+                by_symbol[to_futures_symbol(instrument, contract_date)] = instrument
+                expiries[instrument] = contract_date.isoformat()
+            except ValidationError:
+                # Not in the catalog, so there is no futures root to build a
+                # symbol from. Skip it rather than failing the whole board.
+                log.warning("futures_board_uncatalogued", symbol=instrument.value)
+
+        board: dict[InstrumentSymbol, FuturesQuote] = {}
+        for batch in batch_symbols(list(by_symbol)):
+            try:
+                await self._quota.acquire(self._credentials.app_id)
+                payload = await self._guarded(
+                    # Bind the batch per iteration: the lambda is called later,
+                    # by the retry wrapper, and a free variable would resolve to
+                    # whatever the loop had reached by then.
+                    lambda batch=batch: self._rest.fetch_quotes(
+                        app_id=self._credentials.app_id,
+                        access_token=self._access_token,
+                        symbols=batch,
+                    ),
+                    description=f"futures-board:{len(batch)}",
+                )
+            except Exception as exc:
+                # One bad batch must not cost the other four. Logged, not
+                # swallowed silently — a board quietly missing fifty rows is
+                # indistinguishable from fifty contracts that did not trade.
+                log.warning("futures_board_batch_failed", size=len(batch), error=repr(exc))
+                continue
+
+            fetched_at = self._clock.now()
+            quotes = futures_mapper.split_quote_batch(payload)
+
+            # Say what the broker actually sent when a quote cannot carry a
+            # build-up read. Without this the board degrades to mock with
+            # "broker_returned_nothing", which is true but says nothing about
+            # *why* — and the answer is usually a field the payload omits.
+            without_oi = [
+                values
+                for values in quotes.values()
+                if futures_mapper.open_interest_of(values) is None
+            ]
+            if without_oi:
+                log.warning(
+                    "futures_board_quotes_without_open_interest",
+                    missing=len(without_oi),
+                    of=len(quotes),
+                    available_fields=sorted(without_oi[0]),
+                )
+
+            for symbol, values in quotes.items():
+                quoted = by_symbol.get(symbol)
+                if quoted is None:
+                    # The broker echoed something we did not ask for.
+                    continue
+                try:
+                    board[quoted] = futures_mapper.to_futures_quote_from_values(
+                        values,
+                        instrument=quoted,
+                        contract=symbol,
+                        expiry=expiries.get(quoted, ""),
+                        fetched_at=fetched_at,
+                    )
+                except UpstreamError:
+                    # A contract with no price is not a quote. Leaving it out
+                    # is how the board stays honest about what it knows.
+                    continue
+
+        return board
+
+    async def get_open_interest(
+        self, instrument: InstrumentSymbol
+    ) -> OpenInterestReading | None:
+        """Open interest for the front-month contract, from market depth.
+
+        The calendar roll is used rather than the broker's expiry list for the
+        same reason as the board: resolving the exact expiry costs an extra
+        option-chain request per instrument, which is not affordable across a
+        two-hundred-contract sweep.
+        """
+        contract = front_month_for(instrument, self._clock.now().date())
+        symbol = to_futures_symbol(instrument, contract)
+
+        await self._quota.acquire(self._credentials.app_id)
+        payload = await self._guarded(
+            lambda: self._rest.fetch_depth(
+                app_id=self._credentials.app_id,
+                access_token=self._access_token,
+                symbol=symbol,
+            ),
+            description=f"depth:{instrument.value}",
+        )
+        return futures_mapper.to_open_interest(
+            payload, instrument=instrument, symbol=symbol, observed_at=self._clock.now()
+        )
 
     async def get_option_chain(
         self, instrument: InstrumentSymbol, expiry: str | None = None

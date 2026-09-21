@@ -277,7 +277,16 @@ class MarketSettings(_Section):
     risk_free_rate: float = Field(default=0.07, ge=0.0, le=1.0)
 
     # Ingestion (the option-chain snapshot writer).
-    ingest_symbols: tuple[str, ...] = ("NIFTY", "BANKNIFTY", "SENSEX")
+    #
+    # Empty means "every index in the instrument catalog", which is the sane
+    # default and the only one that survives the catalog changing underneath
+    # us. Set it explicitly to pin a subset.
+    #
+    # Deliberately NOT the whole universe: an option-chain fetch is one broker
+    # call per symbol per tick and the quota is 100k/day, so 216 symbols at the
+    # default 180s cadence would be ~103,680 calls/day before a single user
+    # request. Stock-level analytics need a cheaper feed than this loop.
+    ingest_symbols: tuple[str, ...] = ()
     # Off by default: a mock-fallback day writes nothing, leaving an honest gap.
     # Turn on locally to generate test history without a live broker connection.
     ingest_allow_mock: bool = False
@@ -389,6 +398,58 @@ class ReportSettings(_Section):
     max_tenants_per_tick: int = Field(default=50, ge=1)
 
 
+class CatalogSettings(_Section):
+    """The instrument-catalog refresh worker.
+
+    The F&O universe — which underlyings exist, their lot sizes, and the broker
+    symbols needed to quote them — is refreshed daily from the exchange symbol
+    master rather than pinned in a seed migration, because NSE revises the list
+    and the lot sizes by circular several times a year. The master files are
+    public, so this needs no broker account and spends no API quota.
+    """
+
+    model_config = _section_config("CATALOG_")
+
+    enabled: bool = True
+    #: LOCAL-only auto-start inside the API lifespan, like the other workers.
+    in_process: bool = True
+    #: IST wall-clock time the refresh runs. Well before the 09:15 open, so a
+    #: lot-size revision is in place for the session it applies to.
+    refresh_time_ist: str = "07:30"
+    #: Fill the catalog at startup *if it is empty*. An empty catalog means no
+    #: instrument resolves at all, so a first run should not have to wait for
+    #: tomorrow's refresh. A populated catalog is left alone: the masters are
+    #: ~19 MB and the API runs this loop under ``--reload``.
+    sync_on_start: bool = True
+
+
+class FuturesOpenInterestSettings(_Section):
+    """The open-interest sweep behind the Future Lab's build-up columns.
+
+    The broker endpoint carrying open interest takes one contract per request,
+    so the whole universe is ~220 requests. At the board's refresh rate that
+    would be roughly 340,000 a day against a 100,000 quota; on this cadence it
+    is about 17,000, and open interest moves slowly enough that a reading a few
+    minutes old classifies a build-up just as well as a fresh one.
+    """
+
+    model_config = _section_config("FUTURES_OI_")
+
+    enabled: bool = True
+    #: LOCAL-only auto-start inside the API lifespan, like the other workers.
+    in_process: bool = True
+    #: Seconds between sweeps.
+    interval_seconds: int = Field(default=300, ge=60)
+    #: Requests per second the sweep may use. A deliberately small slice of the
+    #: broker's eight, which is shared with every user request: filling a
+    #: background column must never make someone's page slow.
+    requests_per_second: float = Field(default=2.0, gt=0, le=8.0)
+    #: How long a cached reading stays usable. Long enough that one failed
+    #: sweep does not blank the board, short enough that yesterday's figures
+    #: can never pass for today's.
+    ttl_seconds: int = Field(default=45 * 60, ge=60)
+
+
 class Settings(BaseSettings):
     """Root settings object. Build it once per process via :func:`get_settings`."""
 
@@ -419,6 +480,10 @@ class Settings(BaseSettings):
     mme100: Mme100Settings = Field(default_factory=Mme100Settings)
     messaging: MessagingSettings = Field(default_factory=MessagingSettings)
     report: ReportSettings = Field(default_factory=ReportSettings)
+    catalog: CatalogSettings = Field(default_factory=CatalogSettings)
+    futures_oi: FuturesOpenInterestSettings = Field(
+        default_factory=FuturesOpenInterestSettings
+    )
 
     def assert_deployment_safe(self) -> None:
         """Fail fast when a deployed environment still holds development defaults."""

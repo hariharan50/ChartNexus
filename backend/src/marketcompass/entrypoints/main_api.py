@@ -23,6 +23,8 @@ from marketcompass.bootstrap.container import Container
 from marketcompass.bootstrap.logging import configure_logging
 from marketcompass.bootstrap.route_registry import API_PREFIX, register_routes
 from marketcompass.bootstrap.settings import Environment, Settings, get_settings
+from marketcompass.entrypoints.catalog_runtime import load_registry, run_catalog_loop
+from marketcompass.entrypoints.futures_oi_runtime import run_futures_oi_loop
 from marketcompass.entrypoints.hugin_runtime import run_hugin_loop
 from marketcompass.entrypoints.ingest_runtime import run_capture_loop
 from marketcompass.entrypoints.mme100_runtime import run_mme100_loop
@@ -95,6 +97,10 @@ def create_app(settings: Settings | None = None) -> FastAPI:
             llm=resolved.llm.provider,
         )
 
+        # The instrument catalog backs every symbol lookup the adapters make,
+        # so it is loaded before anything can serve a request.
+        await load_registry(container)
+
         # Local-only background workers. Each has a standalone process for deployed
         # environments (``marketcompass-ingest`` / ``-hugin`` / ``-mme100`` / the
         # report worker); running them in-process lets a developer on just the API
@@ -105,6 +111,20 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         # answers. Shut down in reverse start order in the ``finally``.
         local = resolved.environment == Environment.LOCAL
         workers = (
+            # First: everything else resolves instruments through the catalog,
+            # so it has to be populated before the other loops do useful work.
+            _maybe_start(
+                enabled=local and resolved.catalog.enabled and resolved.catalog.in_process,
+                name="catalog-refresh-loop",
+                make_loop=lambda stop: run_catalog_loop(container, resolved, stop=stop),
+            ),
+            _maybe_start(
+                enabled=local
+                and resolved.futures_oi.enabled
+                and resolved.futures_oi.in_process,
+                name="futures-oi-sweep",
+                make_loop=lambda stop: run_futures_oi_loop(container, resolved, stop=stop),
+            ),
             _maybe_start(
                 enabled=local and resolved.market.ingest_in_process,
                 name="ingest-capture-loop",

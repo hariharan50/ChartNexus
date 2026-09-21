@@ -38,6 +38,8 @@ from marketcompass.contexts.market_ingestion.application.retention import (
     RetentionError,
 )
 from marketcompass.contexts.market_ingestion.application.rollup import RollupDailyIv
+from marketcompass.entrypoints.catalog_runtime import load_registry
+from marketcompass.entrypoints.ingest_runtime import ingest_symbols
 from marketcompass.infrastructure.ingestion.daily_iv_rollup import (
     SqlAlchemyDailyIvWriter,
     SqlAlchemySessionIvSource,
@@ -203,9 +205,12 @@ async def _main(argv: list[str]) -> int:
     args = _parser(settings.market.snapshot_retention_days).parse_args(argv)
 
     container = Container.create(settings, use_db_pool=False)
+    # Adapters resolve symbols through the catalog registry, so it has to
+    # be warm before this process does any instrument work.
+    await load_registry(container)
     try:
         if args.command == "seed":
-            symbols = tuple(args.symbols) if args.symbols else tuple(settings.market.ingest_symbols)
+            symbols = tuple(args.symbols) if args.symbols else ingest_symbols(settings)
             session_date = (
                 date.fromisoformat(args.session_date) if args.session_date else _today_ist()
             )
@@ -226,7 +231,7 @@ async def _main(argv: list[str]) -> int:
                     file=sys.stderr,
                 )
         elif args.command == "rollup-iv":
-            symbols = tuple(args.symbols) if args.symbols else tuple(settings.market.ingest_symbols)
+            symbols = tuple(args.symbols) if args.symbols else ingest_symbols(settings)
             written = await _rollup(container, symbols=symbols, lookback_days=args.lookback_days)
             print(f"rolled up {written} sessions of IV ({', '.join(symbols)})")
             if written == 0:

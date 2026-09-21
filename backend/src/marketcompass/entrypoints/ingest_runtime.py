@@ -27,8 +27,10 @@ from datetime import UTC, date, datetime, timedelta, timezone
 
 from marketcompass.bootstrap.container import Container
 from marketcompass.bootstrap.settings import Settings
+from marketcompass.contexts.instrument_catalog.domain.instrument import InstrumentKind
 from marketcompass.contexts.market_ingestion.application.retention import PruneSnapshots
 from marketcompass.contexts.market_ingestion.application.rollup import RollupDailyIv
+from marketcompass.infrastructure.catalog import registry
 from marketcompass.infrastructure.ingestion.chain_source import build_ingest_service
 from marketcompass.infrastructure.ingestion.daily_iv_rollup import (
     SqlAlchemyDailyIvWriter,
@@ -51,6 +53,24 @@ class _SystemClock:
         return datetime.now(UTC)
 
 
+
+def ingest_symbols(settings: Settings) -> tuple[str, ...]:
+    """Which symbols this loop archives option chains for.
+
+    An explicit ``MARKET_INGEST_SYMBOLS`` wins. Otherwise it is every index in
+    the catalog — resolved per call, so a catalog refresh that adds an index is
+    picked up on the next tick without a restart.
+
+    Not the whole universe, and not by accident: one option-chain fetch per
+    symbol per tick against a 100k/day broker quota does not survive 216
+    symbols at a three-minute cadence.
+    """
+    configured = tuple(settings.market.ingest_symbols)
+    if configured:
+        return configured
+    return registry.current().symbols(kind=InstrumentKind.INDEX)
+
+
 async def capture_tick(container: Container, settings: Settings, *, allow_mock: bool) -> None:
     """One capture pass. Never propagates — the loop must survive a bad tick."""
     try:
@@ -58,7 +78,7 @@ async def capture_tick(container: Container, settings: Settings, *, allow_mock: 
             service = build_ingest_service(
                 session=session,
                 container=container,
-                symbols=tuple(settings.market.ingest_symbols),
+                symbols=ingest_symbols(settings),
                 allow_mock=allow_mock,
             )
             result = await service()
@@ -121,7 +141,7 @@ async def rollup_once(container: Container, settings: Settings) -> None:
                 clock=_SystemClock(),
             )
             result = await use_case(
-                list(settings.market.ingest_symbols),
+                list(ingest_symbols(settings)),
                 lookback_days=settings.market.snapshot_retention_days,
             )
     except Exception as exc:
@@ -149,7 +169,7 @@ async def run_capture_loop(
     log.info(
         "ingest_loop_starting",
         interval_seconds=interval,
-        symbols=list(settings.market.ingest_symbols),
+        symbols=list(ingest_symbols(settings)),
         allow_mock=resolved_allow_mock,
     )
     pruned_on: date | None = None

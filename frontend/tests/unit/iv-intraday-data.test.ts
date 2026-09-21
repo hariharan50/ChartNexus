@@ -113,7 +113,14 @@ describe('the intraday series', () => {
 });
 
 describe('expiry selection', () => {
-  const listed = ['2026-09-08', '2026-09-15', '2026-09-22', '2026-09-29', '2026-10-06', '2026-10-13'];
+  const listed = [
+    '2026-09-08',
+    '2026-09-15',
+    '2026-09-22',
+    '2026-09-29',
+    '2026-10-06',
+    '2026-10-13'
+  ];
 
   it('opens on the nearest three, so the curve has a shape', () => {
     expect(defaultExpiries(listed)).toEqual(['2026-09-08', '2026-09-15', '2026-09-22']);

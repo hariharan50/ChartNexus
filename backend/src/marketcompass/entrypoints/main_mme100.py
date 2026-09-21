@@ -19,6 +19,7 @@ import signal
 from marketcompass.bootstrap.container import Container
 from marketcompass.bootstrap.logging import configure_logging
 from marketcompass.bootstrap.settings import Settings, get_settings
+from marketcompass.entrypoints.catalog_runtime import load_registry
 from marketcompass.entrypoints.mme100_runtime import run_mme100_loop
 from marketcompass.infrastructure.observability.structured_logging import get_logger
 
@@ -28,6 +29,9 @@ log = get_logger(__name__)
 async def _run(settings: Settings) -> None:
     configure_logging(settings)
     container = Container.create(settings, use_db_pool=False)
+    # Adapters resolve symbols through the catalog registry, so it has to
+    # be warm before this process does any instrument work.
+    await load_registry(container)
 
     stop = asyncio.Event()
     loop = asyncio.get_running_loop()

@@ -7,7 +7,6 @@ interface Item {
   label: string;
   glyph: string;
   href: string;
-  isNew?: boolean;
 }
 interface Section {
   title: string;
@@ -19,6 +18,7 @@ const sections: Section[] = [
     title: 'Price Tools',
     items: [
       { label: 'Future Dashboard', glyph: 'gauge', href: '/future-lab/dashboard' },
+      { label: 'Stocks', glyph: 'layers', href: '/future-lab/stocks' },
       { label: 'Market Movers', glyph: 'trend', href: '/future-lab/market-movers' },
       { label: 'Future Heatmap', glyph: 'grid', href: '/future-lab/heatmap' }
     ]
@@ -60,11 +60,6 @@ export default function FutureLabPanel() {
                       <OptionsLabIcon name={item.glyph} />
                     </span>
                     <span className={s.label}>{item.label}</span>
-                    {item.isNew ? (
-                      <span className={s.newBadge} aria-label="New">
-                        N
-                      </span>
-                    ) : null}
                   </Link>
                 </li>
               ))}

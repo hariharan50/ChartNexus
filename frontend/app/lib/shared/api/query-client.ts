@@ -33,7 +33,9 @@ export function createQueryClient(): QueryClient {
  */
 export const queryKeys = {
   session: () => ['session'] as const,
-  instruments: (search?: string) => ['instruments', search ?? ''] as const,
+  // The catalog is cached per scope ('' for the whole universe, or a kind
+  // like 'index'), not per keystroke: filtering happens client-side.
+  instruments: (scope?: string) => ['instruments', scope ?? ''] as const,
   marketStatus: () => ['market-status'] as const,
   spot: (symbol: string) => ['spot', symbol] as const,
   optionChain: (symbol: string, expiry: string) => ['option-chain', symbol, expiry] as const,

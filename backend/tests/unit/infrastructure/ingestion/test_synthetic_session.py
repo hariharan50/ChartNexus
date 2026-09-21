@@ -271,7 +271,7 @@ def test_a_non_positive_interval_is_rejected() -> None:
 
 
 def test_an_unknown_symbol_is_rejected() -> None:
-    with pytest.raises(ValidationError, match="Unknown instrument"):
+    with pytest.raises(ValidationError, match="not a tradeable instrument"):
         build_synthetic_session(symbol="DOGECOIN", session_date=_DATE)
 
 

@@ -43,10 +43,12 @@ def chain_payload() -> dict[str, Any]:
 
 
 def test_symbols_map_both_ways() -> None:
-    assert to_broker_symbol(InstrumentSymbol.NIFTY) == "NSE:NIFTY50-INDEX"
-    assert to_broker_symbol(InstrumentSymbol.BANKNIFTY) == "NSE:NIFTYBANK-INDEX"
-    assert to_broker_symbol(InstrumentSymbol.SENSEX) == "BSE:SENSEX-INDEX"
-    assert from_broker_symbol("NSE:NIFTY50-INDEX") is InstrumentSymbol.NIFTY
+    assert to_broker_symbol(InstrumentSymbol("NIFTY")) == "NSE:NIFTY50-INDEX"
+    assert to_broker_symbol(InstrumentSymbol("BANKNIFTY")) == "NSE:NIFTYBANK-INDEX"
+    assert to_broker_symbol(InstrumentSymbol("SENSEX")) == "BSE:SENSEX-INDEX"
+    # Equality, not identity: an instrument symbol is a value object now, not
+    # an interned enum member, so two "NIFTY"s are equal but not the same object.
+    assert from_broker_symbol("NSE:NIFTY50-INDEX") == InstrumentSymbol("NIFTY")
     assert from_broker_symbol("NSE:SOMETHING-ELSE") is None
 
 
@@ -59,7 +61,7 @@ def test_quote_is_parsed() -> None:
         "d": [{"n": "NSE:NIFTY50-INDEX", "v": {"lp": 24123.45, "ch": -18.2, "chp": -0.42}}],
     }
 
-    quote = to_quote(payload, instrument=InstrumentSymbol.NIFTY, fetched_at=NOW)
+    quote = to_quote(payload, instrument=InstrumentSymbol("NIFTY"), fetched_at=NOW)
 
     assert quote.price == Decimal("24123.45")
     assert quote.change_percent == Decimal("-0.42")
@@ -71,12 +73,12 @@ def test_quote_without_a_price_is_rejected() -> None:
     payload = {"s": "ok", "d": [{"n": "NSE:NIFTY50-INDEX", "v": {}}]}
 
     with pytest.raises(UpstreamError):
-        to_quote(payload, instrument=InstrumentSymbol.NIFTY, fetched_at=NOW)
+        to_quote(payload, instrument=InstrumentSymbol("NIFTY"), fetched_at=NOW)
 
 
 def test_empty_quote_response_is_rejected() -> None:
     with pytest.raises(UpstreamError):
-        to_quote({"s": "ok", "d": []}, instrument=InstrumentSymbol.NIFTY, fetched_at=NOW)
+        to_quote({"s": "ok", "d": []}, instrument=InstrumentSymbol("NIFTY"), fetched_at=NOW)
 
 
 # --- option chain ----------------------------------------------------------
@@ -84,7 +86,7 @@ def test_empty_quote_response_is_rejected() -> None:
 
 def test_chain_does_not_collapse_onto_strike_zero(chain_payload: dict[str, Any]) -> None:
     """The camelCase-parser bug: every contract landing on strike 0."""
-    chain = to_option_chain(chain_payload, instrument=InstrumentSymbol.NIFTY, fetched_at=NOW)
+    chain = to_option_chain(chain_payload, instrument=InstrumentSymbol("NIFTY"), fetched_at=NOW)
 
     strikes = [row.strike for row in chain.strikes]
     assert strikes == [Decimal(24050), Decimal(24100), Decimal(24150)]
@@ -93,7 +95,7 @@ def test_chain_does_not_collapse_onto_strike_zero(chain_payload: dict[str, Any])
 
 def test_underlying_leg_supplies_spot_change_and_future(chain_payload: dict[str, Any]) -> None:
     """strike_price == -1 is the index, not a tradeable strike."""
-    chain = to_option_chain(chain_payload, instrument=InstrumentSymbol.NIFTY, fetched_at=NOW)
+    chain = to_option_chain(chain_payload, instrument=InstrumentSymbol("NIFTY"), fetched_at=NOW)
 
     assert chain.spot_price == Decimal("24123.45")
     assert chain.change_percent == Decimal("-0.42")
@@ -103,7 +105,7 @@ def test_underlying_leg_supplies_spot_change_and_future(chain_payload: dict[str,
 
 
 def test_both_legs_are_parsed_with_snake_case_keys(chain_payload: dict[str, Any]) -> None:
-    chain = to_option_chain(chain_payload, instrument=InstrumentSymbol.NIFTY, fetched_at=NOW)
+    chain = to_option_chain(chain_payload, instrument=InstrumentSymbol("NIFTY"), fetched_at=NOW)
     atm = next(row for row in chain.strikes if row.strike == Decimal(24100))
 
     assert atm.call is not None
@@ -120,7 +122,7 @@ def test_a_strike_quoted_on_one_side_only_keeps_the_other_side_none(
     chain_payload: dict[str, Any],
 ) -> None:
     """Illiquid strikes are one-sided; inventing a zero would corrupt PCR."""
-    chain = to_option_chain(chain_payload, instrument=InstrumentSymbol.NIFTY, fetched_at=NOW)
+    chain = to_option_chain(chain_payload, instrument=InstrumentSymbol("NIFTY"), fetched_at=NOW)
     row = next(row for row in chain.strikes if row.strike == Decimal(24050))
 
     assert row.call is not None
@@ -128,7 +130,7 @@ def test_a_strike_quoted_on_one_side_only_keeps_the_other_side_none(
 
 
 def test_expiries_come_from_the_broker(chain_payload: dict[str, Any]) -> None:
-    chain = to_option_chain(chain_payload, instrument=InstrumentSymbol.NIFTY, fetched_at=NOW)
+    chain = to_option_chain(chain_payload, instrument=InstrumentSymbol("NIFTY"), fetched_at=NOW)
 
     assert chain.expiries == ("2026-07-30", "2026-08-06", "2026-08-27")
     assert chain.expiry == "2026-07-30"
@@ -136,7 +138,7 @@ def test_expiries_come_from_the_broker(chain_payload: dict[str, Any]) -> None:
 
 
 def test_pcr_and_atm_are_computed_from_the_chain(chain_payload: dict[str, Any]) -> None:
-    chain = to_option_chain(chain_payload, instrument=InstrumentSymbol.NIFTY, fetched_at=NOW)
+    chain = to_option_chain(chain_payload, instrument=InstrumentSymbol("NIFTY"), fetched_at=NOW)
 
     # PE OI 115000+117000 over CE OI 123456+71544+60000
     expected = (Decimal(232000) / Decimal(255000)).quantize(Decimal("0.0001"))
@@ -156,7 +158,7 @@ def test_pcr_is_undefined_rather_than_zero_without_call_interest() -> None:
             ],
         },
     }
-    chain = to_option_chain(payload, instrument=InstrumentSymbol.NIFTY, fetched_at=NOW)
+    chain = to_option_chain(payload, instrument=InstrumentSymbol("NIFTY"), fetched_at=NOW)
 
     assert chain.put_call_ratio is None
 
@@ -165,7 +167,7 @@ def test_chain_without_strikes_is_rejected() -> None:
     payload = {"s": "ok", "data": {"optionsChain": [{"strike_price": -1, "ltp": 100}]}}
 
     with pytest.raises(UpstreamError):
-        to_option_chain(payload, instrument=InstrumentSymbol.NIFTY, fetched_at=NOW)
+        to_option_chain(payload, instrument=InstrumentSymbol("NIFTY"), fetched_at=NOW)
 
 
 def test_chain_without_a_spot_price_is_rejected() -> None:
@@ -175,7 +177,7 @@ def test_chain_without_a_spot_price_is_rejected() -> None:
     }
 
     with pytest.raises(UpstreamError):
-        to_option_chain(payload, instrument=InstrumentSymbol.NIFTY, fetched_at=NOW)
+        to_option_chain(payload, instrument=InstrumentSymbol("NIFTY"), fetched_at=NOW)
 
 
 def test_missing_underlying_ltp_is_rejected_rather_than_reading_india_vix() -> None:
@@ -195,7 +197,7 @@ def test_missing_underlying_ltp_is_rejected_rather_than_reading_india_vix() -> N
     }
 
     with pytest.raises(UpstreamError):
-        to_option_chain(payload, instrument=InstrumentSymbol.NIFTY, fetched_at=NOW)
+        to_option_chain(payload, instrument=InstrumentSymbol("NIFTY"), fetched_at=NOW)
 
 
 # --- expiry normalisation --------------------------------------------------

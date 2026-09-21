@@ -1,0 +1,19 @@
+.wrap {
+  border: 1px solid var(--mc-border);
+  border-radius: var(--mc-radius-lg);
+  background: var(--mc-surface);
+  padding: var(--mc-space-2);
+}
+
+.chart {
+  width: 100%;
+  height: 32rem;
+}
+
+.empty {
+  margin: 0;
+  padding: var(--mc-space-6);
+  color: var(--mc-text-muted);
+  font-size: var(--mc-text-sm);
+  text-align: center;
+}

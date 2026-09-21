@@ -85,6 +85,38 @@ class FuturesQuote:
     day_high: Decimal | None
     day_low: Decimal | None
     provenance: Provenance
+    # Open interest on this contract, and the same figure at the previous
+    # close. Both optional: the cash segment has no OI at all, and not every
+    # broker payload carries the previous day's. The build-up read needs them,
+    # and it must be able to tell "no OI reported" from "OI of zero".
+    open_interest: int | None = None
+    previous_open_interest: int | None = None
+    # Yesterday's settlement, when the broker states it. Lets a day's move be
+    # computed without waiting for this session's first snapshot.
+    previous_close: Decimal | None = None
+    # The session's opening print. With the day's high and low it answers
+    # whether the contract opened on its low or its high, which is the
+    # structural read the "O=L" / "O=H" badge shows.
+    day_open: Decimal | None = None
+    # Yesterday's traded volume. No broker payload observed so far carries it,
+    # so expect None on live data until we archive our own daily volume —
+    # which is precisely why volume change has to be nullable downstream.
+    previous_volume: int | None = None
+
+
+@dataclass(frozen=True, slots=True)
+class OpenInterestReading:
+    """Open interest on one contract, and where it stood at the last close.
+
+    Separate from :class:`FuturesQuote` because the two come from different
+    endpoints at different cadences: price ticks by the second, open interest
+    is a slow daily aggregate fetched one contract at a time.
+    """
+
+    instrument: InstrumentSymbol
+    open_interest: int
+    previous_open_interest: int | None
+    observed_at: datetime
 
 
 class CandleInterval(StrEnum):

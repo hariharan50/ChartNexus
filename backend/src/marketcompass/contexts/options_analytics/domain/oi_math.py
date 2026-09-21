@@ -12,10 +12,18 @@ from __future__ import annotations
 
 from collections.abc import Iterable, Sequence
 from dataclasses import dataclass
+from itertools import pairwise
 
 _CALL = "CE"
 _PUT = "PE"
-_DEFAULT_STEP = 50.0
+# Last-resort strike step, used only when a chain arrives with fewer than two
+# listed strikes and there is nothing to measure. It is an index-shaped number
+# and it is wrong for most of the universe — stocks ladder at anything from 1
+# to 500 — so it exists to keep the maths defined, not to be accurate. Any code
+# path that relies on it is working with a chain that has no strikes, which is
+# a data problem rather than a geometry one.
+DEFAULT_STRIKE_STEP = 50.0
+_DEFAULT_STEP = DEFAULT_STRIKE_STEP
 
 
 @dataclass(frozen=True, slots=True)
@@ -125,3 +133,17 @@ def max_pain(rows: Iterable[ChainRow], strikes: Sequence[float]) -> float:
             least_pain = pain
             best_strike = candidate
     return best_strike
+
+
+def infer_step(strikes: Sequence[float]) -> float:
+    """The gap between adjacent strikes, read off the chain itself.
+
+    The minimum positive gap, not the average or the mode: exchanges thin the
+    ladder out towards the wings, so the tightest gap is the one around the
+    money, which is the step every caller actually means.
+
+    This was copied verbatim into six services. One definition means one place
+    to change when the rule does.
+    """
+    diffs = [b - a for a, b in pairwise(strikes) if b - a > 0]
+    return min(diffs) if diffs else DEFAULT_STRIKE_STEP

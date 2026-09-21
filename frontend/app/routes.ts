@@ -95,6 +95,7 @@ export default [
     ...prefix('future-lab', [
       index('routes/terminal/future-lab/index.tsx'),
       route('dashboard', 'routes/terminal/future-lab/dashboard.tsx'),
+      route('stocks', 'routes/terminal/future-lab/stocks.tsx'),
       route('heatmap', 'routes/terminal/future-lab/heatmap.tsx'),
       route('intraday', 'routes/terminal/future-lab/intraday.tsx'),
       route('market-movers', 'routes/terminal/future-lab/market-movers.tsx'),

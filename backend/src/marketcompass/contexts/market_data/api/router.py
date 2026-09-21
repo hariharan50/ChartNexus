@@ -32,7 +32,11 @@ from marketcompass.infrastructure.transport.http.dependencies import CurrentPrin
 router = APIRouter(prefix="/market", tags=["market data"])
 
 InstrumentParam = Annotated[
-    str, Query(description="NIFTY, BANKNIFTY, or SENSEX", examples=["NIFTY"])
+    str,
+    Query(
+        description="Any underlying in the instrument catalog, e.g. NIFTY or RELIANCE.",
+        examples=["NIFTY"],
+    ),
 ]
 
 

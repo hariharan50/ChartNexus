@@ -26,7 +26,7 @@ direction dependency inversion requires. It may not import `bootstrap/` or
 | `entitlements` | plan-based feature gating |
 | `billing` | subscriptions and billing |
 | `preferences` | per-user workspace and display preferences |
-| `instrument_catalog` | instruments/symbols reference data |
+| `instrument_catalog` | the tradeable F&O universe — symbols, lot sizes, strike steps, broker symbols |
 | `broker_connections` | a tenant's broker API credentials and OAuth token lifecycle |
 | `ai_settings` | a user's own LLM provider, API key (encrypted at rest), and model |
 | `market_ingestion` | snapshot capture and archival for the market feed |
@@ -38,6 +38,10 @@ direction dependency inversion requires. It may not import `bootstrap/` or
 | `content_intelligence` | market content/news intelligence |
 | `copilot` | the AI Console analyst agent (Hella) |
 | `stryx` | the aggressive trade-caller agent (STRYX) |
+| `hugin` | the autonomous market-memory agent (HUGIN) |
+| `mme100` | pre-market analysis and the morning briefing (MME100) |
+| `messaging` | outbound delivery to a user's channels (Telegram) |
+| `report` | the daily branded PDF market report |
 | `realtime_delivery` | realtime/websocket delivery |
 | `audit` | audit trail of sensitive actions |
 

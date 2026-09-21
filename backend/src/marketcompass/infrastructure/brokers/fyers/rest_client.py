@@ -18,6 +18,7 @@ an error whose ``message`` is safe to log but not to show a user verbatim.
 from __future__ import annotations
 
 import hashlib
+from collections.abc import Sequence
 from dataclasses import dataclass
 from typing import Any
 from urllib.parse import urlencode
@@ -66,6 +67,15 @@ class FyersEndpoints:
         return f"{self.data_base}/options-chain-v3"
 
     @property
+    def depth(self) -> str:
+        """Market depth — the only endpoint that carries open interest.
+
+        Quotes do not: verified against the live API, whose futures payload
+        exposes price, volume and the day's range but no OI at all.
+        """
+        return f"{self.data_base}/depth"
+
+    @property
     def history(self) -> str:
         return f"{self.data_base}/history"
 
@@ -81,6 +91,34 @@ def app_id_hash(app_id: str, secret_id: str) -> str:
 def authorization_header(app_id: str, access_token: str) -> str:
     """Data requests authenticate as ``<app_id>:<access_token>``."""
     return f"{app_id}:{access_token}"
+
+
+
+# How many symbols go in one ``/data/quotes`` request.
+#
+# FYERS documents a per-request cap on this endpoint; 50 is the widely used
+# value and is what the board fetch chunks to. It is deliberately a named
+# constant rather than a literal: if the real cap turns out to be lower, one
+# edit fixes every caller, and if a request ever starts failing with a batch
+# too large this is the first thing to turn down.
+QUOTE_BATCH_SIZE = 50
+
+
+def batch_symbols(symbols: Sequence[str], size: int = QUOTE_BATCH_SIZE) -> list[list[str]]:
+    """Split symbols into request-sized chunks, preserving order.
+
+    Deduplicates on the way through: asking for the same contract twice in one
+    request wastes part of the batch, and the response is keyed by symbol so
+    the duplicate buys nothing.
+    """
+    if size < 1:
+        raise ValueError("batch size must be at least 1")
+
+    seen: dict[str, None] = {}
+    for symbol in symbols:
+        seen.setdefault(symbol, None)
+    unique = list(seen)
+    return [unique[index : index + size] for index in range(0, len(unique), size)]
 
 
 class FyersRestClient:
@@ -125,12 +163,41 @@ class FyersRestClient:
     async def fetch_profile(self, *, app_id: str, access_token: str) -> dict[str, Any]:
         return await self._get(self._endpoints.profile, app_id=app_id, access_token=access_token)
 
-    async def fetch_quotes(self, *, app_id: str, access_token: str, symbols: str) -> dict[str, Any]:
+    async def fetch_quotes(
+        self, *, app_id: str, access_token: str, symbols: str | Sequence[str]
+    ) -> dict[str, Any]:
+        """One quote request. ``symbols`` may be a single symbol or a batch.
+
+        FYERS accepts a comma-separated list here, which is what makes a
+        two-hundred-instrument board affordable: see
+        :func:`batch_symbols` for the chunking, and note that this method
+        itself does no chunking — a caller passing more than the per-request
+        cap will get whatever the broker does with it.
+        """
+        joined = symbols if isinstance(symbols, str) else ",".join(symbols)
         return await self._get(
             self._endpoints.quotes,
             app_id=app_id,
             access_token=access_token,
-            params={"symbols": symbols},
+            params={"symbols": joined},
+        )
+
+    async def fetch_depth(
+        self, *, app_id: str, access_token: str, symbol: str
+    ) -> dict[str, Any]:
+        """Depth for **one** contract.
+
+        Strictly one — the API rejects a list outright with "More than one
+        symbol is not allowed". That constraint is the reason open interest is
+        swept on a slow background cadence rather than fetched with the board:
+        two hundred-odd contracts is two hundred-odd requests.
+        """
+        return await self._get(
+            self._endpoints.depth,
+            app_id=app_id,
+            access_token=access_token,
+            # Without ohlcv_flag the endpoint 400s; it is not optional.
+            params={"symbol": symbol, "ohlcv_flag": 1},
         )
 
     async def fetch_option_chain(

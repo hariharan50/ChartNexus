@@ -1,0 +1,109 @@
+.rail {
+  display: flex;
+  flex-direction: column;
+  gap: var(--mc-space-3);
+  width: 17rem;
+  flex: 0 0 auto;
+}
+
+.panel {
+  border: 1px solid var(--mc-border);
+  border-radius: var(--mc-radius-lg);
+  background: var(--mc-surface);
+  overflow: hidden;
+}
+
+/* The sector list is long; it scrolls inside the panel so the page does not. */
+.scrollPanel .list {
+  max-height: 22rem;
+  overflow-y: auto;
+}
+
+.head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--mc-space-2) var(--mc-space-3);
+  border-bottom: 1px solid var(--mc-border);
+  background: var(--mc-surface-raised);
+  color: var(--mc-text-muted);
+  font-size: var(--mc-text-xs);
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--mc-space-2);
+  width: 100%;
+  padding: var(--mc-space-2) var(--mc-space-3);
+  border-bottom: 1px solid var(--mc-border);
+  font-size: var(--mc-text-sm);
+}
+
+.list li:last-child .row {
+  border-bottom: 0;
+}
+
+.rowBtn {
+  border-left: 0;
+  border-right: 0;
+  border-top: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  font-size: var(--mc-text-sm);
+  text-align: left;
+  cursor: pointer;
+}
+
+.rowBtn:hover {
+  background: var(--mc-surface-raised);
+}
+
+.rowBtn:focus-visible {
+  outline: 2px solid var(--mc-accent);
+  outline-offset: -2px;
+}
+
+.selected {
+  background: var(--mc-accent-weak);
+}
+
+.name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.right {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  margin-left: auto;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.up {
+  color: var(--mc-bullish);
+  font-weight: 600;
+}
+
+.down {
+  color: var(--mc-bearish);
+  font-weight: 600;
+}
+
+.slash {
+  color: var(--mc-text-subtle);
+}

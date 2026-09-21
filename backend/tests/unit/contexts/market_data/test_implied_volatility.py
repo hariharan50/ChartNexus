@@ -38,7 +38,7 @@ def _chain(
     strikes: tuple[StrikeRow, ...], *, expiry: str = FAR_EXPIRY, spot: str = "24600"
 ) -> OptionChain:
     return OptionChain(
-        instrument=InstrumentSymbol.NIFTY,
+        instrument=InstrumentSymbol("NIFTY"),
         expiry=expiry,
         spot_price=Decimal(spot),
         strikes=strikes,

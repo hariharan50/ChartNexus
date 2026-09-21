@@ -27,7 +27,6 @@ Two departures from the OI-family services, both shared with ``gex_service``:
 from __future__ import annotations
 
 from datetime import UTC, date, datetime, timedelta
-from itertools import pairwise
 from typing import Any
 
 from marketcompass.contexts.options_analytics.application.ports import (
@@ -45,6 +44,7 @@ from marketcompass.contexts.options_analytics.application.session import (
     iso,
     session_open_utc,
 )
+from marketcompass.contexts.options_analytics.domain.oi_math import infer_step
 from marketcompass.contexts.options_analytics.domain.vega_math import (
     VegaProfile,
     synthetic_future,
@@ -57,7 +57,6 @@ _MIN_INTRADAY_SNAPSHOTS = 2
 # the UI offers, so a day with a drifting ladder cannot grow the payload without
 # bound. Matches `GetGex`'s default.
 _SERIES_STRIKE_SPAN = 25
-_DEFAULT_STEP = 50.0
 _CRORE = 1e7
 # Enough precision that a small position is still visible; anything finer is
 # below the width of a rendered point.
@@ -150,7 +149,7 @@ class GetVega:
         if anchor is None:
             anchor = newest.spot if newest.spot is not None else union[len(union) // 2]
 
-        reach = _infer_step(union) * self._strike_span
+        reach = infer_step(union) * self._strike_span
         return [strike for strike in union if strike in current or abs(strike - anchor) <= reach]
 
 
@@ -257,7 +256,3 @@ def _years_to_expiry(moment: datetime, expiry: date | None) -> float:
     remaining: timedelta = close - attach_utc(moment)
     return max(0.0, remaining.total_seconds() / _YEAR_SECONDS)
 
-
-def _infer_step(strikes: list[float]) -> float:
-    diffs = [b - a for a, b in pairwise(strikes) if b - a > 0]
-    return min(diffs) if diffs else _DEFAULT_STEP

@@ -1,0 +1,150 @@
+.toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: var(--mc-space-3);
+}
+
+.field {
+  display: flex;
+  align-items: center;
+  gap: var(--mc-space-2);
+}
+
+.caption {
+  color: var(--mc-text-muted);
+  font-size: var(--mc-text-xs);
+  white-space: nowrap;
+}
+
+.searchBox {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+}
+
+.searchIco {
+  position: absolute;
+  left: var(--mc-space-2);
+  display: inline-flex;
+  color: var(--mc-text-subtle);
+  pointer-events: none;
+}
+
+.search {
+  width: 12rem;
+  height: var(--mc-control-h-sm);
+  padding: 0 var(--mc-space-2) 0 2rem;
+  border: 1px solid var(--mc-field-border);
+  border-radius: var(--mc-radius);
+  background: var(--mc-field-bg);
+  color: var(--mc-text);
+  font: inherit;
+  font-size: var(--mc-text-sm);
+}
+
+.select {
+  height: var(--mc-control-h-sm);
+  min-width: 8rem;
+  padding: 0 var(--mc-space-2);
+  border: 1px solid var(--mc-field-border);
+  border-radius: var(--mc-radius);
+  background: var(--mc-field-bg);
+  color: var(--mc-text);
+  font: inherit;
+  font-size: var(--mc-text-sm);
+}
+
+/* Read-only: the board is front-month only, so this states a fact rather than
+   offering a choice. */
+.chip {
+  display: inline-flex;
+  align-items: center;
+  height: var(--mc-control-h-sm);
+  padding: 0 var(--mc-space-3);
+  border: 1px dashed var(--mc-border-strong);
+  border-radius: var(--mc-radius);
+  color: var(--mc-text);
+  font-size: var(--mc-text-sm);
+  white-space: nowrap;
+}
+
+.right {
+  display: flex;
+  align-items: center;
+  gap: var(--mc-space-2);
+  margin-left: auto;
+}
+
+.viewToggle {
+  display: inline-flex;
+  padding: 2px;
+  border: 1px solid var(--mc-border);
+  border-radius: var(--mc-radius);
+  background: var(--mc-surface);
+}
+
+.toggleBtn {
+  height: calc(var(--mc-control-h-sm) - 4px);
+  padding: 0 var(--mc-space-3);
+  border: 0;
+  border-radius: var(--mc-radius-sm);
+  background: transparent;
+  color: var(--mc-text-muted);
+  font: inherit;
+  font-size: var(--mc-text-sm);
+  cursor: pointer;
+}
+
+.toggleBtn:hover {
+  color: var(--mc-text);
+}
+
+.toggleOn {
+  background: var(--mc-accent);
+  color: var(--mc-on-brand, #fff);
+  font-weight: 600;
+}
+
+.export {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--mc-control-h-sm);
+  height: var(--mc-control-h-sm);
+  border: 1px solid var(--mc-border);
+  border-radius: var(--mc-radius);
+  background: var(--mc-surface);
+  color: var(--mc-text-muted);
+  font: inherit;
+  cursor: pointer;
+}
+
+.export:hover:not(:disabled) {
+  color: var(--mc-text);
+}
+
+.export:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.search:focus-visible,
+.select:focus-visible,
+.toggleBtn:focus-visible,
+.export:focus-visible {
+  outline: 2px solid var(--mc-accent);
+  outline-offset: 1px;
+}
+
+.srOnly {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}

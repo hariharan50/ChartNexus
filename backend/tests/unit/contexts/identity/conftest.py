@@ -75,6 +75,13 @@ class FakeUserRepository:
 
 @dataclass
 class FakeSessionRepository:
+    # The real repository evaluates "is this session still active" against the
+    # database's clock. This fake has to be told the time, because the suite
+    # issues its sessions at a pinned START date: reading the wall clock here
+    # measured a fake session's lifetime against today, so every session aged
+    # out the moment real time passed START + the refresh TTL and
+    # `list_active_for_user` silently began returning nothing.
+    clock: FixedClock
     sessions: dict[SessionId, RefreshSession] = field(default_factory=dict)
 
     async def get(self, session_id: SessionId) -> RefreshSession | None:
@@ -93,7 +100,7 @@ class FakeSessionRepository:
         self.sessions[session.id] = session
 
     async def list_active_for_user(self, user_id: UserId) -> list[RefreshSession]:
-        now = datetime.now(UTC)
+        now = self.clock.now()
         return [s for s in self.sessions.values() if s.user_id == user_id and s.is_active(now)]
 
     async def revoke_family(
@@ -241,8 +248,8 @@ def users() -> FakeUserRepository:
 
 
 @pytest.fixture
-def sessions_repo() -> FakeSessionRepository:
-    return FakeSessionRepository()
+def sessions_repo(clock: FixedClock) -> FakeSessionRepository:
+    return FakeSessionRepository(clock)
 
 
 @pytest.fixture

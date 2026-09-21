@@ -25,7 +25,6 @@ Two departures from the sibling services, both deliberate:
 from __future__ import annotations
 
 from datetime import UTC, date, datetime, timedelta
-from itertools import pairwise
 from typing import Any
 
 from marketcompass.contexts.options_analytics.application.ports import (
@@ -50,6 +49,7 @@ from marketcompass.contexts.options_analytics.domain.gex_math import (
     strike_profile,
     zero_gamma,
 )
+from marketcompass.contexts.options_analytics.domain.oi_math import infer_step
 from marketcompass.shared_kernel.types.identifiers import TenantId
 
 _MIN_INTRADAY_SNAPSHOTS = 2
@@ -57,7 +57,6 @@ _MIN_INTRADAY_SNAPSHOTS = 2
 # is ±20, so this is a superset — it exists so a day with a drifting ladder
 # cannot grow the payload without bound. Matches `GetOiView`'s default.
 _SERIES_STRIKE_SPAN = 25
-_DEFAULT_STEP = 50.0
 _CRORE = 1e7
 # Enough precision that a 1-lakh exposure is still visible; anything finer is
 # below the width of a rendered bar.
@@ -150,7 +149,7 @@ class GetGex:
         if anchor is None:
             anchor = newest.spot if newest.spot is not None else union[len(union) // 2]
 
-        reach = _infer_step(union) * self._strike_span
+        reach = infer_step(union) * self._strike_span
         return [strike for strike in union if strike in current or abs(strike - anchor) <= reach]
 
 
@@ -258,7 +257,3 @@ def _years_to_expiry(moment: datetime, expiry: date | None) -> float:
     remaining: timedelta = close - attach_utc(moment)
     return max(0.0, remaining.total_seconds() / _YEAR_SECONDS)
 
-
-def _infer_step(strikes: list[float]) -> float:
-    diffs = [b - a for a, b in pairwise(strikes) if b - a > 0]
-    return min(diffs) if diffs else _DEFAULT_STEP

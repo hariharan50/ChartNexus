@@ -23,6 +23,7 @@ import calendar
 from datetime import date, timedelta
 
 from marketcompass.contexts.market_data.domain.instruments import InstrumentSymbol
+from marketcompass.infrastructure.catalog import registry
 
 _THURSDAY = 3  # date.weekday(): Monday=0 … Sunday=6
 _DECEMBER = 12
@@ -42,14 +43,6 @@ _MONTHS = (
     "DEC",
 )
 
-# The tradeable root FYERS uses for each index future — distinct from the spot
-# index symbol (``NSE:NIFTY50-INDEX`` spot, ``NSE:NIFTY…FUT`` future).
-_FUTURES_ROOT: dict[InstrumentSymbol, str] = {
-    InstrumentSymbol.NIFTY: "NIFTY",
-    InstrumentSymbol.BANKNIFTY: "BANKNIFTY",
-    InstrumentSymbol.SENSEX: "SENSEX",
-}
-
 
 def last_thursday(year: int, month: int) -> date:
     """The last Thursday of ``month`` — the standard monthly expiry day."""
@@ -62,11 +55,33 @@ def _add_month(year: int, month: int) -> tuple[int, int]:
 
 
 def local_front_month(today: date) -> date:
-    """Front-month expiry from the calendar alone (fallback path)."""
+    """Front-month expiry from the calendar alone.
+
+    **A fallback, and a poor one.** It assumes the last Thursday, which NSE no
+    longer uses — September 2026 expires on Tuesday the 29th, not Thursday the
+    24th. Between those two dates the guess rolls to October while September
+    contracts are still trading, which builds symbols for the wrong series.
+
+    Prefer :func:`front_month_for`, which reads the date the exchange actually
+    published. This remains only for the case where the catalog has no entry.
+    """
     this_month = last_thursday(today.year, today.month)
     if today <= this_month:
         return this_month
     return last_thursday(*_add_month(today.year, today.month))
+
+
+def front_month_for(instrument: InstrumentSymbol, today: date) -> date:
+    """The front-month expiry for one instrument.
+
+    Taken from the catalog, which carries the exchange's own published expiry
+    and is refreshed daily. Falls back to the calendar only when the catalog
+    has nothing — a symbol newly listed between syncs.
+    """
+    row = registry.current().find(instrument)
+    if row is not None and row.front_expiry is not None and row.front_expiry >= today:
+        return row.front_expiry
+    return local_front_month(today)
 
 
 def resolve_front_month(expiries: tuple[str, ...], today: date) -> date:
@@ -104,5 +119,9 @@ def to_futures_symbol(instrument: InstrumentSymbol, contract: date) -> str:
     Only the month and year of ``contract`` are encoded, so the exact expiry day
     never matters to which series this names.
     """
-    root = _FUTURES_ROOT[instrument]
-    return f"{instrument.exchange}:{root}{contract:%y}{_MONTHS[contract.month - 1]}FUT"
+    # Root and exchange both come from the catalog: the futures root is
+    # distinct from the spot symbol (``NSE:NIFTY50-INDEX`` spot but
+    # ``NSE:NIFTY26SEPFUT`` future), and the exchange is per-instrument —
+    # SENSEX and BANKEX are BSE while everything else is NSE.
+    row = registry.current().get(instrument)
+    return f"{row.exchange}:{row.futures_root}{contract:%y}{_MONTHS[contract.month - 1]}FUT"

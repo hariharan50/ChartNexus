@@ -1,0 +1,74 @@
+.legend {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--mc-space-1);
+}
+
+.item {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  padding: 0.25rem var(--mc-space-2);
+  border: 1px solid transparent;
+  border-radius: var(--mc-radius);
+  background: transparent;
+  color: var(--mc-text-muted);
+  font: inherit;
+  font-size: var(--mc-text-xs);
+  cursor: pointer;
+}
+
+.item:hover {
+  border-color: var(--mc-border);
+  color: var(--mc-text);
+}
+
+.item:focus-visible {
+  outline: 2px solid var(--mc-accent);
+  outline-offset: 1px;
+}
+
+.selected {
+  border-color: var(--mc-border-strong);
+  background: var(--mc-surface-raised);
+  color: var(--mc-text);
+}
+
+.swatch {
+  width: 0.625rem;
+  height: 0.625rem;
+  border-radius: 2px;
+}
+
+.label {
+  white-space: nowrap;
+}
+
+.count {
+  color: var(--mc-text);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Four states, two directions, two intensities. Adding open interest is the
+   stronger claim of the pair, so it gets the saturated swatch. */
+.strong-up {
+  background: var(--mc-bullish);
+}
+
+.up {
+  background: color-mix(in srgb, var(--mc-bullish) 45%, transparent);
+}
+
+.strong-down {
+  background: var(--mc-bearish);
+}
+
+.down {
+  background: color-mix(in srgb, var(--mc-bearish) 55%, transparent);
+}
+
+.flat {
+  background: var(--mc-text-subtle);
+}

@@ -34,7 +34,7 @@ from marketcompass.shared_kernel.types.identifiers import TenantId
 pytestmark = pytest.mark.unit
 
 TENANT = TenantId("00000000-0000-4000-8000-000000000001")
-NIFTY = InstrumentSymbol.NIFTY
+NIFTY = InstrumentSymbol("NIFTY")
 
 # A Wednesday, mid-session: 12:00 IST.
 MIDDAY = datetime(2026, 8, 5, 6, 30, tzinfo=UTC)

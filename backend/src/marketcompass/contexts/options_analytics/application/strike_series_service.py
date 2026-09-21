@@ -14,7 +14,6 @@ carrying a fabricated opening bar.
 from __future__ import annotations
 
 from datetime import UTC, datetime
-from itertools import pairwise
 from typing import Any
 
 from marketcompass.contexts.options_analytics.application.ports import (
@@ -30,14 +29,13 @@ from marketcompass.contexts.options_analytics.application.session import (
     iso,
     session_open_utc,
 )
-from marketcompass.contexts.options_analytics.domain.oi_math import ChainRow
+from marketcompass.contexts.options_analytics.domain.oi_math import ChainRow, infer_step
 from marketcompass.shared_kernel.types.identifiers import TenantId
 
 _MIN_INTRADAY_SNAPSHOTS = 2
 # Strikes either side of ATM kept on the ladder the sidebar offers. Matches the
 # straddle/GEX/vega span so the strike list reads the same across the tools.
 _LADDER_STRIKE_SPAN = 25
-_DEFAULT_STEP = 50.0
 _PLACES = 2
 
 
@@ -132,7 +130,7 @@ class GetStrikeSeries:
         if anchor is None:
             anchor = newest.spot if newest.spot is not None else union[len(union) // 2]
 
-        reach = _infer_step(union) * self._strike_span
+        reach = infer_step(union) * self._strike_span
         return [strike for strike in union if strike in current or abs(strike - anchor) <= reach]
 
 
@@ -256,7 +254,3 @@ def _price(row: ChainRow | None) -> float | None:
     """
     return None if row is None else round(row.ltp, _PLACES)
 
-
-def _infer_step(strikes: list[float]) -> float:
-    diffs = [b - a for a, b in pairwise(strikes) if b - a > 0]
-    return min(diffs) if diffs else _DEFAULT_STEP

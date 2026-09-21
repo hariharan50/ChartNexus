@@ -50,7 +50,11 @@ router = APIRouter(prefix="/options-lab", tags=["options lab"])
 _CACHE_TTL_SECONDS = 12
 
 InstrumentParam = Annotated[
-    str, Path(description="NIFTY, BANKNIFTY, or SENSEX", examples=["NIFTY"])
+    str,
+    Path(
+        description="Any underlying in the instrument catalog, e.g. NIFTY or RELIANCE.",
+        examples=["NIFTY"],
+    ),
 ]
 
 # Optional archived-session date. Present → Historical mode; absent → Live (today).

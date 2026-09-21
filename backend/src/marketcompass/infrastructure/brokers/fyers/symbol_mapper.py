@@ -2,35 +2,31 @@
 
 The only place broker symbol strings appear. Everything above this speaks
 ``InstrumentSymbol``.
+
+This used to be a three-entry dict. It is now a catalog lookup, because the
+mapping is not one shape: an index is quoted ``NSE:NIFTY50-INDEX`` while a
+company is quoted ``NSE:RELIANCE-EQ``, and the index root is not even derivable
+from the canonical name (``BANKNIFTY`` maps to ``NIFTYBANK``). Those strings
+come straight from the exchange's own symbol master, so nobody has to maintain
+two hundred of them by hand.
 """
 
 from __future__ import annotations
 
 from marketcompass.contexts.market_data.domain.instruments import InstrumentSymbol
-from marketcompass.shared_kernel.domain.errors import ValidationError
-
-_TO_FYERS: dict[InstrumentSymbol, str] = {
-    InstrumentSymbol.NIFTY: "NSE:NIFTY50-INDEX",
-    InstrumentSymbol.BANKNIFTY: "NSE:NIFTYBANK-INDEX",
-    InstrumentSymbol.SENSEX: "BSE:SENSEX-INDEX",
-}
-
-_FROM_FYERS: dict[str, InstrumentSymbol] = {value: key for key, value in _TO_FYERS.items()}
+from marketcompass.infrastructure.catalog import registry
 
 
 def to_broker_symbol(instrument: InstrumentSymbol) -> str:
-    try:
-        return _TO_FYERS[instrument]
-    except KeyError as exc:
-        raise ValidationError(
-            f"{instrument.value} is not available from this broker.", field="instrument"
-        ) from exc
+    """The broker's symbol for this instrument's spot/underlying price."""
+    return registry.current().get(instrument).spot_symbol
 
 
 def from_broker_symbol(symbol: str) -> InstrumentSymbol | None:
     """Reverse lookup. Returns None for anything we do not track."""
-    return _FROM_FYERS.get(symbol.strip().upper())
+    needle = symbol.strip().upper()
+    for instrument in registry.current().all():
+        if instrument.spot_symbol.upper() == needle:
+            return InstrumentSymbol(instrument.symbol)
+    return None
 
-
-def supported_instruments() -> tuple[InstrumentSymbol, ...]:
-    return tuple(_TO_FYERS)

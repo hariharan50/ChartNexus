@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from collections.abc import Sequence
 from datetime import date, datetime
 from decimal import Decimal
 from typing import Protocol, runtime_checkable
@@ -12,6 +13,7 @@ from marketcompass.contexts.market_data.domain.market_data import (
     CandleSeries,
     ExpiryList,
     FuturesQuote,
+    OpenInterestReading,
     OptionChain,
     Quote,
 )
@@ -34,6 +36,33 @@ class MarketDataProvider(Protocol):
     async def get_quote(self, instrument: InstrumentSymbol) -> Quote: ...
 
     async def get_futures_quote(self, instrument: InstrumentSymbol) -> FuturesQuote: ...
+
+    async def get_futures_board(
+        self, instruments: Sequence[InstrumentSymbol]
+    ) -> dict[InstrumentSymbol, FuturesQuote]:
+        """Front-month futures for many instruments at once.
+
+        The universe-wide read behind the Future Dashboard. Separate from
+        ``get_futures_quote`` because the per-instrument call resolves the
+        active contract from the broker's expiry list — a second request each —
+        which is right for one card and ruinous for two hundred rows against a
+        capped daily quota.
+
+        Instruments the provider could not answer for are simply absent from
+        the result. A partial board is useful; a failed one is not.
+        """
+        ...
+
+    async def get_open_interest(
+        self, instrument: InstrumentSymbol
+    ) -> OpenInterestReading | None:
+        """Open interest on the front-month contract, or ``None`` if unknown.
+
+        One contract per call — the broker endpoint that carries OI refuses a
+        list. Callers sweeping the universe must pace themselves; this is not a
+        request-time lookup.
+        """
+        ...
 
     async def get_option_chain(
         self, instrument: InstrumentSymbol, expiry: str | None = None

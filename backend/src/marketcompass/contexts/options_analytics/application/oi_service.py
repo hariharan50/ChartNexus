@@ -26,7 +26,6 @@ from __future__ import annotations
 
 from collections import OrderedDict
 from datetime import UTC, datetime
-from itertools import pairwise
 from typing import Any
 
 from marketcompass.contexts.options_analytics.application.ports import (
@@ -44,12 +43,12 @@ from marketcompass.contexts.options_analytics.application.session import (
 from marketcompass.contexts.options_analytics.domain.oi_math import (
     ChainRow,
     atm_strike,
+    infer_step,
     max_pain,
     pcr_oi,
 )
 from marketcompass.shared_kernel.types.identifiers import TenantId
 
-_DEFAULT_STEP = 50.0
 _MIN_INTRADAY_SNAPSHOTS = 2
 # Strikes either side of ATM kept in the intraday series. The widest filter the
 # UI offers is ±20, so this is a superset — it exists to stop a day with a
@@ -210,7 +209,7 @@ class GetOiView:
                 }
             )
 
-        step = _infer_step(strikes)
+        step = infer_step(strikes)
         # Caller's spot first (the tier that has one that matches `now_rows`),
         # then the live chain, then the middle of the ladder.
         resolved = spot if spot is not None else chain.spot
@@ -320,7 +319,7 @@ class GetOiView:
         if anchor is None:
             anchor = newest.spot if newest.spot is not None else union[len(union) // 2]
 
-        reach = _infer_step(union) * self._strike_span
+        reach = infer_step(union) * self._strike_span
         return [s for s in union if s in current or abs(s - anchor) <= reach]
 
     def _series(
@@ -402,10 +401,6 @@ def _pcr_from_totals(put_oi: int, call_oi: int) -> float:
         return 0.0
     return round(put_oi / call_oi, 4)
 
-
-def _infer_step(strikes: list[float]) -> float:
-    diffs = [b - a for a, b in pairwise(strikes) if b - a > 0]
-    return min(diffs) if diffs else _DEFAULT_STEP
 
 
 def _iso(dt: datetime) -> str:

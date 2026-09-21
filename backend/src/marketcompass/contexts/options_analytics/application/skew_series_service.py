@@ -27,7 +27,6 @@ Three properties shared with its two IV siblings:
 from __future__ import annotations
 
 from datetime import UTC, datetime
-from itertools import pairwise
 from typing import Any
 
 from marketcompass.contexts.options_analytics.application.ports import (
@@ -43,7 +42,7 @@ from marketcompass.contexts.options_analytics.application.session import (
     iso,
     session_open_utc,
 )
-from marketcompass.contexts.options_analytics.domain.oi_math import ChainRow
+from marketcompass.contexts.options_analytics.domain.oi_math import ChainRow, infer_step
 from marketcompass.shared_kernel.types.identifiers import TenantId
 
 _MIN_INTRADAY_SNAPSHOTS = 2
@@ -51,7 +50,6 @@ _MIN_INTRADAY_SNAPSHOTS = 2
 # the UI offers, so a day with a drifting ladder cannot grow the payload without
 # bound. Matches `GetGex` and `GetVega`.
 _SERIES_STRIKE_SPAN = 25
-_DEFAULT_STEP = 50.0
 # IV is quoted in volatility points; three decimals is finer than any exchange
 # publishes and keeps the payload from carrying float noise.
 _IV_PLACES = 3
@@ -144,7 +142,7 @@ class GetSkew:
         if anchor is None:
             anchor = newest.spot if newest.spot is not None else union[len(union) // 2]
 
-        reach = _infer_step(union) * self._strike_span
+        reach = infer_step(union) * self._strike_span
         return [strike for strike in union if strike in current or abs(strike - anchor) <= reach]
 
 
@@ -241,7 +239,3 @@ def _empty(symbol: str, chain: ProviderChain, now: datetime) -> dict[str, Any]:
 
 # -- helpers ----------------------------------------------------------------
 
-
-def _infer_step(strikes: list[float]) -> float:
-    diffs = [b - a for a, b in pairwise(strikes) if b - a > 0]
-    return min(diffs) if diffs else _DEFAULT_STEP

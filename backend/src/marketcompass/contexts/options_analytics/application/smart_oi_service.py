@@ -42,7 +42,6 @@ from typing import Any
 from marketcompass.contexts.options_analytics.application.oi_series_service import (
     _anchor_atm,
     _effective_interval,
-    _infer_step,
 )
 from marketcompass.contexts.options_analytics.application.ports import (
     Candle,
@@ -63,6 +62,7 @@ from marketcompass.contexts.options_analytics.application.session import (
 )
 from marketcompass.contexts.options_analytics.domain.oi_math import (
     ChainRow,
+    infer_step,
     rows_within,
     strike_window,
 )
@@ -318,7 +318,7 @@ def _payload(
     open_is_estimated: bool,
     interval: str,
 ) -> dict[str, Any]:
-    step = _infer_step(sorted({row.strike for frame in frames for row in frame.rows}))
+    step = infer_step(sorted({row.strike for frame in frames for row in frame.rows}))
     window.pin(_anchor_atm(_opening_anchor(frames), chain), step)
 
     totals: list[_Totals] = []

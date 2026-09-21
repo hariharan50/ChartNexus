@@ -52,7 +52,12 @@ log = get_logger(__name__)
 router = APIRouter(prefix="/mme100", tags=["mme100"])
 
 InstrumentParam = Annotated[
-    str, Path(description="NIFTY, BANKNIFTY, or SENSEX", examples=["NIFTY"])
+    str,
+    Path(
+        description="NIFTY, BANKNIFTY, or SENSEX. This surface is index-only;"
+        " the wider F&O catalog is not covered here yet.",
+        examples=["NIFTY"],
+    ),
 ]
 
 

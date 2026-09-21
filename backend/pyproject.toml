@@ -66,6 +66,8 @@ agent = [
 [project.scripts]
 marketcompass-api = "marketcompass.entrypoints.main_api:run"
 marketcompass-ingest = "marketcompass.entrypoints.main_ingest:run"
+marketcompass-catalog = "marketcompass.entrypoints.main_catalog:run"
+marketcompass-futures-oi = "marketcompass.entrypoints.main_futures_oi:run"
 marketcompass-oi = "marketcompass.entrypoints.main_oi_data:run"
 marketcompass-signals = "marketcompass.entrypoints.main_signals:run"
 marketcompass-hugin = "marketcompass.entrypoints.main_hugin:run"
@@ -156,6 +158,12 @@ ignore_imports = [
     # only `build_messaging`, which assembles the channel repository + adapters from
     # the container. Exempt that single edge.
     "marketcompass.contexts.messaging.api.dependencies -> marketcompass.infrastructure.messaging.build_messaging",
+    # Futures analytics uses the same sanctioned-bridge pattern: its API
+    # dependency imports only `build_futures_services`, which assembles the
+    # broker resolver, the mock fallback and the instrument catalog into a
+    # futures_analytics `FuturesBoardSource`. The context owns the build-up
+    # maths and declares the port; only the bridge knows market_data exists.
+    "marketcompass.contexts.futures_analytics.api.dependencies -> marketcompass.infrastructure.futures.build_futures",
     # Report uses the same sanctioned-bridge pattern: its API dependency imports
     # only `build_report`, which assembles the data gatherer, narrator, renderer and
     # enrollment store from the container. Exempt that single edge.

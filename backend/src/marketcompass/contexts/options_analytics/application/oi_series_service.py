@@ -50,7 +50,7 @@ from marketcompass.contexts.options_analytics.application.session import (
     session_open_frame,
     session_open_utc,
 )
-from marketcompass.contexts.options_analytics.domain.oi_math import ChainRow, atm_strike
+from marketcompass.contexts.options_analytics.domain.oi_math import ChainRow, atm_strike, infer_step
 from marketcompass.shared_kernel.types.identifiers import TenantId
 
 # Bucket sizes the UI offers, in seconds. A request cannot produce resolution
@@ -294,7 +294,7 @@ def _contract_series(frames: list[ChainSnapshot], atm: float, window: int) -> li
     from the picker entirely instead.
     """
     union = sorted({row.strike for frame in frames for row in frame.rows})
-    step = _infer_step(union)
+    step = infer_step(union)
     reach = step * window
     listed = [strike for strike in union if abs(strike - atm) <= reach + 1e-6]
 
@@ -388,11 +388,6 @@ def _find(rows: Iterable[ChainRow], strike: float, side: str) -> ChainRow | None
         if row.strike == strike and row.option_type == side:
             return row
     return None
-
-
-def _infer_step(strikes: list[float]) -> float:
-    gaps = [b - a for a, b in pairwise(strikes) if b > a]
-    return min(gaps) if gaps else 50.0
 
 
 def _anchor_atm(frame: ChainSnapshot | None, chain: ProviderChain) -> float:
