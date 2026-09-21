@@ -450,6 +450,29 @@ class FuturesOpenInterestSettings(_Section):
     ttl_seconds: int = Field(default=45 * 60, ge=60)
 
 
+class FuturesBoardHistorySettings(_Section):
+    """The board capture behind Future Lab's intraday charts and Replay.
+
+    Separate from the open-interest sweep, and deliberately faster. Price
+    arrives from batched quotes — fifty symbols per request, so the whole
+    universe costs five calls and a minute-by-minute cadence is about 1,900
+    requests a day. Open interest costs one request per contract, which is why
+    its sweep runs on five minutes; each frame carries the most recent reading
+    that sweep left behind.
+    """
+
+    model_config = _section_config("FUTURES_HISTORY_")
+
+    enabled: bool = True
+    #: LOCAL-only auto-start inside the API lifespan, like the other workers.
+    in_process: bool = True
+    #: Seconds between captures. Frames are stamped on this boundary, so a
+    #: restarted worker re-capturing an interval cannot double up the series.
+    interval_seconds: int = Field(default=60, ge=15)
+    #: Trading days kept before the prune drops them.
+    retention_days: int = Field(default=30, ge=1)
+
+
 class Settings(BaseSettings):
     """Root settings object. Build it once per process via :func:`get_settings`."""
 
@@ -483,6 +506,9 @@ class Settings(BaseSettings):
     catalog: CatalogSettings = Field(default_factory=CatalogSettings)
     futures_oi: FuturesOpenInterestSettings = Field(
         default_factory=FuturesOpenInterestSettings
+    )
+    futures_history: FuturesBoardHistorySettings = Field(
+        default_factory=FuturesBoardHistorySettings
     )
 
     def assert_deployment_safe(self) -> None:

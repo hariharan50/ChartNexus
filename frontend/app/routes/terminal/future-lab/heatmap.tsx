@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useFuturesBoardQuery } from '$contexts/futures-analytics/queries';
 import type { FuturesRow } from '$contexts/futures-analytics/types';
 import EChart from '$shared/charts/EChart';
@@ -9,11 +9,10 @@ import {
 import { useChartTheme } from '$shared/charts/theme/use-chart-theme';
 import DataSourceBadge from '$shared/ui/DataSourceBadge';
 import { cx } from '$shared/ui/cx';
-import IconClock from '$shared/ui/icons/IconClock';
 import IconGrid from '$shared/ui/icons/IconGrid';
+import { RefreshRing, ReplayToggle, SessionClock } from './components/SessionHeader';
 import {
   applyFilter,
-  clockLabel,
   expiryLabel,
   filterCounts,
   HEATMAP_FILTERS,
@@ -78,14 +77,12 @@ export default function FutureHeatmap() {
           Future Heatmap
         </h1>
         <div className={s.headerRight}>
-          {/* Shown because the design has it, disabled because replaying a
-              board needs a history nobody is recording. */}
-          <span className={s.replay} title={PENDING_HISTORY}>
-            Replay
-            <span className={s.switch} aria-hidden="true" />
-          </span>
-          <Clock />
-          <Countdown active={!board.isFetching} />
+          {/* Shown because the design has it, disabled because replaying the
+              *board* needs a per-frame universe snapshot, which the capture
+              worker does not yet assemble. */}
+          <ReplayToggle on={false} disabled reason={PENDING_HISTORY} />
+          <SessionClock />
+          <RefreshRing seconds={REFRESH_SECONDS} active={!board.isFetching} />
         </div>
       </header>
 
@@ -155,57 +152,5 @@ export default function FutureHeatmap() {
         </div>
       )}
     </div>
-  );
-}
-
-/** The exchange-local wall clock, like the reference's header. */
-function Clock() {
-  const [now, setNow] = useState(() => new Date());
-  useEffect(() => {
-    const timer = setInterval(() => setNow(new Date()), 1000);
-    return () => clearInterval(timer);
-  }, []);
-
-  return (
-    <span className={s.clock}>
-      <span aria-hidden="true" className={s.clockIco}>
-        <IconClock />
-      </span>
-      {clockLabel(now)}
-    </span>
-  );
-}
-
-/**
- * Seconds until the next poll.
- *
- * A board that silently reloads looks static; the ring is what tells you the
- * numbers are on a clock rather than frozen.
- */
-function Countdown({ active }: { active: boolean }) {
-  const [left, setLeft] = useState(REFRESH_SECONDS);
-
-  useEffect(() => {
-    if (!active) {
-      setLeft(REFRESH_SECONDS);
-      return;
-    }
-    const timer = setInterval(
-      () => setLeft((prev) => (prev <= 1 ? REFRESH_SECONDS : prev - 1)),
-      1000
-    );
-    return () => clearInterval(timer);
-  }, [active]);
-
-  const progress = ((REFRESH_SECONDS - left) / REFRESH_SECONDS) * 100;
-
-  return (
-    <span
-      className={s.countdown}
-      style={{ '--mc-progress': `${progress}%` } as React.CSSProperties}
-      title={`Refreshes every ${REFRESH_SECONDS}s`}
-    >
-      {left}
-    </span>
   );
 }

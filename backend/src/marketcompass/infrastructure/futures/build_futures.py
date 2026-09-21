@@ -15,6 +15,9 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from marketcompass.contexts.futures_analytics.application.get_dashboard import (
     GetFuturesDashboard,
 )
+from marketcompass.contexts.futures_analytics.application.get_price_oi_series import (
+    GetFuturesPriceOiSeries,
+)
 from marketcompass.infrastructure.brokers.fyers.quota_manager import QuotaPolicy
 from marketcompass.infrastructure.brokers.mock.provider import MockMarketDataProvider
 from marketcompass.infrastructure.brokers.provider_resolver import TenantProviderResolver
@@ -22,6 +25,9 @@ from marketcompass.infrastructure.futures.board_source import CatalogFuturesBoar
 from marketcompass.infrastructure.futures.oi_cache import RedisOpenInterestCache
 from marketcompass.infrastructure.persistence.postgresql.repositories.integration.broker_connection_repository import (
     SqlAlchemyBrokerConnectionRepository,
+)
+from marketcompass.infrastructure.persistence.postgresql.repositories.market_data.futures_board_snapshot_repository import (
+    SqlAlchemyFuturesBoardSnapshotRepository,
 )
 from marketcompass.infrastructure.time.clock import SystemClock
 
@@ -36,6 +42,7 @@ class FuturesServices:
     """
 
     dashboard: GetFuturesDashboard
+    price_oi_series: GetFuturesPriceOiSeries
 
 
 def build_futures_services(container: Any, session: AsyncSession) -> FuturesServices:
@@ -64,4 +71,12 @@ def build_futures_services(container: Any, session: AsyncSession) -> FuturesServ
             container.redis, ttl_seconds=settings.futures_oi.ttl_seconds
         ),
     )
-    return FuturesServices(dashboard=GetFuturesDashboard(source=source))
+    return FuturesServices(
+        dashboard=GetFuturesDashboard(source=source),
+        price_oi_series=GetFuturesPriceOiSeries(
+            history=SqlAlchemyFuturesBoardSnapshotRepository(session),
+            # The board is the fallback when the archive holds no session yet,
+            # so the page can still say where the contract stands.
+            board=source,
+        ),
+    )

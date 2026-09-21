@@ -4,14 +4,15 @@ The Future Lab's universe-wide reads: one board of front-month futures across
 the whole F&O catalog, classified by price direction against open-interest
 direction.
 
-Percentages here are **day-over-day**, measured against each contract's own
-previous close and previous open interest. The intraday comparison windows the
-Future Lab offers elsewhere need a snapshot archive of the board, which does
-not exist yet.
+Board percentages here are **day-over-day**, measured against each contract's
+own previous close and previous open interest. The intraday series beside them
+reads the board archive the capture worker writes, which is what lets Future
+Lab draw a real session instead of an open-versus-now proxy.
 """
 
 from __future__ import annotations
 
+from datetime import date
 from typing import Annotated, Literal
 
 from fastapi import APIRouter, Query
@@ -20,11 +21,17 @@ from marketcompass.contexts.futures_analytics.api.dependencies import Services
 from marketcompass.contexts.futures_analytics.api.schemas import (
     FuturesBoardResponse,
     FuturesDashboardResponse,
+    PriceOiSeriesResponse,
 )
 from marketcompass.contexts.futures_analytics.application.get_dashboard import (
     DEFAULT_PANEL_LIMIT,
     MAX_PANEL_LIMIT,
     FuturesDashboardQuery,
+)
+from marketcompass.contexts.futures_analytics.application.get_price_oi_series import (
+    DEFAULT_INTERVAL,
+    INTERVALS,
+    PriceOiSeriesQuery,
 )
 from marketcompass.infrastructure.transport.http.dependencies import CurrentPrincipal
 
@@ -90,3 +97,50 @@ async def board(
         )
     )
     return FuturesBoardResponse.of(result)
+
+
+IntervalParam = Annotated[
+    str,
+    Query(description=f"Bucket width: {', '.join(INTERVALS)}."),
+]
+TradeDateParam = Annotated[
+    date | None,
+    Query(
+        alias="date",
+        description="Archived session to replay. Omit for today, which is Live.",
+    ),
+]
+
+
+@router.get(
+    "/price-oi-series/{instrument_id}",
+    response_model=PriceOiSeriesResponse,
+    summary="One contract's intraday price against its open interest",
+    description=(
+        "The front-month futures price and **that contract's own** open "
+        "interest through the session. Not the option chain's OI — the Options "
+        "Lab series of a similar name sums every strike, and the two answer "
+        "different questions. "
+        "`data_quality` says what the numbers are worth: `intraday` is the "
+        "captured session, `live_proxy` is previous-close-versus-now for a day "
+        "with nothing archived yet, and `empty` means there is nothing to draw. "
+        "`oi` carries nulls where a frame fell between open-interest sweeps, "
+        "which run slower than price captures."
+    ),
+)
+async def price_oi_series(
+    instrument_id: str,
+    principal: CurrentPrincipal,
+    services: Services,
+    interval: IntervalParam = DEFAULT_INTERVAL,
+    date_: TradeDateParam = None,
+) -> PriceOiSeriesResponse:
+    payload = await services.price_oi_series(
+        PriceOiSeriesQuery(
+            tenant_id=principal.tenant_id,
+            symbol=instrument_id,
+            interval=interval,
+            trade_date=date_,
+        )
+    )
+    return PriceOiSeriesResponse.model_validate(payload)

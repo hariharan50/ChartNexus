@@ -3,6 +3,8 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
+from datetime import date, datetime
+from decimal import Decimal
 from typing import Protocol, runtime_checkable
 
 from marketcompass.contexts.futures_analytics.domain.buildup import FuturesReading
@@ -25,8 +27,9 @@ class BoardSnapshot:
     #: say so: a board drawn from generated data looks identical to a real one,
     #: and this field is the only thing that distinguishes them.
     source: str = "mock"
-    #: ISO date of the front-month contract these readings are for. The board
-    #: is front-month only, so one date describes every row.
+    #: ISO date of the front-month contract, shared by most of these readings.
+    #: Most, not all: NSE and BSE settle on different days, so each reading
+    #: carries its own and this is the one the bulk of them agree on.
     expiry: str | None = None
 
 
@@ -43,4 +46,45 @@ class FuturesBoardSource(Protocol):
         with zeros, so an empty-ish board is visibly incomplete instead of
         quietly wrong.
         """
+        ...
+
+
+@dataclass(frozen=True, slots=True)
+class BoardFrame:
+    """One contract, at one instant, as captured for the archive.
+
+    ``open_interest`` is optional because price and open interest are fetched
+    on different cadences — see the persistence model's docstring — so a frame
+    may legitimately carry a price and no OI.
+    """
+
+    symbol: str
+    session_date: date
+    captured_at: datetime
+    price: Decimal
+    open_interest: int | None = None
+    volume: int | None = None
+    expiry: str | None = None
+    #: "live" or "mock". A generated frame must never be stored as live: the
+    #: archive outlives the process that wrote it, and a mislabelled row is a
+    #: lie that cannot be detected later.
+    source: str = "mock"
+
+
+@runtime_checkable
+class FuturesBoardHistoryWriter(Protocol):
+    async def save_frames(self, frames: list[BoardFrame]) -> int:
+        """Append one sweep's frames, ignoring any instant already stored.
+
+        Returns how many were actually written. Idempotent on
+        ``(symbol, captured_at)`` so a restarted worker re-running a sweep
+        cannot double up the series.
+        """
+        ...
+
+
+@runtime_checkable
+class FuturesBoardHistoryReader(Protocol):
+    async def frames_for(self, symbol: str, session_date: date) -> list[BoardFrame]:
+        """Every stored frame for one contract on one trading day, oldest first."""
         ...

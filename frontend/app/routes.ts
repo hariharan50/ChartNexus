@@ -97,10 +97,8 @@ export default [
       route('dashboard', 'routes/terminal/future-lab/dashboard.tsx'),
       route('stocks', 'routes/terminal/future-lab/stocks.tsx'),
       route('heatmap', 'routes/terminal/future-lab/heatmap.tsx'),
-      route('intraday', 'routes/terminal/future-lab/intraday.tsx'),
       route('market-movers', 'routes/terminal/future-lab/market-movers.tsx'),
-      route('price-vs-oi', 'routes/terminal/future-lab/price-vs-oi.tsx'),
-      route('sentiment-cycle', 'routes/terminal/future-lab/sentiment-cycle.tsx')
+      route('price-vs-oi', 'routes/terminal/future-lab/price-vs-oi.tsx')
     ]),
 
     // settings/+layout.svelte is a *pathful* layout: it owns the /settings

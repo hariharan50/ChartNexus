@@ -1,24 +1,31 @@
 import { useQuery } from '@tanstack/react-query';
 import { useEffect, useMemo, useState } from 'react';
-import { buildPriceVsOiOption } from '$shared/charts/options/price-vs-oi';
+import { useInstruments } from '$contexts/instrument-catalog/queries';
 import EChart from '$shared/charts/EChart';
+import { buildPriceVsOiOption } from '$shared/charts/options/price-vs-oi';
 import { useChartTheme } from '$shared/charts/theme/use-chart-theme';
-import DatePicker from '$shared/ui/DatePicker';
 import { isoDateIST, lastTradingDayIST } from '$shared/formatting/ist-clock';
+import DataSourceBadge from '$shared/ui/DataSourceBadge';
+import DatePicker from '$shared/ui/DatePicker';
 import { cx } from '$shared/ui/cx';
 import IconChart from '$shared/ui/icons/IconChart';
 import IconChevronDown from '$shared/ui/icons/IconChevronDown';
+import { RefreshRing, ReplayToggle, SessionClock } from './components/SessionHeader';
 import {
+  clampCursor,
   DEFAULT_INTERVAL,
   expiryLabel,
   feedAgeLabel,
   feedAgeMs,
+  filterInstruments,
   fmtOi,
   fmtPrice,
   getPriceOiSeries,
-  INSTRUMENTS,
+  OI_LABEL,
   REFETCH_MS,
+  sliceTo,
   timeLabel,
+  toPickerEntries,
   type Interval,
   type PriceOiView
 } from './price-vs-oi-data';
@@ -29,8 +36,13 @@ export const meta: Route.MetaFunction = () => [
   { title: 'Price vs OI · Future Lab · MarketCompass' }
 ];
 
-const CHART_GROUP = 'price-oi';
 type Mode = 'live' | 'historical';
+
+/** Matches the query's own poll, so the ring counts down to a real refresh. */
+const REFRESH_SECONDS = REFETCH_MS / 1000;
+
+/** Frames per second of replay. Fast enough to read a session in a minute. */
+const REPLAY_FPS = 12;
 
 const INTERVALS: readonly { value: Interval; label: string }[] = [
   { value: '1m', label: '1m' },
@@ -40,68 +52,105 @@ const INTERVALS: readonly { value: Interval; label: string }[] = [
 ];
 
 export default function FuturePriceVsOi() {
-  const [instIdx, setInstIdx] = useState(0);
+  const [symbol, setSymbol] = useState('NIFTY');
+  const [search, setSearch] = useState('');
   const [mode, setMode] = useState<Mode>('live');
   const [date, setDate] = useState(lastTradingDayIST);
   const [interval, setInterval] = useState<Interval>(DEFAULT_INTERVAL);
   const [showPrice, setShowPrice] = useState(true);
   const [showOi, setShowOi] = useState(true);
+  const [sidebarOpen, setSidebarOpen] = useState(true);
+  // `null` means "not replaying" — the chart shows the whole session.
+  const [cursor, setCursor] = useState<number | null>(null);
+  const [playing, setPlaying] = useState(false);
 
-  const instrument = INSTRUMENTS[instIdx] ?? INSTRUMENTS[0];
+  const { instruments } = useInstruments();
+  const entries = useMemo(() => toPickerEntries(instruments), [instruments]);
+  const visibleEntries = useMemo(() => filterInstruments(entries, search), [entries, search]);
+  const current = entries.find((entry) => entry.symbol === symbol);
+
   const historicalDate = mode === 'historical' ? date : undefined;
 
   const query = useQuery<PriceOiView>({
-    queryKey: ['future-lab', 'price-oi', instrument.symbol, interval, mode, historicalDate],
+    queryKey: ['future-lab', 'price-oi', symbol, interval, mode, historicalDate],
     queryFn: () =>
-      getPriceOiSeries(instrument.symbol, {
+      getPriceOiSeries(symbol, {
         interval,
         ...(historicalDate ? { date: historicalDate } : {})
       }),
-    refetchInterval: mode === 'live' ? REFETCH_MS : false
+    // A replay would jump under the reader's feet if the series reloaded mid-run.
+    refetchInterval: mode === 'live' && cursor === null ? REFETCH_MS : false
   });
 
   const view = query.data;
   const theme = useChartTheme();
+  const frames = view?.t.length ?? 0;
 
-  const option = useMemo(
-    () =>
-      view
-        ? buildPriceVsOiOption(
-            {
-              timestamps: view.t,
-              price: view.price,
-              oi: view.oi,
-              formatPrice: fmtPrice,
-              formatOi: (value: number) => fmtOi(value),
-              showPrice,
-              showOi
-            },
-            theme
-          )
-        : null,
-    [view, showPrice, showOi, theme]
-  );
+  // Changing what is drawn ends the replay: a cursor into the old series means
+  // nothing in the new one, and silently re-pointing it would be worse.
+  useEffect(() => {
+    setCursor(null);
+    setPlaying(false);
+  }, [symbol, interval, mode, historicalDate]);
 
-  // -- live clock -----------------------------------------------------------
+  useEffect(() => {
+    if (!playing || frames === 0) return;
+    const timer = window.setInterval(() => {
+      setCursor((prev) => {
+        const next = (prev ?? 0) + 1;
+        if (next >= frames - 1) {
+          setPlaying(false);
+          return frames - 1;
+        }
+        return next;
+      });
+    }, 1000 / REPLAY_FPS);
+    return () => window.clearInterval(timer);
+  }, [playing, frames]);
+
+  const option = useMemo(() => {
+    if (!view) return null;
+    return buildPriceVsOiOption(
+      {
+        timestamps: sliceTo(view.t, cursor),
+        price: sliceTo(view.price, cursor),
+        oi: sliceTo(view.oi, cursor),
+        formatPrice: fmtPrice,
+        formatOi: (value: number) => fmtOi(value),
+        oiName: OI_LABEL,
+        showPrice,
+        showOi
+      },
+      theme
+    );
+  }, [view, cursor, showPrice, showOi, theme]);
+
   const [now, setNow] = useState(() => Date.now());
   useEffect(() => {
-    const t = window.setInterval(() => setNow(Date.now()), 1000);
-    return () => window.clearInterval(t);
+    const timer = window.setInterval(() => setNow(Date.now()), 1000);
+    return () => window.clearInterval(timer);
   }, []);
-  const clock = new Intl.DateTimeFormat('en-GB', {
-    timeZone: 'Asia/Kolkata',
-    hour: 'numeric',
-    minute: '2-digit',
-    second: '2-digit',
-    hour12: true
-  })
-    .format(now)
-    .toLowerCase();
   // Feed-age only matters for the live tape; a replayed past day is never "stale".
-  const feedAge = mode === 'live' ? feedAgeMs(view?.now_ts, now) : null;
+  const feedAge = mode === 'live' && cursor === null ? feedAgeMs(view?.now_ts, now) : null;
 
-  function cycle(delta: number) {
-    setInstIdx((current) => (current + delta + INSTRUMENTS.length) % INSTRUMENTS.length);
+  function step(delta: number) {
+    const index = visibleEntries.findIndex((entry) => entry.symbol === symbol);
+    const pool = visibleEntries.length > 0 ? visibleEntries : entries;
+    if (pool.length === 0) return;
+    const from = index === -1 ? 0 : index;
+    const next = pool[(from + delta + pool.length) % pool.length];
+    if (next) setSymbol(next.symbol);
+  }
+
+  function toggleReplay() {
+    if (frames < 2) return;
+    if (cursor === null) {
+      setCursor(0);
+      setPlaying(true);
+      return;
+    }
+    setCursor(null);
+    setPlaying(false);
   }
 
   return (
@@ -116,83 +165,137 @@ export default function FuturePriceVsOi() {
       ) : !view && query.isPending ? (
         <div className={cx(s.panel, s.muted)}>Loading Price vs OI…</div>
       ) : view ? (
-        <div className={s.layout}>
+        <div className={cx(s.layout, !sidebarOpen && s.collapsed)}>
           {/* LEFT SIDEBAR */}
-          <aside className={s.sidebar}>
-            <section className={s.panel}>
-              <h2 className={s.pTitle}>Settings</h2>
-
-              <div className={s.instrument}>
-                <span className={s.badge}>{instrument.badge}</span>
-                <span className={s.short}>{instrument.short}</span>
-                <span className={s.cyclers}>
-                  <button type="button" aria-label="Previous" onClick={() => cycle(-1)}>
-                    ‹
+          {sidebarOpen ? (
+            <aside className={s.sidebar}>
+              <section className={s.panel}>
+                <div className={s.panelHead}>
+                  <h2 className={s.pTitle}>Settings</h2>
+                  <button
+                    type="button"
+                    className={s.collapseBtn}
+                    aria-label="Collapse settings"
+                    onClick={() => setSidebarOpen(false)}
+                  >
+                    «
                   </button>
-                  <button type="button" aria-label="Next" onClick={() => cycle(1)}>
-                    ›
+                </div>
+
+                <div className={s.instrument}>
+                  <span className={s.badge}>{current?.badge ?? '··'}</span>
+                  <span className={s.short} title={current?.name ?? symbol}>
+                    {symbol}
+                  </span>
+                  <span className={s.cyclers}>
+                    <button type="button" aria-label="Previous" onClick={() => step(-1)}>
+                      ‹
+                    </button>
+                    <button type="button" aria-label="Next" onClick={() => step(1)}>
+                      ›
+                    </button>
+                  </span>
+                </div>
+
+                {/* A cycler alone is unusable across 219 contracts, so the list
+                    is searchable and the arrows step within what it shows. */}
+                <input
+                  className={s.search}
+                  type="search"
+                  value={search}
+                  placeholder="Search symbol…"
+                  aria-label="Search instruments"
+                  onChange={(event) => setSearch(event.currentTarget.value)}
+                />
+                <ul className={s.pickList}>
+                  {visibleEntries.map((entry) => (
+                    <li key={entry.symbol}>
+                      <button
+                        type="button"
+                        className={cx(s.pickRow, entry.symbol === symbol && s.pickOn)}
+                        onClick={() => setSymbol(entry.symbol)}
+                      >
+                        <span className={s.pickSym}>{entry.symbol}</span>
+                        <span className={s.pickName}>{entry.name}</span>
+                      </button>
+                    </li>
+                  ))}
+                  {visibleEntries.length === 0 ? (
+                    <li className={s.pickEmpty}>No contract matches that.</li>
+                  ) : null}
+                </ul>
+
+                <p className={s.subLabel}>Select Mode</p>
+                <div className={s.modeGrid}>
+                  <button
+                    type="button"
+                    className={cx(s.seg, mode === 'live' && s.active)}
+                    onClick={() => setMode('live')}
+                  >
+                    Live
                   </button>
-                </span>
-              </div>
+                  <button
+                    type="button"
+                    className={cx(s.seg, mode === 'historical' && s.active)}
+                    onClick={() => setMode('historical')}
+                  >
+                    Historical
+                  </button>
+                </div>
 
-              <p className={s.subLabel}>Select Mode</p>
-              <div className={s.modeGrid}>
-                <button
-                  type="button"
-                  className={cx(s.seg, mode === 'live' && s.active)}
-                  onClick={() => setMode('live')}
-                >
-                  Live
-                </button>
-                <button
-                  type="button"
-                  className={cx(s.seg, mode === 'historical' && s.active)}
-                  onClick={() => setMode('historical')}
-                >
-                  Historical
-                </button>
-              </div>
+                {mode === 'historical' ? (
+                  <>
+                    <p className={s.subLabel}>Session date</p>
+                    <DatePicker
+                      value={date}
+                      max={isoDateIST(0)}
+                      onChange={setDate}
+                      ariaLabel="Session date"
+                    />
+                  </>
+                ) : null}
 
-              {mode === 'historical' ? (
-                <>
-                  <p className={s.subLabel}>Session date</p>
-                  <DatePicker
-                    value={date}
-                    max={isoDateIST(0)}
-                    onChange={setDate}
-                    ariaLabel="Session date"
-                  />
-                </>
-              ) : null}
-
-              <div className={s.twoUp}>
-                <div>
-                  <p className={s.subLabel}>Expiry</p>
-                  <div className={s.select}>
-                    <span>{expiryLabel(view.expiry_date)}</span>
-                    <span className={s.caret} aria-hidden="true">
-                      <IconChevronDown />
-                    </span>
+                <div className={s.twoUp}>
+                  <div>
+                    <p className={s.subLabel}>Expiry</p>
+                    {/* Read-only: the board tracks the front-month contract and
+                        nothing else, so a dropdown would offer a choice it
+                        cannot honour. */}
+                    <div className={s.select}>
+                      <span>{expiryLabel(view.expiry_date)}</span>
+                      <span className={s.caret} aria-hidden="true">
+                        <IconChevronDown />
+                      </span>
+                    </div>
+                  </div>
+                  <div>
+                    <p className={s.subLabel}>Time</p>
+                    <select
+                      className={s.selectNative}
+                      aria-label="Time interval"
+                      value={interval}
+                      onChange={(e) => setInterval(e.currentTarget.value as Interval)}
+                    >
+                      {INTERVALS.map((option) => (
+                        <option key={option.value} value={option.value}>
+                          {option.label}
+                        </option>
+                      ))}
+                    </select>
                   </div>
                 </div>
-                <div>
-                  <p className={s.subLabel}>Time</p>
-                  <select
-                    className={s.selectNative}
-                    aria-label="Time interval"
-                    value={interval}
-                    onChange={(e) => setInterval(e.currentTarget.value as Interval)}
-                  >
-                    {INTERVALS.map((option) => (
-                      <option key={option.value} value={option.value}>
-                        {option.label}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-              </div>
-            </section>
-          </aside>
+              </section>
+            </aside>
+          ) : (
+            <button
+              type="button"
+              className={s.restore}
+              aria-label="Show settings"
+              onClick={() => setSidebarOpen(true)}
+            >
+              »
+            </button>
+          )}
 
           {/* RIGHT MAIN */}
           <div className={s.main}>
@@ -203,18 +306,33 @@ export default function FuturePriceVsOi() {
                 </span>
                 Future Price vs OI
               </h1>
-              <span className={cx(s.live, feedAge !== null && s.stale)}>
-                <span className={cx(s.dot, mode === 'live' && query.isFetching && s.pulse)} />
-                {mode === 'live' ? `${clock} IST` : `Archived · ${date}`}
-                {feedAge !== null ? (
-                  <>
-                    <span className={s.sep} aria-hidden="true">
-                      ·
-                    </span>
-                    <span>{feedAgeLabel(feedAge)}</span>
-                  </>
-                ) : null}
-              </span>
+              <div className={s.headerRight}>
+                <ReplayToggle
+                  on={cursor !== null}
+                  onToggle={toggleReplay}
+                  disabled={frames < 2}
+                  reason={
+                    frames < 2 ? 'Replay needs a captured session to walk through.' : undefined
+                  }
+                />
+                <span className={cx(s.live, feedAge !== null && s.stale)}>
+                  <span className={cx(s.dot, mode === 'live' && query.isFetching && s.pulse)} />
+                  {mode === 'live' ? <SessionClock /> : `Archived · ${date}`}
+                  {feedAge !== null ? (
+                    <>
+                      <span className={s.sep} aria-hidden="true">
+                        ·
+                      </span>
+                      <span>{feedAgeLabel(feedAge)}</span>
+                    </>
+                  ) : null}
+                </span>
+                <DataSourceBadge source={view.source} />
+                <RefreshRing
+                  seconds={REFRESH_SECONDS}
+                  active={mode === 'live' && cursor === null}
+                />
+              </div>
             </div>
 
             <section className={s.chartPanel}>
@@ -237,7 +355,7 @@ export default function FuturePriceVsOi() {
                 >
                   <Eye on={showOi} />
                   <span className={s.dotLine} aria-hidden="true" />
-                  OI
+                  {OI_LABEL}
                 </button>
               </div>
 
@@ -245,12 +363,27 @@ export default function FuturePriceVsOi() {
                 <p className={s.empty}>
                   {mode === 'historical'
                     ? 'No session archived for that date.'
-                    : 'No snapshots recorded for today yet — the series fills in as the ingest worker captures them.'}
+                    : 'Nothing captured for today yet — the series fills in as the board capture records it.'}
                 </p>
               ) : (
-                <EChart option={option} className={s.chart} group={CHART_GROUP} />
+                <EChart option={option} className={s.chart} />
               )}
             </section>
+
+            {cursor !== null ? (
+              <ReplayBar
+                cursor={clampCursor(cursor, frames)}
+                frames={frames}
+                playing={playing}
+                at={view.t[clampCursor(cursor, frames)]}
+                onPlay={() => setPlaying((on) => !on)}
+                onSeek={setCursor}
+                onExit={() => {
+                  setCursor(null);
+                  setPlaying(false);
+                }}
+              />
+            ) : null}
 
             <p className={s.caption}>{captionFor(view)}</p>
           </div>
@@ -260,22 +393,77 @@ export default function FuturePriceVsOi() {
   );
 }
 
+/**
+ * The replay scrubber.
+ *
+ * Drives a cursor over the frames already fetched — the whole session arrives
+ * in one payload, so winding back and forth costs no request and cannot show a
+ * frame the archive does not hold.
+ */
+function ReplayBar({
+  cursor,
+  frames,
+  playing,
+  at,
+  onPlay,
+  onSeek,
+  onExit
+}: {
+  cursor: number;
+  frames: number;
+  playing: boolean;
+  at: string | undefined;
+  onPlay: () => void;
+  onSeek: (next: number) => void;
+  onExit: () => void;
+}) {
+  return (
+    <div className={s.replayBar}>
+      <button
+        type="button"
+        className={s.playBtn}
+        onClick={onPlay}
+        aria-label={playing ? 'Pause replay' : 'Play replay'}
+      >
+        {playing ? '❚❚' : '▶'}
+      </button>
+      <input
+        className={s.scrub}
+        type="range"
+        min={0}
+        max={Math.max(frames - 1, 0)}
+        value={cursor}
+        aria-label="Replay position"
+        onChange={(event) => onSeek(Number(event.currentTarget.value))}
+      />
+      <span className={s.replayAt}>
+        {at ? timeLabel(at) : '—'}
+        <span className={s.replayCount}>
+          {cursor + 1}/{frames}
+        </span>
+      </span>
+      <button type="button" className={s.exitReplay} onClick={onExit}>
+        Exit
+      </button>
+    </div>
+  );
+}
+
 /** The plain-English note under the chart, from the data tier. */
 function captionFor(view: PriceOiView): string {
+  const oi = `${OI_LABEL} is this contract’s own open interest, not the option chain’s.`;
   if (view.data_quality === 'empty') {
-    return 'No snapshots recorded yet — the series fills in as the ingest worker captures them.';
+    return `Nothing captured yet — the series fills in as the board capture records it. ${oi}`;
   }
   if (view.data_quality === 'live_proxy') {
-    return 'Nothing archived for this day — showing the 9:15 open against the live chain. The shape fills in as snapshots are captured.';
+    return `Nothing archived for this day — showing the previous close against the live board. The shape fills in as frames are captured. ${oi}`;
   }
   const first = view.t[0];
-  const second = view.t[1] ?? view.t[0];
-  if (view.open_is_estimated && first && second) {
-    return `The ${timeLabel(first)} baseline is derived from the day’s OI change; recorded history starts at ${timeLabel(second)}. OI is total chain open interest.`;
-  }
-  return first
-    ? `Recorded from ${timeLabel(first)} at ${view.interval} buckets. OI is total chain open interest.`
+  const gaps = view.oi.filter((value) => value === null).length;
+  const note = gaps
+    ? ` ${gaps} frame${gaps === 1 ? '' : 's'} fell between open-interest sweeps and show a gap.`
     : '';
+  return first ? `Recorded from ${timeLabel(first)} at ${view.interval} buckets. ${oi}${note}` : oi;
 }
 
 /** Open eye when shown, struck through when hidden — matches the Options Lab legend. */

@@ -24,6 +24,7 @@ from marketcompass.bootstrap.logging import configure_logging
 from marketcompass.bootstrap.route_registry import API_PREFIX, register_routes
 from marketcompass.bootstrap.settings import Environment, Settings, get_settings
 from marketcompass.entrypoints.catalog_runtime import load_registry, run_catalog_loop
+from marketcompass.entrypoints.futures_board_runtime import run_futures_board_loop
 from marketcompass.entrypoints.futures_oi_runtime import run_futures_oi_loop
 from marketcompass.entrypoints.hugin_runtime import run_hugin_loop
 from marketcompass.entrypoints.ingest_runtime import run_capture_loop
@@ -124,6 +125,16 @@ def create_app(settings: Settings | None = None) -> FastAPI:
                 and resolved.futures_oi.in_process,
                 name="futures-oi-sweep",
                 make_loop=lambda stop: run_futures_oi_loop(container, resolved, stop=stop),
+            ),
+            # Captures the board itself. Separate from the sweep above because
+            # price is cheap to fetch and open interest is not — see the
+            # runtime's docstring for the quota arithmetic.
+            _maybe_start(
+                enabled=local
+                and resolved.futures_history.enabled
+                and resolved.futures_history.in_process,
+                name="futures-board-capture",
+                make_loop=lambda stop: run_futures_board_loop(container, resolved, stop=stop),
             ),
             _maybe_start(
                 enabled=local and resolved.market.ingest_in_process,

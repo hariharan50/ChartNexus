@@ -72,6 +72,28 @@ Either writer: the charts leave the two-point estimate and show real curves once
 two snapshots have landed for the day (~2 minutes after start, during market
 hours).
 
+## 3b. Futures board capture — the Future Lab archive
+
+Separate from the option-chain ingest above, and separate again from the
+open-interest sweep: this one archives the **futures board** — each contract's
+front-month price and its own open interest — which is what Future Lab's Price
+vs OI chart, Historical and Replay read.
+
+The API starts it in process for local, so normally you need nothing. To run it
+standalone (and set `MC_FUTURES_HISTORY_IN_PROCESS=false` on the API so the two
+do not both write):
+
+    cd backend
+    uv run marketcompass-futures-history
+
+It captures every 60s. **Live boards only** — with no FYERS connection the board
+degrades to generated numbers, and those are deliberately never archived: a
+stored frame outlives the process that wrote it, and a mislabelled one cannot be
+detected later. On a machine with no broker, seed instead (below).
+
+    uv run marketcompass-futures-history --once     # one frame, then exit
+    uv run marketcompass-futures-history --prune    # drop past the retention window
+
 ## 4. Frontend — port 5173
 
     cd frontend
@@ -92,6 +114,16 @@ at right now — including outside market hours — fabricate one:
 
 `--replace` only deletes rows this command wrote itself (`source = mock`); it will
 refuse to touch a day that holds a real live capture.
+
+The futures board has its own seeder, with the same guards — it refuses a
+deployed environment, a future date, and any day the real capture has touched:
+
+    cd backend
+    uv run marketcompass-futures-history --seed 2026-09-18 --replace
+
+That fabricates a whole 09:15–15:30 session for all 219 contracts (today's stops
+at the current minute). Seeded frames are stamped `mock`, so the page's data-source
+badge says so rather than passing them off as captured.
 
 ## One command for all of the above
 

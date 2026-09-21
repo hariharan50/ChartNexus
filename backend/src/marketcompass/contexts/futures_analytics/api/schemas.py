@@ -108,3 +108,36 @@ class FuturesBoardResponse(BaseModel):
             source=dashboard.source,
             expiry=dashboard.expiry,
         )
+
+
+class PriceOiSeriesResponse(BaseModel):
+    """One contract's intraday futures price against its own open interest.
+
+    Deliberately the same shape as the Options Lab's series response so the
+    client keeps one parser, with one addition: ``source``, because a page
+    drawn from a generated board must be able to say so.
+    """
+
+    instrument_id: str
+    symbol: str
+    expiry_date: str | None = Field(
+        default=None, description="ISO date of the contract these frames priced."
+    )
+    open_ts: str
+    now_ts: str
+    data_quality: str = Field(description="intraday | live_proxy | empty")
+    open_is_estimated: bool = Field(
+        default=False,
+        description="True when the opening point is inferred rather than captured.",
+    )
+    interval: str
+    source: str = Field(default="mock", description="live | mock")
+    t: list[str] = Field(default_factory=list, description="Frame timestamps, UTC ISO.")
+    price: list[float] = Field(default_factory=list)
+    oi: list[int | None] = Field(
+        default_factory=list,
+        description=(
+            "Futures open interest, not the option chain's. Null where a frame "
+            "fell between open-interest sweeps — a genuine gap, not a zero."
+        ),
+    )

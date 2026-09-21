@@ -19,21 +19,11 @@ const PAGES: Array<{ path: string; heading: string; title?: string }> = [
     title: 'Future Heatmap · MarketCompass'
   },
   {
-    path: '/future-lab/intraday',
-    heading: 'Future Intraday',
-    title: 'Future Intraday · MarketCompass'
-  },
-  {
     path: '/future-lab/market-movers',
     heading: 'Market Movers',
     title: 'Market Movers · MarketCompass'
   },
   { path: '/future-lab/price-vs-oi', heading: 'Price vs OI', title: 'Price vs OI · MarketCompass' },
-  {
-    path: '/future-lab/sentiment-cycle',
-    heading: 'Future Sentiment Cycle',
-    title: 'Future Sentiment Cycle · MarketCompass'
-  },
 
   {
     path: '/options/atm-straddle',

@@ -314,3 +314,167 @@
   font-size: var(--mc-text-xs);
   color: var(--mc-text-subtle);
 }
+
+/* -- collapsible sidebar ---------------------------------------------------- */
+
+.layout.collapsed {
+  grid-template-columns: 2rem 1fr;
+}
+
+.panelHead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--mc-space-2);
+}
+
+.collapseBtn,
+.restore {
+  height: var(--mc-control-h-sm);
+  min-width: var(--mc-control-h-sm);
+  padding: 0 var(--mc-space-2);
+  border: 1px solid var(--mc-border);
+  border-radius: var(--mc-radius);
+  background: var(--mc-surface);
+  color: var(--mc-text-muted);
+  font: inherit;
+  cursor: pointer;
+}
+
+.restore {
+  align-self: start;
+}
+
+.collapseBtn:hover,
+.restore:hover {
+  color: var(--mc-text);
+}
+
+/* -- instrument picker ------------------------------------------------------ */
+
+.search {
+  width: 100%;
+  height: var(--mc-control-h-sm);
+  margin-top: var(--mc-space-3);
+  padding: 0 var(--mc-space-2);
+  border: 1px solid var(--mc-field-border);
+  border-radius: var(--mc-radius);
+  background: var(--mc-field-bg);
+  color: var(--mc-text);
+  font: inherit;
+  font-size: var(--mc-text-sm);
+}
+
+.search:focus-visible {
+  outline: 2px solid var(--mc-accent);
+  outline-offset: 1px;
+}
+
+/* Capped and scrollable: 219 contracts would otherwise push every other
+   control off the bottom of the sidebar. */
+.pickList {
+  max-height: 14rem;
+  margin: var(--mc-space-2) 0 0;
+  padding: 0;
+  overflow-y: auto;
+  list-style: none;
+  border: 1px solid var(--mc-border);
+  border-radius: var(--mc-radius);
+}
+
+.pickRow {
+  display: flex;
+  align-items: baseline;
+  gap: var(--mc-space-2);
+  width: 100%;
+  padding: var(--mc-space-2);
+  border: 0;
+  background: none;
+  color: var(--mc-text);
+  font: inherit;
+  font-size: var(--mc-text-sm);
+  text-align: left;
+  cursor: pointer;
+}
+
+.pickRow:hover {
+  background: var(--mc-surface-2, var(--mc-surface));
+}
+
+.pickOn {
+  background: var(--mc-accent-weak);
+  color: var(--mc-accent);
+}
+
+.pickSym {
+  flex: none;
+  font-weight: 600;
+}
+
+.pickName {
+  overflow: hidden;
+  color: var(--mc-text-muted);
+  font-size: var(--mc-text-xs);
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.pickEmpty {
+  padding: var(--mc-space-3);
+  color: var(--mc-text-muted);
+  font-size: var(--mc-text-sm);
+}
+
+/* -- header right ----------------------------------------------------------- */
+
+.headerRight {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--mc-space-3);
+}
+
+/* -- replay ----------------------------------------------------------------- */
+
+.replayBar {
+  display: flex;
+  align-items: center;
+  gap: var(--mc-space-3);
+  padding: var(--mc-space-2) var(--mc-space-3);
+  border: 1px solid var(--mc-accent);
+  border-radius: var(--mc-radius);
+  background: var(--mc-accent-weak);
+}
+
+.playBtn,
+.exitReplay {
+  height: var(--mc-control-h-sm);
+  padding: 0 var(--mc-space-3);
+  border: 1px solid var(--mc-border);
+  border-radius: var(--mc-radius);
+  background: var(--mc-surface);
+  color: var(--mc-text);
+  font: inherit;
+  font-size: var(--mc-text-sm);
+  cursor: pointer;
+}
+
+.scrub {
+  flex: 1;
+  min-width: 6rem;
+  accent-color: var(--mc-accent);
+}
+
+.replayAt {
+  display: inline-flex;
+  align-items: baseline;
+  gap: var(--mc-space-2);
+  color: var(--mc-text);
+  font-size: var(--mc-text-sm);
+  font-variant-numeric: tabular-nums;
+}
+
+.replayCount {
+  color: var(--mc-text-muted);
+  font-size: var(--mc-text-xs);
+}

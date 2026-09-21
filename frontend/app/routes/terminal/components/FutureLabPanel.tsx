@@ -25,11 +25,7 @@ const sections: Section[] = [
   },
   {
     title: 'OI Tools',
-    items: [
-      { label: 'Future Intraday', glyph: 'activity', href: '/future-lab/intraday' },
-      { label: 'Price vs OI', glyph: 'bars', href: '/future-lab/price-vs-oi' },
-      { label: 'Future Sentiment Cycle', glyph: 'cycle', href: '/future-lab/sentiment-cycle' }
-    ]
+    items: [{ label: 'Price vs OI', glyph: 'bars', href: '/future-lab/price-vs-oi' }]
   }
 ];
 
