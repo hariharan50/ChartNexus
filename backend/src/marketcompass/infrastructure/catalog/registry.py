@@ -26,7 +26,26 @@ from marketcompass.contexts.instrument_catalog.domain.instrument import (
     Instrument,
     InstrumentKind,
 )
-from marketcompass.shared_kernel.domain.errors import ValidationError
+from marketcompass.shared_kernel.domain.errors import UpstreamError, ValidationError
+
+
+class CatalogNotLoadedError(UpstreamError):
+    """The process never got a catalog, so nothing resolves.
+
+    Distinct from an unknown symbol: the request was fine, this process is not.
+    Mapped to 502 rather than 422 so it reads as an outage in the logs and the
+    client does not cache the answer as a permanent rejection.
+    """
+
+    def __init__(self) -> None:
+        super().__init__(
+            provider="instrument_catalog",
+            message=(
+                "The instrument catalog is not loaded in this process — it failed to "
+                "load at startup and has not recovered. Check the database is "
+                "reachable, or run: uv run marketcompass-catalog --once"
+            ),
+        )
 
 
 class InstrumentRegistry:
@@ -48,10 +67,18 @@ class InstrumentRegistry:
 
         Raises ``ValidationError`` — which the transport layer maps to a 422 —
         rather than ``KeyError``, because an unknown instrument is a bad
-        request, not a bug.
+        request, not a bug. The one exception is an empty registry, which is
+        this process being broken rather than the request: see
+        :class:`CatalogNotLoadedError`.
         """
         instrument = self.find(symbol)
         if instrument is None:
+            # An empty registry is not a bad request, and saying "NIFTY is not
+            # tradeable" sent one debugging session hunting through the catalog
+            # table — which was fine — instead of at the process that never
+            # loaded it. Name the actual fault.
+            if not self._by_symbol:
+                raise CatalogNotLoadedError()
             raise ValidationError(
                 f"{str(symbol).strip().upper()} is not a tradeable instrument.",
                 field="instrument",
