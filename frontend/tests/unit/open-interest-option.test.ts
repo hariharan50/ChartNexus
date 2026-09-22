@@ -32,7 +32,18 @@ const THEME: ChartTheme = {
   onMarker: 'rgb(9, 9, 9)',
   spotLabelBg: 'rgb(10, 10, 10)',
   spotLabelText: 'rgb(12, 12, 12)',
-  maxPainLabelBg: 'rgb(11, 11, 11)'
+  maxPainLabelBg: 'rgb(11, 11, 11)',
+  // The eight categorical slots. Distinct placeholder values rather than
+  // real palette colours: these fixtures assert that a builder reaches for
+  // the right *role*, and a recognisable hex would let a wrong lookup pass.
+  series1: 'rgb(21, 21, 21)',
+  series2: 'rgb(22, 22, 22)',
+  series3: 'rgb(23, 23, 23)',
+  series4: 'rgb(24, 24, 24)',
+  series5: 'rgb(25, 25, 25)',
+  series6: 'rgb(26, 26, 26)',
+  series7: 'rgb(27, 27, 27)',
+  series8: 'rgb(28, 28, 28)'
 };
 
 function bar(strike: number, over: Partial<OiChartBar> = {}): OiChartBar {

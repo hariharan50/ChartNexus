@@ -15,6 +15,7 @@ from marketcompass.contexts.futures_analytics.api.router import router as future
 from marketcompass.contexts.hugin.api.router import router as hugin_router
 from marketcompass.contexts.identity.api.router import router as identity_router
 from marketcompass.contexts.instrument_catalog.api.router import router as instruments_router
+from marketcompass.contexts.market_breadth.api.router import router as breadth_router
 from marketcompass.contexts.market_data.api.router import router as market_router
 from marketcompass.contexts.messaging.api.router import router as messaging_router
 from marketcompass.contexts.mme100.api.router import router as mme100_router
@@ -33,6 +34,7 @@ _ROUTERS: tuple[APIRouter, ...] = (
     market_router,
     options_lab_router,
     futures_router,
+    breadth_router,
     signals_router,
     copilot_router,
     stryx_router,

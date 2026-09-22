@@ -59,6 +59,26 @@
   --mc-bullish-weak: #0f3d2c;
   --mc-bearish: #f2495c;
   --mc-bearish-weak: #47202a;
+  /* Categorical series colours, for the one chart that encodes identity rather
+     than direction: the Index Weightage donut. Eight slots, always assigned in
+     this order and never cycled — a ninth category folds into "Other" instead
+     of inventing a hue.
+     The order is the colour-vision-safety mechanism, not decoration: it was
+     validated for adjacent-pair separation (the pairs a donut actually puts
+     next to each other) against every theme's own surface. Re-ordering or
+     re-stepping these without re-validating undoes that.
+     Dark themes carry their own steps rather than an automatic flip of the
+     light ones. On the two light themes three of these sit below 3:1 against
+     the surface, which is why the weightage donut always ships its labelled
+     table beside it — identity is never carried by colour alone. */
+  --mc-series-1: #3987e5;
+  --mc-series-2: #d95926;
+  --mc-series-3: #199e70;
+  --mc-series-4: #c98500;
+  --mc-series-5: #d55181;
+  --mc-series-6: #008300;
+  --mc-series-7: #9085e9;
+  --mc-series-8: #e66767;
   --mc-neutral: #7b8194;
 
   /* Brand — the amber used for primary actions and the marketing panel. */
@@ -215,6 +235,15 @@
   --mc-bullish-weak: #dcf5eb;
   --mc-bearish: #d92b45;
   --mc-bearish-weak: #fde5e9;
+  /* Categorical series slots — see the note on the dark theme above. */
+  --mc-series-1: #2a78d6;
+  --mc-series-2: #eb6834;
+  --mc-series-3: #1baf7a;
+  --mc-series-4: #eda100;
+  --mc-series-5: #e87ba4;
+  --mc-series-6: #008300;
+  --mc-series-7: #4a3aa7;
+  --mc-series-8: #e34948;
 
   --mc-accent: #2f6fe4;
   --mc-accent-weak: #e6efff;
@@ -247,6 +276,15 @@
   --mc-bullish-weak: #dcefe1;
   --mc-bearish: #c0392b;
   --mc-bearish-weak: #f6e2df;
+  /* Categorical series slots — see the note on the dark theme above. */
+  --mc-series-1: #2a78d6;
+  --mc-series-2: #eb6834;
+  --mc-series-3: #1baf7a;
+  --mc-series-4: #eda100;
+  --mc-series-5: #e87ba4;
+  --mc-series-6: #008300;
+  --mc-series-7: #4a3aa7;
+  --mc-series-8: #e34948;
 
   --mc-accent: #c8551f;
   --mc-accent-weak: #f6e4d8;
@@ -274,6 +312,15 @@
   --mc-bullish-weak: #0f3d2c;
   --mc-bearish: #f2495c;
   --mc-bearish-weak: #47202a;
+  /* Categorical series slots — see the note on the dark theme above. */
+  --mc-series-1: #3987e5;
+  --mc-series-2: #d95926;
+  --mc-series-3: #199e70;
+  --mc-series-4: #c98500;
+  --mc-series-5: #d55181;
+  --mc-series-6: #008300;
+  --mc-series-7: #9085e9;
+  --mc-series-8: #e66767;
 
   --mc-accent: #e2542a;
   --mc-accent-weak: #2a1409;
@@ -304,6 +351,15 @@
   --mc-bullish-weak: #0f3d2c;
   --mc-bearish: #f2495c;
   --mc-bearish-weak: #47202a;
+  /* Categorical series slots — see the note on the dark theme above. */
+  --mc-series-1: #3987e5;
+  --mc-series-2: #d95926;
+  --mc-series-3: #199e70;
+  --mc-series-4: #c98500;
+  --mc-series-5: #d55181;
+  --mc-series-6: #008300;
+  --mc-series-7: #9085e9;
+  --mc-series-8: #e66767;
 
   /* Amber both as the brand *and* the interactive accent — the reference draws
      active pills, links and the selected card border in this orange. */

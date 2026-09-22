@@ -20,7 +20,15 @@ const CHART_TOKENS: Record<keyof ChartTheme, string> = {
   onMarker: '--mc-on-brand',
   spotLabelBg: '--mc-surface-raised',
   spotLabelText: '--mc-text',
-  maxPainLabelBg: '--mc-brand-deep'
+  maxPainLabelBg: '--mc-brand-deep',
+  series1: '--mc-series-1',
+  series2: '--mc-series-2',
+  series3: '--mc-series-3',
+  series4: '--mc-series-4',
+  series5: '--mc-series-5',
+  series6: '--mc-series-6',
+  series7: '--mc-series-7',
+  series8: '--mc-series-8'
 };
 
 /**
@@ -44,7 +52,15 @@ export const SERVER_CHART_THEME: ChartTheme = Object.freeze({
   onMarker: 'rgb(255, 255, 255)',
   spotLabelBg: 'rgb(26, 31, 46)',
   spotLabelText: 'rgb(230, 233, 240)',
-  maxPainLabelBg: 'rgb(140, 50, 18)'
+  maxPainLabelBg: 'rgb(140, 50, 18)',
+  series1: 'rgb(57, 135, 229)',
+  series2: 'rgb(217, 89, 38)',
+  series3: 'rgb(25, 158, 112)',
+  series4: 'rgb(201, 133, 0)',
+  series5: 'rgb(213, 81, 129)',
+  series6: 'rgb(0, 131, 0)',
+  series7: 'rgb(144, 133, 233)',
+  series8: 'rgb(230, 103, 103)'
 });
 
 /**
@@ -122,4 +138,24 @@ export function withAlpha(color: string, alpha: number): string {
   if (!parts || parts.length < 3) return trimmed;
   const [r, g, b] = parts;
   return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+}
+
+/**
+ * The categorical slots as the ordered list a chart consumes.
+ *
+ * Fixed order, and deliberately not a cycle: a chart with more categories than
+ * slots must fold the tail into an "Other" bucket rather than reuse slot 1,
+ * which would make two unrelated things the same colour on one plot.
+ */
+export function seriesPalette(theme: ChartTheme): readonly string[] {
+  return [
+    theme.series1,
+    theme.series2,
+    theme.series3,
+    theme.series4,
+    theme.series5,
+    theme.series6,
+    theme.series7,
+    theme.series8
+  ];
 }

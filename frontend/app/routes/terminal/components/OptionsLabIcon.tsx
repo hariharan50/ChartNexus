@@ -97,6 +97,40 @@ const GLYPHS: Record<string, ReactNode> = {
       <path d="M12 3a9 9 0 1 0 9 9" />
       <path d="M12 3v6l5-2.5Z" />
     </>
+  ),
+  // The Analysis subsection's four Index entries and two FII/DII ones.
+  table: (
+    <>
+      <rect x="4" y="4" width="16" height="16" rx="1.5" />
+      <path d="M4 9h16M9 9v11M14 9v11" />
+    </>
+  ),
+  columns: (
+    <>
+      <rect x="4" y="4" width="16" height="16" rx="1.5" />
+      <path d="M9 8v8M15 8v6" />
+    </>
+  ),
+  area: (
+    <>
+      <path d="M4 20V6" />
+      <path d="M4 16l5-5 4 3 7-7" />
+      <path d="M4 20h16" />
+    </>
+  ),
+  pie: (
+    <>
+      <path d="M12 3a9 9 0 1 0 9 9h-9V3Z" />
+      <path d="M15 3.8A9 9 0 0 1 20.2 9H15V3.8Z" />
+    </>
+  ),
+  scatter: (
+    <>
+      <path d="M4 3v17h17" />
+      <circle cx="9" cy="14" r="1.6" />
+      <circle cx="13" cy="8.5" r="1.6" />
+      <circle cx="17.5" cy="12.5" r="1.6" />
+    </>
   )
 };
 

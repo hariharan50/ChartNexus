@@ -1,0 +1,350 @@
+/*
+ * FII/DII Summary — a fixed left rail beside a wide board.
+ *
+ * The two panes answer different questions and are deliberately not merged:
+ * the rail is **value** (rupees crore traded on the day), the board is
+ * **positions** (contracts held). A reader who reads one column as the other
+ * draws the wrong conclusion, so they never share a table, a scale or a unit
+ * label.
+ *
+ * Everything not specific to this split comes from analysis.module.css.
+ */
+
+.layout {
+  display: grid;
+  grid-template-columns: 17.5rem minmax(0, 1fr);
+  gap: var(--mc-space-4);
+  align-items: start;
+  min-width: 0;
+}
+
+.rail {
+  display: flex;
+  flex-direction: column;
+  gap: var(--mc-space-4);
+  min-width: 0;
+}
+
+/* -- rail: the controls card ---------------------------------------------- */
+
+.rail-title {
+  display: flex;
+  align-items: center;
+  gap: var(--mc-space-3);
+  margin: 0 0 var(--mc-space-4);
+  font-size: var(--mc-text-base);
+  font-weight: 700;
+  color: var(--mc-text);
+}
+
+.rail-ico {
+  display: inline-flex;
+  color: var(--mc-accent);
+}
+
+.field {
+  display: flex;
+  align-items: center;
+  gap: var(--mc-space-3);
+  min-width: 0;
+}
+
+.field + .field {
+  margin-top: var(--mc-space-3);
+}
+
+.field-label {
+  flex: none;
+  width: 4.5rem;
+  font-size: var(--mc-text-xs);
+  color: var(--mc-text-muted);
+}
+
+.field-control {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  min-width: 0;
+  flex: 1;
+}
+
+/*
+ * The session stepper. Sized against --mc-control-h like every other control
+ * in the terminal so it lines up with the date field beside it.
+ */
+.step {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  width: var(--mc-control-h-sm);
+  height: var(--mc-control-h-sm);
+  border: 1px solid var(--mc-border);
+  border-radius: var(--mc-radius);
+  background: var(--mc-surface);
+  color: var(--mc-text-muted);
+  cursor: pointer;
+}
+
+.step:hover:not(:disabled) {
+  border-color: var(--mc-border-strong);
+  color: var(--mc-text);
+}
+
+.step:disabled {
+  cursor: not-allowed;
+  opacity: 0.4;
+}
+
+/* -- rail: the value card -------------------------------------------------- */
+
+.session {
+  margin: 0;
+  font-size: var(--mc-text-xs);
+  color: var(--mc-text-muted);
+}
+
+.benchmark {
+  margin: 0.125rem 0 0;
+  font-size: var(--mc-text-lg);
+  font-weight: 700;
+  color: var(--mc-text);
+}
+
+.benchmark-move {
+  margin-left: 0.375rem;
+  font-size: var(--mc-text-sm);
+  font-weight: 600;
+}
+
+.unit {
+  margin: 0.25rem 0 0;
+  text-align: right;
+  font-size: var(--mc-text-xs);
+  color: var(--mc-text-subtle);
+}
+
+.values {
+  list-style: none;
+  margin: var(--mc-space-3) 0 0;
+  padding: var(--mc-space-3) 0 0;
+  border-top: 1px solid var(--mc-border);
+  display: flex;
+  flex-direction: column;
+  gap: 0.125rem;
+}
+
+/* The cash pair reads as its own block above the derivative segments. */
+.values-break {
+  margin-top: var(--mc-space-3);
+  padding-top: var(--mc-space-3);
+  border-top: 1px solid var(--mc-border);
+}
+
+.value-row {
+  display: flex;
+  align-items: center;
+  gap: var(--mc-space-2);
+  width: 100%;
+  padding: 0.375rem 0.25rem;
+  border: none;
+  border-radius: var(--mc-radius-sm);
+  background: transparent;
+  color: var(--mc-text);
+  font-size: var(--mc-text-sm);
+  text-align: left;
+  cursor: pointer;
+}
+
+.value-row:hover {
+  background: var(--mc-surface-raised);
+}
+
+.value-name {
+  flex: 1;
+  min-width: 0;
+}
+
+.value-amount {
+  flex: none;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+/*
+ * The disclosure triangle, and the two stepper arrows.
+ *
+ * All three are one chevron glyph under a rotation, so the open and closed
+ * states — and the back and forward arrows — cannot drift apart into
+ * lookalike icons that no longer match.
+ */
+.caret {
+  display: inline-flex;
+  flex: none;
+  width: 0.75rem;
+  color: var(--mc-text-subtle);
+  transform: rotate(-90deg);
+  transition: transform 120ms ease;
+}
+
+.caret-open {
+  transform: rotate(0deg);
+}
+
+.chev-left {
+  display: inline-flex;
+  transform: rotate(90deg);
+}
+
+.chev-right {
+  display: inline-flex;
+  transform: rotate(-90deg);
+}
+
+/* Aligns a row with no caret to the ones that have one. */
+.caret-space {
+  display: inline-block;
+  flex: none;
+  width: 0.75rem;
+}
+
+.value-detail {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--mc-space-3);
+  padding: 0.125rem 0.25rem 0.375rem 1.25rem;
+  font-size: var(--mc-text-xs);
+  color: var(--mc-text-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+/* -- the open-interest board ---------------------------------------------- */
+
+.board {
+  overflow-x: auto;
+}
+
+.board table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--mc-text-sm);
+  font-variant-numeric: tabular-nums;
+}
+
+.board th {
+  padding: var(--mc-space-3);
+  border-bottom: 1px solid var(--mc-border);
+  background: var(--mc-surface);
+  font-size: var(--mc-text-xs);
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  color: var(--mc-text-subtle);
+  white-space: nowrap;
+}
+
+.board td {
+  padding: var(--mc-space-3);
+  border-bottom: 1px solid var(--mc-border);
+  color: var(--mc-text);
+  white-space: nowrap;
+}
+
+/*
+ * The band cell — one participant (or segment) spanning its four rows.
+ *
+ * A raised surface rather than a tint of any semantic colour: it is grouping
+ * furniture, and red/green/amber all mean something specific everywhere else
+ * on this page.
+ */
+.band {
+  width: 9rem;
+  text-align: center;
+  vertical-align: middle;
+  background: var(--mc-surface-raised);
+  border-right: 1px solid var(--mc-border);
+  font-weight: 700;
+}
+
+.band-net {
+  display: block;
+  margin-top: 0.25rem;
+  font-size: var(--mc-text-xs);
+  font-weight: 500;
+  color: var(--mc-text-subtle);
+}
+
+/* The last row of a band keeps the divider that separates it from the next. */
+.band-end td {
+  border-bottom: 1px solid var(--mc-border-strong);
+}
+
+.row-label {
+  text-align: left;
+}
+
+.numeric {
+  text-align: right;
+}
+
+/* Yesterday's figure is context, not a reading: it stays in the quiet ink so
+   the eye lands on Net and Change. */
+.muted {
+  color: var(--mc-text-muted);
+}
+
+.expand {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--mc-space-2);
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+}
+
+.expand:hover {
+  color: var(--mc-accent);
+}
+
+/* -- the expanded leg breakdown ------------------------------------------- */
+
+.legs td {
+  padding: 0 var(--mc-space-3) var(--mc-space-3);
+  background: var(--mc-surface-raised);
+}
+
+.legs-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(7rem, 1fr));
+  gap: var(--mc-space-3);
+  padding: var(--mc-space-3);
+  border: 1px solid var(--mc-border);
+  border-radius: var(--mc-radius);
+  background: var(--mc-surface);
+}
+
+.leg {
+  display: flex;
+  flex-direction: column;
+  gap: 0.125rem;
+}
+
+.leg-label {
+  font-size: var(--mc-text-xs);
+  color: var(--mc-text-subtle);
+}
+
+.leg-value {
+  font-size: var(--mc-text-sm);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+@media (max-width: 64rem) {
+  .layout {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}

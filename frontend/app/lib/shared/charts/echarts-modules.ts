@@ -1,7 +1,15 @@
-import { BarChart, GaugeChart, LineChart, TreemapChart } from 'echarts/charts';
+import {
+  BarChart,
+  GaugeChart,
+  LineChart,
+  PieChart,
+  ScatterChart,
+  TreemapChart
+} from 'echarts/charts';
 import {
   AxisPointerComponent,
   DataZoomInsideComponent,
+  GraphicComponent,
   GridComponent,
   MarkAreaComponent,
   MarkLineComponent,
@@ -50,6 +58,15 @@ echarts.use([
   // treemap is one series of ~220 nodes, which is well inside the SVG budget
   // described above — do not switch the renderer for it.
   TreemapChart,
+  // Index Weightage's donut. A pie is the wrong chart for most things, and it
+  // is the right one here: the question is literally "what share of the index
+  // is this", the slices sum to a meaningful whole, and the count is capped at
+  // eight so no slice is a sliver.
+  PieChart,
+  // Sector Rotation's quadrant plot. Position carries strength and
+  // participation, bubble area carries index weight — three encodings a bar
+  // chart cannot show at once.
+  ScatterChart,
   GridComponent,
   TooltipComponent,
   // Lets `echarts.connect` drive one crosshair across the three stacked charts
@@ -62,6 +79,9 @@ echarts.use([
   DataZoomInsideComponent,
   MarkLineComponent,
   MarkAreaComponent,
+  // The total in the Index Weightage donut's hole. A graphic rather than a pie
+  // label so it stays put when a slice is hovered.
+  GraphicComponent,
   SVGRenderer
 ]);
 

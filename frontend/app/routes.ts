@@ -98,7 +98,18 @@ export default [
       route('stocks', 'routes/terminal/future-lab/stocks.tsx'),
       route('heatmap', 'routes/terminal/future-lab/heatmap.tsx'),
       route('market-movers', 'routes/terminal/future-lab/market-movers.tsx'),
-      route('price-vs-oi', 'routes/terminal/future-lab/price-vs-oi.tsx')
+      route('price-vs-oi', 'routes/terminal/future-lab/price-vs-oi.tsx'),
+
+      // Analysis — institutional flow and index internals. Flat under
+      // /future-lab rather than nested under /future-lab/analysis: the nav
+      // groups them, but each is a destination in its own right and a deeper
+      // URL would buy nothing.
+      route('fii-dii-summary', 'routes/terminal/future-lab/analysis/fii-dii-summary.tsx'),
+      route('fii-dii-cash', 'routes/terminal/future-lab/analysis/fii-dii-cash.tsx'),
+      route('index-contributors', 'routes/terminal/future-lab/analysis/index-contributors.tsx'),
+      route('advance-decline', 'routes/terminal/future-lab/analysis/advance-decline.tsx'),
+      route('index-weightage', 'routes/terminal/future-lab/analysis/index-weightage.tsx'),
+      route('sector-rotation', 'routes/terminal/future-lab/analysis/sector-rotation.tsx')
     ]),
 
     // settings/+layout.svelte is a *pathful* layout: it owns the /settings

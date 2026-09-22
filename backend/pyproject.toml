@@ -165,6 +165,12 @@ ignore_imports = [
     # futures_analytics `FuturesBoardSource`. The context owns the build-up
     # maths and declares the port; only the bridge knows market_data exists.
     "marketcompass.contexts.futures_analytics.api.dependencies -> marketcompass.infrastructure.futures.build_futures",
+    # Market breadth uses the same sanctioned-bridge pattern: its API dependency
+    # imports only `build_breadth_services`, which assembles the futures board,
+    # the index weight table and the flow placeholder into market_breadth ports.
+    # The context owns the breadth, contribution and rotation maths; only the
+    # bridge knows the catalog and futures_analytics exist.
+    "marketcompass.contexts.market_breadth.api.dependencies -> marketcompass.infrastructure.breadth.build_breadth",
     # Report uses the same sanctioned-bridge pattern: its API dependency imports
     # only `build_report`, which assembles the data gatherer, narrator, renderer and
     # enrollment store from the container. Exempt that single edge.
@@ -183,6 +189,7 @@ modules = [
     "marketcompass.contexts.market_data",
     "marketcompass.contexts.options_analytics",
     "marketcompass.contexts.futures_analytics",
+    "marketcompass.contexts.market_breadth",
     "marketcompass.contexts.signals",
     "marketcompass.contexts.outcomes",
     "marketcompass.contexts.content_intelligence",

@@ -29,7 +29,18 @@ const THEME: ChartTheme = {
   onMarker: '#ffffff',
   spotLabelBg: '#1b2030',
   spotLabelText: '#e6e9f2',
-  maxPainLabelBg: '#3b2a12'
+  maxPainLabelBg: '#3b2a12',
+  // The eight categorical slots. Distinct placeholder values rather than
+  // real palette colours: these fixtures assert that a builder reaches for
+  // the right *role*, and a recognisable hex would let a wrong lookup pass.
+  series1: '#111111',
+  series2: '#222222',
+  series3: '#333333',
+  series4: '#444444',
+  series5: '#555555',
+  series6: '#666666',
+  series7: '#777777',
+  series8: '#888888'
 };
 
 /** 09:15, 09:48 and 09:51 IST on 2026-08-07 — a late start, as really happens. */

@@ -1,0 +1,411 @@
+/*
+ * The chrome every Analysis page shares.
+ *
+ * One stylesheet rather than six near-identical ones: these pages are read
+ * beside each other and the smallest drift — a card with a different radius, a
+ * table with a different row height — reads as a bug. Anything genuinely
+ * specific to one page lives in that page's own module.
+ *
+ * Control heights come from --mc-control-h so the pickers here line up with
+ * every other control in the terminal.
+ */
+
+.page {
+  display: flex;
+  flex-direction: column;
+  gap: var(--mc-space-4);
+  padding: var(--mc-space-5);
+  min-width: 0;
+}
+
+/* -- header ---------------------------------------------------------------- */
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--mc-space-4);
+  flex-wrap: wrap;
+}
+
+.title-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 0.125rem;
+  min-width: 0;
+}
+
+.title {
+  display: flex;
+  align-items: center;
+  gap: var(--mc-space-3);
+  margin: 0;
+  font-size: var(--mc-text-lg);
+  font-weight: 700;
+  color: var(--mc-text);
+}
+
+.title-ico {
+  display: inline-flex;
+  color: var(--mc-accent);
+}
+
+.subtitle {
+  margin: 0;
+  font-size: var(--mc-text-xs);
+  color: var(--mc-text-muted);
+}
+
+.header-right {
+  display: flex;
+  align-items: center;
+  gap: var(--mc-space-3);
+  flex-wrap: wrap;
+}
+
+/* -- controls -------------------------------------------------------------- */
+
+.segmented {
+  display: inline-flex;
+  padding: 2px;
+  border: 1px solid var(--mc-border);
+  border-radius: var(--mc-radius);
+  background: var(--mc-surface);
+}
+
+.segment {
+  height: calc(var(--mc-control-h) - 0.625rem);
+  padding: 0 var(--mc-space-3);
+  border: none;
+  border-radius: var(--mc-radius-sm);
+  background: transparent;
+  color: var(--mc-text-muted);
+  font-size: var(--mc-text-xs);
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.segment:hover:not(:disabled) {
+  color: var(--mc-text);
+}
+
+.segment-on,
+.segment-on:hover {
+  background: var(--mc-accent-weak);
+  color: var(--mc-accent);
+}
+
+.segment:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+.label {
+  font-size: var(--mc-text-xs);
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--mc-text-subtle);
+}
+
+/* -- cards ----------------------------------------------------------------- */
+
+.card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--mc-space-3);
+  padding: var(--mc-space-4);
+  border: 1px solid var(--mc-border);
+  border-radius: var(--mc-radius-lg);
+  background: var(--mc-surface);
+  min-width: 0;
+}
+
+.card-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--mc-space-3);
+  flex-wrap: wrap;
+}
+
+.card-title {
+  margin: 0;
+  font-size: var(--mc-text-sm);
+  font-weight: 700;
+  color: var(--mc-text);
+}
+
+.card-note {
+  margin: 0;
+  font-size: var(--mc-text-xs);
+  color: var(--mc-text-subtle);
+}
+
+/* Two cards side by side, stacking on a narrow terminal. */
+.split {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(22rem, 1fr));
+  gap: var(--mc-space-4);
+  min-width: 0;
+}
+
+/* -- stat tiles ------------------------------------------------------------ */
+
+.tiles {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(11rem, 1fr));
+  gap: var(--mc-space-3);
+}
+
+.tile {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  padding: var(--mc-space-3) var(--mc-space-4);
+  border: 1px solid var(--mc-border);
+  border-radius: var(--mc-radius);
+  background: var(--mc-surface);
+}
+
+.tile-label {
+  font-size: var(--mc-text-xs);
+  color: var(--mc-text-subtle);
+}
+
+.tile-value {
+  font-size: var(--mc-text-lg);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: var(--mc-text);
+}
+
+.tile-hint {
+  font-size: var(--mc-text-xs);
+  color: var(--mc-text-muted);
+}
+
+.up {
+  color: var(--mc-bullish);
+}
+
+.down {
+  color: var(--mc-bearish);
+}
+
+/* -- charts ---------------------------------------------------------------- */
+
+.chart {
+  width: 100%;
+  height: 20rem;
+}
+
+.chart-tall {
+  width: 100%;
+  height: 28rem;
+}
+
+.chart-short {
+  width: 100%;
+  height: 15rem;
+}
+
+/* -- tables ---------------------------------------------------------------- */
+
+/*
+ * Tables scroll inside their own card rather than widening the page: a
+ * fifty-row member list with eight columns must never make the terminal
+ * shell scroll sideways.
+ */
+.table-wrap {
+  overflow-x: auto;
+  max-height: 26rem;
+  overflow-y: auto;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--mc-text-sm);
+  font-variant-numeric: tabular-nums;
+}
+
+.table th {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  padding: var(--mc-space-2) var(--mc-space-3);
+  background: var(--mc-surface);
+  border-bottom: 1px solid var(--mc-border);
+  font-size: var(--mc-text-xs);
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  color: var(--mc-text-subtle);
+  text-align: right;
+  white-space: nowrap;
+}
+
+.table th:first-child,
+.table td:first-child {
+  text-align: left;
+}
+
+.table td {
+  padding: var(--mc-space-2) var(--mc-space-3);
+  border-bottom: 1px solid var(--mc-border);
+  color: var(--mc-text);
+  text-align: right;
+  white-space: nowrap;
+}
+
+.table tbody tr:hover td {
+  background: var(--mc-surface-raised);
+}
+
+.symbol {
+  font-weight: 600;
+}
+
+.sub {
+  display: block;
+  font-size: var(--mc-text-xs);
+  font-weight: 400;
+  color: var(--mc-text-subtle);
+}
+
+/* A colour swatch in a legend row — identity beside a name, never instead. */
+.swatch {
+  display: inline-block;
+  width: 0.625rem;
+  height: 0.625rem;
+  margin-right: var(--mc-space-2);
+  border-radius: 2px;
+  vertical-align: baseline;
+}
+
+/* -- breadth meter --------------------------------------------------------- */
+
+.meter {
+  display: flex;
+  height: 0.75rem;
+  border-radius: 999px;
+  overflow: hidden;
+  background: var(--mc-surface-raised);
+}
+
+.meter-part {
+  height: 100%;
+}
+
+.meter-adv {
+  background: var(--mc-bullish);
+}
+
+.meter-unch {
+  background: var(--mc-neutral);
+}
+
+.meter-dec {
+  background: var(--mc-bearish);
+}
+
+.meter-legend {
+  display: flex;
+  gap: var(--mc-space-4);
+  flex-wrap: wrap;
+  font-size: var(--mc-text-xs);
+  color: var(--mc-text-muted);
+}
+
+/* -- quadrant legend ------------------------------------------------------- */
+
+.quadrants {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(10rem, 1fr));
+  gap: var(--mc-space-2);
+}
+
+.quadrant {
+  display: flex;
+  flex-direction: column;
+  gap: 0.125rem;
+  padding: var(--mc-space-2) var(--mc-space-3);
+  border-left: 3px solid var(--mc-border);
+  background: var(--mc-surface-raised);
+  border-radius: var(--mc-radius-sm);
+}
+
+.quadrant-leading {
+  border-left-color: var(--mc-bullish);
+}
+
+.quadrant-improving {
+  border-left-color: var(--mc-accent);
+}
+
+.quadrant-weakening {
+  border-left-color: var(--mc-warning);
+}
+
+.quadrant-lagging {
+  border-left-color: var(--mc-bearish);
+}
+
+.quadrant-name {
+  font-size: var(--mc-text-xs);
+  font-weight: 700;
+  color: var(--mc-text);
+}
+
+.quadrant-hint {
+  font-size: var(--mc-text-xs);
+  color: var(--mc-text-subtle);
+}
+
+/* -- states ---------------------------------------------------------------- */
+
+.placeholder,
+.error {
+  margin: 0;
+  padding: var(--mc-space-6);
+  border: 1px dashed var(--mc-border);
+  border-radius: var(--mc-radius-lg);
+  text-align: center;
+  font-size: var(--mc-text-sm);
+  color: var(--mc-text-muted);
+}
+
+.error {
+  border-style: solid;
+  border-color: var(--mc-bearish);
+  background: var(--mc-bearish-weak);
+  color: var(--mc-text);
+}
+
+/*
+ * The provenance note. Stated on the page, not only in the badge: a generated
+ * flow board is indistinguishable from a real one by eye, and the badge alone
+ * has been read as decoration.
+ */
+.note {
+  margin: 0;
+  padding: var(--mc-space-3) var(--mc-space-4);
+  border: 1px solid var(--mc-border);
+  border-left: 3px solid var(--mc-warning);
+  border-radius: var(--mc-radius);
+  background: var(--mc-surface);
+  font-size: var(--mc-text-xs);
+  line-height: 1.5;
+  color: var(--mc-text-muted);
+}
+
+@media (max-width: 48rem) {
+  .page {
+    padding: var(--mc-space-4);
+  }
+
+  .header {
+    align-items: flex-start;
+  }
+}

@@ -52,4 +52,25 @@ export interface ChartTheme {
   spotLabelText: string;
   /** Chip behind a max-pain marker's label — dark in every theme. */
   maxPainLabelBg: string;
+  /**
+   * The eight categorical series slots, for charts that encode *identity*
+   * rather than direction — currently the Index Weightage donut.
+   *
+   * Always assigned in order, never cycled: a ninth category folds into
+   * "Other". The order is what makes the palette colour-vision-safe for the
+   * pairs a chart puts next to each other, and it was validated against every
+   * theme's own surface — see the note beside the tokens in `app.css`.
+   *
+   * Eight named roles rather than an array because the theme is a flat record
+   * of token lookups; `seriesPalette()` in this folder hands them back as the
+   * ordered list a chart actually wants.
+   */
+  series1: string;
+  series2: string;
+  series3: string;
+  series4: string;
+  series5: string;
+  series6: string;
+  series7: string;
+  series8: string;
 }
