@@ -28,11 +28,17 @@ from marketcompass.contexts.market_breadth.application.get_index_analysis import
     GetIndexWeightage,
     GetSectorRotation,
 )
+from marketcompass.contexts.market_breadth.application.ports import (
+    InstitutionalFlowSource,
+)
 from marketcompass.infrastructure.breadth.constituent_source import (
     BoardIndexConstituentSource,
 )
 from marketcompass.infrastructure.breadth.flow_source import (
     SimulatedInstitutionalFlowSource,
+)
+from marketcompass.infrastructure.breadth.nse.flow_source import (
+    NseInstitutionalFlowSource,
 )
 from marketcompass.infrastructure.brokers.fyers.quota_manager import QuotaPolicy
 from marketcompass.infrastructure.brokers.mock.provider import MockMarketDataProvider
@@ -64,7 +70,7 @@ class BreadthServices:
     def of(
         cls,
         index_source: BoardIndexConstituentSource,
-        flow_source: SimulatedInstitutionalFlowSource,
+        flow_source: InstitutionalFlowSource,
     ) -> BreadthServices:
         return cls(
             # The Summary page prints the benchmark beside the session, so it
@@ -106,7 +112,13 @@ def build_breadth_services(container: Any, session: AsyncSession) -> BreadthServ
     )
     return BreadthServices.of(
         index_source=BoardIndexConstituentSource(board),
-        # Generated, and labelled as such all the way to the badge on the page.
-        # See the module docstring for why there is no live adapter yet.
-        flow_source=SimulatedInstitutionalFlowSource(),
+        # NSE's own published files, with the generator behind it for when the
+        # archive cannot be reached — an offline developer, or an outage. The
+        # badge on the page says which of the two answered, every time.
+        flow_source=NseInstitutionalFlowSource(
+            container.http,
+            container.redis,
+            fallback=SimulatedInstitutionalFlowSource(clock),
+            clock=clock,
+        ),
     )

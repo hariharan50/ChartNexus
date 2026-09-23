@@ -78,6 +78,24 @@ class InstitutionalFlowSource(Protocol):
         """
         ...
 
+    async def read_index(
+        self, tenant_id: TenantId, session: date, index: str
+    ) -> IndexSnapshot | None:
+        """Where ``index`` closed on ``session``, if this source can say.
+
+        Separate from ``IndexConstituentSource.read`` because it answers a
+        different question. The broker answers "where is the index *now*";
+        this answers "where did it finish on that day". For the latest
+        session the two agree, and for every archived one only this can be
+        right — a broker asked about a session three weeks back returns
+        today's level, and printing that under that day's date is a lie the
+        reader has no way to catch.
+
+        ``None`` when the source has no archived close, which is the ordinary
+        answer for a source that only generates figures.
+        """
+        ...
+
     @property
     def source(self) -> str:
         """``"live"`` or ``"mock"``.

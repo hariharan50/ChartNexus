@@ -199,6 +199,8 @@ scratch/
 # Agent / tooling local state
 # ---------------------------------------------------------------------------
 .claude
+.kilo
+DEVELOPEMENTWORK
 
 # ---------------------------------------------------------------------------
 # Documentation updates implementation reference

@@ -97,9 +97,9 @@ class FlowSummary:
     #: ``None`` at the ends of the archive.
     previous_session: date | None = None
     next_session: date | None = None
-    #: Where the benchmark stood. Only resolved for the latest session — the
-    #: index close for an archived day is a fact this application does not
-    #: store, and reconstructing it from today's board would be a lie.
+    #: Where the benchmark stood **on this session** — the archived close for
+    #: an older day, not today's level under yesterday's date. ``None`` when
+    #: no close has been published for it yet.
     index: IndexSnapshot | None = None
 
 
@@ -156,17 +156,28 @@ class GetFiiDiiSummary:
             imbalance=segment_imbalance(rows),
             previous_session=previous,
             next_session=following,
-            index=await self._index_for(query),
+            index=await self._index_for(query, session),
         )
 
-    async def _index_for(self, query: FlowQuery) -> IndexSnapshot | None:
-        """The benchmark, but only when the page is showing the latest session.
+    async def _index_for(self, query: FlowQuery, session: date) -> IndexSnapshot | None:
+        """The benchmark, as it stood on the session being shown.
 
-        Reading the index costs a board fetch against the shared broker quota,
-        and for an archived day it would return *today's* level under
-        yesterday's date — worse than showing nothing. So historical
-        navigation is free, and the page prints a level only where it is true.
+        The flow source is asked first because it answers for *that day*: it
+        reads the exchange's own report for the session, so stepping back
+        three weeks prints the level that session closed at. The broker
+        cannot do this — asked about an archived day it returns the level
+        now, which under that day's date is simply false.
+
+        The broker is the fallback for one real gap: between the participant
+        file appearing after the close and the market activity report
+        following it, the latest session exists with no archived close yet,
+        and there the broker's level *is* that session's. It is never used
+        for an archived day, where a wrong level is worse than no level, and
+        it costs a board fetch against the shared quota only in that window.
         """
+        archived = await self.source.read_index(query.tenant_id, session, SUMMARY_INDEX)
+        if archived is not None:
+            return archived
         if self.index is None or query.until is not None:
             return None
         return await self.index.read(query.tenant_id, SUMMARY_INDEX)

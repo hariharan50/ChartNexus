@@ -289,6 +289,19 @@ export function fmtOiChange(value: number | null | undefined): string {
 
 const contracts = new Intl.NumberFormat('en-IN', { maximumFractionDigits: 0 });
 
+/**
+ * Residual below which a segment's four nets count as balanced.
+ *
+ * They must cancel exactly — every long is somebody's short — and on the
+ * exchange's own file they very nearly do: the published participant rows
+ * occasionally disagree with the published total by a contract or two, which
+ * is the file's rounding and not a missing participant. Warning on that would
+ * put a standing "this board is incomplete" notice under a board that is
+ * complete, and a reader who learns to ignore the notice will ignore it on the
+ * day it means something.
+ */
+export const OI_IMBALANCE_TOLERANCE = 10;
+
 /** A plain contract count with no scaling — for the expanded leg breakdown. */
 export function fmtContracts(value: number | null | undefined): string {
   if (value === null || value === undefined || !Number.isFinite(value)) return '—';

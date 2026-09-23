@@ -27,6 +27,9 @@ dependencies = [
     "httpx>=0.28",
     "tenacity>=9.0",
     "websockets>=14.1",
+    # NSE publishes its FII derivative statistics as a legacy BIFF workbook —
+    # the one file in the FII/DII pipeline that is not CSV or JSON.
+    "xlrd>=2.0.1",
     # --- security --------------------------------------------------------
     "argon2-cffi>=23.1",
     "cryptography>=44.0",

@@ -152,6 +152,20 @@ class SimulatedInstitutionalFlowSource:
         # future the archive cannot contain.
         return (previous, following if following <= latest else None)
 
+    async def read_index(
+        self,
+        tenant_id: TenantId,  # noqa: ARG002 — mirrors the port; see `read`.
+        session: date,  # noqa: ARG002
+        index: str,  # noqa: ARG002
+    ) -> None:
+        """Always ``None``.
+
+        A generated index close would be the one figure on the page a reader
+        could check against their own screen, and it would be wrong. The page
+        prints a dash instead, which is what a placeholder should look like.
+        """
+        return None
+
     def _day(self, session: date) -> FlowDay:
         # Seeded from the date alone, so the same session is the same numbers
         # in every process, for every tenant, forever. Tenant-specific flow

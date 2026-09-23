@@ -16,6 +16,7 @@ import {
   fmtOiNet,
   fmtPercent,
   fmtPrice,
+  OI_IMBALANCE_TOLERANCE,
   PARTICIPANT_LABELS,
   SEGMENT_LABELS,
   sessionLabel,
@@ -58,7 +59,10 @@ export default function FiiDiiSummary() {
 
   const groups = view === 'participant' ? data?.by_participant : data?.by_segment;
   const imbalanced = useMemo(
-    () => Object.entries(data?.imbalance ?? {}).filter(([, value]) => value !== 0),
+    () =>
+      Object.entries(data?.imbalance ?? {}).filter(
+        ([, value]) => Math.abs(value) > OI_IMBALANCE_TOLERANCE
+      ),
     [data]
   );
 
@@ -165,11 +169,11 @@ export default function FiiDiiSummary() {
 
       {data?.source === 'mock' ? (
         <p className={s.note}>
-          These figures are generated, not published. FII/DII activity comes from NSE&rsquo;s daily
-          participant file, which no broker API serves — connecting it needs a scheduled fetch and
-          somewhere to store the history. The numbers behave like the real series (positions drift
-          rather than jump, and the four nets sum to zero in every segment) but describe no real
-          session.
+          These figures are generated, not published. The page reads NSE&rsquo;s own daily
+          participant file, FII derivative statistics and cash-market activity, and none of them
+          could be reached for this request — so it fell back to the simulated series rather than
+          showing an empty board. The numbers behave like the real ones (positions drift rather than
+          jump, and the four nets sum to zero in every segment) but describe no real session.
         </p>
       ) : null}
     </div>
@@ -284,10 +288,21 @@ function ValueCard({ data }: { data: FlowSummary }) {
         })}
       </ul>
 
-      <div className={s.meterLegend}>
-        <span>FII {streakLabel(data.fii_cash_streak)}</span>
-        <span>DII {streakLabel(data.dii_cash_streak)}</span>
-      </div>
+      {cash ? (
+        <div className={s.meterLegend}>
+          <span>FII {streakLabel(data.fii_cash_streak)}</span>
+          <span>DII {streakLabel(data.dii_cash_streak)}</span>
+        </div>
+      ) : (
+        // The exchange archives every file on this page by date except this
+        // one: cash-market value is served for the latest session only. What
+        // an older session shows is therefore whatever was recorded while it
+        // *was* the latest, and a dash where nothing was.
+        <p className={s.cardNote}>
+          No cash-market figures recorded for this session — the exchange publishes them for the
+          latest session only. The derivative segments and the board below are archived and exact.
+        </p>
+      )}
       <DataSourceBadge source={data.source} />
     </section>
   );
