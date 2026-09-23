@@ -258,9 +258,11 @@ export default function FuturePriceVsOi() {
                 <div className={s.twoUp}>
                   <div>
                     <p className={s.subLabel}>Expiry</p>
-                    {/* Read-only: the board tracks the front-month contract and
-                        nothing else, so a dropdown would offer a choice it
-                        cannot honour. */}
+                    {/* Read-only here, unlike the board pages, and for a
+                        real reason: this chart is drawn from the archived
+                        session the capture worker writes, and it captures the
+                        front month only. Offering a back month would promise
+                        an intraday series that does not exist. */}
                     <div className={s.select}>
                       <span>{expiryLabel(view.expiry_date)}</span>
                       <span className={s.caret} aria-hidden="true">

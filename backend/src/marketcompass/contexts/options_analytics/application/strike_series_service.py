@@ -253,4 +253,3 @@ def _price(row: ChainRow | None) -> float | None:
     and only a leg missing from the capture is a real gap.
     """
     return None if row is None else round(row.ltp, _PLACES)
-

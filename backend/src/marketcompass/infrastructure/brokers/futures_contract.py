@@ -4,6 +4,13 @@ Index futures trade as monthly series that expire on the last Thursday of their
 month; the near-month contract is the one to show until its expiry passes, after
 which the next month becomes the front month.
 
+A contract is addressed by **series index** rather than by date — 0 is the
+near month, 1 the next, 2 the far — because the dates themselves do not agree
+across the universe: NSE and BSE settle on different days, and a
+holiday-shifted contract differs from its neighbours. One date could therefore
+never name "the same contract" for every row on a board, and a series index
+always can. :func:`expiries_for` turns an index back into the date to show.
+
 Two ways to find the front month live here:
 
 * :func:`resolve_front_month` reads it off the broker's own expiry list. Expiry
@@ -82,6 +89,57 @@ def front_month_for(instrument: InstrumentSymbol, today: date) -> date:
     if row is not None and row.front_expiry is not None and row.front_expiry >= today:
         return row.front_expiry
     return local_front_month(today)
+
+
+#: How many monthly series the exchange lists at once — near, next and far.
+#: The picker offers exactly these, because a fourth does not trade.
+MAX_SERIES = 3
+
+
+def expiries_for(instrument: InstrumentSymbol, today: date) -> tuple[date, ...]:
+    """Every tradeable series for one instrument, nearest first.
+
+    Taken from the catalog, which carries the exchange's own published dates.
+    Expired series are dropped rather than returned and skipped by the caller:
+    "series 1" has to mean the same contract everywhere, and a list that still
+    held yesterday's near month would shift every index behind it.
+
+    Falls back to the calendar when the catalog has nothing — a symbol listed
+    between syncs — which is wrong about the *day* but right about the month,
+    and only the month reaches the broker symbol.
+    """
+    row = registry.current().find(instrument)
+    listed = tuple(day for day in (row.futures_expiries if row else ()) if day >= today)
+    if listed:
+        return listed[:MAX_SERIES]
+    return _calendar_series(front_month_for(instrument, today))
+
+
+def _calendar_series(front: date) -> tuple[date, ...]:
+    """Near, next and far month computed from the front month.
+
+    The same fallback ``local_front_month`` is, with the same caveat: the day
+    is a guess and the month is not. Used only where the catalog is silent.
+    """
+    series = [front]
+    year, month = front.year, front.month
+    for _ in range(MAX_SERIES - 1):
+        year, month = _add_month(year, month)
+        series.append(last_thursday(year, month))
+    return tuple(series)
+
+
+def contract_for(instrument: InstrumentSymbol, today: date, series: int = 0) -> date:
+    """The expiry of one instrument's ``series``-th contract, near month first.
+
+    Clamped rather than raising: a page asking for a far month on an
+    instrument that lists only two series should show the furthest it has,
+    which is what the exchange would tell you, rather than an error.
+    """
+    listed = expiries_for(instrument, today)
+    if not listed:
+        return front_month_for(instrument, today)
+    return listed[min(max(series, 0), len(listed) - 1)]
 
 
 def resolve_front_month(expiries: tuple[str, ...], today: date) -> date:

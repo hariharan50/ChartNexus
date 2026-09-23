@@ -1,0 +1,57 @@
+/* Sized against the shared control tokens so the picker sits level with the
+   search box, the sector filter and the view toggle it stands beside on four
+   different pages. */
+
+.picker {
+  display: flex;
+  align-items: center;
+  gap: var(--mc-space-2);
+}
+
+.caption {
+  color: var(--mc-text-muted);
+  font-size: var(--mc-text-xs);
+  white-space: nowrap;
+}
+
+.select {
+  height: var(--mc-control-h-sm);
+  min-width: 10.5rem;
+  padding: 0 var(--mc-space-2);
+  border: 1px solid var(--mc-field-border);
+  border-radius: var(--mc-radius);
+  background: var(--mc-field-bg);
+  color: var(--mc-text);
+  font: inherit;
+  font-size: var(--mc-text-sm);
+}
+
+.select:focus-visible {
+  outline: 2px solid var(--mc-focus);
+  outline-offset: 1px;
+}
+
+/* Shown only until the listing arrives, when there is a contract to name but
+   no choice to offer yet. Dashed, like every other read-only chip here. */
+.chip {
+  display: inline-flex;
+  align-items: center;
+  height: var(--mc-control-h-sm);
+  padding: 0 var(--mc-space-3);
+  border: 1px dashed var(--mc-border-strong);
+  border-radius: var(--mc-radius);
+  color: var(--mc-text);
+  font-size: var(--mc-text-sm);
+  white-space: nowrap;
+}
+
+/* The build-up columns are empty on this series because nothing measured them.
+   Muted rather than alarming: it is a limit, not a fault. */
+.warn {
+  padding: 0 var(--mc-space-2);
+  border: 1px solid var(--mc-border-strong);
+  border-radius: var(--mc-radius-sm, var(--mc-radius));
+  color: var(--mc-text-muted);
+  font-size: var(--mc-text-xs);
+  white-space: nowrap;
+}

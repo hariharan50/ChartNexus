@@ -93,7 +93,6 @@ def authorization_header(app_id: str, access_token: str) -> str:
     return f"{app_id}:{access_token}"
 
 
-
 # How many symbols go in one ``/data/quotes`` request.
 #
 # FYERS documents a per-request cap on this endpoint; 50 is the widely used
@@ -182,9 +181,7 @@ class FyersRestClient:
             params={"symbols": joined},
         )
 
-    async def fetch_depth(
-        self, *, app_id: str, access_token: str, symbol: str
-    ) -> dict[str, Any]:
+    async def fetch_depth(self, *, app_id: str, access_token: str, symbol: str) -> dict[str, Any]:
         """Depth for **one** contract.
 
         Strictly one — the API rejects a list outright with "More than one

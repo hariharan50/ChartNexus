@@ -29,7 +29,9 @@ TICK = datetime(2026, 8, 24, 3, 0, tzinfo=UTC)  # 08:30 IST Monday
 
 
 class _FakeAgent:
-    def __init__(self, *, answer: str = "NIFTY looks constructive.", available: bool = True) -> None:
+    def __init__(
+        self, *, answer: str = "NIFTY looks constructive.", available: bool = True
+    ) -> None:
         self.available = available
         self._answer = answer
         self.calls: list[tuple[str, str]] = []
@@ -89,9 +91,7 @@ async def test_briefing_runs_each_instrument_and_persists_one_document() -> None
 
 async def test_briefing_skipped_when_agent_unavailable() -> None:
     store = _FakeStore()
-    run = RunMme100Briefing(
-        agent=_FakeAgent(available=False), store=store, instruments=("NIFTY",)
-    )
+    run = RunMme100Briefing(agent=_FakeAgent(available=False), store=store, instruments=("NIFTY",))
     assert await run(TENANT, tick_at=TICK) is None
     assert store.saved == {}
 

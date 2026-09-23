@@ -63,6 +63,8 @@ class StubProvider:
         self._fails = fails
         self._name = name
         self.calls = 0
+        #: Which series the board asked this provider for.
+        self.series = 0
 
     @property
     def name(self) -> str:
@@ -70,8 +72,9 @@ class StubProvider:
         has to say so."""
         return self._name
 
-    async def get_futures_board(self, instruments):  # type: ignore[no-untyped-def]
+    async def get_futures_board(self, instruments, *, series=0):  # type: ignore[no-untyped-def]
         self.calls += 1
+        self.series = series
         if self._fails:
             raise RuntimeError("broker is down")
         return {InstrumentSymbol(s): q for s, q in self._board.items()}
@@ -204,8 +207,11 @@ class FakeOiCache:
     def __init__(self, entries: dict[str, CachedOpenInterest] | None = None) -> None:
         self._entries = entries or {}
 
-    async def read_all(self) -> dict[str, CachedOpenInterest]:
-        return self._entries
+    async def read_all(self, series: int = 0) -> dict[str, CachedOpenInterest]:
+        # Keyed by series like the real cache: a sweep that covers only the
+        # near month leaves the others genuinely empty, which is what lets the
+        # board report "not swept" rather than showing a stale figure.
+        return self._entries if series == 0 else {}
 
 
 def cached(oi: int, previous: int | None) -> CachedOpenInterest:
@@ -223,7 +229,9 @@ async def test_open_interest_is_merged_from_the_sweep() -> None:
     cache = FakeOiCache({"RELIANCE": cached(2000, 1500)})
 
     snapshot = await CatalogFuturesBoardSource(
-        Resolver(live), mock_provider(), oi_cache=cache  # type: ignore[arg-type]
+        Resolver(live),
+        mock_provider(),
+        oi_cache=cache,  # type: ignore[arg-type]
     ).read(TENANT)
     reading = snapshot.readings[0]
 
@@ -236,7 +244,9 @@ async def test_a_contract_the_sweep_missed_keeps_its_price() -> None:
     live = StubProvider({"RELIANCE": quote("RELIANCE", oi=None)})
 
     snapshot = await CatalogFuturesBoardSource(
-        Resolver(live), mock_provider(), oi_cache=FakeOiCache({})  # type: ignore[arg-type]
+        Resolver(live),
+        mock_provider(),
+        oi_cache=FakeOiCache({}),  # type: ignore[arg-type]
     ).read(TENANT)
     reading = snapshot.readings[0]
 
@@ -265,7 +275,9 @@ async def test_real_open_interest_is_never_merged_onto_a_simulated_board() -> No
     cache = FakeOiCache({"RELIANCE": cached(9_999_999, 1)})
 
     snapshot = await CatalogFuturesBoardSource(
-        Resolver(None), mock_provider(), oi_cache=cache  # type: ignore[arg-type]
+        Resolver(None),
+        mock_provider(),
+        oi_cache=cache,  # type: ignore[arg-type]
     ).read(TENANT)
 
     assert snapshot.source == "mock"
@@ -279,7 +291,9 @@ async def test_a_board_that_degraded_does_not_keep_the_live_open_interest() -> N
     cache = FakeOiCache({"RELIANCE": cached(9_999_999, 1)})
 
     snapshot = await CatalogFuturesBoardSource(
-        Resolver(live), mock_provider(), oi_cache=cache  # type: ignore[arg-type]
+        Resolver(live),
+        mock_provider(),
+        oi_cache=cache,  # type: ignore[arg-type]
     ).read(TENANT)
 
     assert snapshot.source == "mock"

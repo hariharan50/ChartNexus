@@ -72,11 +72,7 @@ class SignalDecisionRecord(UUIDPrimaryKeyMixin, TenantScopedMixin, TimestampMixi
             "symbol",
             "generated_at",
         ),
-        CheckConstraint(
-            "decision in ('BUY', 'SELL', 'HOLD')", name="decision_known"
-        ),
-        CheckConstraint(
-            "provenance_source in ('live', 'cached', 'mock')", name="provenance_known"
-        ),
+        CheckConstraint("decision in ('BUY', 'SELL', 'HOLD')", name="decision_known"),
+        CheckConstraint("provenance_source in ('live', 'cached', 'mock')", name="provenance_known"),
         CheckConstraint("confidence >= 0 and confidence <= 100", name="confidence_range"),
     )

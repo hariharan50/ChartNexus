@@ -107,14 +107,10 @@ async def _run_tick(
             # calls tools ad hoc across all instruments, so the session must stay
             # open for the entire run (write-through caches persist on commit).
             async with container.database.session() as session:
-                agent = await build_mme100_worker_agent(
-                    container, session, tenant.owner_user_id
-                )
+                agent = await build_mme100_worker_agent(container, session, tenant.owner_user_id)
                 if not agent.available:
                     continue
-                briefing = RunMme100Briefing(
-                    agent=agent, store=store, instruments=instruments
-                )
+                briefing = RunMme100Briefing(agent=agent, store=store, instruments=instruments)
                 result = await briefing(tenant.tenant_id, tick_at=tick_at)
                 if result is not None:
                     written += 1

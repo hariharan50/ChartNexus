@@ -38,6 +38,8 @@ class FuturesDashboardQuery:
     sector: str | None = None
     #: "index" or "stock". None means the whole universe.
     kind: str | None = None
+    #: Which contract series to draw — 0 near month, 1 next, 2 far.
+    series: int = 0
     deadband_percent: Decimal = DEFAULT_DEADBAND_PERCENT
 
 
@@ -60,8 +62,15 @@ class FuturesDashboard:
     universe: int
     #: "live" or "mock" — never let the two be mistaken for each other.
     source: str = "mock"
-    #: ISO date of the front-month contract.
+    #: ISO date of the contract series these rows belong to.
     expiry: str | None = None
+    #: Which series was drawn — 0 near month, 1 next, 2 far.
+    series: int = 0
+    #: Whether open interest was available for it. When false every row is
+    #: NEUTRAL and the four build-up panels are empty *because nothing was
+    #: measured*, not because nothing happened — a distinction the page has to
+    #: make rather than leave the reader to guess at.
+    has_open_interest: bool = True
 
 
 @dataclass(slots=True)
@@ -69,7 +78,7 @@ class GetFuturesDashboard:
     source: FuturesBoardSource
 
     async def __call__(self, query: FuturesDashboardQuery) -> FuturesDashboard:
-        snapshot = await self.source.read(query.tenant_id)
+        snapshot = await self.source.read(query.tenant_id, series=query.series)
         readings = snapshot.readings
         if query.kind:
             wanted_kind = query.kind.strip().casefold()
@@ -96,6 +105,8 @@ class GetFuturesDashboard:
             universe=snapshot.universe,
             source=snapshot.source,
             expiry=expiry,
+            series=snapshot.series,
+            has_open_interest=snapshot.has_open_interest,
         )
 
 

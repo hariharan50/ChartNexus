@@ -1,8 +1,12 @@
 """Futures analytics endpoints.
 
-The Future Lab's universe-wide reads: one board of front-month futures across
-the whole F&O catalog, classified by price direction against open-interest
-direction.
+The Future Lab's universe-wide reads: one board of futures across the whole
+F&O catalog, classified by price direction against open-interest direction.
+
+Which contract that board prices is a choice — ``series`` selects the near,
+next or far month, and ``GET /futures/expiries`` says what those are. It is an
+index rather than a date because the dates do not agree across the universe,
+so no single date could name the same contract for every row.
 
 Board percentages here are **day-over-day**, measured against each contract's
 own previous close and previous open interest. The intraday series beside them
@@ -19,6 +23,7 @@ from fastapi import APIRouter, Query
 
 from marketcompass.contexts.futures_analytics.api.dependencies import Services
 from marketcompass.contexts.futures_analytics.api.schemas import (
+    ExpiryListResponse,
     FuturesBoardResponse,
     FuturesDashboardResponse,
     PriceOiSeriesResponse,
@@ -33,6 +38,7 @@ from marketcompass.contexts.futures_analytics.application.get_price_oi_series im
     INTERVALS,
     PriceOiSeriesQuery,
 )
+from marketcompass.infrastructure.brokers.futures_contract import MAX_SERIES
 from marketcompass.infrastructure.transport.http.dependencies import CurrentPrincipal
 
 router = APIRouter(prefix="/futures", tags=["futures"])
@@ -49,6 +55,39 @@ KindParam = Annotated[
     Literal["index", "stock"] | None,
     Query(description="Restrict the board to index or stock underlyings."),
 ]
+SeriesParam = Annotated[
+    int,
+    Query(
+        ge=0,
+        le=MAX_SERIES - 1,
+        description=(
+            "Which contract series to price: 0 near month, 1 next, 2 far. An "
+            "index rather than a date, because expiry dates differ across the "
+            "universe and no one date names the same contract for every row. "
+            "GET /futures/expiries lists them with the date each settles on."
+        ),
+    ),
+]
+
+
+@router.get(
+    "/expiries",
+    response_model=ExpiryListResponse,
+    summary="The contract series the board can be drawn for",
+    description=(
+        "Nearest first. `series` is what every other endpoint here takes; "
+        "`expiry` is the date most of the universe settles that series on, for "
+        "the label — the rows themselves carry their own, since NSE and BSE do "
+        "not settle on the same day. Whether a series carries open interest "
+        "depends on the provider answering the request, so the board response "
+        "says, not this listing."
+    ),
+)
+async def expiries(
+    principal: CurrentPrincipal,
+    services: Services,
+) -> ExpiryListResponse:
+    return ExpiryListResponse.of(await services.expiries(principal.tenant_id))
 
 
 @router.get(
@@ -65,9 +104,12 @@ async def dashboard(
     services: Services,
     limit: LimitParam = DEFAULT_PANEL_LIMIT,
     sector: SectorParam = None,
+    series: SeriesParam = 0,
 ) -> FuturesDashboardResponse:
     result = await services.dashboard(
-        FuturesDashboardQuery(tenant_id=principal.tenant_id, limit=limit, sector=sector)
+        FuturesDashboardQuery(
+            tenant_id=principal.tenant_id, limit=limit, sector=sector, series=series
+        )
     )
     return FuturesDashboardResponse.of(result)
 
@@ -87,6 +129,7 @@ async def board(
     services: Services,
     sector: SectorParam = None,
     kind: KindParam = None,
+    series: SeriesParam = 0,
 ) -> FuturesBoardResponse:
     result = await services.dashboard(
         FuturesDashboardQuery(
@@ -94,6 +137,7 @@ async def board(
             limit=MAX_PANEL_LIMIT,
             sector=sector,
             kind=kind,
+            series=series,
         )
     )
     return FuturesBoardResponse.of(result)

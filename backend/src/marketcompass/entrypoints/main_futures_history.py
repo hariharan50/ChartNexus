@@ -160,9 +160,7 @@ def run() -> None:
     parser.add_argument(
         "--seed", metavar="YYYY-MM-DD", help="Fabricate a session for this date and exit."
     )
-    parser.add_argument(
-        "--interval", type=int, default=60, help="Seconds between seeded frames."
-    )
+    parser.add_argument("--interval", type=int, default=60, help="Seconds between seeded frames.")
     parser.add_argument(
         "--replace", action="store_true", help="Drop previously seeded frames first."
     )

@@ -6,6 +6,8 @@ data, so — unusually for this codebase — none of these queries filter by ten
 
 from __future__ import annotations
 
+from datetime import date
+
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -104,6 +106,24 @@ class SqlAlchemyInstrumentRepository:
 # -- mapping ----------------------------------------------------------------
 
 
+def _expiries(stored: str | None) -> tuple[date, ...]:
+    """The stored expiry list, skipping anything unreadable.
+
+    Sorted and de-duplicated on the way out rather than trusted: the domain
+    rejects a list that is neither, and one bad row should cost that row its
+    back months, not the whole catalog load.
+    """
+    if not stored:
+        return ()
+    days: set[date] = set()
+    for part in stored.split(","):
+        try:
+            days.add(date.fromisoformat(part.strip()))
+        except ValueError:
+            continue
+    return tuple(sorted(days))
+
+
 def _to_domain(record: InstrumentRecord) -> Instrument:
     return Instrument(
         symbol=record.symbol,
@@ -118,6 +138,7 @@ def _to_domain(record: InstrumentRecord) -> Instrument:
         strike_step=record.strike_step,
         underlying_token=record.underlying_token,
         front_expiry=record.front_expiry,
+        futures_expiries=_expiries(record.futures_expiries),
         reference_price=record.reference_price,
         sector=record.sector,
         indices=tuple(record.indices.split(",")) if record.indices else (),
@@ -146,6 +167,13 @@ def _apply(record: InstrumentRecord, instrument: Instrument) -> None:
     record.isin = instrument.isin
     record.underlying_token = instrument.underlying_token
     record.front_expiry = instrument.front_expiry
+    # Written even when empty, unlike sector and index membership below: this
+    # comes from the same symbol master as every other field here, so an empty
+    # list means the exchange delisted the series, not that a curated table was
+    # missing.
+    record.futures_expiries = (
+        ",".join(day.isoformat() for day in instrument.futures_expiries) or None
+    )
     record.reference_price = instrument.reference_price
     # Sector and index membership come from the curated table rather than the
     # symbol master. Preserve whatever is stored rather than blanking it if a

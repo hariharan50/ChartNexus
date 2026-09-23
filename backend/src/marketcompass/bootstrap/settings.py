@@ -448,6 +448,20 @@ class FuturesOpenInterestSettings(_Section):
     #: sweep does not blank the board, short enough that yesterday's figures
     #: can never pass for today's.
     ttl_seconds: int = Field(default=45 * 60, ge=60)
+    #: How many contract series the sweep covers — 1 is the near month only,
+    #: 2 adds the next, 3 the far.
+    #:
+    #: The cost is linear: each series is another pass over the universe. At
+    #: the defaults above (~220 contracts at 2/s) one series takes ~110s of the
+    #: 300s interval, so two fit comfortably and three do not — raise
+    #: ``interval_seconds`` or ``requests_per_second`` alongside a depth of 3,
+    #: and check the depth against the daily quota (~17,000 requests per series
+    #: per day against 100,000).
+    #:
+    #: Series past this depth are still selectable on the board: they show
+    #: price, volume and the day's range, and the page says open interest was
+    #: not swept for them rather than drawing an empty build-up board.
+    expiry_depth: int = Field(default=2, ge=1, le=3)
 
 
 class FuturesBoardHistorySettings(_Section):
@@ -504,9 +518,7 @@ class Settings(BaseSettings):
     messaging: MessagingSettings = Field(default_factory=MessagingSettings)
     report: ReportSettings = Field(default_factory=ReportSettings)
     catalog: CatalogSettings = Field(default_factory=CatalogSettings)
-    futures_oi: FuturesOpenInterestSettings = Field(
-        default_factory=FuturesOpenInterestSettings
-    )
+    futures_oi: FuturesOpenInterestSettings = Field(default_factory=FuturesOpenInterestSettings)
     futures_history: FuturesBoardHistorySettings = Field(
         default_factory=FuturesBoardHistorySettings
     )

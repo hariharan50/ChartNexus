@@ -173,9 +173,7 @@ def test_limits_are_honoured() -> None:
 # -- the open marker --------------------------------------------------------
 
 
-def with_prints(
-    *, day_open: str | None, high: str = "110", low: str = "90"
-) -> FuturesReading:
+def with_prints(*, day_open: str | None, high: str = "110", low: str = "90") -> FuturesReading:
     return FuturesReading(
         symbol="RELIANCE",
         price=Decimal(100),

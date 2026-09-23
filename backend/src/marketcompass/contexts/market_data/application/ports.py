@@ -38,9 +38,9 @@ class MarketDataProvider(Protocol):
     async def get_futures_quote(self, instrument: InstrumentSymbol) -> FuturesQuote: ...
 
     async def get_futures_board(
-        self, instruments: Sequence[InstrumentSymbol]
+        self, instruments: Sequence[InstrumentSymbol], *, series: int = 0
     ) -> dict[InstrumentSymbol, FuturesQuote]:
-        """Front-month futures for many instruments at once.
+        """One futures series for many instruments at once.
 
         The universe-wide read behind the Future Dashboard. Separate from
         ``get_futures_quote`` because the per-instrument call resolves the
@@ -48,15 +48,24 @@ class MarketDataProvider(Protocol):
         which is right for one card and ruinous for two hundred rows against a
         capped daily quota.
 
+        ``series`` selects the contract: 0 is the near month, 1 the next, 2 the
+        far. An **index**, not a date, because the expiry dates do not agree
+        across the universe — NSE and BSE settle on different days — so no
+        single date could name the same contract for every row. Each
+        instrument's own listed expiries decide what its ``series`` is, and
+        each quote carries the date it resolved to.
+
         Instruments the provider could not answer for are simply absent from
         the result. A partial board is useful; a failed one is not.
         """
         ...
 
     async def get_open_interest(
-        self, instrument: InstrumentSymbol
+        self, instrument: InstrumentSymbol, *, series: int = 0
     ) -> OpenInterestReading | None:
-        """Open interest on the front-month contract, or ``None`` if unknown.
+        """Open interest on one contract, or ``None`` if unknown.
+
+        ``series`` selects the contract exactly as on ``get_futures_board``.
 
         One contract per call — the broker endpoint that carries OI refuses a
         list. Callers sweeping the universe must pace themselves; this is not a
@@ -120,9 +129,7 @@ class HistoryCachePort(Protocol):
     miss; a cold cache simply returns ``None``.
     """
 
-    async def store(
-        self, series: CandleSeries, *, retain_days: int, now: datetime
-    ) -> None: ...
+    async def store(self, series: CandleSeries, *, retain_days: int, now: datetime) -> None: ...
 
     async def recent(
         self, instrument: InstrumentSymbol, interval: CandleInterval, *, days: int, now: datetime

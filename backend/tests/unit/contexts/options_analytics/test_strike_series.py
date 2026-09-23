@@ -186,7 +186,9 @@ async def test_a_single_capture_is_not_a_session() -> None:
 async def test_a_capture_with_no_spot_anywhere_is_dropped() -> None:
     blind = [
         ChainSnapshot(captured_at=OPEN, rows=_ladder(), spot=None, atm_strike=None),
-        ChainSnapshot(captured_at=OPEN + timedelta(minutes=30), rows=_ladder(), spot=None, atm_strike=None),
+        ChainSnapshot(
+            captured_at=OPEN + timedelta(minutes=30), rows=_ladder(), spot=None, atm_strike=None
+        ),
     ]
     payload = await _service(blind, provider=StubProvider(spot=None))(TENANT, "NIFTY", strike=SPOT)
 

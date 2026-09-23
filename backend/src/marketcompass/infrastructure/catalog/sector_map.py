@@ -357,6 +357,4 @@ def sector_for(symbol: str) -> str | None:
 def indices_for(symbol: str) -> tuple[str, ...]:
     """Which tracked indices a symbol belongs to, alphabetically."""
     needle = symbol.strip().upper()
-    return tuple(
-        sorted(name for name, members in INDEX_MEMBERS.items() if needle in members)
-    )
+    return tuple(sorted(name for name, members in INDEX_MEMBERS.items() if needle in members))

@@ -157,17 +157,42 @@ def previous_volume_at(instrument: InstrumentSymbol, moment: datetime) -> int:
     return max(1, int(yesterday * (elapsed if elapsed > 0 else 1.0)))
 
 
-def _oi_seed(instrument: InstrumentSymbol, session_date: date) -> Random:
-    """A generator keyed to the instrument and the day, like the price walk."""
-    return Random(f"oi:{instrument.value}:{session_date.isoformat()}")  # noqa: S311
+#: What fraction of the near month's book a back month carries: roughly a
+#: tenth for the next month, a fiftieth for the far. Open interest concentrates
+#: overwhelmingly in the front contract and only rolls outwards near expiry,
+#: and a mock that gave all three series the same figures would make the expiry
+#: picker look broken — three identical boards under three different dates.
+_SERIES_LIQUIDITY: tuple[float, ...] = (1.0, 0.11, 0.02)
 
 
-def previous_open_interest(instrument: InstrumentSymbol, session_date: date) -> int:
+def _liquidity(series: int) -> float:
+    """How liquid the ``series``-th contract is against the near month."""
+    return _SERIES_LIQUIDITY[min(max(series, 0), len(_SERIES_LIQUIDITY) - 1)]
+
+
+def _oi_seed(instrument: InstrumentSymbol, session_date: date, series: int = 0) -> Random:
+    """A generator keyed to the instrument, the day and the contract.
+
+    The series is part of the seed, so a back month has its own drift rather
+    than a scaled copy of the near month's — two contracts on one underlying
+    really do move their books independently, and a board where every series
+    classified into the same build-up quadrant would teach the page nothing.
+    """
+    suffix = "" if series == 0 else f":s{series}"
+    return Random(f"oi:{instrument.value}:{session_date.isoformat()}{suffix}")  # noqa: S311
+
+
+def previous_open_interest(
+    instrument: InstrumentSymbol, session_date: date, *, series: int = 0
+) -> int:
     """Yesterday's close, which is where today's build-up is measured from."""
-    return _OI_BASE_LOTS + int(_oi_seed(instrument, session_date).random() * _OI_SPREAD_LOTS)
+    drawn = _OI_BASE_LOTS + int(
+        _oi_seed(instrument, session_date, series).random() * _OI_SPREAD_LOTS
+    )
+    return max(1, int(drawn * _liquidity(series)))
 
 
-def open_interest_at(instrument: InstrumentSymbol, moment: datetime) -> int:
+def open_interest_at(instrument: InstrumentSymbol, moment: datetime, *, series: int = 0) -> int:
     """Open interest now.
 
     Drifts away from yesterday's close as the session runs, by a per-instrument
@@ -181,9 +206,9 @@ def open_interest_at(instrument: InstrumentSymbol, moment: datetime) -> int:
     """
     local = in_ist(moment)
     session_date = local.date()
-    previous = previous_open_interest(instrument, session_date)
+    previous = previous_open_interest(instrument, session_date, series=series)
 
-    rng = _oi_seed(instrument, session_date)
+    rng = _oi_seed(instrument, session_date, series)
     rng.random()  # consume the draw that set the base, so the drift differs
     full_day_drift = (rng.random() - 0.5) * 0.24
 
@@ -211,10 +236,18 @@ _SESSION_MINUTES = 6 * 60 + 25
 
 
 def build_futures_quote(
-    instrument: InstrumentSymbol, moment: datetime, *, contract: str, expiry: date
+    instrument: InstrumentSymbol,
+    moment: datetime,
+    *,
+    contract: str,
+    expiry: date,
+    series: int = 0,
 ) -> FuturesQuote:
     spot = spot_price(instrument, moment)
-    price = (spot * (Decimal(1) + _FUTURES_BASIS)).quantize(Decimal("0.01"))
+    # Carry compounds with time to expiry, so each further series trades at a
+    # wider premium to spot. Without this the three contracts would print the
+    # same price under three different dates, which no futures board does.
+    price = (spot * (Decimal(1) + _FUTURES_BASIS * (series + 1))).quantize(Decimal("0.01"))
     base = base_level(instrument)
     change = (price - base).quantize(Decimal("0.01"))
     change_percent = ((change / base) * Decimal(100)).quantize(Decimal("0.01"))
@@ -223,14 +256,16 @@ def build_futures_quote(
     # per instrument: a single shared formula gave all 210 contracts the same
     # figure, which made the column pure noise on the movers board.
     swing = (price * _SWING_PERCENT).quantize(Decimal("0.01"))
-    volume = volume_at(instrument, moment)
+    # Turnover thins out down the curve exactly as the book does.
+    liquidity = _liquidity(series)
+    volume = max(1, int(volume_at(instrument, moment) * liquidity))
 
     # The open sits inside the day's range. A deterministic slice of instruments
     # open exactly on the low or the high so the O=L / O=H badge has something
     # to show; the rest open somewhere in between, as most really do.
     high = (price + swing).quantize(Decimal("0.01"))
     low = (price - swing).quantize(Decimal("0.01"))
-    edge = _oi_seed(instrument, moment.date()).random()
+    edge = _oi_seed(instrument, moment.date(), series).random()
     if edge < _OPENS_ON_LOW_BELOW:
         day_open = low
     elif edge > _OPENS_ON_HIGH_ABOVE:
@@ -248,13 +283,13 @@ def build_futures_quote(
         volume=volume,
         day_high=high,
         day_low=low,
-        open_interest=open_interest_at(instrument, moment),
-        previous_open_interest=previous_open_interest(instrument, moment.date()),
+        open_interest=open_interest_at(instrument, moment, series=series),
+        previous_open_interest=previous_open_interest(instrument, moment.date(), series=series),
         previous_close=base,
         day_open=day_open,
         # The live path has no previous-volume field, but the mock can supply
         # one so the Vol % column is exercised in development rather than being
         # permanently blank and untested.
-        previous_volume=previous_volume_at(instrument, moment),
+        previous_volume=max(1, int(previous_volume_at(instrument, moment) * liquidity)),
         provenance=Provenance(source=DataSource.MOCK, fetched_at=moment),
     )

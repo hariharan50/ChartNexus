@@ -86,4 +86,3 @@ def build_synthetic_board_session(
 def _at(session_date: date, clock: time) -> datetime:
     """An exchange-local wall time on a session date, as a UTC instant."""
     return datetime.combine(session_date, clock, tzinfo=_IST).astimezone(UTC)
-

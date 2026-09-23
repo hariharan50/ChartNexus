@@ -1,6 +1,7 @@
 import { cx } from '$shared/ui/cx';
 import IconSearch from '$shared/ui/icons/IconSearch';
 import { STATES } from '../stocks-data';
+import ExpiryPicker from './ExpiryPicker';
 import s from './MoversToolbar.module.css';
 
 export type BoardView = 'table' | 'heatmap';
@@ -8,8 +9,14 @@ export type BoardView = 'table' | 'heatmap';
 interface Props {
   search: string;
   onSearch: (value: string) => void;
-  /** Front-month expiry, already formatted — e.g. "Sep (8d) Current". */
-  expiryLabel: string;
+  /** Which contract series the board is showing: 0 near month, 1 next, 2 far. */
+  series: number;
+  onSeries: (series: number) => void;
+  /** The expiry the board came back with, so the control cannot disagree with
+   *  the rows beneath it. */
+  expiry: string | null | undefined;
+  /** Whether that board carries open interest. Undefined until it arrives. */
+  hasOpenInterest: boolean | undefined;
   sector: string;
   sectors: string[];
   onSector: (value: string) => void;
@@ -24,7 +31,10 @@ interface Props {
 export default function MoversToolbar({
   search,
   onSearch,
-  expiryLabel,
+  series,
+  onSeries,
+  expiry,
+  hasOpenInterest,
   sector,
   sectors,
   onSector,
@@ -54,17 +64,13 @@ export default function MoversToolbar({
         </span>
       </label>
 
-      {/*
-        A chip, not a dropdown. The board reads the front-month contract and
-        nothing else, so a control offering other expiries would be a promise
-        it cannot keep. Showing the real expiry and days remaining is the
-        honest half of what the reference design implies.
-      */}
       <div className={s.field}>
-        <span className={s.caption}>Expiry</span>
-        <span className={s.chip} title="The board tracks the front-month contract">
-          {expiryLabel}
-        </span>
+        <ExpiryPicker
+          series={series}
+          onSeries={onSeries}
+          resolved={expiry}
+          hasOpenInterest={hasOpenInterest}
+        />
       </div>
 
       {/* Sectors come from a curated table; if none is loaded the filter would

@@ -54,17 +54,62 @@ export interface FuturesDashboard {
    * board without surfacing it.
    */
   source?: 'live' | 'cached' | 'mock';
+  /**
+   * ISO date of the contract series these rows belong to — the one most of
+   * them share, since NSE and BSE settle on different days. Absent on an API
+   * predating the field.
+   */
+  expiry?: string | null;
+  /** Which series was drawn: 0 near month, 1 next, 2 far. */
+  series?: number;
+  /**
+   * False when no open-interest sweep covers this series. Every row then
+   * reads `neutral` and the build-up panels are empty **because nothing was
+   * measured**, not because nothing happened — a page that does not say which
+   * is showing the reader a market that does not exist.
+   */
+  has_open_interest?: boolean;
 }
 
 export interface FuturesBoard {
   rows: FuturesRow[];
   covered: number;
   universe: number;
-  /** ISO date of the front-month contract every row belongs to. Absent on an
-   *  API predating the field. */
-  expiry?: string | null;
   /** Absent on an API predating the field. Never default it — labelling
    *  unknown provenance as "mock" or "live" is exactly the confusion the
    *  badge exists to prevent; show nothing instead. */
   source?: 'live' | 'cached' | 'mock';
+  /**
+   * ISO date of the contract series these rows belong to — the one most of
+   * them share, since NSE and BSE settle on different days. Absent on an API
+   * predating the field.
+   */
+  expiry?: string | null;
+  /** Which series was drawn: 0 near month, 1 next, 2 far. */
+  series?: number;
+  /**
+   * False when no open-interest sweep covers this series. Every row then
+   * reads `neutral` and the build-up panels are empty **because nothing was
+   * measured**, not because nothing happened — a page that does not say which
+   * is showing the reader a market that does not exist.
+   */
+  has_open_interest?: boolean;
+}
+
+/**
+ * One contract series the Future Lab can be pointed at.
+ *
+ * Addressed by `series` rather than by date, and that is the whole design:
+ * expiry dates do not agree across the universe — NSE and BSE settle on
+ * different days — so no single date could name the same contract for every
+ * row on a board. `expiry` is the date **most** instruments settle that series
+ * on, which makes it a label, not a key.
+ */
+export interface ExpiryOption {
+  series: number;
+  expiry: string;
+}
+
+export interface ExpiryList {
+  expiries: ExpiryOption[];
 }

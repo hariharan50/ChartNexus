@@ -81,7 +81,6 @@ def to_futures_quote_from_values(
     )
 
 
-
 def to_open_interest(
     payload: dict[str, Any],
     *,

@@ -29,4 +29,3 @@ def from_broker_symbol(symbol: str) -> InstrumentSymbol | None:
         if instrument.spot_symbol.upper() == needle:
             return InstrumentSymbol(instrument.symbol)
     return None
-

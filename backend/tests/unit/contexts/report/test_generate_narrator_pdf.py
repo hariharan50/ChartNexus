@@ -28,12 +28,26 @@ TENANT = TenantId(uuid.uuid4())
 def _inputs(source: str = "live") -> ReportInputs:
     return ReportInputs(
         summary=InstrumentSummary(
-            "NIFTY", 24634.9, -19.8, -0.08, 24654.7, 24728.55, 24791.3, 24606.2,
-            21743.65, 26134.7, source,
+            "NIFTY",
+            24634.9,
+            -19.8,
+            -0.08,
+            24654.7,
+            24728.55,
+            24791.3,
+            24606.2,
+            21743.65,
+            26134.7,
+            source,
         ),
         technical=TechnicalRead(
-            24700.0, 24800.0, 42.0, 24680.0, 120.0,
-            (Level(24768.0, "Call wall"),), (Level(24612.0, "Put wall"),),
+            24700.0,
+            24800.0,
+            42.0,
+            24680.0,
+            120.0,
+            (Level(24768.0, "Call wall"),),
+            (Level(24612.0, "Put wall"),),
         ),
         candles=tuple(
             Candle(f"d{i}", 24600 + i, 24650 + i, 24580 + i, 24620 + i) for i in range(30)
@@ -97,9 +111,10 @@ async def test_generate_assembles_report_and_pdf() -> None:
     assert out.pdf == b"%PDF-fake"
     assert out.report.instrument == "NIFTY"
     assert out.report.trading_day == date(2026, 9, 30)
-    assert out.report.sentiment.score == compute_score(
-        _inputs().summary, _inputs().technical, _inputs().options
-    ).score
+    assert (
+        out.report.sentiment.score
+        == compute_score(_inputs().summary, _inputs().technical, _inputs().options).score
+    )
     # briefing context reached the narrator
     assert "ctx=True" in out.report.narrative.outlook
     assert renderer.last is out.report
@@ -155,7 +170,9 @@ def test_pdf_renderer_produces_a_pdf() -> None:
 
 def test_pdf_renderer_handles_empty_data() -> None:
     empty = ReportInputs(
-        summary=InstrumentSummary("NIFTY", None, None, None, None, None, None, None, None, None, "mock"),
+        summary=InstrumentSummary(
+            "NIFTY", None, None, None, None, None, None, None, None, None, "mock"
+        ),
         technical=TechnicalRead(None, None, None, None, None),
         candles=(),
         option_bars=(),
@@ -164,11 +181,18 @@ def test_pdf_renderer_handles_empty_data() -> None:
     )
     score = compute_score(empty.summary, empty.technical, empty.options)
     report = MarketReport(
-        trading_day=date(2026, 9, 30), instrument="NIFTY", summary=empty.summary,
-        technical=empty.technical, candles=empty.candles, option_bars=empty.option_bars,
-        options=empty.options, sentiment=score,
-        narrative=ReportNarrative("", "", "", ""), source="mock",
-        generated_at=datetime.now(UTC), sources=("x",),
+        trading_day=date(2026, 9, 30),
+        instrument="NIFTY",
+        summary=empty.summary,
+        technical=empty.technical,
+        candles=empty.candles,
+        option_bars=empty.option_bars,
+        options=empty.options,
+        sentiment=score,
+        narrative=ReportNarrative("", "", "", ""),
+        source="mock",
+        generated_at=datetime.now(UTC),
+        sources=("x",),
     )
     pdf = ReportPdfRenderer().render(report)  # must not crash on all-None / empty charts
     assert pdf[:5] == b"%PDF-"

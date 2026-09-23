@@ -72,9 +72,7 @@ class FakeBoard:
         return self.snapshot
 
 
-def reading(
-    *, price: str = "1250", price_open: str = "1200", oi: int = 110_000
-) -> FuturesReading:
+def reading(*, price: str = "1250", price_open: str = "1200", oi: int = 110_000) -> FuturesReading:
     return FuturesReading(
         symbol="RELIANCE",
         price=Decimal(price),
@@ -193,9 +191,7 @@ async def test_the_proxys_now_point_never_lands_after_the_close() -> None:
 async def test_a_bucket_reports_its_last_frame_not_its_average() -> None:
     """Every other number on the page is a last-traded price. A bucket that
     reported its mean would disagree with the board beside it."""
-    history = FakeHistory(
-        [frame(0, price="1200"), frame(1, price="1210"), frame(2, price="1220")]
-    )
+    history = FakeHistory([frame(0, price="1200"), frame(1, price="1210"), frame(2, price="1220")])
 
     result = await service(history, FakeBoard())(query(interval="5m"))
 

@@ -107,11 +107,15 @@ def _oi_skew(_s: InstrumentSummary, o: OptionsSummary, _t: TechnicalRead) -> _Co
     return 0.0, SentimentSignal("OI Skew", Stance.NEUTRAL, "Balanced OI")
 
 
-def _volatility(_s: InstrumentSummary, o: OptionsSummary, _t: TechnicalRead) -> _Contribution | None:
+def _volatility(
+    _s: InstrumentSummary, o: OptionsSummary, _t: TechnicalRead
+) -> _Contribution | None:
     if o.india_vix is None:
         return None
     if o.india_vix >= _VIX_HIGH:
-        return -5.0, SentimentSignal("Volatility", Stance.BEARISH, f"VIX {o.india_vix:.1f} elevated")
+        return -5.0, SentimentSignal(
+            "Volatility", Stance.BEARISH, f"VIX {o.india_vix:.1f} elevated"
+        )
     if o.india_vix < _VIX_LOW:
         return 3.0, SentimentSignal("Volatility", Stance.BULLISH, f"VIX {o.india_vix:.1f} calm")
     return 0.0, SentimentSignal("Volatility", Stance.NEUTRAL, f"VIX {o.india_vix:.1f}")

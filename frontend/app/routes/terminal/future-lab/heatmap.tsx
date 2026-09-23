@@ -10,10 +10,10 @@ import { useChartTheme } from '$shared/charts/theme/use-chart-theme';
 import DataSourceBadge from '$shared/ui/DataSourceBadge';
 import { cx } from '$shared/ui/cx';
 import IconGrid from '$shared/ui/icons/IconGrid';
+import ExpiryPicker from './components/ExpiryPicker';
 import { RefreshRing, ReplayToggle, SessionClock } from './components/SessionHeader';
 import {
   applyFilter,
-  expiryLabel,
   filterCounts,
   HEATMAP_FILTERS,
   SIZE_OPTIONS,
@@ -41,7 +41,9 @@ export default function FutureHeatmap() {
   const [size, setSize] = useState<HeatmapSizeId>('turnover');
   const theme = useChartTheme();
 
-  const board = useFuturesBoardQuery({ kind: 'stock' });
+  const [series, setSeries] = useState(0);
+
+  const board = useFuturesBoardQuery({ kind: 'stock', series });
 
   const rows = useMemo(() => board.data?.rows ?? EMPTY, [board.data]);
   // Counts describe the whole board; the chips have to say what they *would*
@@ -97,9 +99,13 @@ export default function FutureHeatmap() {
         </div>
 
         <span className={s.label}>Expiry</span>
-        {/* Read-only: the board tracks the front-month contract and nothing
-            else, so a dropdown would offer a choice it cannot honour. */}
-        <span className={s.chip}>{expiryLabel(board.data?.expiry)}</span>
+        <ExpiryPicker
+          series={series}
+          onSeries={setSeries}
+          resolved={board.data?.expiry}
+          hasOpenInterest={board.data?.has_open_interest}
+          bare
+        />
 
         <label className={s.sizeBy}>
           <span className={s.label}>Size by</span>

@@ -402,7 +402,6 @@ def _pcr_from_totals(put_oi: int, call_oi: int) -> float:
     return round(put_oi / call_oi, 4)
 
 
-
 def _iso(dt: datetime) -> str:
     return _attach_utc(dt).astimezone(UTC).isoformat()
 

@@ -119,6 +119,18 @@
   color: var(--mc-warning);
 }
 
+/* An explanation, not a fault: this contract prices fine, it simply has no
+   open-interest sweep behind it. Quieter than .error for that reason. */
+.notice {
+  margin: 0;
+  padding: var(--mc-space-3) var(--mc-space-4);
+  border: 1px solid var(--mc-border-strong);
+  border-radius: var(--mc-radius);
+  background: var(--mc-surface-2, transparent);
+  color: var(--mc-text-muted);
+  font-size: var(--mc-text-sm);
+}
+
 .error {
   margin: 0;
   padding: var(--mc-space-3) var(--mc-space-4);

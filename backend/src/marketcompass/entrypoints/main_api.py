@@ -120,9 +120,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
                 make_loop=lambda stop: run_catalog_loop(container, resolved, stop=stop),
             ),
             _maybe_start(
-                enabled=local
-                and resolved.futures_oi.enabled
-                and resolved.futures_oi.in_process,
+                enabled=local and resolved.futures_oi.enabled and resolved.futures_oi.in_process,
                 name="futures-oi-sweep",
                 make_loop=lambda stop: run_futures_oi_loop(container, resolved, stop=stop),
             ),

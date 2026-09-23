@@ -7,6 +7,7 @@ itself, the same way the AI agents' bridges do.
 
 from __future__ import annotations
 
+from collections.abc import Awaitable, Callable
 from dataclasses import dataclass
 from typing import Any
 
@@ -18,6 +19,7 @@ from marketcompass.contexts.futures_analytics.application.get_dashboard import (
 from marketcompass.contexts.futures_analytics.application.get_price_oi_series import (
     GetFuturesPriceOiSeries,
 )
+from marketcompass.contexts.futures_analytics.application.ports import ExpiryOption
 from marketcompass.infrastructure.brokers.fyers.quota_manager import QuotaPolicy
 from marketcompass.infrastructure.brokers.mock.provider import MockMarketDataProvider
 from marketcompass.infrastructure.brokers.provider_resolver import TenantProviderResolver
@@ -30,6 +32,7 @@ from marketcompass.infrastructure.persistence.postgresql.repositories.market_dat
     SqlAlchemyFuturesBoardSnapshotRepository,
 )
 from marketcompass.infrastructure.time.clock import SystemClock
+from marketcompass.shared_kernel.types.identifiers import TenantId
 
 
 @dataclass(slots=True)
@@ -43,6 +46,11 @@ class FuturesServices:
 
     dashboard: GetFuturesDashboard
     price_oi_series: GetFuturesPriceOiSeries
+    #: The contract series the board can be drawn for. Handed over as the
+    #: source's own bound method rather than a use case: it reads the catalog
+    #: and returns it, and wrapping that in an application object would add a
+    #: layer with nothing in it.
+    expiries: Callable[[TenantId], Awaitable[list[ExpiryOption]]]
 
 
 def build_futures_services(container: Any, session: AsyncSession) -> FuturesServices:
@@ -73,6 +81,7 @@ def build_futures_services(container: Any, session: AsyncSession) -> FuturesServ
     )
     return FuturesServices(
         dashboard=GetFuturesDashboard(source=source),
+        expiries=source.expiries,
         price_oi_series=GetFuturesPriceOiSeries(
             history=SqlAlchemyFuturesBoardSnapshotRepository(session),
             # The board is the fallback when the archive holds no session yet,

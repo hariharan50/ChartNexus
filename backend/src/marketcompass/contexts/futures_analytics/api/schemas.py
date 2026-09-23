@@ -7,6 +7,7 @@ from decimal import Decimal
 from pydantic import BaseModel, Field
 
 from marketcompass.contexts.futures_analytics.application.get_dashboard import FuturesDashboard
+from marketcompass.contexts.futures_analytics.application.ports import ExpiryOption
 from marketcompass.contexts.futures_analytics.domain.buildup import BuildupRow
 
 
@@ -22,7 +23,9 @@ class FuturesRowResponse(BaseModel):
     #: Null when the feed does not carry open interest for this contract.
     open_interest: int | None = None
     oi_change_percent: Decimal | None = None
-    state: str = Field(description="long_buildup | short_buildup | short_covering | long_unwinding | neutral")
+    state: str = Field(
+        description="long_buildup | short_buildup | short_covering | long_unwinding | neutral"
+    )
     kind: str | None = Field(default=None, description="index | stock")
     lot_size: int | None = None
     volume: int | None = None
@@ -68,7 +71,20 @@ class FuturesDashboardResponse(BaseModel):
     universe: int
     source: str = Field(default="mock", description="live | mock")
     expiry: str | None = Field(
-        default=None, description="ISO date of the front-month contract."
+        default=None,
+        description=(
+            "ISO date of the contract series these rows belong to — the one "
+            "most of them share, since NSE and BSE settle on different days."
+        ),
+    )
+    series: int = Field(default=0, description="0 near month, 1 next, 2 far.")
+    has_open_interest: bool = Field(
+        default=True,
+        description=(
+            "False when no open-interest sweep covers this series: every row "
+            "then reads NEUTRAL and the four build-up panels are empty because "
+            "nothing was measured, not because nothing happened. Say so."
+        ),
     )
 
     @classmethod
@@ -85,7 +101,36 @@ class FuturesDashboardResponse(BaseModel):
             universe=dashboard.universe,
             source=dashboard.source,
             expiry=dashboard.expiry,
+            series=dashboard.series,
+            has_open_interest=dashboard.has_open_interest,
         )
+
+
+class ExpiryOptionResponse(BaseModel):
+    """One contract series the board can be drawn for."""
+
+    series: int = Field(description="0 near month, 1 next, 2 far.")
+    expiry: str = Field(
+        description=(
+            "ISO date most of the universe settles this series on. A "
+            "representative label, not a universal truth: NSE and BSE settle "
+            "on different days, so each row carries its own expiry."
+        )
+    )
+
+    @classmethod
+    def of(cls, option: ExpiryOption) -> ExpiryOptionResponse:
+        return cls(series=option.series, expiry=option.expiry)
+
+
+class ExpiryListResponse(BaseModel):
+    """Every series the Future Lab can be pointed at, nearest first."""
+
+    expiries: list[ExpiryOptionResponse] = Field(default_factory=list)
+
+    @classmethod
+    def of(cls, options: list[ExpiryOption]) -> ExpiryListResponse:
+        return cls(expiries=[ExpiryOptionResponse.of(option) for option in options])
 
 
 class FuturesBoardResponse(BaseModel):
@@ -96,7 +141,20 @@ class FuturesBoardResponse(BaseModel):
     universe: int
     source: str = Field(default="mock", description="live | mock")
     expiry: str | None = Field(
-        default=None, description="ISO date of the front-month contract."
+        default=None,
+        description=(
+            "ISO date of the contract series these rows belong to — the one "
+            "most of them share, since NSE and BSE settle on different days."
+        ),
+    )
+    series: int = Field(default=0, description="0 near month, 1 next, 2 far.")
+    has_open_interest: bool = Field(
+        default=True,
+        description=(
+            "False when no open-interest sweep covers this series: every row "
+            "then reads NEUTRAL and the four build-up panels are empty because "
+            "nothing was measured, not because nothing happened. Say so."
+        ),
     )
 
     @classmethod
@@ -107,6 +165,8 @@ class FuturesBoardResponse(BaseModel):
             universe=dashboard.universe,
             source=dashboard.source,
             expiry=dashboard.expiry,
+            series=dashboard.series,
+            has_open_interest=dashboard.has_open_interest,
         )
 
 

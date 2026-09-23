@@ -89,9 +89,7 @@ async def _run_tick(
                 )
                 delivered += count
         except Exception as exc:
-            log.warning(
-                "report_tenant_failed", tenant_id=str(tenant.tenant_id), error=repr(exc)
-            )
+            log.warning("report_tenant_failed", tenant_id=str(tenant.tenant_id), error=repr(exc))
             continue
 
     log.info("report_tick", tenants=len(tenants), delivered=delivered, tick_at=tick_at.isoformat())

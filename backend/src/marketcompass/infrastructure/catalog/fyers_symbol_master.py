@@ -141,6 +141,9 @@ def parse_universe(
     cash = _index_by_underlying(cm_rows)
 
     futures: dict[str, list[str]] = {}
+    # Every listed series per underlying, not just the nearest: which contract
+    # a page shows is a choice, and the exchange lists three at a time.
+    series: dict[str, set[date]] = {}
     strikes: dict[str, dict[str, list[Decimal]]] = {}
 
     for row in fo_rows:
@@ -161,6 +164,10 @@ def parse_universe(
         # Not an option, so a future. NSE marks these ``XX`` and BSE leaves the
         # column blank, which is why membership of the option set is the test
         # rather than equality with any one sentinel.
+        expiry = _expiry_date(row)
+        if expiry is not None:
+            series.setdefault(underlying, set()).add(expiry)
+
         existing = futures.get(underlying)
         if existing is None or _epoch(row) < _epoch(existing):
             futures[underlying] = row
@@ -174,7 +181,14 @@ def parse_universe(
             log.warning("instrument_missing_cash_row", symbol=underlying, exchange=exchange)
             continue
 
-        instrument = _build(underlying, row, cash_row, strikes.get(underlying), exchange)
+        instrument = _build(
+            underlying,
+            row,
+            cash_row,
+            strikes.get(underlying),
+            exchange,
+            expiries=tuple(sorted(series.get(underlying, ()))),
+        )
         if instrument is not None:
             instruments.append(instrument)
 
@@ -187,6 +201,8 @@ def _build(
     cash_row: list[str],
     ladders: dict[str, list[Decimal]] | None,
     exchange: str,
+    *,
+    expiries: tuple[date, ...] = (),
 ) -> Instrument | None:
     kind = _kind(futures_row[_COL_INSTRUMENT_TYPE])
     if kind is None:
@@ -217,6 +233,7 @@ def _build(
             # `futures_row` is the nearest-dated contract, so its expiry is the
             # front month — exactly, as the exchange lists it.
             front_expiry=_expiry_date(futures_row),
+            futures_expiries=expiries,
             # From the curated table; absent for indices and for any stock
             # newly added to the F&O list that nobody has classified yet.
             sector=sector_for(underlying),

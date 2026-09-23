@@ -55,10 +55,7 @@ def test_a_whole_session_runs_from_the_bell_to_the_close() -> None:
 def test_the_interval_sets_the_spacing() -> None:
     frames = build(interval_seconds=300)
 
-    gaps = {
-        (b.captured_at - a.captured_at).total_seconds()
-        for a, b in pairwise(frames)
-    }
+    gaps = {(b.captured_at - a.captured_at).total_seconds() for a, b in pairwise(frames)}
     assert gaps == {300.0}
 
 

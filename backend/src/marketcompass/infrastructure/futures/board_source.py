@@ -20,9 +20,13 @@ from __future__ import annotations
 
 from collections import Counter
 from dataclasses import replace
+from datetime import date, datetime, timedelta, timezone
 from decimal import Decimal
 
-from marketcompass.contexts.futures_analytics.application.ports import BoardSnapshot
+from marketcompass.contexts.futures_analytics.application.ports import (
+    BoardSnapshot,
+    ExpiryOption,
+)
 from marketcompass.contexts.futures_analytics.domain.buildup import FuturesReading
 from marketcompass.contexts.market_data.application.ports import (
     MarketDataProvider,
@@ -30,6 +34,7 @@ from marketcompass.contexts.market_data.application.ports import (
 )
 from marketcompass.contexts.market_data.domain.instruments import InstrumentSymbol
 from marketcompass.contexts.market_data.domain.market_data import DataSource, FuturesQuote
+from marketcompass.infrastructure.brokers.futures_contract import MAX_SERIES, expiries_for
 from marketcompass.infrastructure.brokers.mock.provider import (
     PROVIDER_NAME as MOCK_PROVIDER_NAME,
 )
@@ -39,6 +44,9 @@ from marketcompass.infrastructure.observability.structured_logging import get_lo
 from marketcompass.shared_kernel.types.identifiers import TenantId
 
 log = get_logger(__name__)
+
+#: India observes no DST, so a fixed offset is exact.
+_IST = timezone(timedelta(hours=5, minutes=30))
 
 
 class CatalogFuturesBoardSource:
@@ -56,16 +64,17 @@ class CatalogFuturesBoardSource:
         # open-interest columns, which is the honest degradation.
         self._oi_cache = oi_cache
 
-    async def read(self, tenant_id: TenantId) -> BoardSnapshot:
+    async def read(self, tenant_id: TenantId, *, series: int = 0) -> BoardSnapshot:
+        series = max(0, min(series, MAX_SERIES - 1))
         instruments = [
             InstrumentSymbol(instrument.symbol) for instrument in registry.current().all()
         ]
         if not instruments:
             log.warning("futures_board_empty_catalog")
-            return BoardSnapshot()
+            return BoardSnapshot(series=series)
 
         provider = await self._resolve(tenant_id)
-        readings, expiry = await self._read_from(provider, instruments)
+        readings, expiry = await self._read_from(provider, instruments, series)
 
         # Whether this is real data is decided by what the provider *is*, not by
         # which object we happen to hold. The resolver builds its own mock when
@@ -84,8 +93,14 @@ class CatalogFuturesBoardSource:
         # worlds, presented with the same confidence as a true one. A mock
         # board carries the mock's own open interest, which at least agrees
         # with the prices beside it.
+        #
+        # `swept` says whether this series has an open-interest sweep behind it
+        # at all. A back month past the sweep's depth has none, every row then
+        # classifies NEUTRAL, and the board has to be able to tell the page
+        # that rather than let four empty build-up panels read as a flat market.
+        swept = True
         if self._oi_cache is not None and source is DataSource.LIVE:
-            readings = await self._merge_open_interest(readings)
+            readings, swept = await self._merge_open_interest(readings, series)
 
         # Degrade to the mock when a real broker gave us nothing usable.
         #
@@ -101,8 +116,10 @@ class CatalogFuturesBoardSource:
                 reason="broker_returned_nothing",
                 requested=len(instruments),
             )
-            readings, expiry = await self._read_from(self._fallback, instruments)
+            readings, expiry = await self._read_from(self._fallback, instruments, series)
             source = DataSource.MOCK
+            # The generator carries its own open interest with every quote.
+            swept = True
 
         log.info(
             "futures_board_read",
@@ -115,17 +132,53 @@ class CatalogFuturesBoardSource:
             universe=len(instruments),
             source=source.value,
             expiry=expiry,
+            series=series,
+            has_open_interest=swept,
         )
 
-    async def _merge_open_interest(
-        self, readings: list[FuturesReading]
-    ) -> list[FuturesReading]:
-        if not readings or self._oi_cache is None:
-            return readings
+    async def expiries(self, tenant_id: TenantId) -> list[ExpiryOption]:  # noqa: ARG002
+        """The series a board can be drawn for, with the date each settles on.
 
-        cached = await self._oi_cache.read_all()
+        The date shown is the one **most** of the universe settles that series
+        on, because they do not all agree — so the picker's label is a
+        representative and every row still carries its own. Read from the
+        catalog rather than from the board: a picker that cost a broker round
+        trip to draw would be a picker nobody could afford to render.
+
+        ``tenant_id`` mirrors the port and is unused — which contracts the
+        exchange lists is not a per-tenant fact.
+        """
+        today = self._today()
+        modal: list[Counter[date]] = [Counter() for _ in range(MAX_SERIES)]
+        for row in registry.current().all():
+            listed = expiries_for(InstrumentSymbol(row.symbol), today)
+            for index, day in enumerate(listed[:MAX_SERIES]):
+                modal[index][day] += 1
+
+        return [
+            ExpiryOption(series=index, expiry=counts.most_common(1)[0][0].isoformat())
+            for index, counts in enumerate(modal)
+            if counts
+        ]
+
+    def _today(self) -> date:
+        """The exchange's date. A listed expiry is an exchange-local fact."""
+        return datetime.now(_IST).date()
+
+    async def _merge_open_interest(
+        self, readings: list[FuturesReading], series: int
+    ) -> tuple[list[FuturesReading], bool]:
+        """The readings, and whether this series was swept at all."""
+        if not readings or self._oi_cache is None:
+            return readings, False
+
+        cached = await self._oi_cache.read_all(series)
         if not cached:
-            return readings
+            # Nothing cached for this series: either the sweep does not reach
+            # it, or it has not run yet. Both mean the same thing to the page,
+            # and both are better said than shown as a board with no build-ups.
+            log.info("futures_board_open_interest_absent", series=series)
+            return readings, False
 
         merged = [
             replace(
@@ -137,14 +190,19 @@ class CatalogFuturesBoardSource:
             else reading
             for reading in readings
         ]
-        log.info("futures_board_open_interest_merged", matched=len(cached), rows=len(merged))
-        return merged
+        log.info(
+            "futures_board_open_interest_merged",
+            matched=len(cached),
+            rows=len(merged),
+            series=series,
+        )
+        return merged, True
 
     async def _read_from(
-        self, provider: MarketDataProvider, instruments: list[InstrumentSymbol]
+        self, provider: MarketDataProvider, instruments: list[InstrumentSymbol], series: int
     ) -> tuple[list[FuturesReading], str | None]:
         try:
-            board = await provider.get_futures_board(instruments)
+            board = await provider.get_futures_board(instruments, series=series)
         except Exception as exc:
             log.warning("futures_board_fetch_failed", error=repr(exc))
             return [], None
@@ -156,7 +214,8 @@ class CatalogFuturesBoardSource:
         ]
         # No board-wide expiry: NSE and BSE settle on different days, so one
         # date would be wrong for part of the universe. Each reading carries
-        # its own and the caller derives whatever the view needs.
+        # its own and the caller derives whatever the view needs. That holds
+        # for every series, not only the near month.
         return readings, _modal_expiry(readings)
 
     async def _resolve(self, tenant_id: TenantId) -> MarketDataProvider:

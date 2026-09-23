@@ -22,6 +22,7 @@ from marketcompass.contexts.market_data.domain.market_data import (
     Quote,
 )
 from marketcompass.infrastructure.brokers.futures_contract import (
+    contract_for,
     front_month_for,
     to_futures_symbol,
 )
@@ -64,9 +65,9 @@ class MockMarketDataProvider:
         )
 
     async def get_futures_board(
-        self, instruments: Sequence[InstrumentSymbol]
+        self, instruments: Sequence[InstrumentSymbol], *, series: int = 0
     ) -> dict[InstrumentSymbol, FuturesQuote]:
-        """The whole board, generated.
+        """The whole board for one series, generated.
 
         No batching to do — there is no upstream to spare — but an instrument
         missing from the catalog is skipped rather than raised, matching the
@@ -79,26 +80,29 @@ class MockMarketDataProvider:
             try:
                 # Resolved per instrument: most share a monthly expiry, but
                 # nothing guarantees it and the catalog knows each exactly.
-                contract = front_month_for(instrument, now.date())
+                contract = contract_for(instrument, now.date(), series)
                 board[instrument] = build_futures_quote(
                     instrument,
                     now,
                     contract=to_futures_symbol(instrument, contract),
                     expiry=contract,
+                    series=series,
                 )
             except ValidationError:
                 continue
         return board
 
     async def get_open_interest(
-        self, instrument: InstrumentSymbol
+        self, instrument: InstrumentSymbol, *, series: int = 0
     ) -> OpenInterestReading | None:
         now = self._clock.now()
         try:
             return OpenInterestReading(
                 instrument=instrument,
-                open_interest=open_interest_at(instrument, now),
-                previous_open_interest=previous_open_interest(instrument, in_ist(now).date()),
+                open_interest=open_interest_at(instrument, now, series=series),
+                previous_open_interest=previous_open_interest(
+                    instrument, in_ist(now).date(), series=series
+                ),
                 observed_at=now,
             )
         except ValidationError:

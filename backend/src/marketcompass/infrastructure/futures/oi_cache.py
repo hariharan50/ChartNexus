@@ -37,6 +37,20 @@ log = get_logger(__name__)
 
 _KEY = "futures-oi"
 
+
+def _key_for(series: int) -> str:
+    """One hash per contract series.
+
+    The near month keeps the original un-suffixed key so a deploy does not
+    start with an empty board while the first sweep runs. Back months get
+    their own hash rather than a prefixed field, so a sweep that covers only
+    the front month leaves the others genuinely absent — which is what the
+    board needs in order to say "not swept" instead of showing a stale figure
+    under a contract it was never read for.
+    """
+    return _KEY if series <= 0 else f"{_KEY}:s{series}"
+
+
 #: How long a reading stays usable. Generous against the sweep interval so a
 #: single failed pass does not blank the board, but far short of a session so
 #: yesterday's figures can never masquerade as today's.
@@ -70,14 +84,14 @@ class RedisOpenInterestCache:
         """
         return self._redis.client
 
-    async def read_all(self) -> dict[str, CachedOpenInterest]:
-        """Every cached reading, keyed by canonical symbol.
+    async def read_all(self, series: int = 0) -> dict[str, CachedOpenInterest]:
+        """Every cached reading for one series, keyed by canonical symbol.
 
         One round trip for the whole board rather than a lookup per row — the
         caller needs all of it or none of it.
         """
         try:
-            raw = await self._hash().hgetall(self._redis.key(_KEY))
+            raw = await self._hash().hgetall(self._redis.key(_key_for(series)))
         except Exception as exc:
             # The board is still worth drawing without open interest, so a
             # cache outage degrades a column rather than the page.
@@ -92,8 +106,8 @@ class RedisOpenInterestCache:
                 readings[symbol] = parsed
         return readings
 
-    async def write_all(self, readings: dict[str, CachedOpenInterest]) -> None:
-        """Replace the cache with a completed sweep.
+    async def write_all(self, readings: dict[str, CachedOpenInterest], series: int = 0) -> None:
+        """Replace one series' cache with a completed sweep.
 
         Written as one mapping so the board never observes a half-updated
         board — some contracts from this sweep and some from the last.
@@ -111,7 +125,7 @@ class RedisOpenInterestCache:
             for symbol, reading in readings.items()
         }
         try:
-            key = self._redis.key(_KEY)
+            key = self._redis.key(_key_for(series))
             client = self._hash()
             await client.hset(key, mapping=payload)
             await client.expire(key, self._ttl)
@@ -125,9 +139,7 @@ def _decode(value: object) -> CachedOpenInterest | None:
         data = json.loads(raw)
         return CachedOpenInterest(
             open_interest=int(data["oi"]),
-            previous_open_interest=(
-                int(data["pdoi"]) if data.get("pdoi") is not None else None
-            ),
+            previous_open_interest=(int(data["pdoi"]) if data.get("pdoi") is not None else None),
             observed_at=datetime.fromisoformat(data["at"]).astimezone(UTC),
         )
     except Exception:

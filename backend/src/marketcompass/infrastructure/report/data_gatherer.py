@@ -233,9 +233,7 @@ def _num(data: dict[str, Any], key: str) -> float | None:
 
 def _technical(series: Any) -> TechnicalRead:
     if series is None or not series.candles:
-        return TechnicalRead(
-            ema20=None, ema50=None, rsi14=None, vwap=None, atr14=None
-        )
+        return TechnicalRead(ema20=None, ema50=None, rsi14=None, vwap=None, atr14=None)
     candles = series.candles
     r = indicators.compute(
         [float(c.high) for c in candles],

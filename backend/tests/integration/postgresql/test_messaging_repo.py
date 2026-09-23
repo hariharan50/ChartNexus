@@ -85,7 +85,9 @@ async def test_undecryptable_secret_reads_as_absent(database: Database) -> None:
 
     # A different secret ⇒ the GCM tag won't verify ⇒ the secret is treated as
     # absent (the user reconnects), never a crash.
-    other = SqlAlchemyChannelConnectionRepository(database, _cipher("a-different-secret-value-32-bytes-minimum!!"))
+    other = SqlAlchemyChannelConnectionRepository(
+        database, _cipher("a-different-secret-value-32-bytes-minimum!!")
+    )
     got = await other.find(user, Channel.TELEGRAM)
     assert got is not None
     assert got.secret == ""

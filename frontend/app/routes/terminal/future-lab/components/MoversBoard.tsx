@@ -19,9 +19,11 @@ import s from './MoversBoard.module.css';
  * interaction — search, four filters, a view toggle, an export, a legend that
  * doubles as a filter — would drift apart within a week.
  *
- * Prices are the front-month **futures** last-traded price, not cash, and the
- * percentages beside them are the day's move against that contract's previous
- * close. Open interest arrives separately, from the background sweep.
+ * Prices are the selected contract's **futures** last-traded price, not cash,
+ * and the percentages beside them are the day's move against that contract's
+ * previous close. Open interest arrives separately, from the background sweep,
+ * which is why a back month can price without classifying — the board says so
+ * rather than showing an empty build-up column as a quiet market.
  */
 interface Props {
   title: string;
@@ -44,8 +46,11 @@ export default function MoversBoard({ title, subtitle, kind, noun, exportName }:
   const [sector, setSector] = useState('');
   const [state, setState] = useState('');
   const [view, setView] = useState<BoardView>('table');
+  // 0 is the near month — the contract almost every reader means by "futures",
+  // and the only one with a full open-interest sweep behind it.
+  const [series, setSeries] = useState(0);
 
-  const board = useFuturesBoardQuery(kind ? { kind } : {});
+  const board = useFuturesBoardQuery({ ...(kind ? { kind } : {}), series });
   const { instruments } = useInstruments(kind ? { kind } : {});
 
   const wanted = useMemo(() => new Set(instruments.map((entry) => entry.symbol)), [instruments]);
@@ -110,7 +115,10 @@ export default function MoversBoard({ title, subtitle, kind, noun, exportName }:
       <MoversToolbar
         search={search}
         onSearch={setSearch}
-        expiryLabel="Front month"
+        series={series}
+        onSeries={setSeries}
+        expiry={board.data?.expiry}
+        hasOpenInterest={board.data?.has_open_interest}
         sector={sector}
         sectors={sectors}
         onSector={setSector}

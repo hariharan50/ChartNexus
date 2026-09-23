@@ -72,6 +72,15 @@ class Instrument:
     #: simply wrong — and wrong in a way that builds October symbols for
     #: contracts still trading in September.
     front_expiry: date | None = None
+    #: Every listed futures expiry for this underlying, ascending, the front
+    #: month first. Empty for a row synced before the field existed.
+    #:
+    #: The exchange lists three monthly series at a time, and which one a page
+    #: is showing is a *choice* — so the whole list is carried rather than only
+    #: the nearest. Per instrument, not universe-wide, because the dates do not
+    #: agree across it: NSE and BSE settle on different days, and a name whose
+    #: contract was holiday-shifted differs from its neighbours.
+    futures_expiries: tuple[date, ...] = ()
     underlying_token: str | None = None
     # A plausible price level, NOT a quote. Derived from the middle of the
     # listed strike ladder, which brackets the money by construction. It exists
@@ -108,6 +117,13 @@ class Instrument:
             raise ValidationError("spot symbol must not be blank", field="spot_symbol")
         if not self.futures_root:
             raise ValidationError("futures root must not be blank", field="futures_root")
+        if list(self.futures_expiries) != sorted(set(self.futures_expiries)):
+            # Consumers index into this by series — element 0 is the near
+            # month, 1 the next — so the order is load-bearing rather than
+            # cosmetic, and a duplicate would shift every series after it.
+            raise ValidationError(
+                "futures expiries must be ascending and unique", field="futures_expiries"
+            )
 
     @property
     def is_index(self) -> bool:

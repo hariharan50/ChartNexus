@@ -45,7 +45,9 @@ class _FakeRepo:
 
 
 class _FakeSender:
-    def __init__(self, *, username: str = "@bot", target: str | None = "555", fail: bool = False) -> None:
+    def __init__(
+        self, *, username: str = "@bot", target: str | None = "555", fail: bool = False
+    ) -> None:
         self._username = username
         self._target = target
         self._fail = fail
@@ -151,9 +153,9 @@ async def test_detect_chat_raises_when_none_found() -> None:
         ConnectTelegramCommand(user_id=USER, tenant_id=TENANT, bot_token=_TOKEN)
     )
     with pytest.raises(ChannelVerificationError):
-        await DetectTelegramChat(
-            repository=repo, senders={Channel.TELEGRAM: sender}, clock=clock
-        )(DetectTelegramChatCommand(user_id=USER))
+        await DetectTelegramChat(repository=repo, senders={Channel.TELEGRAM: sender}, clock=clock)(
+            DetectTelegramChatCommand(user_id=USER)
+        )
 
 
 async def test_send_test_requires_a_linked_chat() -> None:

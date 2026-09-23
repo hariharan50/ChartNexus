@@ -44,6 +44,11 @@ class InstrumentRecord(UUIDPrimaryKeyMixin, TimestampMixin, Base):
 
     isin: Mapped[str | None] = mapped_column(String(12), nullable=True)
     front_expiry: Mapped[date | None] = mapped_column(Date, nullable=True)
+    # Comma-separated ISO dates, the same shape as `indices` and for the same
+    # reason: three short values read as a whole and never queried by element.
+    # Three monthly series at ten characters each fits inside this with room
+    # for an exchange that lists more.
+    futures_expiries: Mapped[str | None] = mapped_column(String(128), nullable=True)
     underlying_token: Mapped[str | None] = mapped_column(String(32), nullable=True)
     # Seed level for mock generation, not a quote. Wide precision: the universe
     # spans IDEA around 10 to BOSCHLTD around 48,000.

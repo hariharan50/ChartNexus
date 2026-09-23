@@ -62,9 +62,7 @@ def test_a_mock_board_is_never_archived() -> None:
 
 
 def test_a_contract_the_board_could_not_price_is_dropped_not_zeroed() -> None:
-    snapshot = BoardSnapshot(
-        readings=[reading(), reading("GHOST", price="0")], source="live"
-    )
+    snapshot = BoardSnapshot(readings=[reading(), reading("GHOST", price="0")], source="live")
 
     frames = frames_from(snapshot, AT)
 
@@ -103,9 +101,7 @@ def test_frames_are_stamped_with_the_exchange_date_of_their_capture() -> None:
         (301, 300, 300),
     ],
 )
-def test_a_capture_is_floored_onto_its_cadence(
-    second: int, interval: int, expected: int
-) -> None:
+def test_a_capture_is_floored_onto_its_cadence(second: int, interval: int, expected: int) -> None:
     """So a restarted worker re-capturing an interval collides with what is
     already stored, instead of crowding the series with a near-duplicate."""
     base = datetime(2026, 9, 21, 8, 0, tzinfo=UTC)

@@ -62,7 +62,9 @@ def test_linking_target_makes_it_ready() -> None:
 def test_updating_token_drops_the_target() -> None:
     conn = _connection()
     conn.link_target("987654321", NOW)
-    conn.update_credentials(secret="111:BBnewnewnewnewnewnewnewnewnewnew12", label="@renamed", now=NOW)
+    conn.update_credentials(
+        secret="111:BBnewnewnewnewnewnewnewnewnewnew12", label="@renamed", now=NOW
+    )
     assert conn.target is None
     assert conn.verified is False
     assert conn.ready is False

@@ -133,7 +133,9 @@ class ReportPdfRenderer:
         pdf.set_xy(_MARGIN, 287)
         pdf.set_text_color(*MUTE)
         pdf.set_font("Helvetica", "", 8)
-        pdf.cell(_CONTENT_W, 5, f"MarketCompass  |  Not investment advice  |  Page {page_no}", align="C")
+        pdf.cell(
+            _CONTENT_W, 5, f"MarketCompass  |  Not investment advice  |  Page {page_no}", align="C"
+        )
 
     def _bullets(self, pdf: FPDF, text: str, *, height: float) -> None:
         pdf.set_text_color(*INK)
@@ -373,7 +375,14 @@ class ReportPdfRenderer:
         _dashed_h(pdf, plot_x, plot_x + plot_w, last_y)
 
     def _oi_bars(
-        self, pdf: FPDF, bars: tuple[OptionStrikeBar, ...], *, x: float, y: float, w: float, h: float
+        self,
+        pdf: FPDF,
+        bars: tuple[OptionStrikeBar, ...],
+        *,
+        x: float,
+        y: float,
+        w: float,
+        h: float,
     ) -> None:
         _fill(pdf, CARD)
         pdf.rect(x, y, w, h, "F")

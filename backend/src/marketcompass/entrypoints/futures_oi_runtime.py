@@ -24,6 +24,13 @@ build-up just as well as a fresh one.
 **Paced, not raced.** The broker allows eight requests a second, shared with
 every user request and every other worker. The sweep deliberately takes a small
 slice of that, so filling a background column never makes someone's page slow.
+
+**One pass per contract series.** The Future Lab can be pointed at the next or
+far month, and each is a separate contract with its own book — there is no
+deriving one from another. ``futures_oi.expiry_depth`` says how many to cover
+and the cost is linear in it, so the default stops at two; a series past the
+depth is still tradeable on the board, minus its open-interest columns, and the
+page says so.
 """
 
 from __future__ import annotations
@@ -36,6 +43,7 @@ from marketcompass.bootstrap.container import Container
 from marketcompass.bootstrap.settings import Settings
 from marketcompass.contexts.broker_connections.domain.value_objects import BrokerName
 from marketcompass.contexts.market_data.domain.instruments import InstrumentSymbol
+from marketcompass.infrastructure.brokers.futures_contract import MAX_SERIES
 from marketcompass.infrastructure.brokers.fyers.quota_manager import QuotaPolicy
 from marketcompass.infrastructure.brokers.provider_resolver import TenantProviderResolver
 from marketcompass.infrastructure.catalog import registry
@@ -82,39 +90,56 @@ async def _sweep(container: Container, settings: Settings) -> int:
         resolver = _resolver(container, settings, connections)
         provider = await resolver.resolve(connection.tenant_id)
 
-        readings: dict[str, CachedOpenInterest] = {}
         delay = 1.0 / max(settings.futures_oi.requests_per_second, 0.1)
         started = datetime.now(UTC)
+        depth = min(settings.futures_oi.expiry_depth, MAX_SERIES)
 
-        for symbol in instruments:
-            try:
-                reading = await provider.get_open_interest(InstrumentSymbol(symbol))
-            except Exception as exc:
-                # One unquotable contract must not end the sweep for the rest.
-                log.debug("futures_oi_symbol_failed", symbol=symbol, error=repr(exc))
-                reading = None
+        # Nearest series first, so a sweep that runs out of interval has
+        # refreshed the contract almost every page is actually showing. Each
+        # series is written to its own cache the moment it completes, for the
+        # same reason: a slow far month must not hold back the near one.
+        by_series: dict[int, dict[str, CachedOpenInterest]] = {}
+        for series in range(depth):
+            readings: dict[str, CachedOpenInterest] = {}
+            for symbol in instruments:
+                try:
+                    reading = await provider.get_open_interest(
+                        InstrumentSymbol(symbol), series=series
+                    )
+                except Exception as exc:
+                    # One unquotable contract must not end the sweep for the rest.
+                    log.debug(
+                        "futures_oi_symbol_failed",
+                        symbol=symbol,
+                        series=series,
+                        error=repr(exc),
+                    )
+                    reading = None
 
-            if reading is not None:
-                readings[symbol] = CachedOpenInterest(
-                    open_interest=reading.open_interest,
-                    previous_open_interest=reading.previous_open_interest,
-                    observed_at=reading.observed_at,
-                )
-            # Pace between contracts, not after the last one.
-            if symbol != instruments[-1]:
-                await asyncio.sleep(delay)
+                if reading is not None:
+                    readings[symbol] = CachedOpenInterest(
+                        open_interest=reading.open_interest,
+                        previous_open_interest=reading.previous_open_interest,
+                        observed_at=reading.observed_at,
+                    )
+                # Pace between contracts, not after the last one.
+                if symbol != instruments[-1]:
+                    await asyncio.sleep(delay)
+            by_series[series] = readings
 
-    await RedisOpenInterestCache(
-        container.redis, ttl_seconds=settings.futures_oi.ttl_seconds
-    ).write_all(readings)
+    cache = RedisOpenInterestCache(container.redis, ttl_seconds=settings.futures_oi.ttl_seconds)
+    for series, readings in by_series.items():
+        await cache.write_all(readings, series)
 
+    priced = sum(len(readings) for readings in by_series.values())
     log.info(
         "futures_oi_swept",
-        priced=len(readings),
-        requested=len(instruments),
+        priced=priced,
+        requested=len(instruments) * depth,
+        series=depth,
         seconds=round((datetime.now(UTC) - started).total_seconds(), 1),
     )
-    return len(readings)
+    return priced
 
 
 def _resolver(

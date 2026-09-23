@@ -33,9 +33,7 @@ async def build_services(
     principal: CurrentPrincipal,
     session: Annotated[AsyncSession, Depends(get_session)],
 ) -> Mme100Services:
-    return await build_mme100_services(
-        request, session, principal.user_id, principal.tenant_id
-    )
+    return await build_mme100_services(request, session, principal.user_id, principal.tenant_id)
 
 
 Services = Annotated[Mme100Services, Depends(build_services)]

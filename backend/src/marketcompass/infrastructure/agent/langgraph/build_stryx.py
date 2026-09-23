@@ -22,9 +22,7 @@ from marketcompass.infrastructure.agent.langgraph.user_llm import build_user_cha
 from marketcompass.shared_kernel.types.identifiers import UserId
 
 
-async def build_stryx_agent(
-    request: Request, session: AsyncSession, user_id: UserId
-) -> AgentPort:
+async def build_stryx_agent(request: Request, session: AsyncSession, user_id: UserId) -> AgentPort:
     container = request.app.state.container
     model = await build_user_chat_model(container, session, user_id)
     if model is None:

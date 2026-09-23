@@ -17,7 +17,7 @@ export default function MarketMovers() {
   return (
     <MoversBoard
       title="Live Future Market Movers"
-      subtitle="NSE futures top gainers & losers — front-month contracts, against previous close."
+      subtitle="NSE futures top gainers & losers, against previous close. Pick the contract with the expiry control."
       noun="contracts"
       exportName="fno-movers"
     />

@@ -14,7 +14,7 @@ export default function Stocks() {
   return (
     <MoversBoard
       title="Live Future Market Movers — Stocks"
-      subtitle="Every NSE stock with a listed futures contract — front-month, against previous close."
+      subtitle="Every NSE stock with a listed futures contract, against previous close. Pick the contract with the expiry control."
       kind="stock"
       noun="stocks"
       exportName="fno-stocks"

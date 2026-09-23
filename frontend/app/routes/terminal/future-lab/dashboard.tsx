@@ -6,6 +6,7 @@ import {
 import type { FuturesRow } from '$contexts/futures-analytics/types';
 import DataTable, { type Column } from '$shared/ui/DataTable';
 import { cx } from '$shared/ui/cx';
+import ExpiryPicker from './components/ExpiryPicker';
 import {
   COMPARE_WINDOWS,
   PANELS,
@@ -38,14 +39,21 @@ export default function FutureDashboard() {
   const [view, setView] = useState<View>('panels');
   const [compare, setCompare] = useState<CompareWindow>('prev');
   const [sector, setSector] = useState<string>('');
+  // 0 is the near month. Held here rather than inside the toolbar because both
+  // the panels and the table read it, and they must never disagree about which
+  // contract they are describing.
+  const [series, setSeries] = useState(0);
 
   const panels = useFuturesDashboardQuery({
     limit: PANEL_ROWS,
+    series,
     ...(sector ? { sector } : {})
   });
   // Only fetched once the table view is actually open: it is the whole
   // universe, and the panels already cost a board read.
-  const board = useFuturesBoardQuery(view === 'table' ? (sector ? { sector } : {}) : {});
+  const board = useFuturesBoardQuery(
+    view === 'table' ? { series, ...(sector ? { sector } : {}) } : { series }
+  );
 
   const rows = view === 'table' ? (board.data?.rows ?? NO_ROWS) : NO_ROWS;
   const sectors = useMemo(() => sectorsIn(rows), [rows]);
@@ -60,8 +68,8 @@ export default function FutureDashboard() {
         <div>
           <h1 className={s.title}>Future Dashboard</h1>
           <p className={s.subtitle}>
-            Front-month futures across the F&amp;O universe, classified by price against open
-            interest.
+            F&amp;O futures across the universe, classified by price against open interest. Pick the
+            contract with the expiry control.
           </p>
         </div>
 
@@ -86,6 +94,13 @@ export default function FutureDashboard() {
       </header>
 
       <div className={s.toolbar}>
+        <ExpiryPicker
+          series={series}
+          onSeries={setSeries}
+          resolved={panels.data?.expiry}
+          hasOpenInterest={panels.data?.has_open_interest}
+        />
+
         <div className={s.compare}>
           <span className={s.toolLabel} id="compare-label">
             Compare
@@ -136,6 +151,16 @@ export default function FutureDashboard() {
           ) : null}
         </span>
       </div>
+
+      {/* Four empty build-up panels are a claim about the market, so when they
+          are empty for a different reason the page has to say which. */}
+      {panels.data && panels.data.has_open_interest === false ? (
+        <p className={s.notice}>
+          Open interest is not swept for this contract, so the four build-up panels are empty
+          because nothing was measured — not because nothing is building. Prices, volume and the
+          day&rsquo;s range are the contract&rsquo;s own.
+        </p>
+      ) : null}
 
       {panels.isError ? <p className={s.error}>The futures board could not be loaded.</p> : null}
 

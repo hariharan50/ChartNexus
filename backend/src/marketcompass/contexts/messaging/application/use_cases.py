@@ -19,9 +19,7 @@ from marketcompass.contexts.messaging.domain.errors import (
 )
 from marketcompass.shared_kernel.types.identifiers import TenantId, UserId
 
-_TEST_MESSAGE = (
-    "✅ MarketCompass is connected. You'll receive your pre-market briefings here."
-)
+_TEST_MESSAGE = "✅ MarketCompass is connected. You'll receive your pre-market briefings here."
 
 
 def _sender(senders: Mapping[Channel, MessageSenderPort], channel: Channel) -> MessageSenderPort:

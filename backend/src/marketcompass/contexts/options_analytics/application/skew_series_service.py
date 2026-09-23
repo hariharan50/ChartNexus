@@ -238,4 +238,3 @@ def _empty(symbol: str, chain: ProviderChain, now: datetime) -> dict[str, Any]:
 
 
 # -- helpers ----------------------------------------------------------------
-

@@ -56,9 +56,7 @@ class FakeRedis:
 
 
 def reading(oi: int = 1000, previous: int | None = 900) -> CachedOpenInterest:
-    return CachedOpenInterest(
-        open_interest=oi, previous_open_interest=previous, observed_at=NOW
-    )
+    return CachedOpenInterest(open_interest=oi, previous_open_interest=previous, observed_at=NOW)
 
 
 async def test_a_sweep_round_trips() -> None:

@@ -68,9 +68,7 @@ class SqlAlchemyAiSettingsRepository:
     def _encrypt(self, settings: AiSettings) -> str | None:
         if not settings.api_key:
             return None
-        return self._cipher.encrypt(
-            settings.api_key, aad=_aad(settings.user_id, settings.provider)
-        )
+        return self._cipher.encrypt(settings.api_key, aad=_aad(settings.user_id, settings.provider))
 
     def _decrypt(self, record: UserAiSettingsRecord) -> str | None:
         """Decrypt, treating an undecryptable value as absent.

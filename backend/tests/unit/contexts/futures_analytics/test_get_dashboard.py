@@ -58,9 +58,13 @@ class FakeSource:
             expiry=expiry,
         )
         self.calls = 0
+        #: Which series the use case asked for, so a test can assert the
+        #: request reached the source rather than being dropped on the way.
+        self.series = 0
 
-    async def read(self, tenant_id: TenantId) -> BoardSnapshot:
+    async def read(self, tenant_id: TenantId, *, series: int = 0) -> BoardSnapshot:
         self.calls += 1
+        self.series = series
         return self.snapshot
 
 

@@ -27,24 +27,64 @@ class BoardSnapshot:
     #: say so: a board drawn from generated data looks identical to a real one,
     #: and this field is the only thing that distinguishes them.
     source: str = "mock"
-    #: ISO date of the front-month contract, shared by most of these readings.
-    #: Most, not all: NSE and BSE settle on different days, so each reading
-    #: carries its own and this is the one the bulk of them agree on.
+    #: ISO date of the contract series these readings are for, shared by most
+    #: of them. Most, not all: NSE and BSE settle on different days, so each
+    #: reading carries its own and this is the one the bulk of them agree on.
     expiry: str | None = None
+    #: Which series was read — 0 near month, 1 next, 2 far. Echoed back so a
+    #: response can never be mistaken for a different contract's.
+    series: int = 0
+    #: Whether open interest was available for this series. ``False`` leaves
+    #: every row NEUTRAL, and the page has to say why rather than presenting an
+    #: empty build-up board as a market with no build-ups in it.
+    has_open_interest: bool = True
+
+
+@dataclass(frozen=True, slots=True)
+class ExpiryOption:
+    """One contract series the board can be drawn for."""
+
+    series: int
+    #: The date most instruments in the universe settle this series on. A
+    #: representative, not a universal truth — the rows themselves carry their
+    #: own — and the label the picker shows.
+    expiry: str
+
+    # Deliberately no "has open interest" flag here. Whether a series carries
+    # it depends on the provider that answers the request — the generator
+    # supplies it with every quote, a live broker only where the sweep has
+    # reached — so the listing cannot know, and a second answer that disagreed
+    # with the board's own would be worse than no answer at all. The board
+    # response carries the one that counts.
 
 
 @runtime_checkable
 class FuturesBoardSource(Protocol):
-    async def read(self, tenant_id: TenantId) -> BoardSnapshot:
-        """The whole F&O universe's front-month futures, in one pass.
+    async def read(self, tenant_id: TenantId, *, series: int = 0) -> BoardSnapshot:
+        """The whole F&O universe's futures for one series, in one pass.
 
         One call, not one per instrument: the implementation batches against
         the broker, and the daily request quota does not survive two hundred
         round trips per refresh.
 
+        ``series`` is an index into each instrument's own listed expiries — 0
+        is the near month — rather than a date, because the dates do not agree
+        across the universe and one of them could never name the same contract
+        for every row.
+
         Contracts the source could not price are omitted rather than returned
         with zeros, so an empty-ish board is visibly incomplete instead of
         quietly wrong.
+        """
+        ...
+
+    async def expiries(self, tenant_id: TenantId) -> list[ExpiryOption]:
+        """The series a board can be drawn for, nearest first.
+
+        Synchronous knowledge in an async signature: it reads the catalog, not
+        the market. Declared on the port anyway so the API never has to reach
+        into the instrument catalog itself — that would be a context boundary
+        crossed for a list the source already assembles.
         """
         ...
 

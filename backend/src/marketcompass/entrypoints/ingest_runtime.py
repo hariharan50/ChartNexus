@@ -53,7 +53,6 @@ class _SystemClock:
         return datetime.now(UTC)
 
 
-
 def ingest_symbols(settings: Settings) -> tuple[str, ...]:
     """Which symbols this loop archives option chains for.
 

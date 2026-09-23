@@ -31,11 +31,21 @@ def _tech(ema20: float | None = 100.0, rsi: float | None = 50.0) -> TechnicalRea
     return TechnicalRead(ema20=ema20, ema50=None, rsi14=rsi, vwap=None, atr14=None)
 
 
-def _opts(pcr: float | None = 0.9, ce: float | None = 1.0, pe: float | None = 1.0,
-          vix: float | None = 15.0) -> OptionsSummary:
+def _opts(
+    pcr: float | None = 0.9,
+    ce: float | None = 1.0,
+    pe: float | None = 1.0,
+    vix: float | None = 15.0,
+) -> OptionsSummary:
     return OptionsSummary(
-        pcr=pcr, pcr_change=None, max_pain=None, atm_strike=None,
-        total_call_oi=ce, total_put_oi=pe, gamma_flip=None, india_vix=vix,
+        pcr=pcr,
+        pcr_change=None,
+        max_pain=None,
+        atm_strike=None,
+        total_call_oi=ce,
+        total_put_oi=pe,
+        gamma_flip=None,
+        india_vix=vix,
     )
 
 
@@ -66,7 +76,9 @@ def test_bearish_stack_scores_low() -> None:
 
 
 def test_score_is_clamped_0_100() -> None:
-    score = compute_score(_summary(ltp=999, chg=99), _tech(ema20=1, rsi=99), _opts(pcr=9, ce=1, pe=99, vix=1))
+    score = compute_score(
+        _summary(ltp=999, chg=99), _tech(ema20=1, rsi=99), _opts(pcr=9, ce=1, pe=99, vix=1)
+    )
     assert 0 <= score.score <= 100
 
 

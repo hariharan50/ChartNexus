@@ -29,7 +29,7 @@ from marketcompass.contexts.market_data.domain.market_data import (
     Quote,
 )
 from marketcompass.infrastructure.brokers.futures_contract import (
-    front_month_for,
+    contract_for,
     resolve_front_month,
     to_futures_symbol,
 )
@@ -154,9 +154,9 @@ class FyersMarketDataProvider:
             )
 
     async def get_futures_board(
-        self, instruments: Sequence[InstrumentSymbol]
+        self, instruments: Sequence[InstrumentSymbol], *, series: int = 0
     ) -> dict[InstrumentSymbol, FuturesQuote]:
-        """Front-month futures for many instruments, in batched requests.
+        """One futures series for many instruments, in batched requests.
 
         Two things make this affordable where calling ``get_futures_quote`` two
         hundred times would not:
@@ -183,7 +183,7 @@ class FyersMarketDataProvider:
             try:
                 # Per instrument: most share a monthly expiry, but nothing
                 # guarantees it, and the catalog knows each one exactly.
-                contract_date = front_month_for(instrument, today)
+                contract_date = contract_for(instrument, today, series)
                 by_symbol[to_futures_symbol(instrument, contract_date)] = instrument
                 expiries[instrument] = contract_date.isoformat()
             except ValidationError:
@@ -254,16 +254,16 @@ class FyersMarketDataProvider:
         return board
 
     async def get_open_interest(
-        self, instrument: InstrumentSymbol
+        self, instrument: InstrumentSymbol, *, series: int = 0
     ) -> OpenInterestReading | None:
-        """Open interest for the front-month contract, from market depth.
+        """Open interest for one contract, from market depth.
 
-        The calendar roll is used rather than the broker's expiry list for the
-        same reason as the board: resolving the exact expiry costs an extra
-        option-chain request per instrument, which is not affordable across a
-        two-hundred-contract sweep.
+        The catalog's listed expiries are used rather than the broker's own
+        list for the same reason as the board: resolving each expiry from the
+        broker costs an extra option-chain request per instrument, which is not
+        affordable across a two-hundred-contract sweep.
         """
-        contract = front_month_for(instrument, self._clock.now().date())
+        contract = contract_for(instrument, self._clock.now().date(), series)
         symbol = to_futures_symbol(instrument, contract)
 
         await self._quota.acquire(self._credentials.app_id)

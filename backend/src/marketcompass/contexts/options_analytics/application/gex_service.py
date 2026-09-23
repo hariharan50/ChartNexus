@@ -256,4 +256,3 @@ def _years_to_expiry(moment: datetime, expiry: date | None) -> float:
     close = datetime.combine(expiry, SESSION_CLOSE, tzinfo=IST)
     remaining: timedelta = close - attach_utc(moment)
     return max(0.0, remaining.total_seconds() / _YEAR_SECONDS)
-
