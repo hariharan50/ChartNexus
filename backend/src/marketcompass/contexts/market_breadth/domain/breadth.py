@@ -131,6 +131,93 @@ def breadth_by_sector(
 UNCLASSIFIED = "UNCLASSIFIED"
 
 
+@dataclass(frozen=True, slots=True)
+class SectorRow:
+    """One sector of the **F&O universe**, counted.
+
+    Deliberately not ``SectorBreadth``. That one slices a tracked index, where
+    every member carries a published index weight and the sector's move is a
+    weight-average. This one covers every name with a listed future — most of
+    which belong to no tracked index and therefore have no weight at all — so
+    its move is a plain mean and it says so in the field name. Two aggregates
+    with the same name and different arithmetic is how a page ends up quoting
+    one and labelling it the other.
+    """
+
+    sector: str
+    count: BreadthCount
+    #: Unweighted mean move across the priced members, because there are no
+    #: weights to average with. ``None`` when nothing in the sector priced.
+    mean_change_percent: Decimal | None
+    members: int
+    #: The names themselves, biggest mover first. Carried so the page can draw
+    #: a sector's members without a second board read — and so the counts above
+    #: and the rows below can never come from two different reads of it.
+    rows: tuple[Constituent, ...] = ()
+
+
+def sector_board(
+    members: Sequence[Constituent],
+    *,
+    deadband_percent: Decimal = DEFAULT_DEADBAND_PERCENT,
+) -> list[SectorRow]:
+    """Every sector across the given names, most members first.
+
+    Sorted by size rather than by weight — the weights do not exist here, and
+    ordering by move would reshuffle the list on every poll, which makes a rail
+    you are trying to click impossible to use.
+    """
+    buckets: dict[str, list[Constituent]] = {}
+    for member in members:
+        buckets.setdefault(member.sector or UNCLASSIFIED, []).append(member)
+
+    out = [
+        SectorRow(
+            sector=sector,
+            count=count_breadth(group, deadband_percent=deadband_percent),
+            mean_change_percent=mean_change(group),
+            members=len(group),
+            rows=tuple(sorted(group, key=_by_change_desc)),
+        )
+        for sector, group in buckets.items()
+    ]
+    out.sort(key=lambda row: (-row.members, row.sector))
+    return out
+
+
+def mean_change(members: Sequence[Constituent]) -> Decimal | None:
+    """Plain average move across the priced members.
+
+    For a group whose members carry no index weight, which is every sector of
+    the F&O universe outside NIFTY 50 and BANK NIFTY. ``None`` rather than zero
+    when nothing priced — an average with no denominator is not a flat sector.
+    """
+    moves = [member.change_percent for member in members if member.change_percent is not None]
+    if not moves:
+        return None
+    return sum(moves, Decimal(0)) / Decimal(len(moves))
+
+
+def weighted_breadth(members: Sequence[Constituent]) -> tuple[Decimal, Decimal]:
+    """Combined index weight advancing, and declining — the weighted meter.
+
+    The head count and this answer different questions. Twelve small names up
+    against three heavyweights down is "36 advancing" and also "most of the
+    index fell", and a reader watching only the count sees a rally that the
+    index did not have.
+    """
+    advancing = declining = Decimal(0)
+    for member in members:
+        change = member.change_percent
+        if change is None:
+            continue
+        if change > DEFAULT_DEADBAND_PERCENT:
+            advancing += member.weight_percent
+        elif change < -DEFAULT_DEADBAND_PERCENT:
+            declining += member.weight_percent
+    return advancing, declining
+
+
 def weighted_change(members: Sequence[Constituent]) -> Decimal | None:
     """Weight-averaged percentage move across the priced members.
 
@@ -156,6 +243,12 @@ def _weight_of(members: Sequence[Constituent]) -> Decimal:
         (member.weight_percent for member in members if member.change_percent is not None),
         Decimal(0),
     )
+
+
+def _by_change_desc(member: Constituent) -> tuple[Decimal, str]:
+    """Biggest gainer first, unpriced names last."""
+    change = member.change_percent
+    return (Decimal(0) if change is None else -change, member.symbol)
 
 
 def _by_weight_desc(member: Constituent) -> tuple[Decimal, str]:

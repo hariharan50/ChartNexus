@@ -106,24 +106,56 @@ export function clockLabel(now: Date): string {
 }
 
 /**
+ * `23 Sep, 6:38:51 pm IST` — the status strip's clock.
+ *
+ * Shorter than `clockLabel` in two deliberate ways. The **year** is dropped:
+ * it is a live wall clock, and nobody reading one is unsure which year it is.
+ * The **zone** is named instead, which is the token that actually earns its
+ * place — this app is read from outside India and a bare `6:38 pm` is
+ * ambiguous in a way `23 Sep 2026` never was.
+ */
+export function sessionClockLabel(now: Date): string {
+  const time = new Intl.DateTimeFormat('en-GB', {
+    timeZone: IST,
+    hour: 'numeric',
+    minute: '2-digit',
+    second: '2-digit',
+    hour12: true
+  }).format(now);
+  return `${dayMonth(now)}, ${time} IST`;
+}
+
+/**
  * `29 Sep 2026 (8d)` — the contract and how long it has left.
  *
  * Days are counted in IST, because an expiry is an exchange-local date and a
  * browser in another timezone must not read it as a day out.
  */
 export function expiryLabel(iso: string | null | undefined, now = new Date()): string {
-  if (!iso) return 'Front month';
-  const expiry = new Date(`${iso}T00:00:00+05:30`);
-  if (Number.isNaN(expiry.getTime())) return 'Front month';
+  const { date, days } = expiryParts(iso, now);
+  return days === null ? date : `${date} (${days}d)`;
+}
 
-  const date = dayMonthYear(expiry);
+/**
+ * The same two facts, unjoined.
+ *
+ * The dropdown lays the date and the days-left out as separate columns so the
+ * countdowns line up down the list; joining them into one string first and
+ * splitting it again would be the long way round to the same place.
+ */
+export function expiryParts(
+  iso: string | null | undefined,
+  now = new Date()
+): { date: string; days: number | null } {
+  if (!iso) return { date: 'Front month', days: null };
+  const expiry = new Date(`${iso}T00:00:00+05:30`);
+  if (Number.isNaN(expiry.getTime())) return { date: 'Front month', days: null };
 
   const startOfToday = new Date(
     `${new Intl.DateTimeFormat('en-CA', { timeZone: IST }).format(now)}T00:00:00+05:30`
   );
   const days = Math.round((expiry.getTime() - startOfToday.getTime()) / 86_400_000);
-  if (days < 0) return date;
-  return `${date} (${days}d)`;
+  return { date: dayMonthYear(expiry), days: days < 0 ? null : days };
 }
 
 const IST = 'Asia/Kolkata';
@@ -135,6 +167,21 @@ const IST = 'Asia/Kolkata';
  * renders September as "Sept" in en-GB, four characters wide in a chip sized
  * for three and odd beside every other month.
  */
+function dayMonth(at: Date): string {
+  const parts = _parts(at);
+  return `${parts('day')} ${parts('month').slice(0, 3)}`;
+}
+
+function _parts(at: Date): (type: Intl.DateTimeFormatPartTypes) => string {
+  const parts = new Intl.DateTimeFormat('en-GB', {
+    timeZone: IST,
+    day: '2-digit',
+    month: 'short',
+    year: 'numeric'
+  }).formatToParts(at);
+  return (type) => parts.find((entry) => entry.type === type)?.value ?? '';
+}
+
 function dayMonthYear(at: Date): string {
   const parts = new Intl.DateTimeFormat('en-GB', {
     timeZone: IST,

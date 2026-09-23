@@ -12,6 +12,10 @@ from decimal import Decimal
 
 from pydantic import BaseModel, Field
 
+from marketcompass.contexts.market_breadth.application.get_breadth_series import (
+    BreadthSeries,
+    SectorRail,
+)
 from marketcompass.contexts.market_breadth.application.get_fii_dii import (
     CashFlowHistory,
     FlowSummary,
@@ -23,7 +27,12 @@ from marketcompass.contexts.market_breadth.application.get_index_analysis import
     SectorRotationResult,
     WeightageResult,
 )
-from marketcompass.contexts.market_breadth.domain.breadth import BreadthCount, SectorBreadth
+from marketcompass.contexts.market_breadth.domain.breadth import (
+    BreadthCount,
+    SectorBreadth,
+    SectorRow,
+)
+from marketcompass.contexts.market_breadth.domain.breadth_series import BreadthPoint
 from marketcompass.contexts.market_breadth.domain.constituents import Constituent
 from marketcompass.contexts.market_breadth.domain.contribution import (
     Contribution,
@@ -452,6 +461,143 @@ class SectorBreadthResponse(BaseModel):
             weight_percent=sector.weight_percent,
             weighted_change_percent=sector.weighted_change_percent,
             members=[MemberResponse.of(member) for member in sector.members],
+        )
+
+
+class BreadthPointResponse(BaseModel):
+    """One bucket of a session's breadth."""
+
+    at: str = Field(description="ISO-8601 instant, UTC.")
+    advancing: int
+    declining: int
+    unchanged: int
+    net: int = Field(description="advancing - declining.")
+    level: Decimal | None = Field(
+        default=None,
+        description=(
+            "The benchmark's level in this bucket. Null for a sector, which "
+            "has no index of its own — never a basket level invented to fill "
+            "the field."
+        ),
+    )
+    advancing_weight: Decimal | None = None
+    declining_weight: Decimal | None = Field(
+        default=None,
+        description=(
+            "Combined index weight advancing/declining, 0-100. Null when the "
+            "scope carries no weights, which is every sector: an F&O name "
+            "outside a tracked index has no published weight."
+        ),
+    )
+
+    @classmethod
+    def of(cls, point: BreadthPoint) -> BreadthPointResponse:
+        return cls(
+            at=point.at.isoformat(),
+            advancing=point.advancing,
+            declining=point.declining,
+            unchanged=point.unchanged,
+            net=point.net,
+            level=point.level,
+            advancing_weight=point.advancing_weight,
+            declining_weight=point.declining_weight,
+        )
+
+
+class BreadthSeriesResponse(BaseModel):
+    """One scope's session, counted bucket by bucket."""
+
+    label: str
+    session: str
+    interval: str
+    quality: str = Field(
+        description=(
+            "intraday | live_proxy | empty. `intraday` is the captured "
+            "session. `live_proxy` is two points — the open and now — for a "
+            "day the archive has not reached, so the line between them is a "
+            "join, not a shape. `empty` means there is nothing to draw."
+        )
+    )
+    points: list[BreadthPointResponse] = Field(default_factory=list)
+    universe: int = Field(description="Contracts in the scope.")
+    measured: int = Field(description="Of those, how many had a baseline.")
+    baseline: str = Field(
+        description=(
+            "previous_close | archived_close. The second is derived from the "
+            "prior session's last capture, which is what an archived day has; "
+            "on a thin contract the two differ."
+        )
+    )
+    weighted_available: bool
+    source: str = Field(default="mock", description="live | mock")
+
+    @classmethod
+    def of(cls, series: BreadthSeries) -> BreadthSeriesResponse:
+        return cls(
+            label=series.label,
+            session=series.session.isoformat(),
+            interval=series.interval,
+            quality=series.quality.value,
+            points=[BreadthPointResponse.of(point) for point in series.points],
+            universe=series.universe,
+            measured=series.measured,
+            baseline=series.baseline,
+            weighted_available=series.weighted_available,
+            source=series.source,
+        )
+
+
+class SectorRowResponse(BaseModel):
+    """One sector of the F&O universe, for the rail."""
+
+    sector: str
+    count: BreadthCountResponse
+    mean_change_percent: Decimal | None = Field(
+        default=None,
+        description=(
+            "Unweighted mean move of the priced members. Unweighted because "
+            "these names have no index weight to average with — this is the "
+            "whole F&O list, not an index."
+        ),
+    )
+    members: int
+    rows: list[MemberResponse] = Field(
+        default_factory=list,
+        description="The sector's own names, biggest mover first.",
+    )
+
+    @classmethod
+    def of(cls, row: SectorRow) -> SectorRowResponse:
+        return cls(
+            sector=row.sector,
+            count=BreadthCountResponse.of(row.count),
+            mean_change_percent=row.mean_change_percent,
+            members=row.members,
+            rows=[MemberResponse.of(member) for member in row.rows],
+        )
+
+
+class SectorRailResponse(BaseModel):
+    """What the Advance/Decline page's rail offers."""
+
+    indices: list[str] = Field(default_factory=list)
+    sectors: list[SectorRowResponse] = Field(default_factory=list)
+    sessions: list[str] = Field(
+        default_factory=list,
+        description=(
+            "Archived sessions Historical can draw, newest first. From the "
+            "archive, not a calendar: a day nobody captured cannot be drawn."
+        ),
+    )
+    source: str = Field(default="mock", description="live | mock")
+
+    @classmethod
+    def of(cls, rail: SectorRail) -> SectorRailResponse:
+        return cls(
+            indices=list(rail.indices),
+            sectors=[SectorRowResponse.of(row) for row in rail.sectors],
+            sessions=[session.isoformat() for session in rail.sessions],
+            source=rail.source,
         )
 
 

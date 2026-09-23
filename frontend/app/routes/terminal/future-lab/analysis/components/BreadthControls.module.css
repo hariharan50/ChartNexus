@@ -1,0 +1,89 @@
+/*
+ * One row of controls above everything they scope.
+ *
+ * Wraps rather than scrolls: these are five small groups and a terminal is
+ * often narrower than it looks once the shell's nav is out, so the row folds
+ * onto a second line instead of hiding a control off the edge.
+ */
+
+.controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--mc-space-4);
+  padding: var(--mc-space-3) var(--mc-space-4);
+  border: 1px solid var(--mc-border);
+  border-radius: var(--mc-radius-lg);
+  background: var(--mc-surface);
+  min-width: 0;
+}
+
+.group {
+  display: flex;
+  align-items: center;
+  gap: var(--mc-space-2);
+  min-width: 0;
+}
+
+.caption {
+  color: var(--mc-text-muted);
+  font-size: var(--mc-text-xs);
+  white-space: nowrap;
+}
+
+.segmented {
+  display: inline-flex;
+  border: 1px solid var(--mc-field-border);
+  border-radius: var(--mc-radius);
+  overflow: hidden;
+}
+
+.seg {
+  height: var(--mc-control-h-sm);
+  padding: 0 var(--mc-space-3);
+  border: 0;
+  border-right: 1px solid var(--mc-field-border);
+  background: var(--mc-field-bg);
+  color: var(--mc-text-muted);
+  font: inherit;
+  font-size: var(--mc-text-sm);
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.seg:last-child {
+  border-right: 0;
+}
+
+.seg:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.seg:focus-visible {
+  outline: 2px solid var(--mc-focus);
+  outline-offset: -2px;
+}
+
+.seg-on {
+  background: var(--mc-surface-raised);
+  color: var(--mc-accent);
+  font-weight: 700;
+}
+
+.toggle {
+  cursor: pointer;
+}
+
+/* Visible and inert, not hidden: a control that disappears as you move down
+   the rail reads as a bug rather than as a limit. */
+.disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.sub {
+  color: var(--mc-text-subtle);
+  font-size: var(--mc-text-xs);
+  white-space: nowrap;
+}

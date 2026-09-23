@@ -1,6 +1,15 @@
-/* Sized against the shared control tokens so the picker sits level with the
-   search box, the sector filter and the view toggle it stands beside on four
-   different pages. */
+/*
+ * Which contract the board is showing.
+ *
+ * A custom listbox rather than a `<select>`, because the native popup is drawn
+ * by the operating system: a white sheet with a blue highlight over a dark
+ * terminal, in a font and row height nothing else on the page shares. Owning
+ * the popup also buys the thing the native control cannot do — three aligned
+ * columns, so the countdowns read down the list instead of trailing each date.
+ *
+ * Sized against the shared control tokens so the trigger sits level with the
+ * search box, the sector filter and the view toggle it stands beside.
+ */
 
 .picker {
   display: flex;
@@ -14,21 +23,137 @@
   white-space: nowrap;
 }
 
-.select {
+/* The popup is positioned against this, not against the picker, so the caption
+   beside it never shifts where the list opens. */
+.anchor {
+  position: relative;
+  display: inline-flex;
+}
+
+.trigger {
+  display: inline-flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--mc-space-3);
   height: var(--mc-control-h-sm);
-  min-width: 10.5rem;
-  padding: 0 var(--mc-space-2);
+  min-width: 11rem;
+  padding: 0 var(--mc-space-2) 0 var(--mc-space-3);
   border: 1px solid var(--mc-field-border);
   border-radius: var(--mc-radius);
   background: var(--mc-field-bg);
   color: var(--mc-text);
   font: inherit;
   font-size: var(--mc-text-sm);
+  font-variant-numeric: tabular-nums;
+  cursor: pointer;
+  white-space: nowrap;
 }
 
-.select:focus-visible {
+.trigger:hover {
+  border-color: var(--mc-border-strong);
+}
+
+.trigger:focus-visible {
   outline: 2px solid var(--mc-focus);
   outline-offset: 1px;
+}
+
+.trigger-open {
+  border-color: var(--mc-accent);
+}
+
+.trigger-date {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.caret {
+  display: inline-flex;
+  color: var(--mc-text-subtle);
+  transition: transform 120ms ease;
+}
+
+.caret-open {
+  transform: rotate(180deg);
+}
+
+/*
+ * The popup.
+ *
+ * Right-aligned to the trigger rather than left: this control sits in a
+ * toolbar that can be close to the viewport edge, and a list that grows
+ * rightwards off screen is worse than one that grows back over its own button.
+ */
+.list {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  z-index: 20;
+  min-width: 100%;
+  margin: 0;
+  padding: var(--mc-space-1);
+  list-style: none;
+  border: 1px solid var(--mc-border-strong);
+  border-radius: var(--mc-radius);
+  background: var(--mc-surface-raised);
+  box-shadow: var(--mc-shadow, 0 8px 24px rgb(0 0 0 / 35%));
+}
+
+.option {
+  display: grid;
+  grid-template-columns: 1.125rem max-content 2.5rem max-content;
+  align-items: center;
+  gap: var(--mc-space-2);
+  padding: var(--mc-space-2) var(--mc-space-2);
+  border-radius: var(--mc-radius-sm);
+  color: var(--mc-text);
+  font-size: var(--mc-text-sm);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.option:hover {
+  background: var(--mc-field-bg-hover);
+}
+
+/* Focus, not hover, is what the keyboard moves — and it has to be visible
+   without an outline that boxes in a full-width row. */
+.option:focus-visible,
+.option:focus {
+  outline: none;
+  background: var(--mc-field-bg-hover);
+  box-shadow: inset 0 0 0 1px var(--mc-accent);
+}
+
+.option-on {
+  color: var(--mc-accent);
+  font-weight: 600;
+}
+
+.tick {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--mc-accent);
+}
+
+.option-date {
+  text-align: left;
+}
+
+/* Right-aligned in a fixed column so `6d` and `61d` end on the same pixel —
+   the whole reason this list is not a string of `29 Sep 2026 (6d)`. */
+.option-days {
+  text-align: right;
+  color: var(--mc-text-muted);
+  font-size: var(--mc-text-xs);
+}
+
+.option-name {
+  color: var(--mc-text-subtle);
+  font-size: var(--mc-text-xs);
+  font-weight: 400;
 }
 
 /* Shown only until the listing arrives, when there is a contract to name but
@@ -50,7 +175,7 @@
 .warn {
   padding: 0 var(--mc-space-2);
   border: 1px solid var(--mc-border-strong);
-  border-radius: var(--mc-radius-sm, var(--mc-radius));
+  border-radius: var(--mc-radius-sm);
   color: var(--mc-text-muted);
   font-size: var(--mc-text-xs);
   white-space: nowrap;

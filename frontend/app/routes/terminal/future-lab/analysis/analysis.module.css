@@ -142,6 +142,109 @@
   color: var(--mc-text-subtle);
 }
 
+/*
+ * The contributors row: one side of the index, the board, the other side.
+ *
+ * The board is given the wider middle because it is the only card here whose
+ * content is a *length* — the two lists read fine narrow, and a bar chart
+ * squeezed into a third of the row stops being readable at the small end.
+ *
+ * `--mc-board-scroll` is set here rather than in each card so the three
+ * scrollers cannot drift apart: three cards that stop at three different
+ * heights read as three unrelated widgets.
+ */
+.board-row {
+  /* The one height in this row. Every card fills it and every scroller inside
+     them flexes to whatever is left, so the three bottom edges line up by
+     construction rather than by three numbers that have to be kept equal. */
+  --mc-board-scroll: 30rem;
+
+  display: grid;
+  grid-auto-rows: minmax(0, 37rem);
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.7fr) minmax(0, 1fr);
+  gap: var(--mc-space-4);
+  /* Stretch, not start: the board is the tallest card because it carries a
+     note and a caption the lists do not, and three cards whose bottom edges
+     disagree by fifty pixels read as three widgets that happened to land near
+     each other. The lists spend the difference on more rows. */
+  align-items: stretch;
+  min-width: 0;
+}
+
+/*
+ * Below this the three columns are all too narrow to read, so they stack and
+ * the board keeps its full width.
+ *
+ * 62rem, not something roomier: this row lives inside the terminal shell, so
+ * it is already narrower than the window, and a breakpoint set to where the
+ * layout looks *best* means a laptop never sees the three-column design at
+ * all. The two lists need about 14rem each and the board about 24rem — that
+ * is what this number is.
+ */
+@media (max-width: 62rem) {
+  .board-row {
+    /* Stacked, each card is on its own and sizes to its content again — three
+       fixed 37rem blocks down a narrow screen is a very long page. */
+    grid-auto-rows: auto;
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+/*
+ * The Advance/Decline layout: a rail you pick a scope from, and the two cards
+ * that scope governs.
+ *
+ * The rail is fixed-ish rather than a share of the row — it holds two dozen
+ * short names and a couple of numbers, and giving it a third of a wide screen
+ * would starve the chart for no gain.
+ */
+.breadth-row {
+  display: grid;
+  /* Wide enough for the longest sector name the map can return
+     (CONSUMER DURABLES) beside a five-figure index level, so the column that
+     identifies the row is not the one that ellipsises. */
+  grid-template-columns: minmax(0, 20.5rem) minmax(0, 1fr);
+  gap: var(--mc-space-4);
+  /* Start, not stretch: the rail is sticky below, and a stretched grid item
+     is given the row's full height, which is exactly what stops it sticking. */
+  align-items: start;
+  min-width: 0;
+}
+
+/*
+ * The rail stays put while the main column scrolls, and scrolls itself when
+ * two dozen sectors do not fit. Stretched to the row instead, it grows to
+ * twelve hundred pixels and the reader has to scroll the chart off screen to
+ * reach the sector they wanted to click.
+ */
+.breadth-row > :first-child {
+  position: sticky;
+  top: var(--mc-space-2);
+  max-height: calc(100vh - 11rem);
+}
+
+.breadth-main {
+  display: flex;
+  flex-direction: column;
+  gap: var(--mc-space-4);
+  min-width: 0;
+}
+
+/* Below this the rail and the chart are both too narrow; the rail goes on top
+   and keeps its own scroll height. */
+@media (max-width: 62rem) {
+  .breadth-row {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  /* Stacked, it is above the chart rather than beside it — sticking would
+     pin it over the content it is meant to scope. */
+  .breadth-row > :first-child {
+    position: static;
+    max-height: 22rem;
+  }
+}
+
 /* Two cards side by side, stacking on a narrow terminal. */
 .split {
   display: grid;

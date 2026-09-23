@@ -1,8 +1,9 @@
 import { useCallback, useDeferredValue, useMemo, useState } from 'react';
-import { useFuturesBoardQuery } from '$contexts/futures-analytics/queries';
+import { BOARD_REFRESH_SECONDS, useFuturesBoardQuery } from '$contexts/futures-analytics/queries';
 import type { FuturesRow } from '$contexts/futures-analytics/types';
 import { useInstruments } from '$contexts/instrument-catalog/queries';
 import DataSourceBadge from '$shared/ui/DataSourceBadge';
+import { SessionStatus } from './SessionHeader';
 import { boardCsv, csvFilename, sectorsIn } from '../stocks-data';
 import BuildLegend from './BuildLegend';
 import MoversHeatmap from './MoversHeatmap';
@@ -108,7 +109,13 @@ export default function MoversBoard({ title, subtitle, kind, noun, exportName }:
           {/* The badge is the only thing separating a generated board from a
               real one; never label mock data "live". */}
           {board.data?.source ? <DataSourceBadge source={board.data.source} /> : null}
-          {board.isFetching ? <span className={s.updating}>Updating…</span> : null}
+          {/* Replaces a bare "Updating…", which said a request was in flight
+              and nothing about whether the board on screen was current. */}
+          <SessionStatus
+            intervalSeconds={BOARD_REFRESH_SECONDS}
+            active={!board.isFetching}
+            updatedAt={board.dataUpdatedAt}
+          />
         </div>
       </header>
 

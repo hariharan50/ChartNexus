@@ -23,8 +23,11 @@ import { toNumber } from '../stocks-data';
 
 export { fmtPercent, fmtPrice, toNumber } from '../stocks-data';
 
-/** Matches the index pages' own poll, so the ring counts to a real refresh. */
-export const INDEX_REFRESH_SECONDS = 15;
+/*
+ * The poll cadences the status strips print, re-exported from the queries that
+ * own them so the number on screen is the interval actually in force.
+ */
+export { FLOW_REFRESH_SECONDS, INDEX_REFRESH_SECONDS } from '$contexts/market-breadth/queries';
 
 // -- money -------------------------------------------------------------------
 

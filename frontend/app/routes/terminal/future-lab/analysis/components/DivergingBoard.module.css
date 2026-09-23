@@ -1,0 +1,219 @@
+/*
+ * The centred diverging board.
+ *
+ * Everything is a token, because this card is read under four themes and a
+ * hard-coded green would survive exactly one of them.
+ *
+ * The whole layout is one grid: four columns per row, mirrored about a centre
+ * gutter. Both tracks are `1fr`, which is what makes the scale shared — a bar
+ * at 60% on the left and a bar at 60% on the right are the same number of
+ * index points, and no arithmetic in the component can quietly break that.
+ */
+
+.card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--mc-space-2);
+  padding: var(--mc-space-4);
+  border: 1px solid var(--mc-border);
+  border-radius: var(--mc-radius-lg);
+  background: var(--mc-surface);
+  min-width: 0;
+}
+
+.head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--mc-space-3);
+  flex-wrap: wrap;
+}
+
+.title {
+  margin: 0;
+  font-size: var(--mc-text-sm);
+  font-weight: 700;
+  color: var(--mc-text);
+}
+
+.totals {
+  display: flex;
+  align-items: baseline;
+  gap: var(--mc-space-2);
+  margin: 0;
+}
+
+.total-label {
+  font-size: var(--mc-text-xs);
+  color: var(--mc-text-subtle);
+}
+
+/* Proportional figures, not tabular: these are standalone headline numbers and
+   equal-width digits make them look loose. The column values below are the
+   opposite case and do use tabular. */
+.total {
+  font-size: var(--mc-text-base);
+  font-weight: 700;
+}
+
+.note,
+.hint {
+  margin: 0;
+  font-size: var(--mc-text-xs);
+  color: var(--mc-text-subtle);
+}
+
+.hint {
+  padding-top: var(--mc-space-1);
+  border-top: 1px solid var(--mc-border);
+}
+
+/* Takes whatever the card has left after its head and captions, so the board
+   and the two lists beside it stop at the same place. The fallback is for the
+   stacked layout, where there is no row height to fill. */
+.rows {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  gap: var(--mc-space-1);
+  min-height: 0;
+  max-height: var(--mc-board-scroll, 28rem);
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding-right: var(--mc-space-1);
+}
+
+/* Filling a row of known height, the cap would only leave a gap under it. */
+@media (min-width: 62.01rem) {
+  .rows {
+    max-height: none;
+  }
+}
+
+/*
+ * label | track │ track | label
+ *
+ * The two tracks meet in the middle. `column-gap` supplies the 2px of surface
+ * that separates the two bars — the spacer is the separator here, never a
+ * stroke drawn around a mark.
+ */
+.row {
+  display: grid;
+  /* The label columns are sized to their content and capped, not given a
+     fixed share: this card sits in the middle of a three-column row, and a
+     fixed 11rem label either wasted half the width or crushed the bars
+     depending on how wide the terminal happened to be. */
+  grid-template-columns: minmax(0, max-content) minmax(0, 1fr) minmax(0, 1fr) minmax(0, max-content);
+  align-items: center;
+  column-gap: 2px;
+  min-height: 1.5rem;
+}
+
+.row:hover {
+  background: var(--mc-surface-raised);
+  border-radius: var(--mc-radius-sm);
+}
+
+.label {
+  display: flex;
+  align-items: center;
+  gap: var(--mc-space-2);
+  min-width: 0;
+  max-width: 11rem;
+  font-size: var(--mc-text-sm);
+  padding: 0 var(--mc-space-2);
+}
+
+/* Mirrored: both labels sit against the centre, so the eye reads outwards from
+   one axis instead of scanning back to two different margins. */
+.label.up {
+  justify-content: flex-end;
+}
+
+.label.down {
+  justify-content: flex-start;
+}
+
+.symbol {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--mc-text);
+}
+
+/* Tabular here: these do align vertically down each side. */
+.points {
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.track {
+  display: flex;
+  align-items: center;
+  min-width: 0;
+  height: 100%;
+}
+
+/*
+ * The left track fills from its right edge, so its bar grows away from the
+ * centre; the right track is the mirror.
+ *
+ * Matched by class, not by `:first-of-type` — every cell in the row is a
+ * `span`, so `.track:first-of-type` matches nothing and silently leaves both
+ * bars left-aligned, which draws two ordinary bar charts instead of one
+ * butterfly.
+ */
+.track.up {
+  justify-content: flex-end;
+}
+
+.track.down {
+  justify-content: flex-start;
+}
+
+/*
+ * Thin marks. 4px rounded at the outer end, square against the centre axis —
+ * the bar reads as growing from a baseline rather than floating.
+ */
+.bar {
+  height: 10px;
+  border-radius: 0;
+}
+
+.bar.up {
+  background: var(--mc-bullish);
+  border-top-left-radius: 4px;
+  border-bottom-left-radius: 4px;
+}
+
+.bar.down {
+  background: var(--mc-bearish);
+  border-top-right-radius: 4px;
+  border-bottom-right-radius: 4px;
+}
+
+.up {
+  color: var(--mc-bullish);
+}
+
+.down {
+  color: var(--mc-bearish);
+}
+
+/* The bar itself is the mark; colour on the label would double-encode it. The
+   signed value is the one exception, and it is the house convention across
+   every board in the terminal. */
+.label .symbol {
+  font-weight: 500;
+}
+
+/* The labels give up width before the bars do: a ticker can lose a character
+   and still be recognised, a bar that has run out of room cannot be read at
+   all. */
+@media (max-width: 60rem) {
+  .label {
+    max-width: 8rem;
+    font-size: var(--mc-text-xs);
+  }
+}

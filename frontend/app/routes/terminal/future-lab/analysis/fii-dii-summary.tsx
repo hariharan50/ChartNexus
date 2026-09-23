@@ -3,11 +3,16 @@ import type { FlowSummary, OiGroup, OiLegs, OiRow } from '$contexts/market-bread
 import { useFiiDiiSummaryQuery } from '$contexts/market-breadth/queries';
 import { isoDateIST } from '$shared/formatting/ist-clock';
 import DataSourceBadge from '$shared/ui/DataSourceBadge';
+import { SessionStatus } from '../components/SessionHeader';
 import DatePicker from '$shared/ui/DatePicker';
 import { cx } from '$shared/ui/cx';
 import IconChevronDown from '$shared/ui/icons/IconChevronDown';
 import IconGrid from '$shared/ui/icons/IconGrid';
 import {
+  FLOW_REFRESH_SECONDS,
+  OI_IMBALANCE_TOLERANCE,
+  PARTICIPANT_LABELS,
+  SEGMENT_LABELS,
   bandLabel,
   fmtContracts,
   fmtCrore,
@@ -16,9 +21,6 @@ import {
   fmtOiNet,
   fmtPercent,
   fmtPrice,
-  OI_IMBALANCE_TOLERANCE,
-  PARTICIPANT_LABELS,
-  SEGMENT_LABELS,
   sessionLabel,
   streakLabel,
   toNumber
@@ -130,6 +132,15 @@ export default function FiiDiiSummary() {
                 ))}
               </div>
             </div>
+
+            {/* The board only polls while it is showing the latest session —
+                an archived day cannot change — so the strip says "not
+                refreshing" there rather than counting at a settled day. */}
+            <SessionStatus
+              intervalSeconds={FLOW_REFRESH_SECONDS}
+              active={session === null && !summary.isFetching}
+              updatedAt={summary.dataUpdatedAt}
+            />
           </section>
 
           {data ? <ValueCard data={data} /> : null}

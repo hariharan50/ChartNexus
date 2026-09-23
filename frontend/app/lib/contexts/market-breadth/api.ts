@@ -1,6 +1,8 @@
 import { apiFetch } from '$shared/api/client';
 import type {
   AdvanceDeclineView,
+  BreadthSeries,
+  SectorRail,
   CashFlowHistory,
   ContributorsView,
   FlowSummary,
@@ -48,6 +50,45 @@ export function getFiiDiiCash(
     params: { sessions: String(opts.sessions ?? DEFAULT_SESSIONS) },
     fetcher
   });
+}
+
+/** Bucket widths the breadth series offers — the backend's own set. */
+export const BREADTH_INTERVALS = ['1m', '5m', '15m', '1h'] as const;
+export type BreadthInterval = (typeof BREADTH_INTERVALS)[number];
+export const DEFAULT_BREADTH_INTERVAL: BreadthInterval = '5m';
+
+export function getBreadthSeries(
+  opts: {
+    index: string;
+    sector?: string | null;
+    date?: string | null;
+    interval?: BreadthInterval;
+  },
+  fetcher?: typeof fetch
+): Promise<BreadthSeries> {
+  const params: Record<string, string> = { index: opts.index };
+  // A sector narrows the scope; omitted entirely for the index itself, so the
+  // request URL for the default view stays the server's own default.
+  if (opts.sector) params.sector = opts.sector;
+  if (opts.date) params.date = opts.date;
+  if (opts.interval) params.interval = opts.interval;
+  return apiFetch<BreadthSeries>({
+    url: '/breadth/index/advance-decline/series',
+    params,
+    fetcher
+  });
+}
+
+/**
+ * The rail: every sector of the F&O universe, with its own names.
+ *
+ * One read for the whole left column. It carries each sector's members too, so
+ * clicking a sector redraws the board beneath the chart without a second
+ * request — and without the counts and the rows coming from two different
+ * reads of the same board.
+ */
+export function getSectorRail(fetcher?: typeof fetch): Promise<SectorRail> {
+  return apiFetch<SectorRail>({ url: '/breadth/sectors', fetcher });
 }
 
 export function getIndexContributors(

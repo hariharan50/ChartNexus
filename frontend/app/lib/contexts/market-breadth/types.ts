@@ -215,6 +215,83 @@ export interface SectorBreadth {
   members: IndexMember[];
 }
 
+/** One bucket of a session's breadth. */
+export interface BreadthPoint {
+  /** ISO-8601 instant, UTC. */
+  at: string;
+  advancing: number;
+  declining: number;
+  unchanged: number;
+  net: number;
+  /**
+   * Where the benchmark stood in this bucket. Null for a sector, which has no
+   * index of its own — never a basket level invented to fill the field.
+   */
+  level: WireNumber | null;
+  /**
+   * Combined index weight advancing/declining, 0-100. Null when the scope
+   * carries no weights, which is every sector: an F&O name outside a tracked
+   * index has no published weight, and 0 would read as "nothing advanced".
+   */
+  advancing_weight: WireNumber | null;
+  declining_weight: WireNumber | null;
+}
+
+/**
+ * What a breadth chart's numbers are worth.
+ *
+ * The same three tiers the Future Lab's price series uses, deliberately: a
+ * reader who has learned what `live_proxy` means there must not have to learn
+ * it again here.
+ */
+export type SeriesQuality = 'intraday' | 'live_proxy' | 'empty';
+
+export interface BreadthSeries {
+  label: string;
+  session: string;
+  interval: string;
+  quality: SeriesQuality;
+  points: BreadthPoint[];
+  /** Contracts in the scope, and how many had a baseline to measure against. */
+  universe: number;
+  measured: number;
+  /**
+   * `previous_close` (the broker's own figure) or `archived_close` (derived
+   * from the prior session's last capture, which is what an archived day has).
+   * On a thin contract the two differ, so the page names it.
+   */
+  baseline: string;
+  /** False for every sector — they carry no index weights to weight by. */
+  weighted_available: boolean;
+  source?: DataSourceName;
+}
+
+/** One sector of the F&O universe, for the rail. */
+export interface SectorRow {
+  sector: string;
+  count: BreadthCount;
+  /**
+   * Unweighted mean move of the priced members — unweighted because these
+   * names have no index weight to average with. Not the same statistic as
+   * `SectorBreadth.weighted_change_percent`, which slices a tracked index.
+   */
+  mean_change_percent: WireNumber | null;
+  members: number;
+  /** The sector's own names, biggest mover first. */
+  rows: IndexMember[];
+}
+
+export interface SectorRail {
+  indices: string[];
+  sectors: SectorRow[];
+  /**
+   * Sessions Historical can actually draw, newest first — from the archive,
+   * not a calendar: a day nobody captured cannot be drawn.
+   */
+  sessions: string[];
+  source?: DataSourceName;
+}
+
 export interface AdvanceDeclineView {
   header: IndexHeader;
   overall: BreadthCount;

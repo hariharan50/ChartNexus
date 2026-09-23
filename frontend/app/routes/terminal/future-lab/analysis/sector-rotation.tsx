@@ -9,7 +9,7 @@ import {
 import { useChartTheme } from '$shared/charts/theme/use-chart-theme';
 import { cx } from '$shared/ui/cx';
 import IconScatter from '$shared/ui/icons/IconScatter';
-import { RefreshRing } from '../components/SessionHeader';
+import { SessionStatus } from '../components/SessionHeader';
 import {
   fmtPercent,
   fmtShare,
@@ -94,7 +94,11 @@ export default function SectorRotation() {
       >
         <IndexPicker value={index} onChange={setIndex} />
         <SourceBadge source={data?.header.source} />
-        <RefreshRing seconds={INDEX_REFRESH_SECONDS} active={!rotation.isFetching} />
+        <SessionStatus
+          intervalSeconds={INDEX_REFRESH_SECONDS}
+          active={!rotation.isFetching}
+          updatedAt={rotation.dataUpdatedAt}
+        />
       </AnalysisHead>
 
       {rotation.isError ? (

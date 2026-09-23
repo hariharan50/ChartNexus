@@ -11,7 +11,7 @@ import DataSourceBadge from '$shared/ui/DataSourceBadge';
 import { cx } from '$shared/ui/cx';
 import IconGrid from '$shared/ui/icons/IconGrid';
 import ExpiryPicker from './components/ExpiryPicker';
-import { RefreshRing, ReplayToggle, SessionClock } from './components/SessionHeader';
+import { ReplayToggle, SessionStatus } from './components/SessionHeader';
 import {
   applyFilter,
   filterCounts,
@@ -83,8 +83,11 @@ export default function FutureHeatmap() {
               *board* needs a per-frame universe snapshot, which the capture
               worker does not yet assemble. */}
           <ReplayToggle on={false} disabled reason={PENDING_HISTORY} />
-          <SessionClock />
-          <RefreshRing seconds={REFRESH_SECONDS} active={!board.isFetching} />
+          <SessionStatus
+            intervalSeconds={REFRESH_SECONDS}
+            active={!board.isFetching}
+            updatedAt={board.dataUpdatedAt}
+          />
         </div>
       </header>
 

@@ -1,0 +1,27 @@
+/*
+ * What this card adds to the shared board: its two totals.
+ *
+ * The board's own geometry lives in DivergingBoard.module.css. Only the header
+ * figures are here, because only they are specific to index points.
+ */
+
+.total-label {
+  font-size: var(--mc-text-xs);
+  color: var(--mc-text-subtle);
+}
+
+/* Proportional figures, not tabular: these are standalone headline numbers and
+   equal-width digits make them look loose. The column values inside the board
+   are the opposite case and do use tabular. */
+.total {
+  font-size: var(--mc-text-base);
+  font-weight: 700;
+}
+
+.up {
+  color: var(--mc-bullish);
+}
+
+.down {
+  color: var(--mc-bearish);
+}

@@ -7,7 +7,7 @@ import { seriesPalette } from '$shared/charts/theme/tokens';
 import { useChartTheme } from '$shared/charts/theme/use-chart-theme';
 import { cx } from '$shared/ui/cx';
 import IconPie from '$shared/ui/icons/IconPie';
-import { RefreshRing } from '../components/SessionHeader';
+import { SessionStatus } from '../components/SessionHeader';
 import {
   fmtPercent,
   fmtShare,
@@ -121,7 +121,11 @@ export default function IndexWeightage() {
         </div>
         <IndexPicker value={index} onChange={setIndex} />
         <SourceBadge source={data?.header.source} />
-        <RefreshRing seconds={INDEX_REFRESH_SECONDS} active={!weightage.isFetching} />
+        <SessionStatus
+          intervalSeconds={INDEX_REFRESH_SECONDS}
+          active={!weightage.isFetching}
+          updatedAt={weightage.dataUpdatedAt}
+        />
       </AnalysisHead>
 
       {weightage.isError ? (

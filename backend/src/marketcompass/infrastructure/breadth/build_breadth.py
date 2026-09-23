@@ -18,6 +18,10 @@ from typing import Any
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from marketcompass.contexts.market_breadth.application.get_breadth_series import (
+    GetBreadthSeries,
+    GetSectorRail,
+)
 from marketcompass.contexts.market_breadth.application.get_fii_dii import (
     GetFiiDiiCashHistory,
     GetFiiDiiSummary,
@@ -29,7 +33,13 @@ from marketcompass.contexts.market_breadth.application.get_index_analysis import
     GetSectorRotation,
 )
 from marketcompass.contexts.market_breadth.application.ports import (
+    BreadthHistorySource,
+    BreadthUniverseSource,
     InstitutionalFlowSource,
+)
+from marketcompass.infrastructure.breadth.breadth_history_source import (
+    ArchiveBreadthHistorySource,
+    CatalogBreadthUniverseSource,
 )
 from marketcompass.infrastructure.breadth.constituent_source import (
     BoardIndexConstituentSource,
@@ -48,6 +58,9 @@ from marketcompass.infrastructure.futures.oi_cache import RedisOpenInterestCache
 from marketcompass.infrastructure.persistence.postgresql.repositories.integration.broker_connection_repository import (
     SqlAlchemyBrokerConnectionRepository,
 )
+from marketcompass.infrastructure.persistence.postgresql.repositories.market_data.futures_board_snapshot_repository import (
+    SqlAlchemyFuturesBoardSnapshotRepository,
+)
 from marketcompass.infrastructure.time.clock import SystemClock
 
 
@@ -59,6 +72,11 @@ class BreadthServices:
     fii_dii_cash: GetFiiDiiCashHistory
     contributors: GetIndexContributors
     advance_decline: GetAdvanceDecline
+    #: Breadth through a session, and the rail it is picked from. Both read the
+    #: captured futures board rather than any breadth store, which does not
+    #: exist — see `breadth_history_source`.
+    breadth_series: GetBreadthSeries
+    sector_rail: GetSectorRail
     weightage: GetIndexWeightage
     sector_rotation: GetSectorRotation
     #: Which indices the constituent source can actually answer for. Exposed as
@@ -71,6 +89,8 @@ class BreadthServices:
         cls,
         index_source: BoardIndexConstituentSource,
         flow_source: InstitutionalFlowSource,
+        history: BreadthHistorySource,
+        universe: BreadthUniverseSource,
     ) -> BreadthServices:
         return cls(
             # The Summary page prints the benchmark beside the session, so it
@@ -78,6 +98,12 @@ class BreadthServices:
             fii_dii_summary=GetFiiDiiSummary(source=flow_source, index=index_source),
             fii_dii_cash=GetFiiDiiCashHistory(source=flow_source),
             contributors=GetIndexContributors(source=index_source),
+            breadth_series=GetBreadthSeries(history=history, universe=universe),
+            sector_rail=GetSectorRail(
+                universe=universe,
+                history=history,
+                indices=index_source.universe(),
+            ),
             advance_decline=GetAdvanceDecline(source=index_source),
             weightage=GetIndexWeightage(source=index_source),
             sector_rotation=GetSectorRotation(source=index_source),
@@ -112,6 +138,10 @@ def build_breadth_services(container: Any, session: AsyncSession) -> BreadthServ
     )
     return BreadthServices.of(
         index_source=BoardIndexConstituentSource(board),
+        # The breadth series is counted out of the futures-board archive; the
+        # rail is counted off the same board read the dashboard already makes.
+        history=ArchiveBreadthHistorySource(SqlAlchemyFuturesBoardSnapshotRepository(session)),
+        universe=CatalogBreadthUniverseSource(board),
         # NSE's own published files, with the generator behind it for when the
         # archive cannot be reached — an offline developer, or an outage. The
         # badge on the page says which of the two answered, every time.

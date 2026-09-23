@@ -1,0 +1,186 @@
+/*
+ * The rail you pick a scope from.
+ *
+ * Two thead blocks in one table, on purpose: the index rows and the sector
+ * rows are two different universes and the second heading is what says so
+ * mid-scroll. Sticky, so the heading you are under is always the one that
+ * describes the rows you are reading.
+ */
+
+.card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--mc-space-2);
+  padding: var(--mc-space-3) var(--mc-space-3) var(--mc-space-2);
+  border: 1px solid var(--mc-border);
+  border-radius: var(--mc-radius-lg);
+  background: var(--mc-surface);
+  min-width: 0;
+}
+
+.scroller {
+  flex: 1 1 auto;
+  min-height: 0;
+  min-width: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  /* Firefox: thin and themed, always there to grab. */
+  scrollbar-width: thin;
+  scrollbar-color: var(--mc-border-strong) transparent;
+}
+
+/*
+ * WebKit/Blink: a slim pill rather than the platform's default slab, which at
+ * this rail's width reads as a second column. Narrower than the strike list's
+ * 12px in the Options Lab — that one is a drag target, this one is a position
+ * indicator on a list you click row by row.
+ */
+.scroller::-webkit-scrollbar {
+  width: 8px;
+}
+
+.scroller::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.scroller::-webkit-scrollbar-thumb {
+  background: var(--mc-border-strong);
+  border-radius: 4px;
+  /* Inset so the thumb floats clear of the rows rather than butting them. */
+  border: 2px solid transparent;
+  background-clip: padding-box;
+}
+
+.scroller::-webkit-scrollbar-thumb:hover {
+  background: var(--mc-text-subtle);
+  background-clip: padding-box;
+}
+
+.table {
+  width: 100%;
+  table-layout: fixed;
+  border-collapse: collapse;
+  font-size: var(--mc-text-sm);
+  font-variant-numeric: tabular-nums;
+}
+
+.table th:nth-child(2) {
+  width: 5.25rem;
+}
+
+.table th:nth-child(3) {
+  width: 3.75rem;
+}
+
+.table th {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  padding: var(--mc-space-2) var(--mc-space-1);
+  border-bottom: 1px solid var(--mc-border);
+  background: var(--mc-surface);
+  color: var(--mc-text-subtle);
+  font-size: var(--mc-text-xs);
+  font-weight: 600;
+  text-align: left;
+  white-space: nowrap;
+}
+
+/* Says which universe the rows under it are counted over. The sector numbers
+   and the index numbers are not comparable and this is where that is said.
+   Named for what it is rather than `.hint`: a generic name in a module that
+   sits beside four others is a name waiting to collide. */
+.universe {
+  /* Short on purpose: this heading shares a narrow column with two numeric
+     ones, and "all F&O" clipped to "all F8". A clipped label is worse than a
+     terse one. */
+  margin-left: var(--mc-space-2);
+  font-weight: 400;
+  opacity: 0.7;
+}
+
+.table td {
+  padding: 0;
+  border-bottom: 1px solid var(--mc-border);
+  color: var(--mc-text);
+  white-space: nowrap;
+  overflow: hidden;
+}
+
+.table tbody tr:hover td {
+  background: var(--mc-surface-raised);
+}
+
+/* The selected scope, marked by a rule rather than a fill: a filled row beside
+   a column of coloured percentages starts competing with them. */
+.selected td {
+  background: var(--mc-surface-raised);
+}
+
+.selected td:first-child {
+  box-shadow: inset 2px 0 0 var(--mc-accent);
+}
+
+.selected .pick {
+  color: var(--mc-accent);
+  font-weight: 700;
+}
+
+/* The whole row is the target — a rail you scan is a rail you click without
+   aiming, so the hit area is the cell, not the text inside it. */
+.pick {
+  display: block;
+  width: 100%;
+  padding: var(--mc-space-2) var(--mc-space-1);
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  font-weight: 600;
+  text-align: left;
+  cursor: pointer;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.pick:focus-visible {
+  outline: 2px solid var(--mc-focus);
+  outline-offset: -2px;
+}
+
+.numeric {
+  padding-right: var(--mc-space-1);
+  text-align: right;
+}
+
+.breadth {
+  font-size: var(--mc-text-xs);
+}
+
+.slash {
+  padding: 0 0.125rem;
+  color: var(--mc-text-subtle);
+}
+
+.empty {
+  margin: 0;
+  padding: var(--mc-space-4) var(--mc-space-2);
+  color: var(--mc-text-subtle);
+  font-size: var(--mc-text-xs);
+}
+
+.footnote {
+  margin: 0;
+  padding-top: var(--mc-space-2);
+  border-top: 1px solid var(--mc-border);
+  color: var(--mc-text-subtle);
+  font-size: var(--mc-text-xs);
+}
+
+.up {
+  color: var(--mc-bullish);
+}
+
+.down {
+  color: var(--mc-bearish);
+}

@@ -1,10 +1,12 @@
 import { useMemo, useState } from 'react';
 import {
+  BOARD_REFRESH_SECONDS,
   useFuturesBoardQuery,
   useFuturesDashboardQuery
 } from '$contexts/futures-analytics/queries';
 import type { FuturesRow } from '$contexts/futures-analytics/types';
 import DataTable, { type Column } from '$shared/ui/DataTable';
+import { SessionStatus } from './components/SessionHeader';
 import { cx } from '$shared/ui/cx';
 import ExpiryPicker from './components/ExpiryPicker';
 import {
@@ -72,6 +74,12 @@ export default function FutureDashboard() {
             contract with the expiry control.
           </p>
         </div>
+
+        <SessionStatus
+          intervalSeconds={BOARD_REFRESH_SECONDS}
+          active={!panels.isFetching}
+          updatedAt={panels.dataUpdatedAt}
+        />
 
         <div className={s.viewToggle} role="group" aria-label="View">
           <button

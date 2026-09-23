@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { DEFAULT_INDEX, type IndexId } from '$contexts/market-breadth/api';
+import { DEFAULT_INDEX, INDICES, type IndexId } from '$contexts/market-breadth/api';
 import { useIndexContributorsQuery } from '$contexts/market-breadth/queries';
 import type { Contribution } from '$contexts/market-breadth/types';
 import EChart from '$shared/charts/EChart';
@@ -8,19 +8,13 @@ import {
   type ContributionBar
 } from '$shared/charts/options/index-contributors';
 import { useChartTheme } from '$shared/charts/theme/use-chart-theme';
-import { cx } from '$shared/ui/cx';
 import IconBars from '$shared/ui/icons/IconBars';
-import { RefreshRing } from '../components/SessionHeader';
-import {
-  fmtPercent,
-  fmtPoints,
-  fmtPrice,
-  fmtShare,
-  INDEX_REFRESH_SECONDS,
-  toNumber
-} from './analysis-data';
+import { SessionStatus } from '../components/SessionHeader';
+import { fmtPercent, fmtPoints, INDEX_REFRESH_SECONDS, toNumber } from './analysis-data';
 import { AnalysisHead, IndexPicker, SourceBadge } from './components/AnalysisHead';
+import ContributorList from './components/ContributorList';
 import IndexStrip from './components/IndexStrip';
+import PointsContribution from './components/PointsContribution';
 import s from './analysis.module.css';
 import type { Route } from './+types/index-contributors';
 
@@ -88,7 +82,11 @@ export default function IndexContributors() {
       >
         <IndexPicker value={index} onChange={setIndex} />
         <SourceBadge source={data?.header.source} />
-        <RefreshRing seconds={INDEX_REFRESH_SECONDS} active={!contributors.isFetching} />
+        <SessionStatus
+          intervalSeconds={INDEX_REFRESH_SECONDS}
+          active={!contributors.isFetching}
+          updatedAt={contributors.dataUpdatedAt}
+        />
       </AnalysisHead>
 
       {contributors.isError ? (
@@ -102,6 +100,18 @@ export default function IndexContributors() {
       ) : (
         <>
           <IndexStrip header={data.header} />
+
+          {/*
+            One side of the index, the board, the other side. The lists say
+            where each member is; the board says how much it moved the index.
+            Side by side because they are read together — a name that surprises
+            you on the board is one glance away from its own price.
+          */}
+          <div className={s.boardRow}>
+            <ContributorList title="Positive Contributors" rows={gainers} side="up" />
+            <PointsContribution label={indexLabel(index)} gainers={gainers} losers={losers} />
+            <ContributorList title="Negative Contributors" rows={losers} side="down" />
+          </div>
 
           <section className={s.card}>
             <div className={s.cardHead}>
@@ -117,61 +127,13 @@ export default function IndexContributors() {
             </div>
             <EChart option={option} className={s.chartTall} resetKey={index} />
           </section>
-
-          <div className={s.split}>
-            <ContributionTable title="Pushed the index up" rows={gainers} />
-            <ContributionTable title="Dragged the index down" rows={losers} />
-          </div>
         </>
       )}
     </div>
   );
 }
 
-function ContributionTable({ title, rows }: { title: string; rows: Contribution[] }) {
-  return (
-    <section className={s.card}>
-      <div className={s.cardHead}>
-        <h2 className={s.cardTitle}>{title}</h2>
-        <p className={s.cardNote}>{rows.length} members</p>
-      </div>
-      <div className={s.tableWrap}>
-        <table className={s.table}>
-          <thead>
-            <tr>
-              <th scope="col">Symbol</th>
-              <th scope="col">Last</th>
-              <th scope="col">Change</th>
-              <th scope="col">Weight</th>
-              <th scope="col">Points</th>
-            </tr>
-          </thead>
-          <tbody>
-            {rows.map((row) => {
-              const points = toNumber(row.points);
-              return (
-                <tr key={row.symbol}>
-                  <td className={s.symbol}>
-                    {row.symbol}
-                    <span className={s.sub}>{row.sector ?? '—'}</span>
-                  </td>
-                  <td>{fmtPrice(row.last)}</td>
-                  <td className={cx(tone(toNumber(row.change_percent)))}>
-                    {fmtPercent(row.change_percent)}
-                  </td>
-                  <td>{fmtShare(row.weight_percent)}</td>
-                  <td className={cx(tone(points))}>{fmtPoints(row.points)}</td>
-                </tr>
-              );
-            })}
-          </tbody>
-        </table>
-      </div>
-    </section>
-  );
-}
-
-function tone(value: number | null): string | undefined {
-  if (value === null || value === 0) return undefined;
-  return value > 0 ? s.up : s.down;
+/** How the picker spells this index — "NIFTY 50", not "NIFTY50". */
+function indexLabel(index: IndexId): string {
+  return INDICES.find((entry) => entry.id === index)?.label ?? index;
 }

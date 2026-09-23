@@ -5,7 +5,8 @@ import { buildCashFlowOption, type CashFlowPoint } from '$shared/charts/options/
 import { useChartTheme } from '$shared/charts/theme/use-chart-theme';
 import { cx } from '$shared/ui/cx';
 import IconFlow from '$shared/ui/icons/IconFlow';
-import { dayLabel, fmtCrore, fmtGross, toNumber } from './analysis-data';
+import { FLOW_REFRESH_SECONDS, dayLabel, fmtCrore, fmtGross, toNumber } from './analysis-data';
+import { SessionStatus } from '../components/SessionHeader';
 import { AnalysisHead, SessionPicker, SourceBadge } from './components/AnalysisHead';
 import s from './analysis.module.css';
 import type { Route } from './+types/fii-dii-cash';
@@ -69,6 +70,11 @@ export default function FiiDiiCashMarket() {
         <span className={s.label}>Window</span>
         <SessionPicker value={sessions} options={WINDOWS} onChange={setSessions} />
         <SourceBadge source={data?.source} />
+        <SessionStatus
+          intervalSeconds={FLOW_REFRESH_SECONDS}
+          active={!cash.isFetching}
+          updatedAt={cash.dataUpdatedAt}
+        />
       </AnalysisHead>
 
       {cash.isError ? (

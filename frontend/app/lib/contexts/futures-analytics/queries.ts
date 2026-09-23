@@ -9,6 +9,9 @@ import type { ExpiryList, FuturesBoard, FuturesDashboard } from './types';
  */
 const REFETCH_MS = 15_000;
 
+/** The same cadence in seconds, for the status strip that prints it. */
+export const BOARD_REFRESH_SECONDS = REFETCH_MS / 1000;
+
 /**
  * Which contracts the exchange lists changes once a day, at most, so this is
  * fetched once and shared by every page that shows the picker rather than

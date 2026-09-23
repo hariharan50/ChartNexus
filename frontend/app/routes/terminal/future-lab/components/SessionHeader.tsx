@@ -1,67 +1,100 @@
-import { useEffect, useState, type CSSProperties } from 'react';
+import { useEffect, useState } from 'react';
 import { cx } from '$shared/ui/cx';
-import IconClock from '$shared/ui/icons/IconClock';
-import { clockLabel } from '../heatmap-data';
+import { sessionClockLabel } from '../heatmap-data';
 import s from './SessionHeader.module.css';
 
 /**
- * The three pieces of header furniture the Future Lab pages share: the
- * exchange clock, the refresh countdown ring, and the replay switch.
+ * The header furniture the Future Lab pages share: the live status strip and
+ * the replay switch.
  *
- * Extracted from the heatmap page once Price vs OI needed the same three. They
- * live together because they are one visual group at the top-right of every
- * page in the section, and three separate files would drift apart.
+ * They live together because they are one visual group at the top-right of
+ * every page in the section, and separate files would drift apart.
  */
 
-/** The exchange-local wall clock. */
-export function SessionClock({ now }: { now?: Date }) {
-  const [tick, setTick] = useState(() => new Date());
+interface StatusProps {
+  /** Poll interval, printed as "15s". */
+  intervalSeconds: number;
+  /** Whether the page is actually polling. A paused page says so. */
+  active: boolean;
+  /**
+   * When the data on screen arrived — react-query's `dataUpdatedAt`.
+   * `undefined` or 0 means nothing has landed yet.
+   */
+  updatedAt?: number | undefined;
+  /** Replaces the live clock, e.g. "Archived · 2026-09-22". */
+  label?: string | undefined;
+}
+
+/**
+ * Whether what you are looking at is current, in words.
+ *
+ * Replaces the countdown ring this section used to carry. A ring answers
+ * "how long until the next poll", which is the one question a reader does not
+ * have; the questions they do have are *when was this taken* and *is it still
+ * arriving*, and neither is answerable from a shrinking arc. So: a live dot,
+ * the exchange clock, the cadence, and how old the numbers on screen actually
+ * are.
+ *
+ * **The age is of the data, not of the request.** It is measured from the
+ * moment the payload landed, so a poll that fails leaves the figure climbing —
+ * which is exactly the signal a frozen board should give and the ring never
+ * did, because it kept sweeping regardless.
+ */
+export function SessionStatus({ intervalSeconds, active, updatedAt, label }: StatusProps) {
+  const [tick, setTick] = useState(() => Date.now());
+
   useEffect(() => {
-    if (now) return;
-    const timer = setInterval(() => setTick(new Date()), 1000);
+    // One timer drives both the clock and the age; they are read together and
+    // must never disagree by a second.
+    const timer = setInterval(() => setTick(Date.now()), 1000);
     return () => clearInterval(timer);
-  }, [now]);
+  }, []);
+
+  const age = updatedAt ? tick - updatedAt : null;
+  const stale = age !== null && age > intervalSeconds * 1000 * STALE_INTERVALS;
 
   return (
-    <span className={s.clock}>
-      <span aria-hidden="true" className={s.clockIco}>
-        <IconClock />
-      </span>
-      {clockLabel(now ?? tick)}
+    <span
+      className={cx(s.status, stale && s.stale)}
+      title={active ? `Refreshes every ${intervalSeconds}s` : 'Not refreshing'}
+    >
+      <span className={cx(s.dot, active && s.pulse, stale && s.dotStale)} aria-hidden="true" />
+      <span>{label ?? sessionClockLabel(new Date(tick))}</span>
+      <span className={s.interval}>{cadenceLabel(intervalSeconds)}</span>
+      <span className={s.age}>{age === null ? 'no data yet' : `updated ${agoLabel(age)}`}</span>
     </span>
   );
 }
 
 /**
- * Seconds until the next poll.
+ * How many poll intervals may pass before the reading counts as stale.
  *
- * A board that silently reloads looks static; the ring is what tells you the
- * numbers are on a clock rather than frozen. Paused rather than hidden when
- * the page is not polling, so the control does not shift about.
+ * Two, not one: a single missed beat is ordinary jitter — a slow response, a
+ * backgrounded tab — and colouring the strip red for it would teach the reader
+ * to ignore red.
  */
-export function RefreshRing({ seconds, active }: { seconds: number; active: boolean }) {
-  const [left, setLeft] = useState(seconds);
+const STALE_INTERVALS = 2;
 
-  useEffect(() => {
-    if (!active) {
-      setLeft(seconds);
-      return;
-    }
-    const timer = setInterval(() => setLeft((prev) => (prev <= 1 ? seconds : prev - 1)), 1000);
-    return () => clearInterval(timer);
-  }, [active, seconds]);
+/**
+ * `15s`, `5m` — the poll cadence.
+ *
+ * Rolled into minutes past sixty seconds: the FII/DII pages poll every five
+ * minutes, and "300s" is a number the reader has to divide before it means
+ * anything.
+ */
+function cadenceLabel(seconds: number): string {
+  if (seconds < 60) return `${seconds}s`;
+  const minutes = Math.round(seconds / 60);
+  return `${minutes}m`;
+}
 
-  const progress = ((seconds - left) / seconds) * 100;
-
-  return (
-    <span
-      className={s.countdown}
-      style={{ '--mc-progress': `${progress}%` } as CSSProperties}
-      title={active ? `Refreshes every ${seconds}s` : 'Not refreshing'}
-    >
-      {left}
-    </span>
-  );
+/** `5s ago`, `2m ago`, `1h 12m ago`. */
+function agoLabel(ageMs: number): string {
+  const seconds = Math.max(Math.floor(ageMs / 1000), 0);
+  if (seconds < 60) return `${seconds}s ago`;
+  const minutes = Math.floor(seconds / 60);
+  if (minutes < 60) return `${minutes}m ago`;
+  return `${Math.floor(minutes / 60)}h ${minutes % 60}m ago`;
 }
 
 /**

@@ -1,26 +1,31 @@
 import { useMemo, useState } from 'react';
-import { DEFAULT_INDEX, type IndexId } from '$contexts/market-breadth/api';
-import { useAdvanceDeclineQuery } from '$contexts/market-breadth/queries';
-import type { BreadthCount } from '$contexts/market-breadth/types';
+import {
+  DEFAULT_BREADTH_INTERVAL,
+  DEFAULT_INDEX,
+  INDICES,
+  type BreadthInterval
+} from '$contexts/market-breadth/api';
+import {
+  useAdvanceDeclineQuery,
+  useBreadthSeriesQuery,
+  useSectorRailQuery
+} from '$contexts/market-breadth/queries';
+import type { BreadthSeries, IndexMember, SectorRow } from '$contexts/market-breadth/types';
 import EChart from '$shared/charts/EChart';
 import {
-  buildSectorBreadthOption,
-  type SectorBreadthBar
-} from '$shared/charts/options/sector-breadth';
+  buildAdvanceDeclineSeriesOption,
+  type BreadthSeriesPoint
+} from '$shared/charts/options/advance-decline-series';
 import { useChartTheme } from '$shared/charts/theme/use-chart-theme';
-import { cx } from '$shared/ui/cx';
+import DataSourceBadge from '$shared/ui/DataSourceBadge';
 import IconArea from '$shared/ui/icons/IconArea';
-import { RefreshRing } from '../components/SessionHeader';
-import {
-  fmtPercent,
-  fmtPrice,
-  fmtShare,
-  INDEX_REFRESH_SECONDS,
-  ratioLabel,
-  toNumber
-} from './analysis-data';
-import { AnalysisHead, IndexPicker, SourceBadge } from './components/AnalysisHead';
-import IndexStrip from './components/IndexStrip';
+import { isoDateIST } from '$shared/formatting/ist-clock';
+import { SessionStatus } from '../components/SessionHeader';
+import { fmtPercent, fmtPrice, INDEX_REFRESH_SECONDS, ratioLabel, toNumber } from './analysis-data';
+import { AnalysisHead, SourceBadge } from './components/AnalysisHead';
+import BreadthControls, { type BreadthMode } from './components/BreadthControls';
+import BreadthRail, { type Scope } from './components/BreadthRail';
+import DivergingBoard, { type BoardRow } from './components/DivergingBoard';
 import s from './analysis.module.css';
 import type { Route } from './+types/advance-decline';
 
@@ -28,199 +33,218 @@ export const meta: Route.MetaFunction = () => [
   { title: 'Advance Decline · Future Lab · MarketCompass' }
 ];
 
-const EMPTY: SectorBreadthBar[] = [];
+const NO_SECTORS: SectorRow[] = [];
+const NO_MEMBERS: IndexMember[] = [];
 
 /**
- * How broad the index's move actually is.
+ * How broad a move is, through the session rather than at this instant.
  *
  * The index level says where the benchmark went; breadth says how many of its
  * members went with it. A 0.6% rise on 12 of 50 advancing is a different
- * session from the same rise on 40 of 50, and the two are indistinguishable
- * from the level alone.
+ * session from the same rise on 40 of 50, and the level alone cannot tell them
+ * apart — nor can a single point-in-time count tell you *when* the rally
+ * narrowed.
  *
- * Three distinctions the page refuses to blur:
+ * Three things this page refuses to blur:
  *
- * * **Unchanged is not a direction.** A member inside the deadband is flat,
- *   not up, and it gets the neutral ink.
- * * **Unpriced is not unchanged.** A member the feed could not price is
- *   counted apart and named in the caption.
- * * **The sector bars are proportions, not counts.** Sectors are different
- *   sizes, and stacking raw counts would let the biggest one answer a question
- *   nobody asked.
+ * * **Two universes, named.** The rail's index rows count a published index
+ *   against published weights; its sector rows count every F&O name the
+ *   catalog classifies there. Those numbers are not comparable and the
+ *   headings say so.
+ * * **A sector has no price and no weight.** There is no NIFTY IT here, so no
+ *   level is drawn for a sector and the weighted view is disabled rather than
+ *   shown flat.
+ * * **The series says what it is worth.** Counted out of the captured board,
+ *   so `live_proxy` — two points joined by a straight line — is labelled, not
+ *   dressed up as a session.
  */
 export default function AdvanceDecline() {
-  const [index, setIndex] = useState<IndexId>(DEFAULT_INDEX);
   const theme = useChartTheme();
-  const breadth = useAdvanceDeclineQuery(index);
-  const data = breadth.data;
+  const [scope, setScope] = useState<Scope>({ index: DEFAULT_INDEX, sector: null });
+  const [interval, setInterval] = useState<BreadthInterval>(DEFAULT_BREADTH_INTERVAL);
+  const [mode, setMode] = useState<BreadthMode>('live');
+  const [date, setDate] = useState<string>(isoDateIST(0));
+  const [weighted, setWeighted] = useState(false);
 
-  const bars = useMemo<SectorBreadthBar[]>(
+  const rail = useSectorRailQuery();
+  const breadth = useAdvanceDeclineQuery(scope.index);
+  const series = useBreadthSeriesQuery({
+    index: scope.index,
+    sector: scope.sector,
+    date: mode === 'historical' ? date : null,
+    interval
+  });
+
+  const sectors = rail.data?.sectors ?? NO_SECTORS;
+  const sessions = rail.data?.sessions ?? [];
+  const data = series.data;
+  const weightedAvailable = data?.weighted_available ?? false;
+  const plotWeighted = weighted && weightedAvailable;
+
+  const points = useMemo<BreadthSeriesPoint[]>(
     () =>
-      data?.sectors.map((sector) => ({
-        sector: sector.sector,
-        advancing: sector.count.advancing,
-        declining: sector.count.declining,
-        unchanged: sector.count.unchanged,
-        weightPercent: toNumber(sector.weight_percent) ?? 0,
-        changePercent: toNumber(sector.weighted_change_percent)
-      })) ?? EMPTY,
+      (data?.points ?? []).map((point) => ({
+        at: point.at,
+        advancing: point.advancing,
+        declining: point.declining,
+        level: toNumber(point.level),
+        advancingWeight: toNumber(point.advancing_weight),
+        decliningWeight: toNumber(point.declining_weight)
+      })),
     [data]
   );
 
   const option = useMemo(
     () =>
-      buildSectorBreadthOption(bars, theme, {
-        formatPercent: (value: number | null) => fmtPercent(value)
+      buildAdvanceDeclineSeriesOption(points, theme, {
+        weighted: plotWeighted,
+        levelName: scope.sector === null ? indexLabel(scope.index) : null,
+        formatTime: clockLabel,
+        formatLevel: (value: number) => fmtPrice(value)
       }),
-    [bars, theme]
+    [points, theme, plotWeighted, scope]
   );
+
+  /** The scope's own names, for the board under the chart. */
+  const members = useMemo<IndexMember[]>(() => {
+    if (scope.sector === null) return breadth.data?.members ?? NO_MEMBERS;
+    return sectors.find((row) => row.sector === scope.sector)?.rows ?? NO_MEMBERS;
+  }, [scope, breadth.data, sectors]);
+
+  const up = useMemo(() => members.filter(isUp).map(toRow), [members]);
+  const down = useMemo(() => members.filter(isDown).map(toRow), [members]);
+  const scopeLabel = data?.label ?? indexLabel(scope.index);
 
   return (
     <div className={s.page}>
       <AnalysisHead
         icon={<IconArea />}
         title="Advance Decline"
-        subtitle="How many index members are up, down and flat"
+        subtitle="How many members were up, down and flat — through the session"
       >
-        <IndexPicker value={index} onChange={setIndex} />
-        <SourceBadge source={data?.header.source} />
-        <RefreshRing seconds={INDEX_REFRESH_SECONDS} active={!breadth.isFetching} />
+        <SourceBadge source={breadth.data?.header.source} />
+        <SessionStatus
+          intervalSeconds={INDEX_REFRESH_SECONDS}
+          active={!series.isFetching && !rail.isFetching}
+          // Two queries feed this page, so the honest age is the older of
+          // them: the screen is only as fresh as its stalest half.
+          updatedAt={Math.min(series.dataUpdatedAt, rail.dataUpdatedAt) || undefined}
+        />
       </AnalysisHead>
 
-      {breadth.isError ? (
-        <p className={s.error}>The breadth reading could not be loaded.</p>
-      ) : data === undefined ? (
-        <p className={s.placeholder}>Loading the index…</p>
-      ) : (
-        <>
-          <IndexStrip header={data.header} />
+      <BreadthControls
+        interval={interval}
+        onInterval={setInterval}
+        mode={mode}
+        onMode={setMode}
+        date={date}
+        onDate={setDate}
+        sessions={sessions}
+        weighted={weighted}
+        onWeighted={setWeighted}
+        weightedAvailable={weightedAvailable}
+      />
 
+      <div className={s.breadthRow}>
+        <BreadthRail
+          scope={scope}
+          onScope={setScope}
+          sectors={sectors}
+          header={breadth.data?.header}
+          loading={rail.isLoading}
+        />
+
+        <div className={s.breadthMain}>
           <section className={s.card}>
             <div className={s.cardHead}>
-              <h2 className={s.cardTitle}>Index breadth</h2>
-              <p className={s.cardNote}>
-                {ratioLabel(data.overall)} advance/decline
-                {data.overall.unpriced > 0 ? ` · ${data.overall.unpriced} unpriced` : ''}
+              <h2 className={s.cardTitle}>{scopeLabel} Advance / Decline</h2>
+              <p className={s.cardNote}>{qualityNote(data)}</p>
+            </div>
+
+            {series.isError ? (
+              <p className={s.error}>The breadth series could not be loaded.</p>
+            ) : points.length === 0 ? (
+              <p className={s.placeholder}>
+                {series.isLoading
+                  ? 'Counting the session…'
+                  : 'No session has been captured for this scope yet.'}
               </p>
-            </div>
-            <Meter count={data.overall} />
-            <p className={s.meterLegend}>
-              <span>
-                <span
-                  className={s.swatch}
-                  style={{ background: 'var(--mc-bullish)' }}
-                  aria-hidden="true"
-                />
-                Advancing {data.overall.advancing}
-              </span>
-              <span>
-                <span
-                  className={s.swatch}
-                  style={{ background: 'var(--mc-neutral)' }}
-                  aria-hidden="true"
-                />
-                Unchanged {data.overall.unchanged}
-              </span>
-              <span>
-                <span
-                  className={s.swatch}
-                  style={{ background: 'var(--mc-bearish)' }}
-                  aria-hidden="true"
-                />
-                Declining {data.overall.declining}
-              </span>
-            </p>
+            ) : (
+              <EChart
+                option={option}
+                className={s.chart}
+                resetKey={`${scope.index}:${scope.sector}:${interval}`}
+              />
+            )}
+
+            {data?.source ? <DataSourceBadge source={data.source} /> : null}
           </section>
 
-          {bars.length > 0 ? (
-            <section className={s.card}>
-              <div className={s.cardHead}>
-                <h2 className={s.cardTitle}>By sector</h2>
-                <p className={s.cardNote}>
-                  Share of each sector&rsquo;s members, heaviest sector first
-                </p>
-              </div>
-              <EChart option={option} className={s.chartTall} resetKey={index} />
-            </section>
-          ) : null}
-
-          <section className={s.card}>
-            <div className={s.cardHead}>
-              <h2 className={s.cardTitle}>Members</h2>
-              <p className={s.cardNote}>Heaviest first · {data.members.length} rows</p>
-            </div>
-            <div className={s.tableWrap}>
-              <table className={s.table}>
-                <thead>
-                  <tr>
-                    <th scope="col">Symbol</th>
-                    <th scope="col">Last</th>
-                    <th scope="col">Change</th>
-                    <th scope="col">%</th>
-                    <th scope="col">Weight</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {data.members.map((member) => {
-                    const move = toNumber(member.change_percent);
-                    return (
-                      <tr key={member.symbol}>
-                        <td className={s.symbol}>
-                          {member.symbol}
-                          <span className={s.sub}>{member.sector ?? '—'}</span>
-                        </td>
-                        <td>{fmtPrice(member.last)}</td>
-                        <td className={cx(tone(toNumber(member.change_absolute)))}>
-                          {fmtPrice(member.change_absolute)}
-                        </td>
-                        <td className={cx(tone(move))}>{fmtPercent(member.change_percent)}</td>
-                        <td>{fmtShare(member.weight_percent)}</td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-            </div>
-          </section>
-        </>
-      )}
+          <DivergingBoard
+            title={`${scopeLabel} Stocks Change %`}
+            totals={
+              <>
+                <span className={s.up}>{up.length} ↑</span>
+                <span className={s.down}>{down.length} ↓</span>
+              </>
+            }
+            note={breadth.data ? `${ratioLabel(breadth.data.overall)} advance/decline` : undefined}
+            up={up}
+            down={down}
+            format={(value) => fmtPercent(value)}
+          />
+        </div>
+      </div>
     </div>
   );
+}
+
+/** `2:36 PM` — exchange-local, because a session is an IST fact. */
+function clockLabel(iso: string): string {
+  const parsed = new Date(iso);
+  if (Number.isNaN(parsed.getTime())) return iso;
+  return new Intl.DateTimeFormat('en-IN', {
+    timeZone: 'Asia/Kolkata',
+    hour: 'numeric',
+    minute: '2-digit',
+    hour12: true
+  }).format(parsed);
 }
 
 /**
- * The whole index as one bar.
+ * What the chart above is worth, in one line.
  *
- * Proportional widths, in the three states' own colours, with the counts
- * written beside it — colour alone never carries the reading.
+ * Never omitted. A two-point proxy and a captured session look identical once
+ * they are drawn, and this is the only thing that separates them.
  */
-function Meter({ count }: { count: BreadthCount }) {
-  const total = count.advancing + count.declining + count.unchanged;
-  const width = (part: number) => (total === 0 ? 0 : (part / total) * 100);
-
-  return (
-    <div
-      className={s.meter}
-      role="img"
-      aria-label={`${count.advancing} advancing, ${count.unchanged} unchanged, ${count.declining} declining`}
-    >
-      <span
-        className={cx(s.meterPart, s.meterAdv)}
-        style={{ width: `${width(count.advancing)}%` }}
-      />
-      <span
-        className={cx(s.meterPart, s.meterUnch)}
-        style={{ width: `${width(count.unchanged)}%` }}
-      />
-      <span
-        className={cx(s.meterPart, s.meterDec)}
-        style={{ width: `${width(count.declining)}%` }}
-      />
-    </div>
-  );
+function qualityNote(series: BreadthSeries | undefined): string {
+  if (!series) return '';
+  const scope = `${series.measured} of ${series.universe} priced`;
+  if (series.quality === 'live_proxy') {
+    return `${scope} · previous close vs now — the shape between them was not captured`;
+  }
+  if (series.quality === 'empty') return `${scope} · nothing captured for this session`;
+  const basis = series.baseline === 'previous_close' ? 'previous close' : "prior session's close";
+  return `${scope} · ${series.interval} buckets · against ${basis}`;
 }
 
-function tone(value: number | null): string | undefined {
-  if (value === null || value === 0) return undefined;
-  return value > 0 ? s.up : s.down;
+function indexLabel(index: string): string {
+  return INDICES.find((entry) => entry.id === index)?.label ?? index;
+}
+
+function isUp(member: IndexMember): boolean {
+  return (toNumber(member.change_percent) ?? 0) > 0;
+}
+
+function isDown(member: IndexMember): boolean {
+  return (toNumber(member.change_percent) ?? 0) < 0;
+}
+
+function toRow(member: IndexMember): BoardRow {
+  const change = toNumber(member.change_percent) ?? 0;
+  return {
+    symbol: member.symbol,
+    value: change,
+    hover: [member.name ?? member.symbol, fmtPercent(change), fmtPrice(member.last)].join(' · ')
+  };
 }

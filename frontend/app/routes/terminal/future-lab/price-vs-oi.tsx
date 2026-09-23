@@ -10,7 +10,7 @@ import DatePicker from '$shared/ui/DatePicker';
 import { cx } from '$shared/ui/cx';
 import IconChart from '$shared/ui/icons/IconChart';
 import IconChevronDown from '$shared/ui/icons/IconChevronDown';
-import { RefreshRing, ReplayToggle, SessionClock } from './components/SessionHeader';
+import { ReplayToggle, SessionStatus } from './components/SessionHeader';
 import {
   clampCursor,
   DEFAULT_INTERVAL,
@@ -317,23 +317,20 @@ export default function FuturePriceVsOi() {
                     frames < 2 ? 'Replay needs a captured session to walk through.' : undefined
                   }
                 />
-                <span className={cx(s.live, feedAge !== null && s.stale)}>
-                  <span className={cx(s.dot, mode === 'live' && query.isFetching && s.pulse)} />
-                  {mode === 'live' ? <SessionClock /> : `Archived · ${date}`}
-                  {feedAge !== null ? (
-                    <>
-                      <span className={s.sep} aria-hidden="true">
-                        ·
-                      </span>
-                      <span>{feedAgeLabel(feedAge)}</span>
-                    </>
-                  ) : null}
-                </span>
-                <DataSourceBadge source={view.source} />
-                <RefreshRing
-                  seconds={REFRESH_SECONDS}
+                {/* The hand-rolled strip this page used to carry is now the
+                    shared one; `feedAge` stays beside it because it is a
+                    different fact — how far the *broker's* feed is behind,
+                    not how old our copy of it is. */}
+                <SessionStatus
+                  intervalSeconds={REFRESH_SECONDS}
                   active={mode === 'live' && cursor === null}
+                  updatedAt={query.dataUpdatedAt}
+                  {...(mode === 'live' ? {} : { label: `Archived · ${date}` })}
                 />
+                {feedAge !== null ? (
+                  <span className={cx(s.live, s.stale)}>{feedAgeLabel(feedAge)}</span>
+                ) : null}
+                <DataSourceBadge source={view.source} />
               </div>
             </div>
 

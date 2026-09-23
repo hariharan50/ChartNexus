@@ -1,0 +1,170 @@
+/*
+ * One side of the index, listed.
+ *
+ * Shares its height with the contribution board beside it through
+ * `--mc-board-scroll`, set once on the three-column row. Three cards that
+ * scroll at three different heights read as three unrelated widgets; one
+ * height makes them one instrument.
+ */
+
+.card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--mc-space-3);
+  padding: var(--mc-space-4);
+  border: 1px solid var(--mc-border);
+  border-radius: var(--mc-radius-lg);
+  background: var(--mc-surface);
+  min-width: 0;
+}
+
+.head {
+  display: flex;
+  align-items: center;
+  gap: var(--mc-space-2);
+}
+
+.title {
+  margin: 0;
+  font-size: var(--mc-text-sm);
+  font-weight: 700;
+}
+
+/* The count is the first thing worth knowing about a list of names — "38 up,
+   12 down" is the day's breadth in two numbers — so it sits in the heading
+   rather than in a note underneath it. */
+.count {
+  padding: 0 var(--mc-space-2);
+  border-radius: var(--mc-radius-sm);
+  font-size: var(--mc-text-xs);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  line-height: 1.5rem;
+}
+
+.count.up {
+  color: var(--mc-bullish);
+  background: var(--mc-bullish-weak);
+}
+
+.count.down {
+  color: var(--mc-bearish);
+  background: var(--mc-bearish-weak);
+}
+
+/*
+ * Takes whatever height the card was stretched to, rather than setting its
+ * own. `--mc-board-scroll` is the floor the board beside it uses, so this only
+ * needs it when the card is standing alone — stacked on a narrow terminal,
+ * where there is nothing to match.
+ */
+.scroller {
+  flex: 1 1 auto;
+  min-height: 0;
+  min-width: 0;
+  overflow-y: auto;
+}
+
+@media (max-width: 62rem) {
+  .scroller {
+    max-height: var(--mc-board-scroll, 28rem);
+  }
+}
+
+/*
+ * Fixed layout, so the columns cannot push the card wider than its share of
+ * the row. Left to size itself, the table takes the width its longest price
+ * and longest ticker want — which in a column this narrow means a horizontal
+ * scrollbar under every list, and a horizontal scrollbar inside a table of
+ * fifteen characters is a layout that has given up.
+ *
+ * The two numeric columns are the fixed ones because their content has a
+ * known maximum; the symbol column takes what is left and ellipsises.
+ */
+.table {
+  width: 100%;
+  table-layout: fixed;
+  border-collapse: collapse;
+  font-size: var(--mc-text-sm);
+  font-variant-numeric: tabular-nums;
+}
+
+/*
+ * Sized to their longest real content and no wider, because every pixel here
+ * comes out of the ticker: price is five figures and two decimals
+ * (`11,155.00`), change is at most `-12.34%`. Generous numeric columns look
+ * tidy in isolation and truncate `ULTRACEMCO` to `UL…` in the column that
+ * actually identifies the row.
+ */
+.table th:nth-child(2) {
+  width: 4.5rem;
+}
+
+.table th:nth-child(3) {
+  width: 3.5rem;
+}
+
+.table th {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  padding: var(--mc-space-2) var(--mc-space-1);
+  border-bottom: 1px solid var(--mc-border);
+  background: var(--mc-surface);
+  color: var(--mc-text-subtle);
+  font-size: var(--mc-text-xs);
+  font-weight: 600;
+  text-align: left;
+  white-space: nowrap;
+}
+
+.table td {
+  padding: var(--mc-space-2) var(--mc-space-1);
+  border-bottom: 1px solid var(--mc-border);
+  color: var(--mc-text);
+  white-space: nowrap;
+  overflow: hidden;
+}
+
+.table tbody tr:last-child td {
+  border-bottom: 0;
+}
+
+.table tbody tr:hover td {
+  background: var(--mc-surface-raised);
+}
+
+.numeric {
+  text-align: right;
+}
+
+.symbol {
+  display: flex;
+  align-items: center;
+  gap: var(--mc-space-2);
+  min-width: 0;
+}
+
+/* The ticker is the one thing in the row allowed to lose characters — a price
+   or a percentage with its tail cut off would be a different number. */
+.ticker {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-weight: 600;
+}
+
+.empty {
+  margin: 0;
+  padding: var(--mc-space-4) var(--mc-space-2);
+  color: var(--mc-text-subtle);
+  font-size: var(--mc-text-xs);
+}
+
+.up {
+  color: var(--mc-bullish);
+}
+
+.down {
+  color: var(--mc-bearish);
+}

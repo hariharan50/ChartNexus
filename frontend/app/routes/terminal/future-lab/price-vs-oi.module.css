@@ -211,6 +211,9 @@
   height: 1.1rem;
 }
 
+/* Now only the feed-age chip: the live dot and clock moved to the shared
+   SessionStatus strip, which says how old *our* copy is. This says how far
+   the broker's own feed is behind, which is a different fact. */
 .live {
   display: inline-flex;
   align-items: center;
@@ -221,33 +224,8 @@
   font-variant-numeric: tabular-nums;
 }
 
-.dot {
-  width: 0.5rem;
-  height: 0.5rem;
-  border-radius: 50%;
-  background: var(--mc-bullish);
-}
-
-.dot.pulse {
-  animation: pulse 1.2s ease-in-out infinite;
-}
-
-@keyframes pulse {
-  50% {
-    opacity: 0.35;
-  }
-}
-
 .live.stale {
   color: var(--mc-bearish);
-}
-
-.live.stale .dot {
-  background: var(--mc-bearish);
-}
-
-.sep {
-  color: var(--mc-border-strong);
 }
 
 /* -- chart panel + legend -- */

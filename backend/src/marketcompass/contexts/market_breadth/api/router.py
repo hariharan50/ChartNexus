@@ -22,11 +22,18 @@ from fastapi import APIRouter, HTTPException, Query, status
 from marketcompass.contexts.market_breadth.api.dependencies import Services
 from marketcompass.contexts.market_breadth.api.schemas import (
     AdvanceDeclineResponse,
+    BreadthSeriesResponse,
     CashFlowResponse,
     ContributorsResponse,
     FlowSummaryResponse,
+    SectorRailResponse,
     SectorRotationResponse,
     WeightageResponse,
+)
+from marketcompass.contexts.market_breadth.application.get_breadth_series import (
+    DEFAULT_INTERVAL,
+    INTERVALS,
+    BreadthSeriesQuery,
 )
 from marketcompass.contexts.market_breadth.application.get_fii_dii import (
     DEFAULT_SESSIONS,
@@ -164,6 +171,90 @@ async def advance_decline(
     return AdvanceDeclineResponse.of(result)
 
 
+SectorParam = Annotated[
+    str | None,
+    Query(
+        max_length=64,
+        description=(
+            "Narrow the series to one sector of the F&O universe. Omit for the "
+            "index itself. A sector carries no index weights and no benchmark "
+            "level, and the response says so."
+        ),
+    ),
+]
+BreadthSessionParam = Annotated[
+    date | None,
+    Query(
+        alias="date",
+        description="Archived session to replay. Omit for today, which is Live.",
+    ),
+]
+BreadthIntervalParam = Annotated[
+    str,
+    Query(description=f"Bucket width: {', '.join(INTERVALS)}."),
+]
+
+
+@router.get(
+    "/index/advance-decline/series",
+    response_model=BreadthSeriesResponse,
+    summary="Advances and declines through the session",
+    description=(
+        "How many members of an index — or of one sector — were above their "
+        "baseline, once per bucket across a trading day, with the benchmark's "
+        "level beside it. "
+        "**Counted out of the futures-board archive after the fact**: nothing "
+        "in this application stores breadth, and the board is captured every "
+        "minute for the whole F&O universe. `quality` therefore matters — see "
+        "its description — and `baseline` says which previous close each point "
+        "was measured against. "
+        "Weighted figures are present only when the scope has published index "
+        "weights, which no sector does."
+    ),
+)
+async def advance_decline_series(  # noqa: PLR0917 — FastAPI reads the
+    # parameters to build the query-string contract; collapsing them into one
+    # object would take those names out of the OpenAPI schema.
+    principal: CurrentPrincipal,
+    services: Services,
+    index: IndexParam = DEFAULT_INDEX,
+    sector: SectorParam = None,
+    date_: BreadthSessionParam = None,
+    interval: BreadthIntervalParam = DEFAULT_INTERVAL,
+) -> BreadthSeriesResponse:
+    result = await services.breadth_series(
+        BreadthSeriesQuery(
+            tenant_id=principal.tenant_id,
+            index=_known_index(services, index),
+            sector=sector,
+            session=date_,
+            interval=interval if interval in INTERVALS else DEFAULT_INTERVAL,
+        )
+    )
+    return BreadthSeriesResponse.of(result)
+
+
+@router.get(
+    "/sectors",
+    response_model=SectorRailResponse,
+    summary="Every sector of the F&O universe, counted",
+    description=(
+        "The Advance/Decline page's rail. Counts come from one board read "
+        "across the whole catalog — the same call the Future Dashboard makes, "
+        "so this costs no extra broker quota. "
+        "`mean_change_percent` is **unweighted**: these are all listed F&O "
+        "names, most of which belong to no tracked index and carry no "
+        "published weight. `sessions` lists the days Historical can actually "
+        "draw, taken from the archive rather than from a calendar."
+    ),
+)
+async def sector_rail(
+    principal: CurrentPrincipal,
+    services: Services,
+) -> SectorRailResponse:
+    return SectorRailResponse.of(await services.sector_rail(principal.tenant_id))
+
+
 @router.get(
     "/index/weightage",
     response_model=WeightageResponse,
@@ -206,13 +297,8 @@ async def sector_rotation(
     return SectorRotationResponse.of(result)
 
 
-def _index_query(principal: CurrentPrincipal, services: Services, index: str) -> IndexQuery:
-    """Validate the index name against what the source can actually answer for.
-
-    A 404 rather than an empty board: asking for an index nobody tracks is a
-    different thing from asking for one whose members could not be priced, and
-    a page that cannot tell them apart will show "no data" for a typo.
-    """
+def _known_index(services: Services, index: str) -> str:
+    """The index name, validated — same 404 as ``_index_query``, no query."""
     wanted = index.strip().upper()
     known = services.indices()
     if wanted not in known:
@@ -220,4 +306,14 @@ def _index_query(principal: CurrentPrincipal, services: Services, index: str) ->
             status_code=status.HTTP_404_NOT_FOUND,
             detail=f"Unknown index {index!r}. Tracked: {', '.join(known)}.",
         )
-    return IndexQuery(tenant_id=principal.tenant_id, index=wanted)
+    return wanted
+
+
+def _index_query(principal: CurrentPrincipal, services: Services, index: str) -> IndexQuery:
+    """Validate the index name against what the source can actually answer for.
+
+    A 404 rather than an empty board: asking for an index nobody tracks is a
+    different thing from asking for one whose members could not be priced, and
+    a page that cannot tell them apart will show "no data" for a typo.
+    """
+    return IndexQuery(tenant_id=principal.tenant_id, index=_known_index(services, index))

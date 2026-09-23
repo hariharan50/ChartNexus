@@ -32,12 +32,6 @@
   gap: var(--mc-space-2);
 }
 
-.updating {
-  color: var(--mc-text-muted);
-  font-size: var(--mc-text-xs);
-  animation: pulse 1s ease-in-out infinite;
-}
-
 @keyframes pulse {
   50% {
     opacity: 0.35;
