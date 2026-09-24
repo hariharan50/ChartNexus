@@ -8,6 +8,7 @@ import IconChart from '$shared/ui/icons/IconChart';
 import IconChevronDown from '$shared/ui/icons/IconChevronDown';
 import { lastTradingDayIST } from '$shared/formatting/ist-clock';
 import HistoryMode, { type Mode } from '../components/HistoryMode';
+import IntradayMaxPain from './components/IntradayMaxPain';
 import MaxPainSentiment from './components/MaxPainSentiment';
 import {
   CALL_COLOR,
@@ -21,7 +22,15 @@ import {
   withinWindow,
   type OiView
 } from '../open-interest/oi-data';
-import { fmtPain, maxPainBias, painCurve, visibleCurve, windowWidened } from './max-pain-data';
+import {
+  fmtPain,
+  getMaxPainSeries,
+  maxPainBias,
+  painCurve,
+  visibleCurve,
+  windowWidened,
+  type MaxPainSeriesView
+} from './max-pain-data';
 import s from './route.module.css';
 import type { Route } from './+types/route';
 
@@ -52,6 +61,15 @@ export default function MaxPain() {
   const query = useQuery<OiView>({
     queryKey: ['options-lab', 'oi', instrument.symbol, mode, historyDate],
     queryFn: () => getOpenInterest(instrument.symbol, { date: historyDate }),
+    refetchInterval: mode === 'live' ? REFETCH_MS : false
+  });
+
+  // The session's max-pain path. A second query rather than a field on the OI
+  // payload: it reads the whole archive for the day, which the snapshot
+  // endpoint has no business carrying.
+  const seriesQuery = useQuery<MaxPainSeriesView>({
+    queryKey: ['options-lab', 'max-pain-series', instrument.symbol, mode, historyDate],
+    queryFn: () => getMaxPainSeries(instrument.symbol, { date: historyDate }),
     refetchInterval: mode === 'live' ? REFETCH_MS : false
   });
 
@@ -211,6 +229,14 @@ export default function MaxPain() {
 
           {/* RIGHT MAIN */}
           <div className={s.main}>
+            {/* The session's path first: where max pain is heading is the live
+                story, and the profile below is the snapshot behind it. */}
+            <IntradayMaxPain
+              view={seriesQuery.data}
+              loading={seriesQuery.isPending}
+              historical={mode === 'historical'}
+            />
+
             <section className={s.panel}>
               <div className={s.chartTop}>
                 <h2 className={s.pTitle}>

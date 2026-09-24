@@ -182,6 +182,31 @@ class PcrSeriesResponse(_Schema):
         return cls.model_validate(payload)
 
 
+class MaxPainSeriesResponse(_Schema):
+    """Max pain through the session, behind the Intraday Max Pain chart."""
+
+    instrument_id: str
+    symbol: str
+    expiry_date: str | None
+    lot_size: int | None
+    spot: float
+    open_ts: str
+    now_ts: str
+    data_quality: str
+    open_is_estimated: bool = False
+    t: list[str]
+    # The tradable current-month future, not index spot. `None` on the
+    # reconstructed 09:15 frame, where nothing was recorded.
+    fut: list[float | None]
+    # `None`, never 0, where a capture could not be priced. Zero would drag the
+    # shared price scale to the floor and read as a crash that never happened.
+    max_pain: list[float | None]
+
+    @classmethod
+    def of(cls, payload: dict[str, Any]) -> MaxPainSeriesResponse:
+        return cls.model_validate(payload)
+
+
 class StrikeSeriesResponse(_Schema):
     """One strike's price/OI series behind the six Price vs OI charts."""
 

@@ -12,6 +12,9 @@ from marketcompass.contexts.options_analytics.application.gex_service import Get
 from marketcompass.contexts.options_analytics.application.iv_history_service import (
     GetIvHistory,
 )
+from marketcompass.contexts.options_analytics.application.max_pain_series_service import (
+    GetMaxPainSeries,
+)
 from marketcompass.contexts.options_analytics.application.oi_series_service import GetOiSeries
 from marketcompass.contexts.options_analytics.application.oi_service import GetOiView
 from marketcompass.contexts.options_analytics.application.pcr_series_service import GetPcrSeries
@@ -48,6 +51,7 @@ class OptionsAnalyticsServices:
     oi_series: GetOiSeries
     price_oi_series: GetPriceOiSeries
     pcr_series: GetPcrSeries
+    max_pain_series: GetMaxPainSeries
     gex: GetGex
     iv_history: GetIvHistory
     skew: GetSkew
@@ -84,6 +88,7 @@ def build_options_analytics_services_from(
         oi_series=GetOiSeries(provider=provider, snapshots=snapshots),
         price_oi_series=GetPriceOiSeries(provider=provider, snapshots=snapshots),
         pcr_series=GetPcrSeries(provider=provider, snapshots=snapshots),
+        max_pain_series=GetMaxPainSeries(provider=provider, snapshots=snapshots),
         gex=GetGex(
             provider=provider,
             snapshots=snapshots,

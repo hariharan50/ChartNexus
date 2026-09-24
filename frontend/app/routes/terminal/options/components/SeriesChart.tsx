@@ -58,6 +58,11 @@ interface Props {
    */
   zoomable?: boolean | undefined;
   /**
+   * Plot the value lines on the price axis instead of their own — for series
+   * measured in the same unit as the future. See `buildMultiSeriesOption`.
+   */
+  sharedPriceAxis?: boolean | undefined;
+  /**
    * Reset-zoom wiring, owned by the page rather than the panel.
    *
    * Panels sharing a `group` share a window, so a reset has to land on all of
@@ -85,6 +90,7 @@ export default function SeriesChart({
   empty,
   compact,
   zoomable,
+  sharedPriceAxis,
   zoomEpoch = 0,
   onResetZoom
 }: Props) {
@@ -125,7 +131,8 @@ export default function SeriesChart({
           referenceLine,
           showFutures: futuresOn,
           compact,
-          zoomable
+          zoomable,
+          sharedPriceAxis
         },
         theme
       ),
@@ -140,6 +147,7 @@ export default function SeriesChart({
       futuresOn,
       compact,
       zoomable,
+      sharedPriceAxis,
       theme
     ]
   );

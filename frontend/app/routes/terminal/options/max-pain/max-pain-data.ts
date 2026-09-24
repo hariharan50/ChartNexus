@@ -10,6 +10,7 @@
  * Everything here is pure, so the arithmetic is testable without a canvas.
  */
 
+import { apiFetch } from '$shared/api/client';
 import type { OiStrike } from '../open-interest/oi-data';
 
 /** What every option holder would lose if the market settled at `strike`. */
@@ -204,4 +205,145 @@ export function maxPainBias(spot: number, maxPain: number): MaxPainBias {
     gapPct,
     position
   };
+}
+
+// -- the intraday series ------------------------------------------------------
+
+/**
+ * Max pain through the session, from the archive.
+ *
+ * Unlike the curve above, this cannot be derived on the client: it needs one
+ * priced chain per capture, and the payload that would carry eighty of those is
+ * the whole archive. The backend reads the `max_pain_strike` the ingest worker
+ * already stored at capture time.
+ */
+export interface MaxPainSeriesView {
+  instrument_id: string;
+  symbol: string;
+  expiry_date: string | null;
+  lot_size: number | null;
+  spot: number;
+  open_ts: string;
+  now_ts: string;
+  /** `intraday` | `live_proxy` | `empty` — how much session there really is. */
+  data_quality: string;
+  open_is_estimated: boolean;
+  t: string[];
+  /** The tradable future. `null` on the reconstructed 09:15 frame. */
+  fut: (number | null)[];
+  /** `null`, never 0, where a capture could not be priced. */
+  max_pain: (number | null)[];
+}
+
+export function getMaxPainSeries(
+  instrument: string,
+  opts: { date?: string | undefined } = {},
+  fetcher?: typeof fetch
+): Promise<MaxPainSeriesView> {
+  return apiFetch<MaxPainSeriesView>({
+    url: `/options-lab/max-pain-series/${encodeURIComponent(instrument)}`,
+    params: opts.date ? { date: opts.date } : {},
+    fetcher
+  });
+}
+
+/** Which way max pain has moved today, and what spot is doing about it. */
+export type Drift = 'up' | 'down' | 'unchanged';
+export type Approach = 'converging' | 'diverging' | 'steady';
+
+export interface Convergence {
+  /** Latest max pain, and the price being read against it. */
+  maxPain: number;
+  price: number;
+  /** `price − maxPain`: positive means spot is above the pin. */
+  distance: number;
+  distancePct: number;
+  /** Where max pain opened, and how far it has travelled since. */
+  openMaxPain: number;
+  shift: number;
+  drift: Drift;
+  /** Whether the gap has narrowed since the open. */
+  approach: Approach;
+}
+
+/**
+ * The reading the chart is for.
+ *
+ * A snapshot says where max pain is; this says where it is *going* and whether
+ * price is closing on it. Max pain migrating toward spot is writers
+ * repositioning, and it is the part a single bar chart cannot show.
+ *
+ * Returns `undefined` rather than a zeroed reading when there is not enough
+ * session to compare two ends of — a "0 points, steady" card would look like a
+ * finding rather than an absence.
+ */
+export function convergence(view: MaxPainSeriesView | undefined): Convergence | undefined {
+  if (!view) return undefined;
+
+  const pains = view.max_pain;
+  const lastIdx = lastDefined(pains);
+  const firstIdx = firstDefined(pains);
+  if (lastIdx === null || firstIdx === null) return undefined;
+
+  const maxPain = pains[lastIdx]!;
+  const openMaxPain = pains[firstIdx]!;
+  if (maxPain <= 0) return undefined;
+
+  // The future where one was recorded, else the chain's spot. The future is
+  // the tradable instrument and the one the chart plots, so the card must read
+  // against the same number the eye is following.
+  const priceIdx = lastDefined(view.fut);
+  const price = priceIdx === null ? view.spot : view.fut[priceIdx]!;
+  if (!Number.isFinite(price) || price <= 0) return undefined;
+
+  const distance = price - maxPain;
+  const shift = maxPain - openMaxPain;
+
+  const openPriceIdx = firstDefined(view.fut);
+  const openPrice = openPriceIdx === null ? price : view.fut[openPriceIdx]!;
+  const openGap = Math.abs(openPrice - openMaxPain);
+  const nowGap = Math.abs(distance);
+
+  return {
+    maxPain,
+    price,
+    distance,
+    distancePct: (distance / maxPain) * 100,
+    openMaxPain,
+    shift,
+    drift: shift > 0 ? 'up' : shift < 0 ? 'down' : 'unchanged',
+    approach: approachOf(openGap, nowGap, maxPain)
+  };
+}
+
+/**
+ * Below this the gap has not really changed.
+ *
+ * A quarter of a percent **of the index level** — about 58 points on a 23,350
+ * NIFTY, or a little over one strike. Scaled to the index rather than to the
+ * gap itself on purpose: a gap that opens at 100 points and sits at 102 has not
+ * changed regime, but a dead zone derived from that 100 would call the 2-point
+ * wobble a divergence. Without this every tick flips the card between
+ * converging and diverging, which is noise dressed as a signal.
+ */
+const APPROACH_DEAD_ZONE_PCT = 0.25;
+
+function approachOf(openGap: number, nowGap: number, level: number): Approach {
+  const moved = openGap - nowGap;
+  const deadZone = Math.abs(level) * (APPROACH_DEAD_ZONE_PCT / 100);
+  if (Math.abs(moved) < deadZone) return 'steady';
+  return moved > 0 ? 'converging' : 'diverging';
+}
+
+function firstDefined(values: (number | null)[]): number | null {
+  const index = values.findIndex((value) => value != null && Number.isFinite(value));
+  return index === -1 ? null : index;
+}
+
+function lastDefined(values: (number | null)[]): number | null {
+  for (let index = values.length - 1; index >= 0; index -= 1) {
+    const value = values[index];
+    if (value != null && Number.isFinite(value)) return index;
+  }
+  return null;
 }

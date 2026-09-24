@@ -52,6 +52,16 @@ export interface SeriesLine {
    * upward and a negative one downward — the Premium Decay change chart.
    */
   fillOrigin?: number | undefined;
+  /**
+   * Draw as a step rather than a sloped line, holding each value until the
+   * next point.
+   *
+   * For series that only ever take discrete values. Max pain is a *strike*: it
+   * sits at 23,400 and then it sits at 23,350, and it was never at 23,380 in
+   * between. A sloped segment draws it passing through prices that are not
+   * strikes and were never the answer to anything.
+   */
+  step?: boolean;
 }
 
 export interface MultiSeriesInput {
@@ -69,6 +79,19 @@ export interface MultiSeriesInput {
   /** A horizontal marker on the value axis, e.g. PCR = 1. */
   referenceLine?: { value: number; label: string } | undefined;
   showFutures: boolean;
+  /**
+   * Plot the value lines on the *price* axis instead of their own.
+   *
+   * For series measured in the same unit as the future - max pain is an index
+   * level, not a ratio or an OI total. The whole reading of such a chart is the
+   * *distance* between the lines, and on two independently scaled axes they can
+   * appear to cross when they never did. Sharing the scale is the only way that
+   * gap means anything.
+   *
+   * Opt-in: every other chart here plots a different quantity against price,
+   * where a second scale is exactly right.
+   */
+  sharedPriceAxis?: boolean | undefined;
   /**
    * Give the plot the width back on a narrow panel.
    *
@@ -235,6 +258,10 @@ export function buildMultiSeriesOption(
 ): EChartsCoreOption {
   const { timestamps, futures, lines, formatValue, formatPrice, valueAxisName } = input;
   const { referenceLine, showFutures, compact, rightGutter, zoomable } = input;
+  const sharedAxis = input.sharedPriceAxis === true;
+  // On a shared scale the lines belong to the price axis, and the right axis
+  // has nothing left of its own to measure.
+  const valueAxisIndex = sharedAxis ? 0 : 1;
   const axisName = { color: theme.axis, fontSize: 11, fontWeight: 600 as const };
 
   const ms = timestamps.map((iso) => Date.parse(iso));
@@ -341,7 +368,7 @@ export function buildMultiSeriesOption(
         type: 'value',
         scale: true,
         position: 'right',
-        name: valueAxisName,
+        name: sharedAxis ? '' : valueAxisName,
         nameLocation: 'end',
         nameGap: 14,
         nameTextStyle: { ...axisName, align: 'right' },
@@ -350,13 +377,17 @@ export function buildMultiSeriesOption(
         // Only the price axis draws split lines. Two sets of horizontal rules at
         // different intervals reads as a moiré and neither is followable.
         splitLine: { show: false },
-        axisLabel: { color: theme.axis, fontSize: 11, formatter: formatValue }
+        // Nothing plots against it on a shared scale; leaving its labels on
+        // would print a second, unrelated ladder of numbers down the edge.
+        axisLabel: sharedAxis
+          ? { show: false }
+          : { color: theme.axis, fontSize: 11, formatter: formatValue }
       }
     ],
     series: [
       ...(showFutures ? [futuresSeries(xs, futures, latestFuture, theme, formatPrice)] : []),
-      ...lines.map((line) => contractSeries(xs, line, formatValue)),
-      ...(referenceLine ? [markerSeries(referenceLine, theme)] : [])
+      ...lines.map((line) => contractSeries(xs, line, formatValue, valueAxisIndex)),
+      ...(referenceLine ? [markerSeries(referenceLine, theme, valueAxisIndex)] : [])
     ]
   };
 }
@@ -465,12 +496,17 @@ function futuresSeries(
   };
 }
 
-function contractSeries(xs: number[], line: SeriesLine, formatValue: (value: number) => string) {
+function contractSeries(
+  xs: number[],
+  line: SeriesLine,
+  formatValue: (value: number) => string,
+  yAxisIndex: number
+) {
   return {
     id: line.id,
     name: line.label,
     type: 'line',
-    yAxisIndex: 1,
+    yAxisIndex,
     z: 2,
     data: pointsOf(xs, line.values),
     showSymbol: false,
@@ -486,6 +522,9 @@ function contractSeries(xs: number[], line: SeriesLine, formatValue: (value: num
     // draws values between captures that were never recorded, and the overshoot
     // it invents at a turn is exactly where someone would read a peak.
     smooth: false,
+    // Holds each value to the next point rather than sloping between them —
+    // see `SeriesLine.step`. Omitted entirely when off, so nothing else changes.
+    ...(line.step ? { step: 'end' as const } : {}),
     lineStyle: { width: 2, color: line.color },
     itemStyle: { color: line.color },
     // A faint fill under the line when the caller asks for one. Left off the
@@ -534,11 +573,15 @@ function contractSeries(xs: number[], line: SeriesLine, formatValue: (value: num
  * a line from the legend cannot take the reference with it. The reference is
  * the thing the lines are read *against*; it has to outlive them.
  */
-function markerSeries(reference: { value: number; label: string }, theme: ChartTheme) {
+function markerSeries(
+  reference: { value: number; label: string },
+  theme: ChartTheme,
+  yAxisIndex: number
+) {
   return {
     id: 'reference',
     type: 'line',
-    yAxisIndex: 1,
+    yAxisIndex,
     data: [],
     silent: true,
     markLine: {

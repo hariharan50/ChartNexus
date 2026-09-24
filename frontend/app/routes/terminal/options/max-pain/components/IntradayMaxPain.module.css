@@ -1,0 +1,93 @@
+.wrap {
+  display: flex;
+  flex-direction: column;
+  gap: var(--mc-space-3);
+}
+
+/* Matches the page's own panel chrome, for the empty and loading states that
+   render without a SeriesChart of their own. */
+.panel {
+  background: var(--mc-surface);
+  border: 1px solid var(--mc-border);
+  border-radius: var(--mc-radius-lg);
+  box-shadow: var(--mc-shadow);
+  padding: var(--mc-space-4);
+}
+
+.title {
+  display: flex;
+  align-items: center;
+  gap: var(--mc-space-2);
+  margin: 0 0 var(--mc-space-2);
+  font-size: var(--mc-text-base);
+  font-weight: 700;
+}
+
+.ico {
+  display: inline-flex;
+  color: var(--mc-accent);
+}
+
+.muted,
+.empty {
+  margin: 0;
+  font-size: var(--mc-text-sm);
+  color: var(--mc-text-subtle);
+}
+
+.reading {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(11rem, 1fr));
+  gap: var(--mc-space-4);
+  padding: var(--mc-space-4);
+  background: var(--mc-surface);
+  border: 1px solid var(--mc-border);
+  border-radius: var(--mc-radius-lg);
+}
+
+.label {
+  margin: 0 0 0.25rem;
+  font-size: var(--mc-text-xs);
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--mc-text-subtle);
+}
+
+.value {
+  margin: 0;
+  font-size: var(--mc-text-lg);
+  font-weight: 700;
+}
+
+.note {
+  margin: 0.125rem 0 0;
+  font-size: var(--mc-text-xs);
+  color: var(--mc-text-subtle);
+}
+
+.up {
+  color: var(--mc-bullish);
+}
+
+.down {
+  color: var(--mc-bearish);
+}
+
+/* Converging on the pin is the state that matters into expiry, so it gets the
+   accent; diverging is a real reading too, not a warning. */
+.converging {
+  color: var(--mc-accent);
+}
+
+.diverging,
+.steady {
+  color: var(--mc-text-subtle);
+}
+
+.caption {
+  margin: 0;
+  font-size: var(--mc-text-xs);
+  line-height: 1.6;
+  color: var(--mc-text-subtle);
+}

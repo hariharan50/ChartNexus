@@ -16,6 +16,7 @@ from marketcompass.contexts.options_analytics.api.dependencies import Services
 from marketcompass.contexts.options_analytics.api.schemas import (
     GexResponse,
     IvHistoryResponse,
+    MaxPainSeriesResponse,
     OiSeriesResponse,
     OiViewResponse,
     PcrSeriesResponse,
@@ -229,6 +230,44 @@ async def pcr_series(
 
     payload = await services.pcr_series(principal.tenant_id, symbol, trade_date=_trade_date(date_))
     response = PcrSeriesResponse.of(payload)
+    await redis.client.set(cache_key, response.model_dump_json(), ex=_CACHE_TTL_SECONDS)
+    return response
+
+
+@router.get(
+    "/max-pain-series/{instrument_id}",
+    response_model=MaxPainSeriesResponse,
+    summary="Intraday max pain against the tradable future",
+    description=(
+        "One point per capture: the max-pain strike and the current-month "
+        "future. Where the Max Pain profile answers where max pain is now, "
+        "this answers where it has been going - the migration through the "
+        "session is the reading, and a single snapshot cannot show it."
+    ),
+    responses={422: {"description": "Unknown instrument"}},
+)
+async def max_pain_series(
+    request: Request,
+    principal: CurrentPrincipal,
+    services: Services,
+    instrument_id: InstrumentParam,
+    *,
+    date_: DateParam = None,
+) -> MaxPainSeriesResponse:
+    symbol = instrument_id.strip().upper()
+    redis = get_container(request).redis
+    # No interval in the key: three numbers a capture, so the timeframe is
+    # applied on the client and one cached entry serves them all.
+    cache_key = redis.key("lab:max-pain-series", str(principal.tenant_id), symbol, _day_key(date_))
+
+    cached = await redis.client.get(cache_key)
+    if cached is not None:
+        return MaxPainSeriesResponse.model_validate_json(cached)
+
+    payload = await services.max_pain_series(
+        principal.tenant_id, symbol, trade_date=_trade_date(date_)
+    )
+    response = MaxPainSeriesResponse.of(payload)
     await redis.client.set(cache_key, response.model_dump_json(), ex=_CACHE_TTL_SECONDS)
     return response
 
