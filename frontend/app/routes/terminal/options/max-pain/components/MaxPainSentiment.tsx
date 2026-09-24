@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 import EChart from '$shared/charts/EChart';
-import { buildMaxPainGaugeOption } from '$shared/charts/options/max-pain-gauge';
+import { buildZonedGaugeOption } from '$shared/charts/options/zoned-gauge';
 import { useChartTheme } from '$shared/charts/theme/use-chart-theme';
 import type { ChartTheme } from '$shared/charts/theme/types';
 import type { MaxPainBias, MaxPainZone } from '../max-pain-data';
@@ -44,10 +44,10 @@ export default function MaxPainSentiment({ bias, maxPain, spot }: Props) {
 
   const option = useMemo(
     () =>
-      buildMaxPainGaugeOption(
+      buildZonedGaugeOption(
         {
           position: bias.position,
-          gapPct: bias.gapPct,
+          readout: `${bias.gapPct >= 0 ? '+' : ''}${bias.gapPct.toFixed(2)}%`,
           zone: bias.label,
           zoneColor: color
         },

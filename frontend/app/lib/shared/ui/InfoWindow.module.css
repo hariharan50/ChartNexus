@@ -1,0 +1,176 @@
+/* The shared explainer window's chrome.
+   It inherits --mc-accent from whatever page opens it, so it tones to that
+   page rather than carrying a palette of its own. */
+
+.overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  /* Extra room at the top so the window clears the fixed navbar rather than
+     hugging it; otherwise near-symmetric, keeping it centred. */
+  padding: 84px 20px 28px;
+  background: color-mix(in srgb, #000 55%, transparent);
+  backdrop-filter: blur(3px);
+  animation: info-fade 140ms ease;
+}
+
+@media (max-width: 40rem) {
+  .overlay {
+    padding: 72px 14px 16px;
+  }
+}
+
+@keyframes info-fade {
+  from {
+    opacity: 0;
+  }
+}
+
+/* A full-bleed transparent button behind the window: click-to-close that stays
+   reachable without hanging a handler on a non-interactive div. */
+.backdrop {
+  position: absolute;
+  inset: 0;
+  border: 0;
+  padding: 0;
+  background: transparent;
+  cursor: default;
+}
+
+.window {
+  position: relative;
+  z-index: 1;
+  width: min(52rem, 100%);
+  /* Fills the padded overlay up to a cap; the body scrolls inside it. */
+  max-height: 100%;
+  display: flex;
+  flex-direction: column;
+  border: 1px solid var(--mc-border);
+  border-radius: var(--mc-radius-lg);
+  background: var(--mc-surface-raised, var(--mc-surface));
+  box-shadow: 0 24px 60px -20px rgb(0 0 0 / 60%);
+  overflow: hidden;
+  animation: info-pop 160ms ease;
+}
+
+@keyframes info-pop {
+  from {
+    opacity: 0;
+    transform: translateY(8px) scale(0.98);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .overlay,
+  .window {
+    animation: none;
+  }
+}
+
+.head {
+  flex: none;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--mc-space-3);
+  padding: var(--mc-space-4);
+  border-bottom: 1px solid var(--mc-border);
+  background: linear-gradient(
+    120deg,
+    color-mix(in srgb, var(--mc-accent) 14%, transparent),
+    color-mix(in srgb, var(--mc-accent) 4%, transparent)
+  );
+}
+
+.titleWrap {
+  display: flex;
+  align-items: center;
+  gap: var(--mc-space-3);
+}
+
+.mark {
+  display: grid;
+  place-items: center;
+  width: 2.375rem;
+  height: 2.375rem;
+  flex: none;
+  border-radius: 50%;
+  background: var(--mc-accent);
+  color: #fff;
+  font-weight: 800;
+}
+
+.title {
+  margin: 0;
+  font-size: var(--mc-text-base);
+  font-weight: 700;
+  color: var(--mc-text);
+}
+
+.kicker {
+  margin: 0.125rem 0 0;
+  font-size: var(--mc-text-xs);
+  color: var(--mc-text-subtle);
+}
+
+.close {
+  display: grid;
+  place-items: center;
+  width: 2rem;
+  height: 2rem;
+  flex: none;
+  border-radius: var(--mc-radius);
+  border: 1px solid var(--mc-border);
+  background: var(--mc-surface);
+  color: var(--mc-text-subtle);
+  font-size: 1.35rem;
+  line-height: 1;
+  cursor: pointer;
+  transition:
+    color var(--mc-duration-fast) ease,
+    border-color var(--mc-duration-fast) ease;
+}
+
+.close:hover {
+  color: var(--mc-text);
+  border-color: var(--mc-accent);
+}
+
+.tabs {
+  flex: none;
+  display: flex;
+  gap: 0.125rem;
+  padding: var(--mc-space-2) var(--mc-space-4) 0;
+  border-bottom: 1px solid var(--mc-border);
+}
+
+.tab {
+  border: 0;
+  border-bottom: 2px solid transparent;
+  background: transparent;
+  color: var(--mc-text-subtle);
+  font-size: var(--mc-text-sm);
+  font-weight: 700;
+  padding: var(--mc-space-2) var(--mc-space-3);
+  cursor: pointer;
+  transition: color var(--mc-duration-fast) ease;
+}
+
+.tab:hover {
+  color: var(--mc-text);
+}
+
+.tab-active {
+  color: var(--mc-accent);
+  border-bottom-color: var(--mc-accent);
+}
+
+.body {
+  flex: 1;
+  min-height: 0;
+  padding: var(--mc-space-4);
+  overflow-y: auto;
+}

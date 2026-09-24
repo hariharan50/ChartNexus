@@ -1,0 +1,275 @@
+.grid {
+  display: flex;
+  flex-direction: column;
+  gap: var(--mc-space-4);
+}
+
+.panel {
+  padding: var(--mc-space-4);
+  background: var(--mc-surface);
+  border: 1px solid var(--mc-border);
+  border-radius: var(--mc-radius-lg);
+}
+
+.wide {
+  min-width: 0;
+}
+
+.head {
+  margin-bottom: var(--mc-space-4);
+}
+
+.title {
+  margin: 0;
+  font-size: var(--mc-text-sm);
+  font-weight: 700;
+}
+
+.sub {
+  margin: 0.125rem 0 0;
+  font-size: var(--mc-text-xs);
+  line-height: 1.5;
+  color: var(--mc-text-subtle);
+}
+
+.empty {
+  margin: 0;
+  font-size: var(--mc-text-sm);
+  color: var(--mc-text-subtle);
+}
+
+/* Direction is carried by the global `.mc-up` / `.mc-down` utilities, not by
+   classes local to this file — see the note beside them in app.css. Elements
+   that paint a fill read them through `currentcolor`. */
+
+/* -- who is on which side --------------------------------------------------- */
+
+.headline {
+  margin: 0 0 var(--mc-space-4);
+  font-size: var(--mc-text-base);
+  font-weight: 600;
+  line-height: 1.5;
+  color: var(--mc-text);
+}
+
+.splits {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--mc-space-3);
+}
+
+.split {
+  display: grid;
+  grid-template-columns: 4rem minmax(0, 1fr) 11rem;
+  align-items: center;
+  gap: var(--mc-space-3);
+}
+
+@media (max-width: 44rem) {
+  .split {
+    grid-template-columns: 4rem minmax(0, 1fr);
+  }
+
+  .split-counts {
+    grid-column: 2;
+    justify-content: flex-start;
+  }
+}
+
+.split-name {
+  font-size: var(--mc-text-sm);
+  font-weight: 700;
+}
+
+/* The bar *is* the book: the two sides always fill it, so their widths are
+   read against each other rather than against an axis. */
+.split-bar {
+  display: flex;
+  height: 1.75rem;
+  border-radius: var(--mc-radius);
+  overflow: hidden;
+  background: var(--mc-surface-raised);
+}
+
+.split-empty {
+  border: 1px dashed var(--mc-border-strong);
+  background: transparent;
+}
+
+.side {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 0;
+  background: currentcolor;
+  transition: width var(--mc-duration-fast) ease;
+}
+
+/* White on the filled side, so the label reads at any width. */
+.side-text {
+  font-size: var(--mc-text-xs);
+  font-weight: 700;
+  color: #fff;
+  white-space: nowrap;
+  padding: 0 0.375rem;
+}
+
+.split-counts {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  justify-content: flex-end;
+  font-size: var(--mc-text-xs);
+  font-weight: 600;
+}
+
+.split-sep {
+  color: var(--mc-text-subtle);
+  font-weight: 400;
+}
+
+.legend {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+  flex-wrap: wrap;
+  margin: var(--mc-space-4) 0 0;
+  padding-top: var(--mc-space-3);
+  border-top: 1px solid var(--mc-border);
+  font-size: var(--mc-text-xs);
+  color: var(--mc-text-subtle);
+}
+
+.key {
+  width: 0.75rem;
+  height: 0.75rem;
+  border-radius: 3px;
+  background: currentcolor;
+}
+
+.key + .key {
+  margin-left: var(--mc-space-3);
+}
+
+.legend-note {
+  margin-left: auto;
+}
+
+/* -- the matrix ------------------------------------------------------------- */
+
+.matrix-scroll {
+  overflow-x: auto;
+}
+
+.matrix {
+  display: grid;
+  grid-template-columns: 5rem repeat(4, minmax(6.5rem, 1fr));
+  gap: 0.25rem;
+  min-width: 34rem;
+}
+
+.corner {
+  display: block;
+}
+
+.col-head,
+.row-head {
+  display: flex;
+  align-items: center;
+  font-size: var(--mc-text-xs);
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--mc-text-subtle);
+}
+
+.col-head {
+  justify-content: flex-end;
+  padding-bottom: 0.25rem;
+}
+
+.cell {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  min-height: var(--mc-control-h);
+  padding: 0 0.625rem;
+  border: 1px solid transparent;
+  border-radius: var(--mc-radius);
+  font-size: var(--mc-text-sm);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  /* White on a filled cell: the background is already carrying the direction,
+     and same-hue text on a same-hue fill is the one combination that does not
+     read at any intensity. */
+  color: #fff;
+}
+
+/* An unpublished pair keeps its place in the grid rather than collapsing it —
+   the matrix is read positionally. */
+.cell-empty {
+  color: var(--mc-text-subtle);
+  border-color: var(--mc-border-strong);
+  border-style: dashed;
+  font-weight: 600;
+}
+
+/* -- money flow ------------------------------------------------------------- */
+
+.flows {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.375rem;
+}
+
+.flow-row {
+  display: grid;
+  grid-template-columns: 9rem minmax(0, 1fr) 7rem;
+  align-items: center;
+  gap: var(--mc-space-3);
+  font-size: var(--mc-text-sm);
+}
+
+.flow-label {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--mc-text-subtle);
+}
+
+/* Bars diverge from a centre rule, so a row's side is its sign — direction
+   reads before any number does. */
+.track {
+  position: relative;
+  height: 1.125rem;
+  background: var(--mc-surface-raised);
+  border-radius: var(--mc-radius);
+}
+
+.mid {
+  position: absolute;
+  left: 50%;
+  top: 0;
+  bottom: 0;
+  width: 1px;
+  background: var(--mc-border-strong);
+}
+
+.bar {
+  position: absolute;
+  top: 3px;
+  bottom: 3px;
+  border-radius: 2px;
+  background: currentcolor;
+}
+
+.flow-value {
+  text-align: right;
+  font-weight: 700;
+}

@@ -2,7 +2,7 @@ import type { EChartsCoreOption } from '../echarts-modules';
 import type { ChartTheme } from '../theme/types';
 
 /**
- * The sentiment gauge on the Max Pain page, in TradingView's "Summary" styling.
+ * A five-zone sentiment gauge, in TradingView's "Summary" styling.
  *
  * A half circle over five zones — Strong sell through Strong buy — drawn as a
  * pale track with a gradient arc filled up to the needle. What it measures is
@@ -16,8 +16,8 @@ import type { ChartTheme } from '../theme/types';
  * it read the same number.
  */
 
-/** Zone names, left (most bearish) to right (most bullish). */
-const ZONE_LABELS = ['Strong sell', 'Sell', 'Neutral', 'Buy', 'Strong buy'] as const;
+/** The Max Pain page's zone names, and the default when a caller names none. */
+export const SENTIMENT_ZONES = ['Strong sell', 'Sell', 'Neutral', 'Buy', 'Strong buy'] as const;
 
 /** Midpoint of each fifth — the only axis positions that carry a label. */
 const MIDPOINTS = [0.1, 0.3, 0.5, 0.7, 0.9];
@@ -37,25 +37,34 @@ const RAMP = [
   { offset: 1, color: '#4f46e5' }
 ];
 
-export interface MaxPainGaugeInput {
+export interface ZonedGaugeInput {
   /**
    * 0–1 across the arc: 0.5 is spot exactly on max pain, 0 and 1 are the ends
    * of the range the page considers a full move.
    */
   position: number;
-  /** Signed gap between spot and max pain, in percent — the centre readout. */
-  gapPct: number;
+  /** The centre readout, already formatted — a percent, a ratio, a count. */
+  readout: string;
   /** Which zone `position` falls in, so the right rim label can be picked out. */
   zone: string;
   /** The zone's colour, shared with the verdict rendered beneath the gauge. */
   zoneColor: string;
+  /**
+   * Five rim labels, most bearish first.
+   *
+   * Parameterised because the arc is not specific to any one reading: the same
+   * five-zone dial serves "spot against max pain" and "longs against shorts",
+   * and only the words around the rim differ.
+   */
+  zoneLabels?: readonly string[];
 }
 
-export function buildMaxPainGaugeOption(
-  input: MaxPainGaugeInput,
+export function buildZonedGaugeOption(
+  input: ZonedGaugeInput,
   theme: ChartTheme
 ): EChartsCoreOption {
-  const { position, gapPct, zone, zoneColor } = input;
+  const { position, readout, zone, zoneColor } = input;
+  const zoneLabels = input.zoneLabels ?? SENTIMENT_ZONES;
 
   return {
     backgroundColor: 'transparent',
@@ -124,7 +133,7 @@ export function buildMaxPainGaugeOption(
           formatter: (value: number) => {
             const i = MIDPOINTS.findIndex((mid) => Math.abs(value - mid) < 1e-6);
             if (i < 0) return '';
-            const text = ZONE_LABELS[i]!;
+            const text = zoneLabels[i]!;
             // The reading itself is picked out; the other four recede. Done
             // with a rich style rather than a colour callback, which ECharts
             // supports far less consistently across versions.
@@ -140,7 +149,7 @@ export function buildMaxPainGaugeOption(
           fontSize: 24,
           fontWeight: 700,
           // The reading people act on is the gap, not the 0–1 arc position.
-          formatter: () => `${gapPct >= 0 ? '+' : ''}${gapPct.toFixed(2)}%`
+          formatter: () => readout
         },
         // Ten splits so the label midpoints (every 0.1) land on real axis
         // positions; nothing is drawn at them.

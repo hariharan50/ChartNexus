@@ -1,0 +1,61 @@
+/* Prose inside the shared InfoWindow. Reading copy, so the measure is capped
+   and the line height is looser than the terminal's dense default. */
+
+.section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--mc-space-3);
+  max-width: 44rem;
+}
+
+.p {
+  margin: 0;
+  font-size: var(--mc-text-sm);
+  line-height: 1.65;
+  color: var(--mc-text);
+}
+
+.h3 {
+  margin: var(--mc-space-2) 0 0;
+  font-size: var(--mc-text-sm);
+  font-weight: 700;
+  color: var(--mc-text);
+}
+
+.list {
+  margin: 0;
+  padding-left: 1.125rem;
+  display: flex;
+  flex-direction: column;
+  gap: var(--mc-space-2);
+  font-size: var(--mc-text-sm);
+  line-height: 1.6;
+  color: var(--mc-text);
+}
+
+/* Numbered because the order is the instruction — this is a procedure, not a
+   list of facts. */
+.steps {
+  margin: 0;
+  padding-left: 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: var(--mc-space-3);
+  font-size: var(--mc-text-sm);
+  line-height: 1.65;
+  color: var(--mc-text);
+}
+
+.steps li::marker {
+  color: var(--mc-accent);
+  font-weight: 700;
+}
+
+.note {
+  margin: var(--mc-space-2) 0 0;
+  padding-top: var(--mc-space-3);
+  border-top: 1px solid var(--mc-border);
+  font-size: var(--mc-text-xs);
+  line-height: 1.6;
+  color: var(--mc-text-subtle);
+}

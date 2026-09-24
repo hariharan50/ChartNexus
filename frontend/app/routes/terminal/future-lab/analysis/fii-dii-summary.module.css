@@ -12,7 +12,10 @@
 
 .layout {
   display: grid;
-  grid-template-columns: 17.5rem minmax(0, 1fr);
+  /* 20rem, not 17.5: the date picker wrapped its month onto a second line and
+     the two segmented controls sat tight against their labels. The board keeps
+     the rest, and `minmax(0, 1fr)` still lets it shrink rather than overflow. */
+  grid-template-columns: 20rem minmax(0, 1fr);
   gap: var(--mc-space-4);
   align-items: start;
   min-width: 0;
@@ -243,11 +246,26 @@
   white-space: nowrap;
 }
 
+/*
+ * No `color` here on purpose.
+ *
+ * It used to set `var(--mc-text)`, which is `.board td` — a class *and* an
+ * element, so it outranked the bare `.up`/`.down` the cells also carry and
+ * quietly repainted every signed figure plain white. The board looked
+ * uncoloured while the markup said otherwise, which is the worst kind of
+ * styling bug: nothing to see in the JSX. Cells inherit the card's ink
+ * instead, leaving the tone classes free to win.
+ */
 .board td {
   padding: var(--mc-space-3);
   border-bottom: 1px solid var(--mc-border);
-  color: var(--mc-text);
   white-space: nowrap;
+}
+
+/* Signed figures carry the reading, so they get weight as well as hue —
+   colour alone is not something every reader can rely on. */
+.board td.numeric {
+  font-weight: 600;
 }
 
 /*
@@ -287,10 +305,12 @@
   text-align: right;
 }
 
-/* Yesterday's figure is context, not a reading: it stays in the quiet ink so
-   the eye lands on Net and Change. */
+/* Yesterday's figure is coloured too, so a book that was short yesterday and
+   is short today reads as one continuous state rather than two unrelated
+   numbers. It stays a shade lighter than the live columns so the eye still
+   lands on Net and Change first. */
 .muted {
-  color: var(--mc-text-muted);
+  opacity: 0.75;
 }
 
 .expand {
@@ -347,4 +367,47 @@
   .layout {
     grid-template-columns: minmax(0, 1fr);
   }
+}
+
+/* The card heading's right-hand side: how fresh the session is, what unit the
+   board is in, and the guide button. All three are statements *about* the data,
+   which is why they sit together here rather than among the rail's controls —
+   and the rail was too narrow for the status strip, which clipped its own
+   "updated" text. Wraps rather than overflowing on a narrow viewport. */
+.head-right {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: var(--mc-space-3);
+  min-width: 0;
+  /* The card head aligns its children on the baseline, which is right for a
+     title beside a line of text and wrong for a group this tall. Centring just
+     this side leaves the shared rule alone for the five other pages using it. */
+  align-self: center;
+}
+
+/* Deliberately quiet — it is an affordance for a reader who wants it, not a
+   call to action competing with the data. */
+.help {
+  display: grid;
+  place-items: center;
+  width: 1.5rem;
+  height: 1.5rem;
+  flex: none;
+  border: 1px solid var(--mc-border-strong);
+  border-radius: 50%;
+  background: var(--mc-surface-raised);
+  color: var(--mc-text-subtle);
+  font-size: var(--mc-text-xs);
+  font-weight: 700;
+  cursor: pointer;
+  transition:
+    color var(--mc-duration-fast) ease,
+    border-color var(--mc-duration-fast) ease;
+}
+
+.help:hover {
+  color: var(--mc-accent);
+  border-color: var(--mc-accent);
 }

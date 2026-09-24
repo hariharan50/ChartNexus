@@ -411,6 +411,27 @@ body {
   font-feature-settings: 'tnum' 1;
 }
 
+/*
+ * The two directions, as globals.
+ *
+ * Almost every board in the app paints something green or red, and a component
+ * that picks its tone class dynamically — `s[side]`, where side is 'up' or
+ * 'down' — gets no help from the compiler or the tests if that class is missing
+ * from its stylesheet: CSS Modules hand back `undefined`, `cx` drops it, and the
+ * board renders grey with nothing in the markup to explain why. Under vitest the
+ * module is a proxy that echoes any key, so tests cannot catch it either.
+ *
+ * As plain strings these cannot silently vanish, and they are greppable.
+ * Elements that paint a fill rather than text read them through `currentcolor`.
+ */
+.mc-up {
+  color: var(--mc-bullish);
+}
+
+.mc-down {
+  color: var(--mc-bearish);
+}
+
 :where(a) {
   color: var(--mc-accent);
   text-decoration: none;

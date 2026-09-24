@@ -15,8 +15,10 @@ import type {
   BreadthCount,
   FlowSegment,
   IndexHeader,
+  OiGroup,
   OiParticipant,
   RotationQuadrant,
+  SegmentFlow,
   WireNumber
 } from '$contexts/market-breadth/types';
 import { toNumber } from '../stocks-data';
@@ -309,4 +311,246 @@ export const OI_IMBALANCE_TOLERANCE = 10;
 export function fmtContracts(value: number | null | undefined): string {
   if (value === null || value === undefined || !Number.isFinite(value)) return '—';
   return contracts.format(value);
+}
+
+/* -- positioning ------------------------------------------------------------ */
+
+/**
+ * The FII index-futures long/short ratio, and where it sits on a gauge.
+ *
+ * This is the number traders actually take away from the participant file: how
+ * many longs the foreign institutions hold for every short in index futures.
+ * Above 1 they are positioned for a rise, below 1 for a fall, and the distance
+ * from 1 is the conviction. The page carried the two legs that make it inside a
+ * collapsed row and never divided them.
+ */
+export type RatioZone = 'heavily_short' | 'short' | 'balanced' | 'long' | 'heavily_long';
+
+export interface LongShortRead {
+  long: number;
+  short: number;
+  ratio: number;
+  /** 0–1 along the gauge, log-scaled about parity — see `gaugePosition`. */
+  position: number;
+  zone: RatioZone;
+}
+
+/**
+ * Ratios beyond this factor either way sit at the gauge's ends.
+ *
+ * Sixteen, not eight. FII index-futures books routinely run at eight or more
+ * shorts per long — a live session measured 40,611 against 339,224, a ratio of
+ * 0.12 — and an extent of 8 pinned the needle to the very edge on an ordinary
+ * day, so the dial lost all resolution exactly where it is read most. A floor
+ * of one-sixteenth keeps realistic readings inside the arc and reserves the
+ * ends for genuinely extreme ones.
+ */
+const RATIO_EXTENT = 16;
+
+const ZONE_EDGES: { below: number; zone: RatioZone }[] = [
+  { below: 0.5, zone: 'heavily_short' },
+  { below: 0.85, zone: 'short' },
+  { below: 1.18, zone: 'balanced' },
+  { below: 2, zone: 'long' }
+];
+
+/**
+ * A ratio's place on a 0–1 dial, log-scaled about parity.
+ *
+ * Halving and doubling are the same size of move, so 0.5 and 2.0 have to sit
+ * equally far either side of centre. On a linear scale they do not: a ratio can
+ * only fall to 0 on the bearish side but rise without limit on the bullish one,
+ * so everything short is crushed into the left sliver of the dial. Logs make
+ * the two directions symmetric, which is the only way the needle means
+ * anything.
+ */
+export function gaugePosition(ratio: number): number {
+  if (!Number.isFinite(ratio) || ratio <= 0) return 0;
+  const span = Math.log(RATIO_EXTENT);
+  // −1 at one-eighth, 0 at parity, +1 at eight times.
+  const offset = Math.log(ratio) / span;
+  return Math.max(0, Math.min(1, 0.5 + offset / 2));
+}
+
+export function ratioZone(ratio: number): RatioZone {
+  for (const edge of ZONE_EDGES) {
+    if (ratio < edge.below) return edge.zone;
+  }
+  return 'heavily_long';
+}
+
+/**
+ * The long/short read for one participant and segment, or `undefined`.
+ *
+ * `undefined` rather than a zeroed reading when the legs are missing or the
+ * short side is zero: a ratio with an empty denominator is undefined, and
+ * rendering `Infinity` — or worse, 0 — as a sentiment gauge would be a
+ * confident answer to a question the data cannot answer.
+ */
+export function longShortRead(
+  groups: OiGroup[] | undefined,
+  participant: OiParticipant,
+  segment: FlowSegment
+): LongShortRead | undefined {
+  const row = groups
+    ?.flatMap((group) => group.rows)
+    .find((entry) => entry.participant === participant && entry.segment === segment);
+
+  const long = row?.legs?.long ?? null;
+  const short = row?.legs?.short ?? null;
+  if (long === null || short === null || short <= 0 || long < 0) return undefined;
+
+  const ratio = long / short;
+  return { long, short, ratio, position: gaugePosition(ratio), zone: ratioZone(ratio) };
+}
+
+/**
+ * The long share of a book, 0–1.
+ *
+ * The figure the split bar is drawn from, and a better headline than the ratio
+ * it comes from: "11% of the book is long" is a proportion anyone can picture,
+ * where "0.12" needs converting before it means anything.
+ */
+export function longShare(read: LongShortRead): number {
+  const total = read.long + read.short;
+  return total > 0 ? read.long / total : 0;
+}
+
+/** Every participant's long/short read in one segment, in board order. */
+export interface ParticipantSplit {
+  participant: OiParticipant;
+  read: LongShortRead | undefined;
+}
+
+export function longShortByParticipant(
+  groups: OiGroup[] | undefined,
+  segment: FlowSegment
+): ParticipantSplit[] {
+  return OI_PARTICIPANTS.map((participant) => ({
+    participant,
+    read: longShortRead(groups, participant, segment)
+  }));
+}
+
+export const ZONE_LABELS: Record<RatioZone, string> = {
+  heavily_short: 'Heavily short',
+  short: 'Net short',
+  balanced: 'Balanced',
+  long: 'Net long',
+  heavily_long: 'Heavily long'
+};
+
+/**
+ * The reading in a sentence.
+ *
+ * Phrased as "N shorts for every long" rather than as the raw ratio: 0.12 means
+ * nothing at a glance, "eight shorts for every long" means everything.
+ */
+export function ratioVerdict(read: LongShortRead, who = 'FII'): string {
+  const { ratio } = read;
+  if (read.zone === 'balanced') {
+    return 'Longs and shorts are close to even — no directional lean in the futures book.';
+  }
+  if (ratio < 1) {
+    return `${who} hold about ${(1 / ratio).toFixed(1)} shorts for every long — positioned for a fall.`;
+  }
+  return `${who} hold about ${ratio.toFixed(1)} longs for every short — positioned for a rise.`;
+}
+
+/* -- the positioning matrix ------------------------------------------------- */
+
+export interface MatrixCell {
+  participant: OiParticipant;
+  segment: FlowSegment;
+  /** `null` where the file published no row for this pair. */
+  net: number | null;
+  change: number | null;
+}
+
+/** The four segments the participant file carries, in board order. */
+export const OI_SEGMENTS: FlowSegment[] = [
+  'index_futures',
+  'index_options',
+  'stock_futures',
+  'stock_options'
+];
+
+export const OI_PARTICIPANTS: OiParticipant[] = ['fii', 'dii', 'pro', 'client'];
+
+/**
+ * Every participant/segment pair, present or not.
+ *
+ * A fixed 4×4 rather than whatever the payload happened to contain: the grid is
+ * read positionally, so a missing row has to leave a gap in its own place
+ * rather than shuffling every cell after it into the wrong column.
+ */
+export function positioningMatrix(groups: OiGroup[] | undefined): MatrixCell[] {
+  const rows = groups?.flatMap((group) => group.rows) ?? [];
+  const cells: MatrixCell[] = [];
+
+  for (const participant of OI_PARTICIPANTS) {
+    for (const segment of OI_SEGMENTS) {
+      const row = rows.find(
+        (entry) => entry.participant === participant && entry.segment === segment
+      );
+      cells.push({
+        participant,
+        segment,
+        net: row?.net ?? null,
+        change: row?.change ?? null
+      });
+    }
+  }
+  return cells;
+}
+
+/**
+ * How strongly to tint a matrix cell: 0–1 against the largest net on the board.
+ *
+ * Scaled to the board's own maximum rather than an absolute figure, because the
+ * segments differ by orders of magnitude — stock options dwarf index futures —
+ * and a fixed scale would leave most of the sixteen cells invisible. The square
+ * root keeps the mid-sized cells distinguishable instead of washing everything
+ * but the largest out to nearly nothing.
+ */
+export function matrixIntensity(net: number | null, peak: number): number {
+  if (net === null || peak <= 0) return 0;
+  return Math.min(1, Math.sqrt(Math.abs(net) / peak));
+}
+
+/* -- money flow ------------------------------------------------------------- */
+
+export interface FlowRow {
+  id: string;
+  label: string;
+  /** Rupees crore, signed. `null` where the file published no figure. */
+  net: number | null;
+}
+
+/**
+ * The day's value flow, as rows for a diverging board.
+ *
+ * Cash carries both participants; the derivative segments carry FII only,
+ * because that is all the published value tables hold. A segment with no figure
+ * is kept with a `null` so the board shows a gap rather than quietly listing
+ * fewer segments than the exchange publishes.
+ */
+export function moneyFlowRows(segments: SegmentFlow[] | undefined): FlowRow[] {
+  const bySegment = new Map((segments ?? []).map((entry) => [entry.segment, entry]));
+  const cash = bySegment.get('cash');
+
+  const rows: FlowRow[] = [
+    { id: 'fii-cash', label: 'FII Cash', net: toNumber(cash?.fii.net ?? null) },
+    { id: 'dii-cash', label: 'DII Cash', net: toNumber(cash?.dii?.net ?? null) }
+  ];
+
+  for (const segment of OI_SEGMENTS) {
+    const entry = bySegment.get(segment);
+    rows.push({
+      id: `fii-${segment}`,
+      label: `FII ${SEGMENT_LABELS[segment]}`,
+      net: toNumber(entry?.fii.net ?? null)
+    });
+  }
+  return rows;
 }

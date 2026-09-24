@@ -187,3 +187,59 @@ describe('the leg breakdown', () => {
     expect(screen.queryByText('Total book')).not.toBeInTheDocument();
   });
 });
+
+/**
+ * Colour on the signed columns.
+ *
+ * The board carried `tone()` on its cells all along and still rendered every
+ * figure plain white: `.board td { color: … }` is a class *and* an element, so
+ * it outranked the bare `.up`/`.down` the same cells carried. Nothing in the
+ * JSX looked wrong, which is what made it survive.
+ *
+ * jsdom does not apply CSS-module styles and the class names are hashed, so
+ * the colour itself is not assertable here. What is assertable — and what
+ * actually regressed — is that each signed cell carries a *distinct* tone
+ * class per sign, and that the two signs never resolve to the same one.
+ */
+describe('OiBoard colouring', () => {
+  function cellsOf(container: HTMLElement) {
+    return Array.from(container.querySelectorAll('tbody tr:first-child td'));
+  }
+
+  /** One band holding a single row, so the cell indices stay predictable. */
+  function oneRow(over: Partial<OiRow>): OiGroup {
+    const only = row('fii', 'index_futures', over);
+    return { key: 'fii', rows: [only], net: only.net, change: only.change };
+  }
+
+  it('gives a positive and a negative net different tone classes', () => {
+    const positive = render(<OiBoard groups={[oneRow({ net: 505_000 })]} view="participant" />);
+    const posClass = cellsOf(positive.container)[2]?.className ?? '';
+    positive.unmount();
+
+    const negative = render(<OiBoard groups={[oneRow({ net: -505_000 })]} view="participant" />);
+    const negClass = cellsOf(negative.container)[2]?.className ?? '';
+
+    expect(posClass).not.toBe('');
+    expect(negClass).not.toBe('');
+    expect(posClass).not.toBe(negClass);
+  });
+
+  it('colours the previous-day column too, so a steady short reads as one state', () => {
+    const { container } = render(
+      <OiBoard groups={[oneRow({ net: -5, previous_net: -7 })]} view="participant" />
+    );
+
+    const [, , net, prev] = cellsOf(container);
+    // Same sign, so the same tone — the column is no longer inert grey.
+    expect(prev?.className).toContain(net?.className.split(' ').at(-1) ?? '@@');
+  });
+
+  it('leaves an unchanged figure uncoloured rather than picking a side', () => {
+    const { container } = render(<OiBoard groups={[oneRow({ change: 0 })]} view="participant" />);
+
+    const change = cellsOf(container)[4];
+    const net = cellsOf(container)[2];
+    expect(change?.className).not.toBe(net?.className);
+  });
+});

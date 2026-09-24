@@ -49,3 +49,12 @@
 .compact {
   padding: 0 0.375rem;
 }
+
+/* No pill: the card around it is already the frame, and the colour carries the
+   meaning on its own. Wins over the per-source rules above by sitting later in
+   the file at equal specificity. */
+.plain {
+  padding: 0;
+  border-color: transparent;
+  background: transparent;
+}

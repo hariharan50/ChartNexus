@@ -4,6 +4,8 @@ import { useFiiDiiSummaryQuery } from '$contexts/market-breadth/queries';
 import { isoDateIST } from '$shared/formatting/ist-clock';
 import DataSourceBadge from '$shared/ui/DataSourceBadge';
 import { SessionStatus } from '../components/SessionHeader';
+import FiiDiiCharts from './components/FiiDiiCharts';
+import FiiDiiGuide from './components/FiiDiiGuide';
 import DatePicker from '$shared/ui/DatePicker';
 import { cx } from '$shared/ui/cx';
 import IconChevronDown from '$shared/ui/icons/IconChevronDown';
@@ -36,6 +38,9 @@ export const meta: Route.MetaFunction = () => [
 /** Which axis the open-interest board bands by. */
 export type View = 'participant' | 'segment';
 
+/** Whether the right pane shows the exact table or the charts over it. */
+export type Mode = 'board' | 'charts';
+
 /**
  * One published participant session, described completely.
  *
@@ -55,6 +60,9 @@ export default function FiiDiiSummary() {
   // date string cannot express, and the only one that should keep polling.
   const [session, setSession] = useState<string | null>(null);
   const [view, setView] = useState<View>('participant');
+  // Board or charts — the same session, read as digits or as shapes.
+  const [mode, setMode] = useState<Mode>('board');
+  const [guideOpen, setGuideOpen] = useState(false);
 
   const summary = useFiiDiiSummaryQuery({ date: session });
   const data = summary.data;
@@ -133,14 +141,22 @@ export default function FiiDiiSummary() {
               </div>
             </div>
 
-            {/* The board only polls while it is showing the latest session —
-                an archived day cannot change — so the strip says "not
-                refreshing" there rather than counting at a settled day. */}
-            <SessionStatus
-              intervalSeconds={FLOW_REFRESH_SECONDS}
-              active={session === null && !summary.isFetching}
-              updatedAt={summary.dataUpdatedAt}
-            />
+            <div className={p.field}>
+              <span className={p.fieldLabel}>Display</span>
+              <div className={s.segmented} role="group" aria-label="Show the board or the charts">
+                {(['board', 'charts'] as Mode[]).map((option) => (
+                  <button
+                    key={option}
+                    type="button"
+                    className={cx(s.segment, option === mode && s.segmentOn)}
+                    aria-pressed={option === mode}
+                    onClick={() => setMode(option)}
+                  >
+                    {option === 'board' ? 'Board' : 'Charts'}
+                  </button>
+                ))}
+              </div>
+            </div>
           </section>
 
           {data ? <ValueCard data={data} /> : null}
@@ -148,10 +164,35 @@ export default function FiiDiiSummary() {
 
         <section className={s.card}>
           <div className={s.cardHead}>
-            <h2 className={s.cardTitle}>Open interest by {view}</h2>
-            {/* Says which unit the board is in, every time. The rail beside
-                it is crores and the two are not comparable. */}
-            <p className={s.cardNote}>Contracts held, not value traded</p>
+            <h2 className={s.cardTitle}>
+              {mode === 'board' ? `Open interest by ${view}` : 'The session, charted'}
+            </h2>
+            <div className={p.headRight}>
+              {/* The board only polls while it is showing the latest session —
+                  an archived day cannot change — so the strip says "not
+                  refreshing" there rather than counting at a settled day. */}
+              <SessionStatus
+                intervalSeconds={FLOW_REFRESH_SECONDS}
+                active={session === null && !summary.isFetching}
+                updatedAt={summary.dataUpdatedAt}
+              />
+              {/* Says which unit the board is in, every time. The rail beside
+                  it is crores and the two are not comparable. */}
+              <p className={s.cardNote}>
+                {mode === 'board'
+                  ? 'Contracts held, not value traded'
+                  : 'Positions in contracts, flow in rupees crore'}
+              </p>
+              <button
+                type="button"
+                className={p.help}
+                aria-label="How to read this page"
+                title="How to read this page"
+                onClick={() => setGuideOpen(true)}
+              >
+                ?
+              </button>
+            </div>
           </div>
 
           {summary.isError ? (
@@ -162,6 +203,8 @@ export default function FiiDiiSummary() {
             <p className={s.placeholder}>
               No open interest was published for {sessionLabel(data?.session_date ?? null)}.
             </p>
+          ) : mode === 'charts' && data ? (
+            <FiiDiiCharts data={data} />
           ) : (
             <OiBoard groups={groups} view={view} />
           )}
@@ -177,6 +220,8 @@ export default function FiiDiiSummary() {
           ) : null}
         </section>
       </div>
+
+      {guideOpen ? <FiiDiiGuide onClose={() => setGuideOpen(false)} /> : null}
 
       {data?.source === 'mock' ? (
         <p className={s.note}>
@@ -314,7 +359,7 @@ function ValueCard({ data }: { data: FlowSummary }) {
           latest session only. The derivative segments and the board below are archived and exact.
         </p>
       )}
-      <DataSourceBadge source={data.source} />
+      <DataSourceBadge source={data.source} plain />
     </section>
   );
 }
@@ -420,8 +465,12 @@ function Band({
                 </button>
               </td>
               <td className={cx(p.numeric, tone(row.net))}>{fmtOiNet(row.net)}</td>
-              {/* Yesterday is context, not a reading: quiet ink, no colour. */}
-              <td className={cx(p.numeric, p.muted)}>{fmtOiNet(row.previous_net)}</td>
+              {/* Coloured like the others, one shade back: yesterday is still
+                  context, but a book that was short then and is short now
+                  should read as one state rather than two stray numbers. */}
+              <td className={cx(p.numeric, p.muted, tone(row.previous_net))}>
+                {fmtOiNet(row.previous_net)}
+              </td>
               <td className={cx(p.numeric, tone(row.change))}>{fmtOiChange(row.change)}</td>
             </tr>
             {expanded ? (
@@ -449,17 +498,21 @@ function Band({
 function Legs({ legs }: { legs: OiLegs | null }) {
   if (!legs) return <p className={s.cardNote}>No breakdown published for this row.</p>;
 
+  // `side` is the leg's direction, not the sign of its number: a leg count is
+  // always positive, so colouring it by value would paint the whole row green.
+  // Bullish legs (long futures, long calls, short puts) read green, bearish red
+  // — the same convention the nets above them use.
   const entries =
     legs.long !== null || legs.short !== null
       ? [
-          { label: 'Long', value: legs.long },
-          { label: 'Short', value: legs.short }
+          { label: 'Long', value: legs.long, side: 'up' as const },
+          { label: 'Short', value: legs.short, side: 'down' as const }
         ]
       : [
-          { label: 'Call long', value: legs.call_long },
-          { label: 'Call short', value: legs.call_short },
-          { label: 'Put long', value: legs.put_long },
-          { label: 'Put short', value: legs.put_short }
+          { label: 'Call long', value: legs.call_long, side: 'up' as const },
+          { label: 'Call short', value: legs.call_short, side: 'down' as const },
+          { label: 'Put long', value: legs.put_long, side: 'down' as const },
+          { label: 'Put short', value: legs.put_short, side: 'up' as const }
         ];
 
   return (
@@ -467,10 +520,13 @@ function Legs({ legs }: { legs: OiLegs | null }) {
       {entries.map((entry) => (
         <span className={p.leg} key={entry.label}>
           <span className={p.legLabel}>{entry.label}</span>
-          <span className={p.legValue}>{fmtContracts(entry.value)}</span>
+          <span className={cx(p.legValue, entry.side === 'up' ? s.up : s.down)}>
+            {fmtContracts(entry.value)}
+          </span>
         </span>
       ))}
       <span className={p.leg}>
+        {/* The book's size, not a direction — left uncoloured deliberately. */}
         <span className={p.legLabel}>Total book</span>
         <span className={p.legValue}>{fmtContracts(legs.total)}</span>
       </span>
