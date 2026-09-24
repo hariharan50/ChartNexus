@@ -11,6 +11,7 @@ import { cx } from '$shared/ui/cx';
 import IconBolt from '$shared/ui/icons/IconBolt';
 import IconChart from '$shared/ui/icons/IconChart';
 import IconChevronDown from '$shared/ui/icons/IconChevronDown';
+import IconGlobe from '$shared/ui/icons/IconGlobe';
 import IconMessage from '$shared/ui/icons/IconMessage';
 import IconMoon from '$shared/ui/icons/IconMoon';
 import IconSearch from '$shared/ui/icons/IconSearch';
@@ -114,7 +115,13 @@ const nav: NavItem[] = [
         icon: IconTarget,
         desc: 'Deeper multi-index analytics'
       },
-      { label: 'Options', href: '/options', icon: IconChart, desc: 'Chain, PCR, max pain & OI' }
+      { label: 'Options', href: '/options', icon: IconChart, desc: 'Chain, PCR, max pain & OI' },
+      {
+        label: 'GIA — Global Index Analysis',
+        href: '/global-index-analysis',
+        icon: IconGlobe,
+        desc: 'World benchmarks & the Indian open'
+      }
     ]
   },
   { label: 'Options Lab', href: '/options/open-interest', mega: true },

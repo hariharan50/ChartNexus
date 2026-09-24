@@ -8,6 +8,7 @@ import {
   toBackendSymbol,
   vixCard
 } from '$contexts/market-data/derive';
+import { useFiiDiiSummaryQuery } from '$contexts/market-breadth/queries';
 import {
   useMarketStatusQuery,
   useOptionChainQuery,
@@ -39,6 +40,9 @@ export default function Dashboard() {
   const sensexQ = useSpotQuery('SENSEX');
   const bankNiftyQ = useSpotQuery('BANKNIFTY');
   const chainQ = useOptionChainQuery(toBackendSymbol(focused));
+  // Same query key the Future Lab's FII/DII pages use, so the rail card and
+  // the page it links to share one fetch and can never disagree.
+  const flowQ = useFiiDiiSummaryQuery();
 
   const chain = chainQ.data;
 
@@ -121,9 +125,9 @@ export default function Dashboard() {
           )}
         </div>
         <aside className={s.right}>
-          {chainMetrics ? <OptionsMetricsCard metrics={chainMetrics} /> : null}
-          <FiiDiiCard />
           <GapIndicatorCard reading={gap} loading={focusedSpotQ.isPending} label={focusedLabel} />
+          {chainMetrics ? <OptionsMetricsCard metrics={chainMetrics} /> : null}
+          <FiiDiiCard summary={flowQ.data} loading={flowQ.isPending} />
         </aside>
       </div>
 

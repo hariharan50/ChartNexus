@@ -45,6 +45,7 @@ export default [
   layout('routes/terminal/layout.tsx', [
     route('dashboard', 'routes/terminal/dashboard/route.tsx'),
     route('advanced-dashboard', 'routes/terminal/advanced-dashboard/route.tsx'),
+    route('global-index-analysis', 'routes/terminal/global-index-analysis/route.tsx'),
     route('option-chain', 'routes/terminal/option-chain/route.tsx'),
     route('analyse', 'routes/terminal/analyse/route.tsx'),
     route('tools', 'routes/terminal/tools.tsx'),

@@ -53,3 +53,30 @@
 .down {
   color: var(--mc-bearish);
 }
+
+.streak {
+  margin: 0.25rem 0 0;
+  font-size: var(--mc-text-xs);
+  color: var(--mc-text-subtle);
+}
+
+/* The five-session total sits under the rule, so the day's net stays the
+   figure the eye lands on first. */
+.window {
+  margin: var(--mc-space-3) 0 0;
+  padding-top: var(--mc-space-3);
+  border-top: 1px solid var(--mc-border);
+  font-size: var(--mc-text-xs);
+  color: var(--mc-text-subtle);
+}
+
+.detail {
+  font-size: var(--mc-text-xs);
+  font-weight: 600;
+  color: var(--mc-accent);
+  text-decoration: none;
+}
+
+.detail:hover {
+  text-decoration: underline;
+}
