@@ -10,3 +10,19 @@
   line-height: 1;
   user-select: none;
 }
+
+/*
+ * A real logo, masked to the same circle the initials fill.
+ *
+ * `contain` rather than `cover`: a wordmark favicon cropped to fill a circle
+ * loses the word, which is the only part of it that identifies the company.
+ * The white plate is what the marks are drawn for — nearly all of them are
+ * dark-on-transparent, and on this app's dark surface they would otherwise
+ * vanish.
+ */
+.logo {
+  object-fit: contain;
+  background: #fff;
+  /* The plate would otherwise sit tight against a dark mark's own edge. */
+  padding: 1px;
+}
