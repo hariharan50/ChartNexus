@@ -178,6 +178,12 @@ ignore_imports = [
     # only `build_report`, which assembles the data gatherer, narrator, renderer and
     # enrollment store from the container. Exempt that single edge.
     "marketcompass.contexts.report.api.dependencies -> marketcompass.infrastructure.report.build_report",
+    # Global markets uses the same sanctioned-bridge pattern: its API dependency
+    # imports only `build_global_services`, which assembles the Yahoo quote
+    # source, the simulated fallback, the GIFT adapter and the Redis journal
+    # from the container. The context owns the handoff maths; only the bridge
+    # knows which provider is behind the port.
+    "marketcompass.contexts.global_markets.api.dependencies -> marketcompass.infrastructure.global_markets.build_global",
 ]
 modules = [
     "marketcompass.contexts.identity",
@@ -193,6 +199,7 @@ modules = [
     "marketcompass.contexts.options_analytics",
     "marketcompass.contexts.futures_analytics",
     "marketcompass.contexts.market_breadth",
+    "marketcompass.contexts.global_markets",
     "marketcompass.contexts.signals",
     "marketcompass.contexts.outcomes",
     "marketcompass.contexts.content_intelligence",

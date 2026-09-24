@@ -1,0 +1,45 @@
+.wrap {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(9rem, 1fr));
+  gap: var(--mc-space-3);
+}
+
+.cell {
+  padding: var(--mc-space-3);
+  background: var(--mc-surface);
+  border: 1px solid var(--mc-border);
+  border-radius: var(--mc-radius);
+}
+
+.label {
+  margin: 0 0 0.25rem;
+  font-size: var(--mc-text-xs);
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--mc-text-subtle);
+}
+
+.value {
+  margin: 0;
+  font-size: var(--mc-text-lg);
+  font-weight: 700;
+}
+
+.move {
+  margin: 0.125rem 0 0;
+  font-size: var(--mc-text-xs);
+  font-weight: 600;
+}
+
+.up {
+  color: var(--mc-bullish);
+}
+
+.down {
+  color: var(--mc-bearish);
+}
+
+.none {
+  color: var(--mc-text-subtle);
+}

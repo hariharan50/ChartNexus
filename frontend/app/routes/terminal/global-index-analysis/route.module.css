@@ -1,0 +1,118 @@
+.page {
+  display: flex;
+  flex-direction: column;
+  gap: var(--mc-space-4);
+  padding: var(--mc-space-4);
+}
+
+.head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--mc-space-4);
+  flex-wrap: wrap;
+}
+
+.titles h1 {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--mc-space-2);
+  margin: 0;
+  font-size: var(--mc-text-xl);
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
+.ico {
+  display: inline-flex;
+  color: var(--mc-accent);
+}
+
+.titles p {
+  margin: 0.25rem 0 0;
+  font-size: var(--mc-text-sm);
+  color: var(--mc-text-subtle);
+}
+
+.controls {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--mc-space-3);
+}
+
+.stamp {
+  font-size: var(--mc-text-xs);
+  color: var(--mc-text-subtle);
+}
+
+/* The two reads sit side by side deliberately: the whole point is that they
+   are independent answers to the same question and can disagree. */
+.reads {
+  display: grid;
+  grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr);
+  gap: var(--mc-space-4);
+  align-items: start;
+}
+
+@media (max-width: 60rem) {
+  .reads {
+    grid-template-columns: 1fr;
+  }
+}
+
+.error {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--mc-space-3);
+  padding: var(--mc-space-4);
+  background: var(--mc-surface);
+  border: 1px solid var(--mc-bearish);
+  border-radius: var(--mc-radius-lg);
+}
+
+.error p {
+  margin: 0;
+  font-size: var(--mc-text-sm);
+}
+
+.error button {
+  min-height: var(--mc-control-h);
+  padding: 0 var(--mc-control-px);
+  border: 1px solid var(--mc-border-strong);
+  border-radius: var(--mc-radius);
+  background: var(--mc-surface-raised);
+  color: var(--mc-text);
+  font-size: var(--mc-text-sm);
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.loading {
+  display: flex;
+  flex-direction: column;
+  gap: var(--mc-space-4);
+}
+
+.skelWide,
+.skelRow {
+  display: block;
+  border-radius: var(--mc-radius-lg);
+  background: var(--mc-surface-raised);
+  border: 1px solid var(--mc-border);
+}
+
+.skelWide {
+  height: 11rem;
+}
+
+.skelRow {
+  height: 7rem;
+}
+
+.disclaimer {
+  margin: 0;
+  font-size: var(--mc-text-xs);
+  line-height: 1.6;
+  color: var(--mc-text-subtle);
+}

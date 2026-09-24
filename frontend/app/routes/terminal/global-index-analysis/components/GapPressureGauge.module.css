@@ -1,0 +1,182 @@
+.wrap {
+  background: var(--mc-surface);
+  border: 1px solid var(--mc-border);
+  border-radius: var(--mc-radius-lg);
+  box-shadow: var(--mc-shadow);
+  padding: var(--mc-space-4);
+}
+
+.head {
+  margin-bottom: var(--mc-space-3);
+}
+
+.title {
+  margin: 0;
+  font-size: var(--mc-text-base);
+  font-weight: 700;
+}
+
+.sub {
+  margin: 0.125rem 0 0;
+  font-size: var(--mc-text-xs);
+  color: var(--mc-text-subtle);
+}
+
+.score {
+  margin: 0;
+  font-size: 2.25rem;
+  font-weight: 700;
+  line-height: 1.05;
+  letter-spacing: -0.02em;
+}
+
+.band {
+  margin: 0.25rem 0 var(--mc-space-3);
+  font-size: var(--mc-text-xs);
+  font-weight: 700;
+  letter-spacing: 0.08em;
+}
+
+.up {
+  color: var(--mc-bullish);
+}
+
+.down {
+  color: var(--mc-bearish);
+}
+
+.score:not(.up):not(.down),
+.band:not(.up):not(.down) {
+  color: var(--mc-text-subtle);
+}
+
+.gauge {
+  position: relative;
+  height: 0.5rem;
+  border-radius: 999px;
+  background: linear-gradient(
+    90deg,
+    var(--mc-bearish) 0%,
+    var(--mc-surface-raised) 50%,
+    var(--mc-bullish) 100%
+  );
+  border: 1px solid var(--mc-border);
+}
+
+.zero {
+  position: absolute;
+  left: 50%;
+  top: -2px;
+  bottom: -2px;
+  width: 1px;
+  background: var(--mc-border-strong);
+}
+
+.needle {
+  position: absolute;
+  top: -0.25rem;
+  width: 0.5rem;
+  height: 1rem;
+  margin-left: -0.25rem;
+  border-radius: 2px;
+  background: currentcolor;
+  border: 1px solid var(--mc-surface);
+}
+
+.needle:not(.up):not(.down) {
+  color: var(--mc-text-subtle);
+}
+
+.scale {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 0.25rem;
+  font-size: 0.625rem;
+  color: var(--mc-text-subtle);
+}
+
+.breakdownTitle {
+  margin: var(--mc-space-4) 0 var(--mc-space-2);
+  font-size: var(--mc-text-xs);
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--mc-text-subtle);
+}
+
+.waterfall {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.row {
+  display: grid;
+  grid-template-columns: 6.5rem 1fr 4rem 3.25rem;
+  align-items: center;
+  gap: var(--mc-space-2);
+  font-size: var(--mc-text-xs);
+}
+
+.name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Diverging from a centre line: a bar's side is its sign, so direction reads
+   before any number does. */
+.track {
+  position: relative;
+  height: 0.875rem;
+  background: var(--mc-surface-raised);
+  border-radius: 3px;
+}
+
+.mid {
+  position: absolute;
+  left: 50%;
+  top: 0;
+  bottom: 0;
+  width: 1px;
+  background: var(--mc-border-strong);
+}
+
+.bar {
+  position: absolute;
+  top: 2px;
+  bottom: 2px;
+  border-radius: 2px;
+}
+
+.bar.up {
+  background: var(--mc-bullish);
+}
+
+.bar.down {
+  background: var(--mc-bearish);
+}
+
+.move {
+  text-align: right;
+  color: var(--mc-text-subtle);
+}
+
+.points {
+  text-align: right;
+  font-weight: 700;
+}
+
+.missing,
+.caveat {
+  margin: var(--mc-space-3) 0 0;
+  font-size: var(--mc-text-xs);
+  color: var(--mc-text-subtle);
+}
+
+.missing {
+  color: var(--mc-warning);
+}

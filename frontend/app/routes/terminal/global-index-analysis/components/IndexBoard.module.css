@@ -1,0 +1,116 @@
+.wrap {
+  background: var(--mc-surface);
+  border: 1px solid var(--mc-border);
+  border-radius: var(--mc-radius-lg);
+  box-shadow: var(--mc-shadow);
+  padding: var(--mc-space-4);
+}
+
+.head {
+  margin-bottom: var(--mc-space-3);
+}
+
+.title {
+  margin: 0;
+  font-size: var(--mc-text-base);
+  font-weight: 700;
+}
+
+.sub {
+  margin: 0.125rem 0 0;
+  font-size: var(--mc-text-xs);
+  color: var(--mc-text-subtle);
+}
+
+/* The table scrolls inside its own box; the page never scrolls sideways. */
+.scroller {
+  overflow-x: auto;
+}
+
+.table {
+  width: 100%;
+  min-width: 34rem;
+  border-collapse: collapse;
+  font-size: var(--mc-text-sm);
+}
+
+.table th,
+.table td {
+  padding: 0.4375rem var(--mc-space-2);
+  text-align: left;
+  border-bottom: 1px solid var(--mc-border);
+}
+
+.table thead th {
+  font-size: var(--mc-text-xs);
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--mc-text-subtle);
+  border-bottom-color: var(--mc-border-strong);
+}
+
+.num {
+  text-align: right;
+}
+
+.name {
+  font-weight: 600;
+}
+
+/* The region header doubles as its own aggregate row. */
+.groupRow th {
+  font-size: var(--mc-text-xs);
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--mc-text-subtle);
+  background: var(--mc-surface-raised);
+}
+
+.groupRow td {
+  background: var(--mc-surface-raised);
+  font-size: var(--mc-text-xs);
+}
+
+.groupNote {
+  color: var(--mc-text-subtle);
+  font-size: var(--mc-text-xs);
+}
+
+.up {
+  color: var(--mc-bullish);
+}
+
+.down {
+  color: var(--mc-bearish);
+}
+
+.none {
+  color: var(--mc-text-subtle);
+}
+
+.trend {
+  width: 4.5rem;
+}
+
+.spark {
+  display: block;
+  width: 4rem;
+  height: 1.25rem;
+}
+
+.spark.none {
+  color: var(--mc-text-subtle);
+}
+
+.noSpark {
+  color: var(--mc-text-subtle);
+}
+
+.hours {
+  width: 7rem;
+  text-align: right;
+  font-size: var(--mc-text-xs);
+  color: var(--mc-text-subtle);
+}

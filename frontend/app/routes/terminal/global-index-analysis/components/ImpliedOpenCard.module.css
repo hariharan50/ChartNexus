@@ -1,0 +1,122 @@
+.wrap {
+  background: var(--mc-surface);
+  border: 1px solid var(--mc-border);
+  border-radius: var(--mc-radius-lg);
+  box-shadow: var(--mc-shadow);
+  padding: var(--mc-space-4);
+}
+
+.head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--mc-space-3);
+  margin-bottom: var(--mc-space-3);
+}
+
+.title {
+  margin: 0;
+  font-size: var(--mc-text-base);
+  font-weight: 700;
+}
+
+.sub {
+  margin: 0.125rem 0 0;
+  font-size: var(--mc-text-xs);
+  color: var(--mc-text-subtle);
+}
+
+.signal {
+  display: inline-flex;
+  align-items: center;
+  min-height: var(--mc-control-h);
+  margin: 0;
+  padding: 0 var(--mc-control-px);
+  border: 1px solid currentcolor;
+  border-radius: var(--mc-radius);
+  font-size: var(--mc-text-sm);
+  font-weight: 700;
+  letter-spacing: 0.08em;
+}
+
+.up {
+  color: var(--mc-bullish);
+}
+
+.signal.up {
+  background: var(--mc-bullish-weak);
+}
+
+.down {
+  color: var(--mc-bearish);
+}
+
+.signal.down {
+  background: var(--mc-bearish-weak);
+}
+
+.flat {
+  color: var(--mc-text-subtle);
+}
+
+.signal.flat {
+  background: var(--mc-surface-raised);
+  border-color: var(--mc-border-strong);
+}
+
+.gap {
+  margin: var(--mc-space-3) 0 0;
+  font-size: var(--mc-text-lg);
+  font-weight: 700;
+}
+
+.figures {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: var(--mc-space-3);
+  margin: var(--mc-space-4) 0 0;
+  padding-top: var(--mc-space-3);
+  border-top: 1px solid var(--mc-border);
+}
+
+.cell dt {
+  margin: 0 0 0.25rem;
+  font-size: var(--mc-text-xs);
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--mc-text-subtle);
+}
+
+.cell dd {
+  margin: 0;
+  font-size: var(--mc-text-sm);
+  font-weight: 700;
+}
+
+.bases {
+  margin: var(--mc-space-2) 0 0;
+  font-size: var(--mc-text-xs);
+  color: var(--mc-text-subtle);
+}
+
+.verdict {
+  margin: var(--mc-space-4) 0 0;
+  padding-top: var(--mc-space-3);
+  border-top: 1px solid var(--mc-border);
+  font-size: var(--mc-text-xs);
+  color: var(--mc-text-subtle);
+}
+
+/* A disagreement is a finding, not a fault — it gets emphasis, not an alarm. */
+.verdict.flagged {
+  color: var(--mc-text);
+  font-weight: 600;
+}
+
+.empty,
+.caveat {
+  margin: var(--mc-space-3) 0 0;
+  font-size: var(--mc-text-xs);
+  color: var(--mc-text-subtle);
+}
