@@ -180,3 +180,28 @@ def live_proxy_frames(
         future_price=future_price if future_price is not None else spot,
     )
     return [opening, current]
+
+
+def for_expiry(
+    snapshots: list[ChainSnapshot], expiry: str | None
+) -> list[ChainSnapshot]:
+    """Keep only the captures that priced ``expiry``.
+
+    The archive holds whichever expiry the ingest worker follows - the nearest
+    one. Ask a page for a far expiry and the live chain obliges, but the
+    archived frames behind the intraday series are still the near contract, so
+    without this filter the page draws one expiry's header over another's rows
+    and never says a word about it.
+
+    Filtering instead of substituting is the point: an expiry the archive does
+    not hold comes back empty, and the caller's own snapshot-count check then
+    drops it to the live-proxy tier, which is the honest answer - open versus
+    now, off the chain that expiry actually has.
+
+    ``expiry`` of ``None`` means "whatever the backend picks", so everything is
+    kept. Frames with no recorded expiry are kept too: they predate the column,
+    and dropping them would silently empty the archive for every older session.
+    """
+    if expiry is None:
+        return snapshots
+    return [snap for snap in snapshots if snap.expiry in (None, expiry)]

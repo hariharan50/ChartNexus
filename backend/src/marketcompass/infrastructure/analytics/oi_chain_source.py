@@ -115,6 +115,7 @@ def _to_chain_snapshot(record: OptionChainSnapshotRecord) -> ChainSnapshot:
     return ChainSnapshot(
         captured_at=record.captured_at,
         rows=rows,
+        expiry=record.expiry,
         spot=float(record.spot) if record.spot is not None else None,
         atm_strike=float(record.atm_strike) if record.atm_strike is not None else None,
         max_pain=float(record.max_pain_strike) if record.max_pain_strike is not None else None,

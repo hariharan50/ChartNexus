@@ -48,6 +48,15 @@ class ChainSnapshot:
 
     captured_at: datetime
     rows: tuple[ChainRow, ...] = field(default_factory=tuple)
+    #: Which expiry this capture priced, as an ISO date.
+    #:
+    #: The archive holds whichever expiry the ingest worker was following - in
+    #: practice the nearest. Without this field a page asked for a far expiry
+    #: would draw that expiry's header over the *near* expiry's archived rows,
+    #: which is a chart that silently describes a different contract from the
+    #: one its title claims. ``None`` on the synthesised frames, which are built
+    #: from a chain whose expiry the caller already knows.
+    expiry: str | None = None
     spot: float | None = None
     atm_strike: float | None = None
     max_pain: float | None = None

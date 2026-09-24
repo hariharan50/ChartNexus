@@ -89,12 +89,15 @@ export interface SkewView {
 
 export function getSkew(
   instrument: string,
-  opts: { date?: string | undefined } = {},
+  opts: { date?: string | undefined; expiry?: string | undefined } = {},
   fetcher?: typeof fetch
 ): Promise<SkewView> {
   return apiFetch<SkewView>({
     url: `/options-lab/skew/${encodeURIComponent(instrument)}`,
-    params: opts.date ? { date: opts.date } : {},
+    params: {
+      ...(opts.date ? { date: opts.date } : {}),
+      ...(opts.expiry ? { expiry: opts.expiry } : {})
+    },
     fetcher
   });
 }

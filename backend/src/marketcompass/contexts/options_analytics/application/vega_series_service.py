@@ -40,6 +40,7 @@ from marketcompass.contexts.options_analytics.application.session import (
     SESSION_CLOSE,
     attach_utc,
     drop_future,
+    for_expiry,
     future_of,
     iso,
     session_open_utc,
@@ -81,13 +82,24 @@ class GetVega:
         self._strike_span = strike_span
 
     async def __call__(
-        self, tenant_id: TenantId, symbol: str, *, trade_date: datetime | None = None
+        self,
+        tenant_id: TenantId,
+        symbol: str,
+        *,
+        expiry: str | None = None,
+        trade_date: datetime | None = None,
     ) -> dict[str, Any]:
         now = self._now()
         # Live reads today; Historical replays the picked archived session.
         as_of = trade_date or now
-        chain = await self._provider.fetch(tenant_id, symbol)
+        chain = await self._provider.fetch(tenant_id, symbol, expiry=expiry)
         snaps = await self._snapshots.day_snapshots(tenant_id, symbol, trade_date_utc=as_of)
+        # Filtered by what the chain actually resolved to, not by what was
+        # asked for. A provider handed an expiry it does not list answers
+        # with its nearest instead, and keying off the request would then
+        # draw one contract's archived rows under another's header. Anything
+        # the archive does not hold drops to live-proxy, which is honest.
+        snaps = for_expiry(snaps, chain.expiry)
         # Only the live day is clipped to "now"; a past session is whole.
         if trade_date is None:
             snaps = drop_future(snaps, now)
@@ -99,12 +111,15 @@ class GetVega:
 
         ordered = sorted(snaps, key=lambda snap: snap.captured_at)
         axis = self._axis(ordered)
-        expiry = _parse_expiry(chain.expiry)
+        # Named apart from the `expiry` parameter, which is the ISO string the
+        # caller asked for; this is the resolved chain's expiry as a date, for
+        # the time-to-expiry maths.
+        expiry_date = _parse_expiry(chain.expiry)
 
         frames: list[dict[str, Any]] = []
         quoted = 0.0
         for snap in ordered:
-            built = _frame(snap, axis=axis, expiry=expiry, chain=chain)
+            built = _frame(snap, axis=axis, expiry=expiry_date, chain=chain)
             if built is None:
                 continue
             frames.append(built[0])

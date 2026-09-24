@@ -57,7 +57,9 @@ def _snap(minutes: int, *, oi: int, change: int = 0, volume: int = 0, **header) 
 
 
 class StubProvider:
-    async def fetch(self, tenant_id: TenantId, symbol: str) -> ProviderChain:
+    async def fetch(
+        self, tenant_id: TenantId, symbol: str, *, expiry: str | None = None
+    ) -> ProviderChain:
         return ProviderChain(rows=_rows(oi=100), spot=24_650.0, lot_size=75, expiry="2026-08-11")
 
 
@@ -153,7 +155,9 @@ async def test_before_the_bell_there_is_no_session_to_proxy() -> None:
 
 
 class _ProviderWithChange:
-    async def fetch(self, tenant_id: TenantId, symbol: str) -> ProviderChain:
+    async def fetch(
+        self, tenant_id: TenantId, symbol: str, *, expiry: str | None = None
+    ) -> ProviderChain:
         return ProviderChain(
             rows=_rows(oi=1_000, change=100, volume=4_200),
             spot=24_650.0,

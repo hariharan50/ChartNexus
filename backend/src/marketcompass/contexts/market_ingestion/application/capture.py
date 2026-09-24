@@ -74,6 +74,7 @@ class CaptureChainSnapshots:
         clock: Clock,
         symbols: tuple[str, ...],
         allow_mock: bool = False,
+        expiries: int = 1,
     ) -> None:
         self._source = source
         self._writer = writer
@@ -81,6 +82,7 @@ class CaptureChainSnapshots:
         self._clock = clock
         self._symbols = symbols
         self._allow_mock = allow_mock
+        self._expiries = max(1, expiries)
 
     async def __call__(self) -> CaptureResult:
         now = self._clock.now()
@@ -100,21 +102,52 @@ class CaptureChainSnapshots:
         )
 
     async def _capture_one(self, symbol: str, acc: _Acc) -> None:
+        """Archive this symbol's configured expiries.
+
+        Each expiry is captured independently: one contract's broker hiccup must
+        not cost the others, exactly as one symbol's failure must not cost the
+        rest of the universe.
+        """
+        for expiry in await self._expiries_for(symbol):
+            await self._capture_expiry(symbol, expiry, acc)
+
+    async def _expiries_for(self, symbol: str) -> tuple[str | None, ...]:
+        """The expiries to capture, or ``(None,)`` to take whatever resolves.
+
+        ``None`` is not the same as "the nearest": it lets the provider pick,
+        which is the behaviour this loop had before it could archive more than
+        one contract, and the one it keeps when configured for a single expiry.
+        """
+        if self._expiries <= 1:
+            return (None,)
         try:
-            observation = await self._source.fetch(symbol)
+            listed = await self._source.expiries(symbol)
+        except Exception:
+            # A source that cannot list them still has a default chain to give.
+            return (None,)
+        if not listed:
+            return (None,)
+        return tuple(listed[: self._expiries])
+
+    async def _capture_expiry(self, symbol: str, expiry: str | None, acc: _Acc) -> None:
+        # Failures are labelled with the contract, not just the symbol: "NIFTY
+        # failed" is useless when five of its six expiries wrote fine.
+        label = symbol if expiry is None else f"{symbol}@{expiry}"
+        try:
+            observation = await self._source.fetch(symbol, expiry=expiry)
         except Exception as exc:
-            acc.failed.append((symbol, repr(exc)))
+            acc.failed.append((label, repr(exc)))
             return
         if observation is None:
             return
 
         try:
-            stored = await self._store(symbol, observation, acc)
+            stored = await self._store(label, observation, acc)
         except Exception as exc:
-            acc.failed.append((symbol, repr(exc)))
+            acc.failed.append((label, repr(exc)))
             return
         if stored:
-            acc.written.append(symbol)
+            acc.written.append(label)
 
     async def _store(self, symbol: str, observation: ChainObservation, acc: _Acc) -> bool:
         """Decide whether this observation belongs in the archive, and write it.
@@ -158,7 +191,12 @@ class CaptureChainSnapshots:
         return True
 
     async def _is_unchanged(self, snapshot: SnapshotToWrite) -> bool:
-        previous = await self._writer.latest_rows(snapshot.symbol, snapshot.session_date)
+        # Scoped to this contract. Compared across expiries the check is
+        # meaningless: two different contracts never have identical books, so
+        # it would pass every time and the frozen-tape guard would be dead code.
+        previous = await self._writer.latest_rows(
+            snapshot.symbol, snapshot.session_date, snapshot.expiry
+        )
         return previous is not None and previous == snapshot.rows
 
     def _to_snapshot(self, observation: ChainObservation) -> SnapshotToWrite:

@@ -9,9 +9,9 @@ import { lastTradingDayIST } from '$shared/formatting/ist-clock';
 import { cx } from '$shared/ui/cx';
 import IconChart from '$shared/ui/icons/IconChart';
 import IconCheck from '$shared/ui/icons/IconCheck';
-import IconChevronDown from '$shared/ui/icons/IconChevronDown';
 import IconEye from '$shared/ui/icons/IconEye';
 import IconEyeOff from '$shared/ui/icons/IconEyeOff';
+import ExpiryPicker from '../components/ExpiryPicker';
 import HistoryMode, { type Mode } from '../components/HistoryMode';
 import {
   bucketIndices,
@@ -19,7 +19,6 @@ import {
   clockLabel,
   dateLabel,
   DEFAULT_TIMEFRAME,
-  expiryLabel,
   fmtOi,
   fmtPcr,
   fmtPrice,
@@ -91,6 +90,8 @@ export default function PriceVsOi() {
   const [timeframe, setTimeframe] = useState<Timeframe>(DEFAULT_TIMEFRAME);
   const [selectedStrike, setSelectedStrike] = useState<number | null>(null);
   const [sidebarOpen, setSidebarOpen] = useState(true);
+  // `undefined` means "whatever the backend picks" — the nearest expiry.
+  const [expiry, setExpiry] = useState<string | undefined>(undefined);
   // Bumped to rebuild every panel at the full time range — the zoom reset. The
   // dataZoom window lives inside ECharts, so a fresh option is how it is cleared.
   const [zoomNonce, setZoomNonce] = useState(0);
@@ -139,7 +140,10 @@ export default function PriceVsOi() {
       historyDate
     ],
     queryFn: () =>
-      getStrikeSeries(instrument.symbol, selectedStrike ?? undefined, { date: historyDate }),
+      getStrikeSeries(instrument.symbol, selectedStrike ?? undefined, {
+        date: historyDate,
+        expiry
+      }),
     refetchInterval: dataMode === 'live' ? REFETCH_MS : false
   });
 
@@ -371,13 +375,14 @@ export default function PriceVsOi() {
 
                 <div className={s.twoUp}>
                   <div>
-                    <p className={s.subLabel}>Expiry</p>
-                    <div className={s.select}>
-                      <span>{expiryLabel(vw.expiry_date)}</span>
-                      <span className={s.caret} aria-hidden="true">
-                        <IconChevronDown />
-                      </span>
-                    </div>
+                    <ExpiryPicker
+                      instrument={instrument.symbol}
+                      value={expiry}
+                      onChange={setExpiry}
+                      resolved={vw.expiry_date}
+                      archiveBound
+                      dataQuality={vw?.data_quality}
+                    />
                   </div>
                   <div>
                     <p className={s.subLabel}>Timeframe</p>

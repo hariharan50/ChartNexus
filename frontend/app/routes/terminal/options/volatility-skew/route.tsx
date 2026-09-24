@@ -9,9 +9,9 @@ import { useChartTheme } from '$shared/charts/theme/use-chart-theme';
 import { isoDateIST, lastTradingDayIST } from '$shared/formatting/ist-clock';
 import { cx } from '$shared/ui/cx';
 import IconChart from '$shared/ui/icons/IconChart';
-import IconChevronDown from '$shared/ui/icons/IconChevronDown';
 import IconEye from '$shared/ui/icons/IconEye';
 import IconEyeOff from '$shared/ui/icons/IconEyeOff';
+import ExpiryPicker from '../components/ExpiryPicker';
 import HistoryMode, { type Mode } from '../components/HistoryMode';
 import ReplayBar, { REPLAY_SPEEDS, type ReplaySpeed } from '../smart-oi/components/ReplayBar';
 import TimeRangeSlider from '../components/TimeRangeSlider';
@@ -22,7 +22,6 @@ import {
   coverageNote,
   csvFilename,
   dateLabel,
-  expiryLabel,
   fmtIv,
   fmtOi,
   freshnessLabel,
@@ -67,6 +66,8 @@ export default function VolatilitySkew() {
   const [showCallOi, setShowCallOi] = useState(true);
   const [showPutOi, setShowPutOi] = useState(true);
   const [sidebarOpen, setSidebarOpen] = useState(true);
+  // `undefined` means "whatever the backend picks" — the nearest expiry.
+  const [expiry, setExpiry] = useState<string | undefined>(undefined);
   /** Frame being shown, or -1 to follow live (far right of the track). */
   const [frameIdx, setFrameIdx] = useState(-1);
   /** Strike-slider handles, in index space; `null` until the ladder is known. */
@@ -88,8 +89,8 @@ export default function VolatilitySkew() {
 
   const historyDate = dataMode === 'historical' ? date : undefined;
   const query = useQuery<SkewView>({
-    queryKey: ['options-lab', 'skew', instrument.symbol, dataMode, historyDate],
-    queryFn: () => getSkew(instrument.symbol, { date: historyDate }),
+    queryKey: ['options-lab', 'skew', instrument.symbol, dataMode, historyDate, expiry],
+    queryFn: () => getSkew(instrument.symbol, { date: historyDate, expiry }),
     refetchInterval: dataMode === 'live' && !replay ? REFETCH_MS : false
   });
 
@@ -290,16 +291,14 @@ export default function VolatilitySkew() {
 
                 <HistoryMode mode={dataMode} date={date} onMode={setDataMode} onDate={setDate} />
 
-                <p className={s.subLabel}>Expiry</p>
-                {/* Read-only: the snapshot archive holds the nearest expiry
-                    only, so offering a picker would promise history that was
-                    never captured. */}
-                <div className={s.select} title="The archived session's expiry">
-                  <span>{expiryLabel(view.expiry_date)}</span>
-                  <span className={s.caret} aria-hidden="true">
-                    <IconChevronDown />
-                  </span>
-                </div>
+                <ExpiryPicker
+                  instrument={instrument.symbol}
+                  value={expiry}
+                  onChange={setExpiry}
+                  resolved={view.expiry_date}
+                  archiveBound
+                  dataQuality={view?.data_quality}
+                />
 
                 <p className={s.subLabel}>X-Axis View</p>
                 <div className={s.segRow} role="tablist" aria-label="X-axis view">

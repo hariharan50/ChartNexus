@@ -41,17 +41,33 @@ class FakeCalendar:
 
 
 class FakeSource:
-    """Returns a preset observation per symbol, or raises the preset error."""
+    """Returns a preset observation per symbol, or raises the preset error.
 
-    def __init__(self, results: dict[str, ChainObservation | Exception | None]) -> None:
+    An observation comes back stamped with the expiry it was asked for, because
+    a real source returns a different contract's book for each one. A fake that
+    handed back the same expiry every time would make the capture loop's
+    per-contract duplicate check reject every expiry after the first.
+    """
+
+    def __init__(
+        self,
+        results: dict[str, ChainObservation | Exception | None],
+        listed: dict[str, tuple[str, ...]] | None = None,
+    ) -> None:
         self._results = results
+        self.listed = listed or {}
         self.asked: list[str] = []
 
-    async def fetch(self, symbol: str) -> ChainObservation | None:
+    async def expiries(self, symbol: str) -> tuple[str, ...]:
+        return self.listed.get(symbol, ())
+
+    async def fetch(self, symbol: str, *, expiry: str | None = None) -> ChainObservation | None:
         self.asked.append(symbol)
         result = self._results.get(symbol)
         if isinstance(result, Exception):
             raise result
+        if result is not None and expiry is not None:
+            return replace(result, expiry=expiry)
         return result
 
     def set(self, symbol: str, result: ChainObservation) -> None:
@@ -67,11 +83,17 @@ class FakeWriter:
         self.saved.append(snapshot)
 
     async def latest_rows(
-        self, symbol: str, session_date: date
+        self, symbol: str, session_date: date, expiry: str | None = None
     ) -> tuple[ChainRowToWrite, ...] | None:
+        # Honours the expiry scope, as the real repository does: a fake that
+        # ignored it would compare each contract against whichever was written
+        # last and reject every expiry after the first as a duplicate.
         for snapshot in reversed(self.saved):
-            if snapshot.symbol == symbol and snapshot.session_date == session_date:
-                return snapshot.rows
+            if snapshot.symbol != symbol or snapshot.session_date != session_date:
+                continue
+            if expiry is not None and snapshot.expiry != expiry:
+                continue
+            return snapshot.rows
         return None
 
     async def has_source(self, symbol: str, session_date: date, source: str) -> bool:
@@ -103,7 +125,14 @@ def _observation(
     )
 
 
-def _capture(source: FakeSource, writer: FakeWriter, *, open_: bool, allow_mock: bool = False):
+def _capture(
+    source: FakeSource,
+    writer: FakeWriter,
+    *,
+    open_: bool,
+    allow_mock: bool = False,
+    expiries: int = 1,
+):
     return CaptureChainSnapshots(
         source=source,
         writer=writer,
@@ -111,6 +140,7 @@ def _capture(source: FakeSource, writer: FakeWriter, *, open_: bool, allow_mock:
         clock=FakeClock(CAPTURED_AT),
         symbols=("NIFTY",),
         allow_mock=allow_mock,
+        expiries=expiries,
     )
 
 
@@ -273,3 +303,75 @@ async def test_mock_is_still_written_on_a_day_with_no_live_capture() -> None:
     assert first.written == ("NIFTY",)
     assert second.written == ("NIFTY",)
     assert [s.source for s in writer.saved] == ["mock", "mock"]
+
+
+# -- several expiries per tick ------------------------------------------------
+
+
+async def test_one_expiry_asks_the_provider_to_choose() -> None:
+    """The behaviour the archive has always had, kept as the default.
+
+    ``None`` is not "the nearest" - it lets the provider resolve, which is what
+    every existing deployment's history was captured under.
+    """
+    source = FakeSource({"NIFTY": _observation("NIFTY")}, {"NIFTY": ("2026-10-01", "2026-10-08")})
+    writer = FakeWriter()
+
+    await _capture(source, writer, open_=True, allow_mock=True)()
+
+    assert len(writer.saved) == 1
+
+
+async def test_raising_the_setting_archives_a_session_for_each_expiry() -> None:
+    """The fix. Without this the series pages have history for the front month
+    only, and every other expiry falls back to a two-point open-versus-now."""
+    source = FakeSource(
+        {"NIFTY": _observation("NIFTY")},
+        {"NIFTY": ("2026-10-01", "2026-10-08", "2026-10-15", "2026-10-22")},
+    )
+    writer = FakeWriter()
+
+    result = await _capture(source, writer, open_=True, allow_mock=True, expiries=3)()
+
+    assert len(writer.saved) == 3
+    assert result.written == ("NIFTY@2026-10-01", "NIFTY@2026-10-08", "NIFTY@2026-10-15")
+
+
+async def test_it_never_asks_for_more_expiries_than_are_listed() -> None:
+    source = FakeSource({"NIFTY": _observation("NIFTY")}, {"NIFTY": ("2026-10-01",)})
+    writer = FakeWriter()
+
+    await _capture(source, writer, open_=True, allow_mock=True, expiries=6)()
+
+    assert len(writer.saved) == 1
+
+
+async def test_a_source_that_cannot_list_expiries_still_captures_one() -> None:
+    """A provider outage on the expiry list must not stop the archive entirely."""
+    source = FakeSource({"NIFTY": _observation("NIFTY")}, {})
+    writer = FakeWriter()
+
+    await _capture(source, writer, open_=True, allow_mock=True, expiries=6)()
+
+    assert len(writer.saved) == 1
+
+
+async def test_one_expiry_failing_does_not_cost_the_others() -> None:
+    """Same rule as one symbol not sinking the tick, one level down."""
+
+    class PartlyBroken(FakeSource):
+        async def fetch(self, symbol: str, *, expiry: str | None = None):  # type: ignore[no-untyped-def]
+            if expiry == "2026-10-08":
+                raise RuntimeError("broker hiccup")
+            return await super().fetch(symbol, expiry=expiry)
+
+    source = PartlyBroken(
+        {"NIFTY": _observation("NIFTY")},
+        {"NIFTY": ("2026-10-01", "2026-10-08", "2026-10-15")},
+    )
+    writer = FakeWriter()
+
+    result = await _capture(source, writer, open_=True, allow_mock=True, expiries=3)()
+
+    assert len(writer.saved) == 2
+    assert [label for label, _ in result.failed] == ["NIFTY@2026-10-08"]

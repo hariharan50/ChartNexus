@@ -8,9 +8,9 @@ import { getExpiries } from '$contexts/broker-connections/api';
 import { lastTradingDayIST } from '$shared/formatting/ist-clock';
 import { cx } from '$shared/ui/cx';
 import IconChart from '$shared/ui/icons/IconChart';
-import IconChevronDown from '$shared/ui/icons/IconChevronDown';
 import IconEye from '$shared/ui/icons/IconEye';
 import IconEyeOff from '$shared/ui/icons/IconEyeOff';
+import ExpiryPicker from '../components/ExpiryPicker';
 import HistoryMode, { type Mode } from '../components/HistoryMode';
 import {
   bucketIndices,
@@ -69,6 +69,8 @@ export default function IvIntradayChart() {
   const [showIv, setShowIv] = useState(true);
   const [showFuture, setShowFuture] = useState(true);
   const [sidebarOpen, setSidebarOpen] = useState(true);
+  // `undefined` means "whatever the backend picks" — the nearest expiry.
+  const [expiry, setExpiry] = useState<string | undefined>(undefined);
   const [zoomNonce, setZoomNonce] = useState(0);
   /** `null` until the reader picks — see the same pattern on MultiStrike. */
   const [picked, setPicked] = useState<string[] | null>(null);
@@ -86,8 +88,8 @@ export default function IvIntradayChart() {
 
   // -- intraday -------------------------------------------------------------
   const skew = useQuery<SkewView>({
-    queryKey: ['options-lab', 'skew', instrument.symbol, dataMode, historyDate],
-    queryFn: () => getSkew(instrument.symbol, { date: historyDate }),
+    queryKey: ['options-lab', 'skew', instrument.symbol, dataMode, historyDate, expiry],
+    queryFn: () => getSkew(instrument.symbol, { date: historyDate, expiry }),
     refetchInterval: dataMode === 'live' ? REFETCH_MS : false,
     enabled: view === 'intraday'
   });
@@ -252,15 +254,14 @@ export default function IvIntradayChart() {
 
                 {view === 'intraday' ? (
                   <>
-                    <p className={s.subLabel}>Expiry</p>
-                    {/* Read-only here: the archive holds the nearest expiry
-                        only, so a picker would promise history never captured. */}
-                    <div className={s.select} title="The archived session's expiry">
-                      <span>{expiryLabel(vw?.expiry_date ?? null)}</span>
-                      <span className={s.caret} aria-hidden="true">
-                        <IconChevronDown />
-                      </span>
-                    </div>
+                    <ExpiryPicker
+                      instrument={instrument.symbol}
+                      value={expiry}
+                      onChange={setExpiry}
+                      resolved={vw?.expiry_date ?? null}
+                      archiveBound
+                      dataQuality={vw?.data_quality}
+                    />
 
                     <p className={s.subLabel}>Timeframe</p>
                     <select

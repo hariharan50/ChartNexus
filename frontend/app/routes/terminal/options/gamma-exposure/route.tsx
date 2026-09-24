@@ -5,16 +5,15 @@ import { buildGammaExposureOption, type GexMarker } from '$shared/charts/options
 import { useChartTheme } from '$shared/charts/theme/use-chart-theme';
 import { cx } from '$shared/ui/cx';
 import IconChart from '$shared/ui/icons/IconChart';
-import IconChevronDown from '$shared/ui/icons/IconChevronDown';
 import IconEye from '$shared/ui/icons/IconEye';
 import IconEyeOff from '$shared/ui/icons/IconEyeOff';
 import { lastTradingDayIST } from '$shared/formatting/ist-clock';
 import GexLevels from './components/GexLevels';
 import GexReadout from './components/GexReadout';
+import ExpiryPicker from '../components/ExpiryPicker';
 import HistoryMode, { type Mode } from '../components/HistoryMode';
 import {
   csvFilename,
-  expiryLabel,
   fmtGex,
   frameBars,
   frameLevels,
@@ -80,6 +79,8 @@ export default function GammaExposure() {
   const [showNet, setShowNet] = useState(true);
   const [showAbs, setShowAbs] = useState(true);
   const [sidebarOpen, setSidebarOpen] = useState(true);
+  // `undefined` means "whatever the backend picks" — the nearest expiry.
+  const [expiry, setExpiry] = useState<string | undefined>(undefined);
   /** Frame being shown, or -1 to follow live (far right of the track). */
   const [frameIdx, setFrameIdx] = useState(-1);
 
@@ -95,8 +96,8 @@ export default function GammaExposure() {
 
   const historyDate = dataMode === 'historical' ? date : undefined;
   const query = useQuery<GexView>({
-    queryKey: ['options-lab', 'gex', instrument.symbol, dataMode, historyDate],
-    queryFn: () => getGex(instrument.symbol, { date: historyDate }),
+    queryKey: ['options-lab', 'gex', instrument.symbol, dataMode, historyDate, expiry],
+    queryFn: () => getGex(instrument.symbol, { date: historyDate, expiry }),
     refetchInterval: dataMode === 'live' ? REFETCH_MS : false
   });
 
@@ -314,13 +315,14 @@ export default function GammaExposure() {
 
                 <HistoryMode mode={dataMode} date={date} onMode={setDataMode} onDate={setDate} />
 
-                <p className={s.subLabel}>Expiry</p>
-                <div className={s.select}>
-                  <span>{expiryLabel(view.expiry_date)}</span>
-                  <span className={s.caret} aria-hidden="true">
-                    <IconChevronDown />
-                  </span>
-                </div>
+                <ExpiryPicker
+                  instrument={instrument.symbol}
+                  value={expiry}
+                  onChange={setExpiry}
+                  resolved={view.expiry_date}
+                  archiveBound
+                  dataQuality={view?.data_quality}
+                />
 
                 <p className={s.subLabel}>Chart</p>
                 <div className={s.layoutRow}>

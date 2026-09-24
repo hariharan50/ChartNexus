@@ -33,7 +33,9 @@ def _rows(call_oi: int, put_oi: int) -> tuple[ChainRow, ...]:
 
 
 class StubProvider:
-    async def fetch(self, tenant_id: TenantId, symbol: str) -> ProviderChain:
+    async def fetch(
+        self, tenant_id: TenantId, symbol: str, *, expiry: str | None = None
+    ) -> ProviderChain:
         return ProviderChain(rows=_rows(300, 300), spot=104.0, lot_size=75, expiry="2026-08-07")
 
 

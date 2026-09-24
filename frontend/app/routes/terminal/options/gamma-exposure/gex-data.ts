@@ -53,12 +53,15 @@ export interface GexView {
 
 export function getGex(
   instrument: string,
-  opts: { date?: string | undefined } = {},
+  opts: { date?: string | undefined; expiry?: string | undefined } = {},
   fetcher?: typeof fetch
 ): Promise<GexView> {
   return apiFetch<GexView>({
     url: `/options-lab/gex/${encodeURIComponent(instrument)}`,
-    params: opts.date ? { date: opts.date } : {},
+    params: {
+      ...(opts.date ? { date: opts.date } : {}),
+      ...(opts.expiry ? { expiry: opts.expiry } : {})
+    },
     fetcher
   });
 }

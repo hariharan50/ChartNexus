@@ -3,15 +3,14 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { SeriesLine } from '$shared/charts/options/multi-series';
 import { cx } from '$shared/ui/cx';
 import IconChart from '$shared/ui/icons/IconChart';
-import IconChevronDown from '$shared/ui/icons/IconChevronDown';
 import { lastTradingDayIST } from '$shared/formatting/ist-clock';
+import ExpiryPicker from '../components/ExpiryPicker';
 import HistoryMode, { type Mode } from '../components/HistoryMode';
 import SeriesChart from '../components/SeriesChart';
 import { CALL_COLOR, feedAgeLabel, feedAgeMs, PUT_COLOR } from '../open-interest/oi-data';
 import {
   bucketIndices,
   DEFAULT_TIMEFRAME,
-  expiryLabel,
   fmtOi,
   fmtPrice,
   fmtRatio,
@@ -43,6 +42,8 @@ const REPLAY_MS = 15_000;
 export default function PutCallRatio() {
   const [instIdx, setInstIdx] = useState(0);
   const [sidebarOpen, setSidebarOpen] = useState(true);
+  // `undefined` means "whatever the backend picks" — the nearest expiry.
+  const [expiry, setExpiry] = useState<string | undefined>(undefined);
   const [mode, setMode] = useState<Mode>('live');
   const [date, setDate] = useState(lastTradingDayIST);
   const [timeframe, setTimeframe] = useState<Timeframe>(DEFAULT_TIMEFRAME);
@@ -51,8 +52,8 @@ export default function PutCallRatio() {
 
   const historyDate = mode === 'historical' ? date : undefined;
   const query = useQuery<PcrSeriesView>({
-    queryKey: ['options-lab', 'pcr-series', instrument.symbol, mode, historyDate],
-    queryFn: () => getPcrSeries(instrument.symbol, { date: historyDate }),
+    queryKey: ['options-lab', 'pcr-series', instrument.symbol, mode, historyDate, expiry],
+    queryFn: () => getPcrSeries(instrument.symbol, { date: historyDate, expiry }),
     refetchInterval: mode === 'live' ? REFETCH_MS : false
   });
 
@@ -191,13 +192,14 @@ export default function PutCallRatio() {
 
                 <HistoryMode mode={mode} date={date} onMode={setMode} onDate={setDate} />
 
-                <p className={s.subLabel}>Expiry</p>
-                <div className={s.select}>
-                  <span>{expiryLabel(view.expiry_date)}</span>
-                  <span className={s.caret} aria-hidden="true">
-                    <IconChevronDown />
-                  </span>
-                </div>
+                <ExpiryPicker
+                  instrument={instrument.symbol}
+                  value={expiry}
+                  onChange={setExpiry}
+                  resolved={view.expiry_date}
+                  archiveBound
+                  dataQuality={view?.data_quality}
+                />
 
                 <p className={s.subLabel}>Timeframe</p>
                 <select

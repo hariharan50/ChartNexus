@@ -13,6 +13,7 @@ chain is stamped ``DataSource.MOCK`` and the UI shows it as simulated.
 from __future__ import annotations
 
 import math
+from dataclasses import dataclass
 from datetime import date, datetime, timedelta
 from decimal import Decimal
 
@@ -46,9 +47,10 @@ def build_option_chain(
 
     expiries = upcoming_expiries(moment.date())
     resolved = expiry if expiry in expiries else expiries[0]
+    term = _term_factors(moment.date(), resolved)
 
     strikes = tuple(
-        _build_row(strike=_money(strike), call=call, put=put, spot=spot, step=step)
+        _build_row(strike=_money(strike), call=call, put=put, spot=spot, step=step, term=term)
         for strike, call, put in frame.pairs()
     )
 
@@ -79,27 +81,76 @@ def upcoming_expiries(today: date, count: int = 6) -> tuple[str, ...]:
     return tuple((first + timedelta(weeks=week)).isoformat() for week in range(count))
 
 
-def _build_row(*, strike: Decimal, call: Leg, put: Leg, spot: Decimal, step: Decimal) -> StrikeRow:
-    moneyness = float((strike - spot) / (step * 10))
-    return StrikeRow(
-        strike=strike,
-        call=_quote(call, delta=_delta(moneyness)),
-        put=_quote(put, delta=_delta(moneyness) - 1),
+@dataclass(frozen=True, slots=True)
+class _Term:
+    """How a contract differs from the front month, by time to expiry.
+
+    The synthetic book used to be identical for every expiry - only the label
+    changed. That made the expiry picker impossible to test against the mock:
+    switching to November redrew precisely the same chart, which is exactly what
+    a broken picker looks like. It also taught the layout the wrong lesson,
+    since a real board never looks like that.
+
+    Three effects, all monotonic in days to expiry and all deliberately crude -
+    this is a shape, not a pricing model:
+
+    * **Open interest thins out.** Positioning concentrates in the front month;
+      a contract two months out carries a fraction of the near one's book.
+    * **Premium grows.** More time, more time value.
+    * **Implied volatility rises a little.** A gently upward-sloping term
+      structure, which is the usual state.
+    """
+
+    oi: float
+    premium: float
+    iv: float
+
+
+#: The front month is the reference; everything else is scaled against it.
+_NEAR_TERM = _Term(oi=1.0, premium=1.0, iv=1.0)
+
+
+def _term_factors(today: date, expiry: str) -> _Term:
+    try:
+        days = max(0, (date.fromisoformat(expiry) - today).days)
+    except ValueError:
+        return _NEAR_TERM
+
+    # Weeks out, where the front weekly is 0.
+    weeks = days / 7.0
+    return _Term(
+        # Halves roughly every four weeks, with a floor so a far month still
+        # has a readable book rather than an empty one.
+        oi=max(0.08, 1.0 / (1.0 + 0.45 * weeks)),
+        # Premium grows with the square root of time, as option value does.
+        premium=math.sqrt(1.0 + weeks),
+        iv=1.0 + 0.04 * weeks,
     )
 
 
-def _quote(leg: Leg, *, delta: float) -> OptionQuote:
-    last = _money(leg.ltp)
+def _build_row(
+    *, strike: Decimal, call: Leg, put: Leg, spot: Decimal, step: Decimal, term: _Term
+) -> StrikeRow:
+    moneyness = float((strike - spot) / (step * 10))
+    return StrikeRow(
+        strike=strike,
+        call=_quote(call, delta=_delta(moneyness), term=term),
+        put=_quote(put, delta=_delta(moneyness) - 1, term=term),
+    )
+
+
+def _quote(leg: Leg, *, delta: float, term: _Term = _NEAR_TERM) -> OptionQuote:
+    last = _money(leg.ltp * term.premium)
     return OptionQuote(
         last_price=last,
-        open_interest=leg.oi,
+        open_interest=int(leg.oi * term.oi),
         # The day change a broker actually reports. This used to be a made-up
         # fraction of the current OI, which the Open Interest service's
         # single-snapshot tier then inverted to "reconstruct" a session open —
         # producing an open that never existed.
-        open_interest_change=leg.oi_change,
-        volume=leg.volume,
-        implied_volatility=Decimal(str(leg.iv)),
+        open_interest_change=int(leg.oi_change * term.oi),
+        volume=int(leg.volume * term.oi),
+        implied_volatility=Decimal(str(round(leg.iv * term.iv, 2))),
         bid=(last - _SPREAD).quantize(_CENTS),
         ask=(last + _SPREAD).quantize(_CENTS),
         delta=Decimal(str(round(delta, 4))),

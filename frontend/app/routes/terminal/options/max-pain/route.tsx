@@ -5,8 +5,8 @@ import { buildMaxPainOption } from '$shared/charts/options/max-pain';
 import { useChartTheme } from '$shared/charts/theme/use-chart-theme';
 import { cx } from '$shared/ui/cx';
 import IconChart from '$shared/ui/icons/IconChart';
-import IconChevronDown from '$shared/ui/icons/IconChevronDown';
 import { lastTradingDayIST } from '$shared/formatting/ist-clock';
+import ExpiryPicker from '../components/ExpiryPicker';
 import HistoryMode, { type Mode } from '../components/HistoryMode';
 import IntradayMaxPain from './components/IntradayMaxPain';
 import MaxPainSentiment from './components/MaxPainSentiment';
@@ -47,6 +47,8 @@ const STRIKE_FILTERS: { label: string; value: 'all' | number }[] = [
 export default function MaxPain() {
   const [instIdx, setInstIdx] = useState(0);
   const [sidebarOpen, setSidebarOpen] = useState(true);
+  // `undefined` means "whatever the backend picks" — the nearest expiry.
+  const [expiry, setExpiry] = useState<string | undefined>(undefined);
   const [mode, setMode] = useState<Mode>('live');
   const [date, setDate] = useState(lastTradingDayIST);
   const [strikeFilter, setStrikeFilter] = useState<'all' | number>(20);
@@ -59,8 +61,8 @@ export default function MaxPain() {
   // it whenever both are in the same mode/day).
   const historyDate = mode === 'historical' ? date : undefined;
   const query = useQuery<OiView>({
-    queryKey: ['options-lab', 'oi', instrument.symbol, mode, historyDate],
-    queryFn: () => getOpenInterest(instrument.symbol, { date: historyDate }),
+    queryKey: ['options-lab', 'oi', instrument.symbol, mode, historyDate, expiry],
+    queryFn: () => getOpenInterest(instrument.symbol, { date: historyDate, expiry }),
     refetchInterval: mode === 'live' ? REFETCH_MS : false
   });
 
@@ -68,8 +70,8 @@ export default function MaxPain() {
   // payload: it reads the whole archive for the day, which the snapshot
   // endpoint has no business carrying.
   const seriesQuery = useQuery<MaxPainSeriesView>({
-    queryKey: ['options-lab', 'max-pain-series', instrument.symbol, mode, historyDate],
-    queryFn: () => getMaxPainSeries(instrument.symbol, { date: historyDate }),
+    queryKey: ['options-lab', 'max-pain-series', instrument.symbol, mode, historyDate, expiry],
+    queryFn: () => getMaxPainSeries(instrument.symbol, { date: historyDate, expiry }),
     refetchInterval: mode === 'live' ? REFETCH_MS : false
   });
 
@@ -125,18 +127,6 @@ export default function MaxPain() {
     const t = window.setInterval(() => setNow(Date.now()), 1000);
     return () => window.clearInterval(t);
   }, []);
-  const expiry = useMemo(() => {
-    if (!view?.expiry_date) return 'Nearest expiry';
-    const date = new Date(view.expiry_date);
-    const days = Math.max(0, Math.round((date.getTime() - Date.now()) / 86_400_000));
-    const label = new Intl.DateTimeFormat('en-GB', {
-      day: '2-digit',
-      month: 'short',
-      year: 'numeric'
-    }).format(date);
-    return `${label} (${days === 0 ? 'today' : `${days}d`})`;
-  }, [view?.expiry_date]);
-
   return (
     <div className={s.page}>
       {query.isError ? (
@@ -192,13 +182,14 @@ export default function MaxPain() {
 
                 <HistoryMode mode={mode} date={date} onMode={setMode} onDate={setDate} />
 
-                <p className={s.subLabel}>Expiry</p>
-                <div className={s.select}>
-                  <span>{expiry}</span>
-                  <span className={s.caret} aria-hidden="true">
-                    <IconChevronDown />
-                  </span>
-                </div>
+                <ExpiryPicker
+                  instrument={instrument.symbol}
+                  value={expiry}
+                  onChange={setExpiry}
+                  resolved={view.expiry_date}
+                  archiveBound
+                  dataQuality={view?.data_quality}
+                />
 
                 <p className={s.subLabel}>Strikes above and below ATM</p>
                 <div className={s.filterRow}>

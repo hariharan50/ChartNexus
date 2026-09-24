@@ -1,124 +1,164 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { render, screen, waitFor, within } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import type { ReactElement } from 'react';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import ExpiryPicker from '../../app/routes/terminal/future-lab/components/ExpiryPicker';
+import { afterEach, describe, expect, it, vi } from 'vitest';
+import ExpiryPicker, {
+  expiryLabel
+} from '../../app/routes/terminal/options/components/ExpiryPicker';
 
 /**
- * The expiry listbox.
+ * The Options Lab expiry control.
  *
- * It replaced a native `<select>`, which came with the platform's keyboard
- * behaviour for free. Owning the popup means owning that behaviour too, so
- * what is pinned here is the contract a `<select>` used to honour: arrows move,
- * Enter picks, Escape closes and hands focus back, and opening starts on the
- * row that is already selected.
+ * The bug this replaced was not a styling problem: every tool rendered a `div`
+ * that printed the nearest expiry and could not be changed, so picking another
+ * expiry silently redrew the same chart. The cases below pin the three things
+ * that made it broken — that the list is real, that choosing an entry reports
+ * the chosen date, and that a far expiry says why its intraday history is thin
+ * instead of just looking empty.
  */
+vi.mock('../../app/lib/contexts/broker-connections/api', () => ({
+  getExpiries: vi.fn(async () => ({
+    instrument: 'NIFTY',
+    expiries: ['2026-09-29', '2026-10-06', '2026-10-13'],
+    provenance: { source: 'mock', fetched_at: '', age_seconds: 0, is_stale: true }
+  }))
+}));
 
-const EXPIRIES = {
-  expiries: [
-    { series: 0, expiry: '2026-09-29' },
-    { series: 1, expiry: '2026-10-27' },
-    { series: 2, expiry: '2026-11-23' }
-  ]
-};
+function renderPicker(element: ReactElement) {
+  const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+  return render(<QueryClientProvider client={client}>{element}</QueryClientProvider>);
+}
 
-beforeEach(() => {
-  vi.useFakeTimers({ shouldAdvanceTime: true });
-  vi.setSystemTime(new Date('2026-09-23T06:00:00Z'));
-  vi.stubGlobal(
-    'fetch',
-    vi.fn(async () => new Response(JSON.stringify(EXPIRIES), { status: 200 }))
-  );
-});
+afterEach(() => vi.useRealTimers());
 
-afterEach(() => {
-  vi.useRealTimers();
-  vi.unstubAllGlobals();
-});
+describe('expiryLabel', () => {
+  it('names the date and how long it has left', () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date('2026-09-24T04:00:00Z'));
 
-function mount(ui: ReactElement) {
-  const client = new QueryClient({
-    defaultOptions: { queries: { retry: false, gcTime: 0 } }
+    expect(expiryLabel('2026-09-29')).toBe('29 Sep 2026 (5d)');
+    expect(expiryLabel('2026-11-03')).toBe('3 Nov 2026 (40d)');
   });
-  return render(<QueryClientProvider client={client}>{ui}</QueryClientProvider>);
-}
 
-async function openList(onSeries = vi.fn()) {
-  mount(<ExpiryPicker series={0} onSeries={onSeries} />);
-  const trigger = await screen.findByRole('button', { name: 'Contract expiry' });
-  await waitFor(() => expect(trigger).toHaveTextContent('29 Sep 2026'));
-  await userEvent.click(trigger);
-  return { trigger, list: await screen.findByRole('listbox'), onSeries };
-}
+  it('calls an unresolved expiry the nearest one rather than printing null', () => {
+    expect(expiryLabel(null)).toBe('Nearest expiry');
+  });
+});
 
 describe('ExpiryPicker', () => {
-  it('shows each contract with its countdown and its position', () => {
-    /* Three aligned columns are the reason this is not a `<select>`: a native
-       option can only carry one string. */
-    return openList().then(async ({ list }) => {
-      const options = within(list).getAllByRole('option');
-      expect(options).toHaveLength(3);
-      expect(options[0]).toHaveTextContent('29 Sep 2026');
-      expect(options[0]).toHaveTextContent('6d');
-      expect(options[0]).toHaveTextContent('Near month');
-      expect(options[2]).toHaveTextContent('Far month');
-    });
-  });
-
-  it('opens on the row already selected', async () => {
-    const client = new QueryClient({ defaultOptions: { queries: { retry: false, gcTime: 0 } } });
-    render(
-      <QueryClientProvider client={client}>
-        <ExpiryPicker series={1} onSeries={vi.fn()} />
-      </QueryClientProvider>
+  it('lists every listed expiry, not just the nearest', async () => {
+    renderPicker(
+      <ExpiryPicker
+        instrument="NIFTY"
+        value={undefined}
+        onChange={() => {}}
+        resolved="2026-09-29"
+      />
     );
-    await userEvent.click(await screen.findByRole('button', { name: 'Contract expiry' }));
 
-    const options = within(await screen.findByRole('listbox')).getAllByRole('option');
-    expect(options[1]).toHaveAttribute('aria-selected', 'true');
-    await waitFor(() => expect(options[1]).toHaveFocus());
+    await waitFor(() => expect(screen.getAllByRole('option')).toHaveLength(4));
   });
 
-  it('moves with the arrows and picks with Enter', async () => {
-    const { onSeries } = await openList();
-
-    await userEvent.keyboard('{ArrowDown}{Enter}');
-    expect(onSeries).toHaveBeenCalledWith(1);
-  });
-
-  it('closes on Escape and hands focus back to the trigger', async () => {
-    const { trigger } = await openList();
-
-    await userEvent.keyboard('{Escape}');
-    expect(screen.queryByRole('listbox')).not.toBeInTheDocument();
-    expect(trigger).toHaveFocus();
-  });
-
-  it('picks on click', async () => {
-    const { list, onSeries } = await openList();
-
-    await userEvent.click(within(list).getAllByRole('option')[2]!);
-    expect(onSeries).toHaveBeenCalledWith(2);
-    expect(screen.queryByRole('listbox')).not.toBeInTheDocument();
-  });
-
-  it('closes when the pointer goes down outside it', async () => {
-    await openList();
-
-    await userEvent.click(document.body);
-    expect(screen.queryByRole('listbox')).not.toBeInTheDocument();
-  });
-
-  it('says when the selected contract carries no open interest', () => {
-    /* Empty build-up columns are a claim about the market unless the page says
-       nothing measured them. */
-    const client = new QueryClient({ defaultOptions: { queries: { retry: false, gcTime: 0 } } });
-    render(
-      <QueryClientProvider client={client}>
-        <ExpiryPicker series={2} onSeries={vi.fn()} hasOpenInterest={false} />
-      </QueryClientProvider>
+  it('reports the expiry that was chosen', async () => {
+    const onChange = vi.fn();
+    renderPicker(
+      <ExpiryPicker
+        instrument="NIFTY"
+        value={undefined}
+        onChange={onChange}
+        resolved="2026-09-29"
+      />
     );
-    expect(screen.getByText('no OI')).toBeInTheDocument();
+    await waitFor(() => expect(screen.getAllByRole('option')).toHaveLength(4));
+
+    await userEvent.selectOptions(screen.getByRole('combobox', { name: 'Expiry' }), '2026-10-13');
+
+    expect(onChange).toHaveBeenCalledWith('2026-10-13');
+  });
+
+  it('reports undefined when the default is chosen, so the backend picks', async () => {
+    const onChange = vi.fn();
+    renderPicker(
+      <ExpiryPicker
+        instrument="NIFTY"
+        value="2026-10-13"
+        onChange={onChange}
+        resolved="2026-10-13"
+      />
+    );
+    await waitFor(() => expect(screen.getAllByRole('option')).toHaveLength(4));
+
+    await userEvent.selectOptions(screen.getByRole('combobox', { name: 'Expiry' }), '');
+
+    expect(onChange).toHaveBeenCalledWith(undefined);
+  });
+
+  it('warns when the answer that came back really was degraded', async () => {
+    renderPicker(
+      <ExpiryPicker
+        instrument="NIFTY"
+        value="2026-10-13"
+        onChange={() => {}}
+        resolved="2026-10-13"
+        archiveBound
+        dataQuality="live_proxy"
+      />
+    );
+
+    await waitFor(() =>
+      expect(screen.getByText(/archive holds the nearest expiry only/)).toBeInTheDocument()
+    );
+  });
+
+  it('stays quiet when the picked expiry did come back with a full session', async () => {
+    // Driven by the tier, not by the date's position in the list: after a
+    // settlement the archived expiry is no longer the first entry, and
+    // inferring it kept the control silent on exactly the degraded reads it
+    // exists to explain.
+    renderPicker(
+      <ExpiryPicker
+        instrument="NIFTY"
+        value="2026-10-13"
+        onChange={() => {}}
+        resolved="2026-10-13"
+        archiveBound
+        dataQuality="intraday"
+      />
+    );
+    await waitFor(() => expect(screen.getAllByRole('option')).toHaveLength(4));
+
+    expect(screen.queryByText(/archive holds/)).not.toBeInTheDocument();
+  });
+
+  it('says nothing while sitting on the backend-picked default', async () => {
+    renderPicker(
+      <ExpiryPicker
+        instrument="NIFTY"
+        value={undefined}
+        onChange={() => {}}
+        resolved="2026-09-29"
+        archiveBound
+        dataQuality="live_proxy"
+      />
+    );
+    await waitFor(() => expect(screen.getAllByRole('option')).toHaveLength(4));
+
+    expect(screen.queryByText(/archive holds/)).not.toBeInTheDocument();
+  });
+
+  it('says nothing about the archive on a page that does not read it', async () => {
+    renderPicker(
+      <ExpiryPicker
+        instrument="NIFTY"
+        value="2026-10-13"
+        onChange={() => {}}
+        resolved="2026-10-13"
+        dataQuality="live_proxy"
+      />
+    );
+    await waitFor(() => expect(screen.getAllByRole('option')).toHaveLength(4));
+
+    expect(screen.queryByText(/archive holds/)).not.toBeInTheDocument();
   });
 });

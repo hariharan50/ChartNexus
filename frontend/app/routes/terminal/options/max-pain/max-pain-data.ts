@@ -237,12 +237,15 @@ export interface MaxPainSeriesView {
 
 export function getMaxPainSeries(
   instrument: string,
-  opts: { date?: string | undefined } = {},
+  opts: { date?: string | undefined; expiry?: string | undefined } = {},
   fetcher?: typeof fetch
 ): Promise<MaxPainSeriesView> {
   return apiFetch<MaxPainSeriesView>({
     url: `/options-lab/max-pain-series/${encodeURIComponent(instrument)}`,
-    params: opts.date ? { date: opts.date } : {},
+    params: {
+      ...(opts.date ? { date: opts.date } : {}),
+      ...(opts.expiry ? { expiry: opts.expiry } : {})
+    },
     fetcher
   });
 }

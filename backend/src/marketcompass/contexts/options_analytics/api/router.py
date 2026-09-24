@@ -64,6 +64,13 @@ DateParam = Annotated[
     Query(alias="date", description="Archived session to replay (ISO date); omit for Live"),
 ]
 
+#: The expiry a page is looking at. ``None`` means "whatever the backend
+#: picks", which is the nearest one - the default every tool opens on.
+ExpiryParam = Annotated[
+    str | None,
+    Query(description="ISO expiry date, e.g. 2026-10-06. Defaults to the nearest expiry."),
+]
+
 
 def _trade_date(date_: date | None) -> datetime | None:
     """A picked date as an instant safely inside its IST trading day.
@@ -95,17 +102,20 @@ async def open_interest(
     services: Services,
     instrument_id: InstrumentParam,
     *,
+    expiry: ExpiryParam = None,
     date_: DateParam = None,
 ) -> OiViewResponse:
     symbol = instrument_id.strip().upper()
     redis = get_container(request).redis
-    cache_key = redis.key("lab:oi", str(principal.tenant_id), symbol, _day_key(date_))
+    cache_key = redis.key(
+        "lab:oi", str(principal.tenant_id), symbol, expiry or "near", _day_key(date_)
+    )
 
     cached = await redis.client.get(cache_key)
     if cached is not None:
         return OiViewResponse.model_validate_json(cached)
 
-    payload = await services.oi_view(principal.tenant_id, symbol, trade_date=_trade_date(date_))
+    payload = await services.oi_view(principal.tenant_id, symbol, expiry=expiry, trade_date=_trade_date(date_))
     response = OiViewResponse.of(payload)
     await redis.client.set(cache_key, response.model_dump_json(), ex=_CACHE_TTL_SECONDS)
     return response
@@ -132,6 +142,7 @@ async def oi_series(
     window: Annotated[int, Query(ge=1, le=MAX_WINDOW, description="Strikes either side of ATM")] = (
         DEFAULT_WINDOW
     ),
+    expiry: ExpiryParam = None,
     date_: DateParam = None,
 ) -> OiSeriesResponse:
     symbol = instrument_id.strip().upper()
@@ -139,7 +150,13 @@ async def oi_series(
     # Keyed by interval and window as well: they change the payload, so sharing
     # one entry across them would serve whichever shape arrived first.
     cache_key = redis.key(
-        "lab:oi-series", str(principal.tenant_id), symbol, interval, str(window), _day_key(date_)
+        "lab:oi-series",
+        str(principal.tenant_id),
+        symbol,
+        interval,
+        str(window),
+        expiry or "near",
+        _day_key(date_),
     )
 
     cached = await redis.client.get(cache_key)
@@ -147,7 +164,7 @@ async def oi_series(
         return OiSeriesResponse.model_validate_json(cached)
 
     payload = await services.oi_series(
-        principal.tenant_id, symbol, interval=interval, window=window, trade_date=_trade_date(date_)
+        principal.tenant_id, symbol, interval=interval, window=window, expiry=expiry, trade_date=_trade_date(date_)
     )
     response = OiSeriesResponse.of(payload)
     await redis.client.set(cache_key, response.model_dump_json(), ex=_CACHE_TTL_SECONDS)
@@ -173,6 +190,7 @@ async def price_oi_series(
     instrument_id: InstrumentParam,
     *,
     interval: Annotated[str, Query(description="1m, 5m, 15m or 1h")] = DEFAULT_INTERVAL,
+    expiry: ExpiryParam = None,
     date_: Annotated[
         date | None,
         Query(alias="date", description="Archived session to replay (ISO date); omit for today"),
@@ -185,14 +203,16 @@ async def price_oi_series(
 
     redis = get_container(request).redis
     day = "live" if date_ is None else date_.isoformat()
-    cache_key = redis.key("lab:price-oi-series", str(principal.tenant_id), symbol, interval, day)
+    cache_key = redis.key(
+        "lab:price-oi-series", str(principal.tenant_id), symbol, interval, expiry or "near", day
+    )
 
     cached = await redis.client.get(cache_key)
     if cached is not None:
         return PriceOiSeriesResponse.model_validate_json(cached)
 
     payload = await services.price_oi_series(
-        principal.tenant_id, symbol, interval=interval, trade_date=trade_date
+        principal.tenant_id, symbol, interval=interval, expiry=expiry, trade_date=trade_date
     )
     response = PriceOiSeriesResponse.of(payload)
     await redis.client.set(cache_key, response.model_dump_json(), ex=_CACHE_TTL_SECONDS)
@@ -216,19 +236,22 @@ async def pcr_series(
     services: Services,
     instrument_id: InstrumentParam,
     *,
+    expiry: ExpiryParam = None,
     date_: DateParam = None,
 ) -> PcrSeriesResponse:
     symbol = instrument_id.strip().upper()
     redis = get_container(request).redis
     # No interval in the key: this payload is six numbers a capture, so the
     # timeframe is applied on the client and one cached entry serves them all.
-    cache_key = redis.key("lab:pcr-series", str(principal.tenant_id), symbol, _day_key(date_))
+    cache_key = redis.key(
+        "lab:pcr-series", str(principal.tenant_id), symbol, expiry or "near", _day_key(date_)
+    )
 
     cached = await redis.client.get(cache_key)
     if cached is not None:
         return PcrSeriesResponse.model_validate_json(cached)
 
-    payload = await services.pcr_series(principal.tenant_id, symbol, trade_date=_trade_date(date_))
+    payload = await services.pcr_series(principal.tenant_id, symbol, expiry=expiry, trade_date=_trade_date(date_))
     response = PcrSeriesResponse.of(payload)
     await redis.client.set(cache_key, response.model_dump_json(), ex=_CACHE_TTL_SECONDS)
     return response
@@ -252,20 +275,23 @@ async def max_pain_series(
     services: Services,
     instrument_id: InstrumentParam,
     *,
+    expiry: ExpiryParam = None,
     date_: DateParam = None,
 ) -> MaxPainSeriesResponse:
     symbol = instrument_id.strip().upper()
     redis = get_container(request).redis
     # No interval in the key: three numbers a capture, so the timeframe is
     # applied on the client and one cached entry serves them all.
-    cache_key = redis.key("lab:max-pain-series", str(principal.tenant_id), symbol, _day_key(date_))
+    cache_key = redis.key(
+        "lab:max-pain-series", str(principal.tenant_id), symbol, expiry or "near", _day_key(date_)
+    )
 
     cached = await redis.client.get(cache_key)
     if cached is not None:
         return MaxPainSeriesResponse.model_validate_json(cached)
 
     payload = await services.max_pain_series(
-        principal.tenant_id, symbol, trade_date=_trade_date(date_)
+        principal.tenant_id, symbol, expiry=expiry, trade_date=_trade_date(date_)
     )
     response = MaxPainSeriesResponse.of(payload)
     await redis.client.set(cache_key, response.model_dump_json(), ex=_CACHE_TTL_SECONDS)
@@ -290,19 +316,22 @@ async def gex(
     services: Services,
     instrument_id: InstrumentParam,
     *,
+    expiry: ExpiryParam = None,
     date_: DateParam = None,
 ) -> GexResponse:
     symbol = instrument_id.strip().upper()
     redis = get_container(request).redis
     # The strike filter and the time scrub are both applied on the client, so one
     # entry per tenant/symbol/day serves every reader of that session.
-    cache_key = redis.key("lab:gex", str(principal.tenant_id), symbol, _day_key(date_))
+    cache_key = redis.key(
+        "lab:gex", str(principal.tenant_id), symbol, expiry or "near", _day_key(date_)
+    )
 
     cached = await redis.client.get(cache_key)
     if cached is not None:
         return GexResponse.model_validate_json(cached)
 
-    payload = await services.gex(principal.tenant_id, symbol, trade_date=_trade_date(date_))
+    payload = await services.gex(principal.tenant_id, symbol, expiry=expiry, trade_date=_trade_date(date_))
     response = GexResponse.of(payload)
     await redis.client.set(cache_key, response.model_dump_json(), ex=_CACHE_TTL_SECONDS)
     return response
@@ -327,19 +356,22 @@ async def vega(
     services: Services,
     instrument_id: InstrumentParam,
     *,
+    expiry: ExpiryParam = None,
     date_: DateParam = None,
 ) -> VegaResponse:
     symbol = instrument_id.strip().upper()
     redis = get_container(request).redis
     # The strike window and the timeframe are both applied on the client, so one
     # entry per tenant/symbol/day serves every reader of that session.
-    cache_key = redis.key("lab:vega", str(principal.tenant_id), symbol, _day_key(date_))
+    cache_key = redis.key(
+        "lab:vega", str(principal.tenant_id), symbol, expiry or "near", _day_key(date_)
+    )
 
     cached = await redis.client.get(cache_key)
     if cached is not None:
         return VegaResponse.model_validate_json(cached)
 
-    payload = await services.vega(principal.tenant_id, symbol, trade_date=_trade_date(date_))
+    payload = await services.vega(principal.tenant_id, symbol, expiry=expiry, trade_date=_trade_date(date_))
     response = VegaResponse.of(payload)
     await redis.client.set(cache_key, response.model_dump_json(), ex=_CACHE_TTL_SECONDS)
     return response
@@ -446,6 +478,7 @@ async def skew(
     services: Services,
     instrument_id: InstrumentParam,
     *,
+    expiry: ExpiryParam = None,
     date_: DateParam = None,
 ) -> SkewResponse:
     symbol = instrument_id.strip().upper()
@@ -453,13 +486,15 @@ async def skew(
     # The strike window, the frame and the curve blend are all applied on the
     # client, so one entry per tenant/symbol/day serves every reader of that
     # session.
-    cache_key = redis.key("lab:skew", str(principal.tenant_id), symbol, _day_key(date_))
+    cache_key = redis.key(
+        "lab:skew", str(principal.tenant_id), symbol, expiry or "near", _day_key(date_)
+    )
 
     cached = await redis.client.get(cache_key)
     if cached is not None:
         return SkewResponse.model_validate_json(cached)
 
-    payload = await services.skew(principal.tenant_id, symbol, trade_date=_trade_date(date_))
+    payload = await services.skew(principal.tenant_id, symbol, expiry=expiry, trade_date=_trade_date(date_))
     response = SkewResponse.of(payload)
     await redis.client.set(cache_key, response.model_dump_json(), ex=_CACHE_TTL_SECONDS)
     return response
@@ -483,20 +518,23 @@ async def straddle_series(
     services: Services,
     instrument_id: InstrumentParam,
     *,
+    expiry: ExpiryParam = None,
     date_: DateParam = None,
 ) -> StraddleSeriesResponse:
     symbol = instrument_id.strip().upper()
     redis = get_container(request).redis
     # The strike selection and the timeframe are both applied on the client, so
     # one entry per tenant/symbol/day serves every reader of that session.
-    cache_key = redis.key("lab:straddle-series", str(principal.tenant_id), symbol, _day_key(date_))
+    cache_key = redis.key(
+        "lab:straddle-series", str(principal.tenant_id), symbol, expiry or "near", _day_key(date_)
+    )
 
     cached = await redis.client.get(cache_key)
     if cached is not None:
         return StraddleSeriesResponse.model_validate_json(cached)
 
     payload = await services.straddle_series(
-        principal.tenant_id, symbol, trade_date=_trade_date(date_)
+        principal.tenant_id, symbol, expiry=expiry, trade_date=_trade_date(date_)
     )
     response = StraddleSeriesResponse.of(payload)
     await redis.client.set(cache_key, response.model_dump_json(), ex=_CACHE_TTL_SECONDS)
@@ -524,6 +562,7 @@ async def strike_series(
     strike: Annotated[
         float | None, Query(gt=0, description="The strike to plot; omit for at-the-money")
     ] = None,
+    expiry: ExpiryParam = None,
     date_: DateParam = None,
 ) -> StrikeSeriesResponse:
     symbol = instrument_id.strip().upper()
@@ -535,6 +574,7 @@ async def strike_series(
         str(principal.tenant_id),
         symbol,
         "atm" if strike is None else f"{strike:g}",
+        expiry or "near",
         _day_key(date_),
     )
 
@@ -543,7 +583,7 @@ async def strike_series(
         return StrikeSeriesResponse.model_validate_json(cached)
 
     payload = await services.strike_series(
-        principal.tenant_id, symbol, strike=strike, trade_date=_trade_date(date_)
+        principal.tenant_id, symbol, strike=strike, expiry=expiry, trade_date=_trade_date(date_)
     )
     response = StrikeSeriesResponse.of(payload)
     await redis.client.set(cache_key, response.model_dump_json(), ex=_CACHE_TTL_SECONDS)

@@ -62,7 +62,25 @@ class ProviderChainSource:
         self._fallback = fallback
         self._risk_free_rate = risk_free_rate
 
-    async def fetch(self, symbol: str) -> ChainObservation | None:
+    async def expiries(self, symbol: str) -> tuple[str, ...]:
+        """The instrument's listed expiries, nearest first.
+
+        Empty when the symbol is unknown or the provider cannot list them; the
+        caller then falls back to capturing whatever the chain resolves to.
+        """
+        try:
+            instrument = InstrumentSymbol.parse(symbol)
+        except Exception:
+            return ()
+
+        provider = await self._resolve_provider()
+        try:
+            listed = await provider.get_expiries(instrument)
+        except UpstreamError:
+            return ()
+        return tuple(listed.expiries)
+
+    async def fetch(self, symbol: str, *, expiry: str | None = None) -> ChainObservation | None:
         try:
             instrument = InstrumentSymbol.parse(symbol)
         except Exception:
@@ -70,11 +88,11 @@ class ProviderChainSource:
 
         provider = await self._resolve_provider()
         try:
-            chain = await provider.get_option_chain(instrument)
+            chain = await provider.get_option_chain(instrument, expiry=expiry)
         except UpstreamError:
             # A live provider that cannot answer degrades to simulated data,
             # which the use case then declines to store (unless mock is allowed).
-            chain = await self._fallback.get_option_chain(instrument)
+            chain = await self._fallback.get_option_chain(instrument, expiry=expiry)
 
         # So the archive actually has IV to draw on later — FYERS never quotes
         # it, and without this every stored row's `iv` would be permanently null.
@@ -180,4 +198,5 @@ def build_ingest_service(
         clock=clock,
         symbols=symbols,
         allow_mock=allow_mock,
+        expiries=settings.market.ingest_expiries,
     )

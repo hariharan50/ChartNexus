@@ -134,6 +134,31 @@ def _to_option_quote(entry: dict[str, Any]) -> OptionQuote:
     )
 
 
+def parse_expiry_epochs(payload: dict[str, Any]) -> dict[str, str]:
+    """ISO expiry date to the broker's own epoch for it.
+
+    FYERS selects an expiry by ``timestamp`` - the epoch it publishes alongside
+    each date in ``expiryData`` - and there is no documented rule for deriving
+    that epoch from the date. It is read back rather than computed: a guessed
+    timestamp does not error, it silently returns the default chain, which is
+    indistinguishable from the request having worked.
+    """
+    data = payload.get("data")
+    raw = data.get("expiryData") if isinstance(data, dict) else None
+    if not isinstance(raw, list):
+        return {}
+
+    epochs: dict[str, str] = {}
+    for item in raw:
+        if not isinstance(item, dict):
+            continue
+        iso = _normalise_date(item.get("date")) or _normalise_date(item.get("expiry"))
+        stamp = item.get("expiry")
+        if iso and stamp is not None and iso not in epochs:
+            epochs[iso] = str(stamp)
+    return epochs
+
+
 def _parse_expiries(raw: Any) -> tuple[str, ...]:
     """Normalise the broker's expiry list to ISO dates.
 

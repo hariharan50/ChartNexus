@@ -13,7 +13,7 @@ from __future__ import annotations
 
 from collections.abc import Sequence
 from datetime import timedelta
-from typing import Protocol
+from typing import Any, Protocol
 
 from marketcompass.contexts.broker_connections.domain.value_objects import BrokerCredentials
 from marketcompass.contexts.market_data.domain.instruments import InstrumentSymbol
@@ -57,6 +57,34 @@ PROVIDER_NAME = "fyers"
 # About twenty strikes either side of at-the-money — enough for max pain and
 # gamma exposure without pulling the entire chain on every request.
 DEFAULT_STRIKE_COUNT = 20
+
+#: ISO expiry -> broker epoch, per broker symbol, with the instant it was read.
+#: Process-local and tiny: a handful of dates per instrument, refreshed hourly.
+#: Held here rather than on the client because the provider is rebuilt per
+#: request, so an instance attribute would never survive to be read.
+_EXPIRY_EPOCHS: dict[str, tuple[float, dict[str, str]]] = {}
+_EPOCH_TTL_SECONDS = 3600.0
+
+#: Symbols whose expiry payload has already been logged, so the one-shot
+#: diagnostic below does not repeat every tick.
+_EXPIRY_SHAPE_LOGGED: set[str] = set()
+
+
+def _log_expiry_shape(symbol: str, payload: dict[str, Any]) -> None:
+    """Log the broker's raw ``expiryData`` once per symbol per process.
+
+    Selecting an expiry needs the epoch FYERS publishes beside each date, and
+    the assumed shape (``{"date": ..., "expiry": <epoch>}``) does not match what
+    the live account returns - the value sent back was ignored. This records the
+    real shape so the mapping can be written against fact rather than guessed
+    at again. Remove once expiry selection works.
+    """
+    if symbol in _EXPIRY_SHAPE_LOGGED:
+        return
+    _EXPIRY_SHAPE_LOGGED.add(symbol)
+    data = payload.get("data")
+    raw = data.get("expiryData") if isinstance(data, dict) else None
+    log.info("fyers_expiry_shape", symbol=symbol, expiry_data=repr(raw)[:600])
 
 
 class QuotaManager(Protocol):
@@ -280,12 +308,29 @@ class FyersMarketDataProvider:
         )
 
     async def get_option_chain(
-        self, instrument: InstrumentSymbol, expiry: str | None = None
+        self,
+        instrument: InstrumentSymbol,
+        expiry: str | None = None,  # noqa: ARG002 - honoured once the epoch shape is known
     ) -> OptionChain:
+        """The chain for ``expiry``, or the broker's default when none is asked.
+
+        **The expiry currently does not reach FYERS.** Its options-chain
+        endpoint selects a contract by ``timestamp``, and resolving an ISO date
+        to the epoch it wants needs ``expiryData`` - whose shape differs from
+        what this adapter assumed, so the value sent was ignored and the default
+        chain came back regardless. Sending a wrong timestamp is indistinguishable
+        from sending none: no error, just the near chain.
+
+        Until that is settled from a real payload (see the one-shot log below),
+        one call is made and the response is reported as the expiry it actually
+        is. Labelling the near chain with a far expiry - which this did before -
+        is the worse failure: the page then shows one contract's book under
+        another's heading and nothing says so.
+        """
         symbol = to_broker_symbol(instrument)
         await self._quota.acquire(self._credentials.app_id)
 
-        payload = await self._guarded(
+        payload: dict[str, Any] = await self._guarded(
             lambda: self._rest.fetch_option_chain(
                 app_id=self._credentials.app_id,
                 access_token=self._access_token,
@@ -294,11 +339,15 @@ class FyersMarketDataProvider:
             ),
             description=f"option-chain:{instrument.value}",
         )
+        _log_expiry_shape(symbol, payload)
+
         return option_chain_mapper.to_option_chain(
             payload,
             instrument=instrument,
             fetched_at=self._clock.now(),
-            expiry=expiry,
+            # Deliberately not `expiry`: the request could not be honoured, so
+            # the chain is named for what it is.
+            expiry=None,
         )
 
     async def get_expiries(self, instrument: InstrumentSymbol) -> ExpiryList:

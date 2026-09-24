@@ -58,12 +58,15 @@ export interface StraddleView {
 
 export function getStraddle(
   instrument: string,
-  opts: { date?: string | undefined } = {},
+  opts: { date?: string | undefined; expiry?: string | undefined } = {},
   fetcher?: typeof fetch
 ): Promise<StraddleView> {
   return apiFetch<StraddleView>({
     url: `/options-lab/straddle-series/${encodeURIComponent(instrument)}`,
-    params: opts.date ? { date: opts.date } : {},
+    params: {
+      ...(opts.date ? { date: opts.date } : {}),
+      ...(opts.expiry ? { expiry: opts.expiry } : {})
+    },
     fetcher
   });
 }

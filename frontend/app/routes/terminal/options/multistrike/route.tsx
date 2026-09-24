@@ -11,9 +11,9 @@ import { useChartTheme } from '$shared/charts/theme/use-chart-theme';
 import { lastTradingDayIST } from '$shared/formatting/ist-clock';
 import { cx } from '$shared/ui/cx';
 import IconChart from '$shared/ui/icons/IconChart';
-import IconChevronDown from '$shared/ui/icons/IconChevronDown';
 import IconEye from '$shared/ui/icons/IconEye';
 import IconEyeOff from '$shared/ui/icons/IconEyeOff';
+import ExpiryPicker from '../components/ExpiryPicker';
 import HistoryMode, { type Mode } from '../components/HistoryMode';
 import StrikeLadder from './components/StrikeLadder';
 import {
@@ -25,7 +25,6 @@ import {
   dateLabel,
   DEFAULT_TIMEFRAME,
   defaultLegs,
-  expiryLabel,
   fmtPremium,
   fmtPrice,
   freshnessLabel,
@@ -77,6 +76,8 @@ export default function MultistrikeChart() {
   const [showFuture, setShowFuture] = useState(true);
   const [hidden, setHidden] = useState<Set<string>>(() => new Set());
   const [sidebarOpen, setSidebarOpen] = useState(true);
+  // `undefined` means "whatever the backend picks" — the nearest expiry.
+  const [expiry, setExpiry] = useState<string | undefined>(undefined);
   // Bumped by Reset zoom: it feeds `resetKey`, and a rebuild is what re-applies
   // the option's own window — the merge path deliberately leaves the reader's
   // zoom alone (see `use-echart.ts`).
@@ -102,8 +103,8 @@ export default function MultistrikeChart() {
 
   const historyDate = dataMode === 'historical' ? date : undefined;
   const query = useQuery<StraddleView>({
-    queryKey: ['options-lab', 'straddle-series', instrument.symbol, dataMode, historyDate],
-    queryFn: () => getStraddle(instrument.symbol, { date: historyDate }),
+    queryKey: ['options-lab', 'straddle-series', instrument.symbol, dataMode, historyDate, expiry],
+    queryFn: () => getStraddle(instrument.symbol, { date: historyDate, expiry }),
     refetchInterval: dataMode === 'live' ? REFETCH_MS : false
   });
 
@@ -279,16 +280,14 @@ export default function MultistrikeChart() {
 
                 <div className={s.twoUp}>
                   <div>
-                    <p className={s.subLabel}>Expiry</p>
-                    {/* Read-only: the snapshot archive holds the nearest expiry
-                        only, so offering a picker would promise history that
-                        was never captured. */}
-                    <div className={s.select} title="The archived session's expiry">
-                      <span>{expiryLabel(vw.expiry_date)}</span>
-                      <span className={s.caret} aria-hidden="true">
-                        <IconChevronDown />
-                      </span>
-                    </div>
+                    <ExpiryPicker
+                      instrument={instrument.symbol}
+                      value={expiry}
+                      onChange={setExpiry}
+                      resolved={vw.expiry_date}
+                      archiveBound
+                      dataQuality={vw?.data_quality}
+                    />
                   </div>
                   <div>
                     <p className={s.subLabel}>Timeframe</p>

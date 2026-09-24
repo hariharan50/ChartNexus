@@ -6,7 +6,7 @@ import { useChartTheme } from '$shared/charts/theme/use-chart-theme';
 import { lastTradingDayIST } from '$shared/formatting/ist-clock';
 import { cx } from '$shared/ui/cx';
 import IconChart from '$shared/ui/icons/IconChart';
-import IconChevronDown from '$shared/ui/icons/IconChevronDown';
+import ExpiryPicker from '../components/ExpiryPicker';
 import HistoryMode, { type Mode } from '../components/HistoryMode';
 import {
   bollinger,
@@ -16,7 +16,6 @@ import {
   dateLabel,
   DEFAULT_TIMEFRAME,
   ema,
-  expiryLabel,
   fmtPrice,
   fmtStraddle,
   freshnessLabel,
@@ -85,6 +84,8 @@ export default function AtmStraddleChart() {
     bollinger: false
   });
   const [sidebarOpen, setSidebarOpen] = useState(true);
+  // `undefined` means "whatever the backend picks" — the nearest expiry.
+  const [expiry, setExpiry] = useState<string | undefined>(undefined);
   const [settingsOpen, setSettingsOpen] = useState(false);
   // Bumped by Reset zoom: it feeds `resetKey`, and a rebuild is what re-applies
   // the option's own window — the merge path deliberately leaves the reader's
@@ -103,8 +104,8 @@ export default function AtmStraddleChart() {
 
   const historyDate = dataMode === 'historical' ? date : undefined;
   const query = useQuery<StraddleView>({
-    queryKey: ['options-lab', 'straddle-series', instrument.symbol, dataMode, historyDate],
-    queryFn: () => getStraddle(instrument.symbol, { date: historyDate }),
+    queryKey: ['options-lab', 'straddle-series', instrument.symbol, dataMode, historyDate, expiry],
+    queryFn: () => getStraddle(instrument.symbol, { date: historyDate, expiry }),
     refetchInterval: dataMode === 'live' ? REFETCH_MS : false
   });
 
@@ -270,13 +271,14 @@ export default function AtmStraddleChart() {
 
                 <div className={s.twoUp}>
                   <div>
-                    <p className={s.subLabel}>Expiry</p>
-                    <div className={s.select}>
-                      <span>{expiryLabel(vw.expiry_date)}</span>
-                      <span className={s.caret} aria-hidden="true">
-                        <IconChevronDown />
-                      </span>
-                    </div>
+                    <ExpiryPicker
+                      instrument={instrument.symbol}
+                      value={expiry}
+                      onChange={setExpiry}
+                      resolved={vw.expiry_date}
+                      archiveBound
+                      dataQuality={vw?.data_quality}
+                    />
                   </div>
                   <div>
                     <p className={s.subLabel}>Timeframe</p>

@@ -2,12 +2,12 @@ import { useQuery } from '@tanstack/react-query';
 import { useEffect, useMemo, useState } from 'react';
 import { cx } from '$shared/ui/cx';
 import IconChart from '$shared/ui/icons/IconChart';
-import IconChevronDown from '$shared/ui/icons/IconChevronDown';
 import { lastTradingDayIST } from '$shared/formatting/ist-clock';
 import BarPair from './components/BarPair';
 import OpenInterestChart from './components/OpenInterestChart';
 import PcrDonut from './components/PcrDonut';
 import SentimentDonut from './components/SentimentDonut';
+import ExpiryPicker from '../components/ExpiryPicker';
 import HistoryMode, { type Mode } from '../components/HistoryMode';
 import TimeRangeSlider from '../components/TimeRangeSlider';
 import {
@@ -67,6 +67,8 @@ export default function OpenInterest() {
   const [mode, setMode] = useState<OiMode>('change_total');
   const [showLot, setShowLot] = useState(false);
   const [strikeFilter, setStrikeFilter] = useState<'all' | number>(10);
+  // `undefined` means "whatever the backend picks" — the nearest expiry.
+  const [expiry, setExpiry] = useState<string | undefined>(undefined);
   /** Which quick-range pill (if any) matches the current window, for highlighting. */
   const [activePreset, setActivePreset] = useState<number | 'all' | null>('all');
   /** Left (window-start) handle position, or -1 for "start of session". */
@@ -85,8 +87,8 @@ export default function OpenInterest() {
 
   const historyDate = dataMode === 'historical' ? date : undefined;
   const query = useQuery<OiView>({
-    queryKey: ['options-lab', 'oi', instrument.symbol, dataMode, historyDate],
-    queryFn: () => getOpenInterest(instrument.symbol, { date: historyDate }),
+    queryKey: ['options-lab', 'oi', instrument.symbol, dataMode, historyDate, expiry],
+    queryFn: () => getOpenInterest(instrument.symbol, { date: historyDate, expiry }),
     refetchInterval: dataMode === 'live' ? REFETCH_MS : false
   });
 
@@ -159,18 +161,6 @@ export default function OpenInterest() {
         : series.length > 0 && series.length < 3
           ? `Only ${series.length} snapshot${series.length === 1 ? '' : 's'} recorded so far today, so the timeline is coarse — it fills in through market hours.`
           : '';
-
-  const expiryLabel = useMemo(() => {
-    if (!view?.expiry_date) return 'Nearest expiry';
-    const d = new Date(view.expiry_date);
-    const days = Math.max(0, Math.round((d.getTime() - Date.now()) / 86_400_000));
-    const label = new Intl.DateTimeFormat('en-GB', {
-      day: '2-digit',
-      month: 'short',
-      year: 'numeric'
-    }).format(d);
-    return `${label} (${days === 0 ? 'today' : `${days}d`})`;
-  }, [view?.expiry_date]);
 
   function resetSlider() {
     setOpenFrameIdx(-1);
@@ -264,14 +254,14 @@ export default function OpenInterest() {
 
                 <HistoryMode mode={dataMode} date={date} onMode={setDataMode} onDate={setDate} />
 
-                <p className={s.subLabel}>Expiry</p>
-                <div className={s.select}>
-                  <span>{expiryLabel}</span>
-                  <span className={s.caret} aria-hidden="true">
-                    <IconChevronDown />
-                  </span>
-                </div>
-                <p className={s.hint}>Live chain is served for the nearest expiry.</p>
+                <ExpiryPicker
+                  instrument={instrument.symbol}
+                  value={expiry}
+                  onChange={setExpiry}
+                  resolved={view?.expiry_date ?? null}
+                  archiveBound
+                  dataQuality={view?.data_quality}
+                />
 
                 <p className={s.subLabel}>Strikes above-below ATM</p>
                 <div className={s.filterRow}>

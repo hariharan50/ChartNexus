@@ -72,7 +72,9 @@ class StubProvider:
         self._expiry = expiry
         self._spot = spot
 
-    async def fetch(self, tenant_id: TenantId, symbol: str) -> ProviderChain:
+    async def fetch(
+        self, tenant_id: TenantId, symbol: str, *, expiry: str | None = None
+    ) -> ProviderChain:
         return ProviderChain(rows=(), spot=self._spot, lot_size=LOT, expiry=self._expiry)
 
 

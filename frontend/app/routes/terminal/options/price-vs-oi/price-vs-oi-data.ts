@@ -68,13 +68,17 @@ export interface StrikeSeriesView {
 export function getStrikeSeries(
   instrument: string,
   strike?: number | undefined,
-  opts: { date?: string | undefined } = {},
+  opts: { date?: string | undefined; expiry?: string | undefined } = {},
   fetcher?: typeof fetch
 ): Promise<StrikeSeriesView> {
   return apiFetch<StrikeSeriesView>({
     url: `/options-lab/strike-series/${encodeURIComponent(instrument)}`,
     // Omit `strike` for the at-the-money default the backend fills in.
-    params: { ...(strike != null ? { strike } : {}), ...(opts.date ? { date: opts.date } : {}) },
+    params: {
+      ...(strike != null ? { strike } : {}),
+      ...(opts.date ? { date: opts.date } : {}),
+      ...(opts.expiry ? { expiry: opts.expiry } : {})
+    },
     fetcher
   });
 }

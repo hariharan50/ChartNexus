@@ -12,7 +12,8 @@ the failure mode that matters, so degradation is recorded rather than hidden.
 from __future__ import annotations
 
 from dataclasses import dataclass, replace
-from datetime import datetime, timedelta, timezone
+from datetime import date, datetime, timedelta, timezone
+from typing import Final
 
 from marketcompass.contexts.market_data.application.ports import (
     Clock,
@@ -228,6 +229,15 @@ class GetOptionChain(_FallbackMixin):
         return replace(chain, iv_percentile=rank)
 
 
+#: How far out an expiry is worth offering, in days.
+#:
+#: Six weeklies. A broker will happily list monthlies a quarter out, but nobody
+#: reading an intraday options tool is trading them - and every extra entry is
+#: one more thing to scroll past in a picker that is used constantly. The cap
+#: is applied here rather than in the UI so every caller agrees on the list.
+MAX_EXPIRY_HORIZON_DAYS: Final = 42
+
+
 class GetExpiries(_FallbackMixin):
     def __init__(
         self,
@@ -243,9 +253,25 @@ class GetExpiries(_FallbackMixin):
     async def __call__(self, query: QuoteQuery) -> ExpiryList:
         provider, _ = await self._providers(query.tenant_id)
         try:
-            return await provider.get_expiries(query.instrument)
+            listed = await provider.get_expiries(query.instrument)
         except UpstreamError:
-            return await self._fallback.get_expiries(query.instrument)
+            listed = await self._fallback.get_expiries(query.instrument)
+        return self._within_horizon(listed)
+
+    def _within_horizon(self, listed: ExpiryList) -> ExpiryList:
+        """Drop expiries past the horizon, keeping at least the nearest one.
+
+        The floor matters: on a provider whose next expiry is further out than
+        the horizon - a stock with monthly-only expiries, say - a naive filter
+        would return an empty list and leave the picker with nothing to choose.
+        """
+        horizon = self._clock.now().date() + timedelta(days=MAX_EXPIRY_HORIZON_DAYS)
+        kept = [expiry for expiry in listed.expiries if _on_or_before(expiry, horizon)]
+        if not kept and listed.expiries:
+            kept = [listed.expiries[0]]
+        if len(kept) == len(listed.expiries):
+            return listed
+        return replace(listed, expiries=tuple(kept))
 
 
 class GetHistory(_FallbackMixin):
@@ -376,3 +402,15 @@ def _with_provenance(chain: OptionChain, provenance: Provenance) -> OptionChain:
         change_percent=chain.change_percent,
         future_price=chain.future_price,
     )
+
+
+def _on_or_before(expiry: str, horizon: date) -> bool:
+    """Whether ``expiry`` falls on or before ``horizon``.
+
+    An unparseable date is kept: the provider knows its own format better than
+    this does, and silently dropping a row would be worse than showing one.
+    """
+    try:
+        return date.fromisoformat(expiry) <= horizon
+    except ValueError:
+        return True

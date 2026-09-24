@@ -3,16 +3,15 @@ import { useEffect, useMemo, useState } from 'react';
 import { seriesColor, type SeriesLine } from '$shared/charts/options/multi-series';
 import { cx } from '$shared/ui/cx';
 import IconChart from '$shared/ui/icons/IconChart';
-import IconChevronDown from '$shared/ui/icons/IconChevronDown';
 import { lastTradingDayIST } from '$shared/formatting/ist-clock';
 import ContractPicker from './components/ContractPicker';
+import ExpiryPicker from '../components/ExpiryPicker';
 import HistoryMode, { type Mode } from '../components/HistoryMode';
 import SeriesChart from '../components/SeriesChart';
 import { feedAgeLabel, feedAgeMs } from '../open-interest/oi-data';
 import {
   contractLabel,
   DEFAULT_INTERVAL,
-  expiryLabel,
   fmtOi,
   fmtPrice,
   getOiSeries,
@@ -54,6 +53,8 @@ const SOURCES: { id: StrikeSourceId; title: string; hint: string }[] = [
 export default function MultiOiVolume() {
   const [instIdx, setInstIdx] = useState(0);
   const [sidebarOpen, setSidebarOpen] = useState(true);
+  // `undefined` means "whatever the backend picks" — the nearest expiry.
+  const [expiry, setExpiry] = useState<string | undefined>(undefined);
   const [zoomEpoch, setZoomEpoch] = useState(0);
   const [mode, setMode] = useState<Mode>('live');
   const [date, setDate] = useState(lastTradingDayIST);
@@ -81,8 +82,8 @@ export default function MultiOiVolume() {
 
   const historyDate = mode === 'historical' ? date : undefined;
   const query = useQuery<OiSeriesView>({
-    queryKey: ['options-lab', 'oi-series', instrument.symbol, interval, mode, historyDate],
-    queryFn: () => getOiSeries(instrument.symbol, interval, { date: historyDate }),
+    queryKey: ['options-lab', 'oi-series', instrument.symbol, interval, mode, historyDate, expiry],
+    queryFn: () => getOiSeries(instrument.symbol, interval, { date: historyDate, expiry }),
     refetchInterval: mode === 'live' ? REFETCH_MS : false
   });
 
@@ -191,13 +192,14 @@ export default function MultiOiVolume() {
 
                 <div className={s.twoUp}>
                   <div>
-                    <p className={s.subLabel}>Expiry</p>
-                    <div className={s.select}>
-                      <span>{expiryLabel(view.expiry_date)}</span>
-                      <span className={s.caret} aria-hidden="true">
-                        <IconChevronDown />
-                      </span>
-                    </div>
+                    <ExpiryPicker
+                      instrument={instrument.symbol}
+                      value={expiry}
+                      onChange={setExpiry}
+                      resolved={view.expiry_date}
+                      archiveBound
+                      dataQuality={view?.data_quality}
+                    />
                   </div>
                   <div>
                     <p className={s.subLabel}>Time</p>

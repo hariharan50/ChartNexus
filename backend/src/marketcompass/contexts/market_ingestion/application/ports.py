@@ -75,7 +75,18 @@ class ChainSource(Protocol):
     caller skips it rather than treating it as a failure).
     """
 
-    async def fetch(self, symbol: str) -> ChainObservation | None: ...
+    async def fetch(
+        self, symbol: str, *, expiry: str | None = None
+    ) -> ChainObservation | None: ...
+
+    async def expiries(self, symbol: str) -> tuple[str, ...]:
+        """The expiries worth archiving for ``symbol``, nearest first.
+
+        Empty when the source cannot say, which the caller reads as "just
+        capture whatever the chain resolves to" - the behaviour before any of
+        this existed.
+        """
+        ...
 
 
 @runtime_checkable
@@ -83,9 +94,14 @@ class SnapshotWriter(Protocol):
     async def save(self, snapshot: SnapshotToWrite) -> None: ...
 
     async def latest_rows(
-        self, symbol: str, session_date: date
+        self, symbol: str, session_date: date, expiry: str | None = None
     ) -> tuple[ChainRowToWrite, ...] | None:
         """The legs of the most recent capture, for duplicate detection.
+
+        Scoped to ``expiry`` when one is given. Without that scope a tick that
+        archives several contracts compares each against whichever of them was
+        written last, so the frozen-tape check stops comparing like with like
+        and silently stops working.
 
         ``None`` when nothing is stored for that symbol-day yet.
         """

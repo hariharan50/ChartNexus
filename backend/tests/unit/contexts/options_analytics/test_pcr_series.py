@@ -53,7 +53,9 @@ def _snap(
 
 
 class StubProvider:
-    async def fetch(self, tenant_id: TenantId, symbol: str) -> ProviderChain:
+    async def fetch(
+        self, tenant_id: TenantId, symbol: str, *, expiry: str | None = None
+    ) -> ProviderChain:
         return ProviderChain(rows=(), spot=24_650.0, lot_size=75, expiry="2026-08-11")
 
 

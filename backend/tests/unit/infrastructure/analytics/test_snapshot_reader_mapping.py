@@ -41,6 +41,7 @@ def _record(**kwargs: object) -> SimpleNamespace:
     base = {
         "captured_at": datetime(2026, 8, 4, 4, 0, tzinfo=UTC),
         "rows": [_row()],
+        "expiry": "2026-08-11",
         "spot": Decimal("24050.75"),
         "atm_strike": Decimal("24050"),
         "max_pain_strike": Decimal("24000"),
@@ -48,6 +49,20 @@ def _record(**kwargs: object) -> SimpleNamespace:
     }
     base.update(kwargs)
     return SimpleNamespace(**base)
+
+
+def test_the_frame_remembers_which_expiry_it_priced() -> None:
+    """Without it, a page asked for a far expiry would draw that expiry's header
+    over the near expiry's archived rows and never say so."""
+    snapshot = _to_chain_snapshot(_record())
+
+    assert snapshot.expiry == "2026-08-11"
+
+
+def test_a_record_predating_the_expiry_column_maps_to_none() -> None:
+    snapshot = _to_chain_snapshot(_record(expiry=None))
+
+    assert snapshot.expiry is None
 
 
 def test_ist_session_date_crosses_no_boundary_within_session() -> None:

@@ -83,21 +83,31 @@ class SqlAlchemyOptionChainSnapshotRepository:
         )
         return result.scalars().all()
 
-    async def latest(self, symbol: str, session_date: date) -> OptionChainSnapshotRecord | None:
-        """The most recent snapshot for a symbol on one trading date."""
+    async def latest(
+        self, symbol: str, session_date: date, expiry: str | None = None
+    ) -> OptionChainSnapshotRecord | None:
+        """The most recent snapshot for a symbol on one trading date.
+
+        Narrowed to one contract when ``expiry`` is given - the archive holds
+        several per symbol once the worker captures more than the front month.
+        """
+        clauses = [
+            OptionChainSnapshotRecord.symbol == symbol,
+            OptionChainSnapshotRecord.session_date == session_date,
+        ]
+        if expiry is not None:
+            clauses.append(OptionChainSnapshotRecord.expiry == expiry)
+
         result = await self._session.execute(
             select(OptionChainSnapshotRecord)
-            .where(
-                OptionChainSnapshotRecord.symbol == symbol,
-                OptionChainSnapshotRecord.session_date == session_date,
-            )
+            .where(*clauses)
             .order_by(OptionChainSnapshotRecord.captured_at.desc())
             .limit(1)
         )
         return result.scalars().first()
 
     async def latest_rows(
-        self, symbol: str, session_date: date
+        self, symbol: str, session_date: date, expiry: str | None = None
     ) -> tuple[ChainRowToWrite, ...] | None:
         """Satisfies ``market_ingestion``'s ``SnapshotWriter.latest_rows``.
 
@@ -105,7 +115,7 @@ class SqlAlchemyOptionChainSnapshotRepository:
         records, so the caller can compare it against what it is about to write
         with a plain ``==`` on frozen dataclasses.
         """
-        record = await self.latest(symbol, session_date)
+        record = await self.latest(symbol, session_date, expiry)
         if record is None:
             return None
         return tuple(

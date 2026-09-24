@@ -6,9 +6,9 @@ import { useChartTheme } from '$shared/charts/theme/use-chart-theme';
 import { lastTradingDayIST } from '$shared/formatting/ist-clock';
 import { cx } from '$shared/ui/cx';
 import IconChart from '$shared/ui/icons/IconChart';
-import IconChevronDown from '$shared/ui/icons/IconChevronDown';
 import IconEye from '$shared/ui/icons/IconEye';
 import IconEyeOff from '$shared/ui/icons/IconEyeOff';
+import ExpiryPicker from '../components/ExpiryPicker';
 import HistoryMode, { type Mode } from '../components/HistoryMode';
 import {
   bucketIndices,
@@ -16,7 +16,6 @@ import {
   csvFilename,
   dateLabel,
   DEFAULT_TIMEFRAME,
-  expiryLabel,
   fmtPrice,
   fmtVega,
   frameTotals,
@@ -70,6 +69,8 @@ export default function VegaAnalysis() {
   const [showPut, setShowPut] = useState(true);
   const [showDiff, setShowDiff] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(true);
+  // `undefined` means "whatever the backend picks" — the nearest expiry.
+  const [expiry, setExpiry] = useState<string | undefined>(undefined);
 
   const theme = useChartTheme();
   const instrument = OI_INSTRUMENTS[instIdx] ?? OI_INSTRUMENTS[0]!;
@@ -80,8 +81,8 @@ export default function VegaAnalysis() {
 
   const historyDate = dataMode === 'historical' ? date : undefined;
   const query = useQuery<VegaView>({
-    queryKey: ['options-lab', 'vega', instrument.symbol, dataMode, historyDate],
-    queryFn: () => getVega(instrument.symbol, { date: historyDate }),
+    queryKey: ['options-lab', 'vega', instrument.symbol, dataMode, historyDate, expiry],
+    queryFn: () => getVega(instrument.symbol, { date: historyDate, expiry }),
     refetchInterval: dataMode === 'live' ? REFETCH_MS : false
   });
 
@@ -257,13 +258,14 @@ export default function VegaAnalysis() {
 
                 <div className={s.twoUp}>
                   <div>
-                    <p className={s.subLabel}>Expiry</p>
-                    <div className={s.select}>
-                      <span>{expiryLabel(vw.expiry_date)}</span>
-                      <span className={s.caret} aria-hidden="true">
-                        <IconChevronDown />
-                      </span>
-                    </div>
+                    <ExpiryPicker
+                      instrument={instrument.symbol}
+                      value={expiry}
+                      onChange={setExpiry}
+                      resolved={vw.expiry_date}
+                      archiveBound
+                      dataQuality={vw?.data_quality}
+                    />
                   </div>
                   <div>
                     <p className={s.subLabel}>Timeframe</p>

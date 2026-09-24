@@ -65,12 +65,15 @@ export interface VegaView {
 
 export function getVega(
   instrument: string,
-  opts: { date?: string | undefined } = {},
+  opts: { date?: string | undefined; expiry?: string | undefined } = {},
   fetcher?: typeof fetch
 ): Promise<VegaView> {
   return apiFetch<VegaView>({
     url: `/options-lab/vega/${encodeURIComponent(instrument)}`,
-    params: opts.date ? { date: opts.date } : {},
+    params: {
+      ...(opts.date ? { date: opts.date } : {}),
+      ...(opts.expiry ? { expiry: opts.expiry } : {})
+    },
     fetcher
   });
 }

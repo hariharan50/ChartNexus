@@ -50,6 +50,7 @@ def _snap(
     pain: float | None,
     future: float | None = 24_700.0,
     rows: tuple[ChainRow, ...] | None = None,
+    expiry: str | None = None,
 ) -> ChainSnapshot:
     # Anchored at the bell, so these fixtures get no reconstructed open - that
     # path has its own test below, and a surprise extra point at index 0 would
@@ -57,6 +58,7 @@ def _snap(
     return ChainSnapshot(
         captured_at=BELL + timedelta(minutes=minute),
         rows=rows if rows is not None else (_row("CE", 1_000, 10), _row("PE", 900, -10)),
+        expiry=expiry,
         spot=24_650.0,
         atm_strike=24_650.0,
         max_pain=pain,
@@ -65,12 +67,23 @@ def _snap(
 
 
 class StubProvider:
-    def __init__(self, rows: tuple[ChainRow, ...] = (), spot: float = 24_650.0) -> None:
+    def __init__(
+        self,
+        rows: tuple[ChainRow, ...] = (),
+        spot: float = 24_650.0,
+        listed: tuple[str, ...] = ("2026-08-11", "2026-09-29"),
+    ) -> None:
         self._rows = rows
         self._spot = spot
+        self._listed = listed
 
-    async def fetch(self, tenant_id: TenantId, symbol: str) -> ProviderChain:
-        return ProviderChain(rows=self._rows, spot=self._spot, lot_size=75, expiry="2026-08-11")
+    async def fetch(
+        self, tenant_id: TenantId, symbol: str, *, expiry: str | None = None
+    ) -> ProviderChain:
+        # Mirrors a real provider: it answers for the expiry asked for, and
+        # falls back to its own nearest when it does not list that one.
+        resolved = expiry if expiry in self._listed else self._listed[0]
+        return ProviderChain(rows=self._rows, spot=self._spot, lot_size=75, expiry=resolved)
 
 
 class StubReader:
@@ -231,6 +244,62 @@ class TestReconstructedOpen:
         assert payload["max_pain"][0] == expected
 
 
+class TestExpirySelection:
+    """The bug this fixes: picking a far expiry showed the near expiry's data.
+
+    The live chain obliges when asked for a far expiry, but the archive behind
+    every intraday series holds whichever expiry the ingest worker follows - the
+    nearest. Without filtering, the page drew a far-expiry header over near-
+    expiry rows and said nothing about it.
+    """
+
+    async def test_asking_for_the_archived_expiry_keeps_the_intraday_series(self) -> None:
+        snaps = [
+            _snap(0, pain=24_600.0, expiry="2026-08-11"),
+            _snap(30, pain=24_650.0, expiry="2026-08-11"),
+        ]
+        service = _service(snaps)
+
+        payload = await service(TENANT, "NIFTY", expiry="2026-08-11")
+
+        assert payload["data_quality"] == "intraday"
+
+    async def test_a_far_expiry_drops_to_live_proxy_rather_than_borrowing_rows(self) -> None:
+        """The heart of it. Showing the near expiry's series under a far
+        expiry's label is worse than admitting there is no history for it."""
+        snaps = [
+            _snap(0, pain=24_600.0, expiry="2026-08-11"),
+            _snap(30, pain=24_650.0, expiry="2026-08-11"),
+        ]
+        service = _service(snaps, chain_rows=_ladder(24_700.0))
+
+        payload = await service(TENANT, "NIFTY", expiry="2026-09-29")
+
+        assert payload["data_quality"] == "live_proxy"
+        assert len(payload["t"]) == 2
+
+    async def test_no_expiry_asked_for_keeps_everything(self) -> None:
+        """The default: whatever the backend picks, which is the nearest."""
+        snaps = [
+            _snap(0, pain=24_600.0, expiry="2026-08-11"),
+            _snap(30, pain=24_650.0, expiry="2026-08-11"),
+        ]
+        service = _service(snaps)
+
+        payload = await service(TENANT, "NIFTY")
+
+        assert payload["data_quality"] == "intraday"
+
+    async def test_captures_predating_the_expiry_column_are_kept(self) -> None:
+        """Dropping them would silently empty the archive for older sessions."""
+        snaps = [_snap(0, pain=24_600.0), _snap(30, pain=24_650.0)]
+        service = _service(snaps)
+
+        payload = await service(TENANT, "NIFTY", expiry="2026-09-29")
+
+        assert payload["data_quality"] == "intraday"
+
+
 class TestDegradedTiers:
     async def test_an_unarchived_day_falls_to_a_two_point_proxy(self) -> None:
         """Honest, and labelled: the ingest worker has not run, so open-vs-now
@@ -266,3 +335,27 @@ class TestDegradedTiers:
         assert payload["symbol"] == "NIFTY"
         assert payload["expiry_date"] == "2026-08-11"
         assert payload["open_ts"] and payload["now_ts"]
+
+
+class TestResolvedExpiryWins:
+    """The header and the rows must always describe the same contract."""
+
+    async def test_a_substituted_expiry_uses_the_substitute_s_archive(self) -> None:
+        """A provider handed an expiry it does not list answers with its nearest.
+
+        Keying the archive filter off the *request* would then draw the nearest
+        contract's rows under a header naming the one that was asked for - the
+        exact confusion this whole change exists to remove.
+        """
+        snaps = [
+            _snap(0, pain=24_600.0, expiry="2026-08-11"),
+            _snap(30, pain=24_650.0, expiry="2026-08-11"),
+        ]
+        # 2027-01-28 is not listed, so the stub resolves to 2026-08-11 - and the
+        # archive for *that* contract is what the series must be built from.
+        service = _service(snaps)
+
+        payload = await service(TENANT, "NIFTY", expiry="2027-01-28")
+
+        assert payload["expiry_date"] == "2026-08-11"
+        assert payload["data_quality"] == "intraday"

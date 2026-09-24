@@ -290,6 +290,17 @@ class MarketSettings(_Section):
     # Off by default: a mock-fallback day writes nothing, leaving an honest gap.
     # Turn on locally to generate test history without a live broker connection.
     ingest_allow_mock: bool = False
+    # How many expiries to archive per symbol, nearest first.
+    #
+    # One by default, which is what the archive has always held - and the reason
+    # the Options Lab series charts fall back to "open vs now" the moment a
+    # reader picks anything but the front contract. Raising it gives those pages
+    # a real session for further expiries, at a directly proportional cost:
+    # this multiplies both the broker calls per tick and the stored rows. At the
+    # 100k/day quota, two symbols x six expiries on the default 180s cadence is
+    # already ~5,760 calls/day. Bounded by the same 42-day horizon the expiry
+    # picker uses, so it can never run away.
+    ingest_expiries: int = Field(default=1, ge=1, le=12)
     # In LOCAL only, the API runs the capture loop itself as a background task, so
     # a developer who starts just the API still gets a populated archive rather
     # than the Options Lab charts' two-point "open vs now" estimate. Ignored

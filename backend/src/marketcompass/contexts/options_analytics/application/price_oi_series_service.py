@@ -42,6 +42,7 @@ from marketcompass.contexts.options_analytics.application.ports import (
 )
 from marketcompass.contexts.options_analytics.application.session import (
     drop_future,
+    for_expiry,
     future_of,
     iso as _iso,
     live_proxy_frames,
@@ -71,6 +72,7 @@ class GetPriceOiSeries:
         symbol: str,
         *,
         interval: str = DEFAULT_INTERVAL,
+        expiry: str | None = None,
         trade_date: datetime | None = None,
     ) -> dict[str, Any]:
         now = self._now()
@@ -79,8 +81,14 @@ class GetPriceOiSeries:
         as_of = trade_date or now
         bucket = INTERVALS.get(interval, INTERVALS[DEFAULT_INTERVAL])
 
-        chain = await self._provider.fetch(tenant_id, symbol)
+        chain = await self._provider.fetch(tenant_id, symbol, expiry=expiry)
         snaps = await self._snapshots.day_snapshots(tenant_id, symbol, trade_date_utc=as_of)
+        # Filtered by what the chain actually resolved to, not by what was
+        # asked for. A provider handed an expiry it does not list answers
+        # with its nearest instead, and keying off the request would then
+        # draw one contract's archived rows under another's header. Anything
+        # the archive does not hold drops to live-proxy, which is honest.
+        snaps = for_expiry(snaps, chain.expiry)
         # Only clip "future" frames on the live day — a past session is whole.
         if trade_date is None:
             snaps = drop_future(snaps, now)

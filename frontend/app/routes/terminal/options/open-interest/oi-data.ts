@@ -84,12 +84,17 @@ export interface OiView {
 
 export function getOpenInterest(
   instrument: string,
-  opts: { date?: string | undefined } = {},
+  opts: { date?: string | undefined; expiry?: string | undefined } = {},
   fetcher?: typeof fetch
 ): Promise<OiView> {
+  const params: Record<string, string> = {};
+  if (opts.date) params.date = opts.date;
+  // Omitted entirely when unset, so the backend picks the nearest expiry
+  // rather than the client guessing a date the exchange may not list.
+  if (opts.expiry) params.expiry = opts.expiry;
   return apiFetch<OiView>({
     url: `/options-lab/oi/${encodeURIComponent(instrument)}`,
-    params: opts.date ? { date: opts.date } : {},
+    params,
     fetcher
   });
 }

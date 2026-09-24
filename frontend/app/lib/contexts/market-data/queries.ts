@@ -13,12 +13,14 @@
 
 import { useQuery } from '@tanstack/react-query';
 import {
+  getExpiries,
   getFutures,
   getMarketStatus,
   getOptionChain,
   getSpot
 } from '$contexts/broker-connections/api';
 import type {
+  ExpiryList,
   FuturesQuote,
   MarketStatus,
   OptionChain,
@@ -70,5 +72,21 @@ export function useOptionChainForExpiryQuery(instrument: string, expiry: string 
     queryKey: queryKeys.optionChain(instrument, expiry ?? 'nearest'),
     queryFn: () => getOptionChain(instrument, expiry),
     refetchInterval: REFETCH_MS
+  });
+}
+
+/**
+ * The instrument's listed expiries, for the Options Lab expiry picker.
+ *
+ * Refetched rarely on purpose: the listed expiries change when a contract
+ * settles, which is once a week - polling them on the terminal's fifteen-second
+ * loop would spend a broker request a minute on a list that is stable for days.
+ */
+export function useExpiriesQuery(instrument: string) {
+  return useQuery<ExpiryList>({
+    queryKey: ['market', 'expiries', instrument],
+    queryFn: () => getExpiries(instrument),
+    staleTime: 15 * 60_000,
+    refetchInterval: 30 * 60_000
   });
 }
