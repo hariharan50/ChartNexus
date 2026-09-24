@@ -38,6 +38,10 @@ def to_quote(
         price=price,
         change=_decimal(values.get("ch")),
         change_percent=_decimal(values.get("chp")),
+        # Same key fallbacks the futures mapper already uses: the quotes
+        # endpoint spells these out, the depth payload abbreviates them.
+        day_open=_decimal(values.get("open_price") or values.get("o")),
+        previous_close=_decimal(values.get("prev_close_price") or values.get("pc")),
         provenance=Provenance(source=DataSource.LIVE, fetched_at=fetched_at),
     )
 

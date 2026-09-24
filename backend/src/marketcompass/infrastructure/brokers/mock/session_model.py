@@ -246,6 +246,39 @@ def spot_at(symbol: str, moment: datetime) -> Decimal:
     return _money(_spot_track(instrument, session_date)[index])
 
 
+def session_open_and_previous_close(
+    symbol: str | InstrumentSymbol, moment: datetime
+) -> tuple[Decimal, Decimal]:
+    """The session's opening print and the prior session's close.
+
+    Both come off the same seeded walk as :func:`spot_at`, so the open a card
+    displays always sits within the day's range of the spot beside it. Deriving
+    the previous close from a flat base level instead would make every session
+    show an identical gap.
+    """
+    instrument = _parse(symbol)
+    session_date, _ = _locate(moment)
+    day_open = _money(_spot_track(instrument, session_date)[0])
+
+    previous_date = _previous_session_date(session_date)
+    previous_close = _money(_spot_track(instrument, previous_date)[-1])
+    return day_open, previous_close
+
+
+def _previous_session_date(session_date: date) -> date:
+    """The trading day before ``session_date``, skipping the weekend.
+
+    The same Saturday/Sunday rule :func:`_locate` applies, so a Monday's gap is
+    measured against Friday's close rather than against a session that never
+    traded.
+    """
+    previous = session_date - timedelta(days=1)
+    weekend_days = previous.weekday() - 4
+    if weekend_days > 0:
+        previous -= timedelta(days=weekend_days)
+    return previous
+
+
 def frame_count() -> int:
     """Frames in a full session on the internal grid."""
     return len(_grid(date(2026, 1, 1)))

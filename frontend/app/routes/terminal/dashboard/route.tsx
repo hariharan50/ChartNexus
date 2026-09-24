@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react';
 import {
   aiSummary,
+  gapReading,
   indexCard,
   metrics,
   optionRows,
@@ -15,13 +16,13 @@ import {
 import DataSourceBadge from '$shared/ui/DataSourceBadge';
 import AiSummaryCard from './components/AiSummaryCard';
 import FiiDiiCard from './components/FiiDiiCard';
+import GapIndicatorCard from './components/GapIndicatorCard';
 import IndexCard from './components/IndexCard';
 import IndexTabs from './components/IndexTabs';
 import LiveBadge from './components/LiveBadge';
 import MarketPhase from './components/MarketPhase';
 import OptionChainCard from './components/OptionChainCard';
 import OptionsMetricsCard from './components/OptionsMetricsCard';
-import QuickActionsCard from './components/QuickActionsCard';
 import type { IndexKey } from './dashboard-data';
 import s from './route.module.css';
 import type { Route } from './+types/route';
@@ -61,6 +62,15 @@ export default function Dashboard() {
   );
 
   const focusedLabel = indices.find((q) => q.key === focused)?.label ?? 'NIFTY 50';
+
+  // The gap card reads the focused index. Its spot query is already running
+  // above for the index strip, so following the tab costs no extra request.
+  const focusedSpotQ =
+    focused === 'SENSEX' ? sensexQ : focused === 'BANKNIFTY' ? bankNiftyQ : niftyQ;
+  const gap = useMemo(
+    () => gapReading(focusedLabel, focusedSpotQ.data),
+    [focusedLabel, focusedSpotQ.data]
+  );
 
   // Provenance for the source badge: prefer the chain, fall back to status.
   const provenance = chain?.provenance;
@@ -113,7 +123,7 @@ export default function Dashboard() {
         <aside className={s.right}>
           {chainMetrics ? <OptionsMetricsCard metrics={chainMetrics} /> : null}
           <FiiDiiCard />
-          <QuickActionsCard />
+          <GapIndicatorCard reading={gap} loading={focusedSpotQ.isPending} label={focusedLabel} />
         </aside>
       </div>
 

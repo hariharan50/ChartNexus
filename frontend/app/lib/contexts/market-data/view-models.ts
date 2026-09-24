@@ -26,6 +26,20 @@ export interface IndexQuote {
   pending?: boolean;
 }
 
+/** How the session opened against the previous close. */
+export type GapSignal = 'gap_up' | 'gap_down' | 'flat';
+
+export interface GapReading {
+  /** The index this reading is for, e.g. `NIFTY 50`. */
+  label: string;
+  open: number;
+  previousClose: number;
+  /** `open - previousClose`, signed. */
+  points: number;
+  percent: number;
+  signal: GapSignal;
+}
+
 export interface OptionRow {
   strike: number;
   type: OptionType;

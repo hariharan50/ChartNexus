@@ -27,6 +27,7 @@ from marketcompass.infrastructure.brokers.mock.session_model import (
     IST,
     base_level,
     lot_size,
+    session_open_and_previous_close,
     spot_at,
     strike_step,
 )
@@ -62,12 +63,17 @@ def build_quote(instrument: InstrumentSymbol, moment: datetime) -> Quote:
     base = base_level(instrument)
     change = (price - base).quantize(Decimal("0.01"))
     change_percent = ((change / base) * Decimal(100)).quantize(Decimal("0.01"))
+    # Both read off the same walk as ``price``, so the opening print a gap card
+    # shows stays within the day's range of the spot beside it.
+    day_open, previous_close = session_open_and_previous_close(instrument, moment)
 
     return Quote(
         instrument=instrument,
         price=price,
         change=change,
         change_percent=change_percent,
+        day_open=day_open,
+        previous_close=previous_close,
         provenance=Provenance(source=DataSource.MOCK, fetched_at=moment),
     )
 

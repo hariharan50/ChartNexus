@@ -62,6 +62,12 @@ class Quote:
     change: Decimal | None
     change_percent: Decimal | None
     provenance: Provenance
+    # The session's opening print and the prior session's close. Together they
+    # are the overnight gap, which the dashboard reads directly. Optional
+    # because not every broker payload carries them, and a missing figure has
+    # to stay visibly missing rather than default to the last price.
+    day_open: Decimal | None = None
+    previous_close: Decimal | None = None
 
 
 @dataclass(frozen=True, slots=True)

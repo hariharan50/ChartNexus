@@ -53,6 +53,9 @@ export interface Quote {
   price: string;
   change: string | null;
   change_percent: string | null;
+  /** The session's opening print and the prior session's close — the gap. */
+  day_open: string | null;
+  previous_close: string | null;
   provenance: Provenance;
 }
 

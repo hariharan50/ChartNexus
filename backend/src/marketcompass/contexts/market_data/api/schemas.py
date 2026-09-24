@@ -53,6 +53,10 @@ class QuoteResponse(_Schema):
     price: Decimal
     change: Decimal | None
     change_percent: Decimal | None
+    #: The session's opening print and the prior session's close, so a client
+    #: can read the overnight gap without a second request.
+    day_open: Decimal | None
+    previous_close: Decimal | None
     provenance: ProvenanceResponse
 
     @classmethod
@@ -62,6 +66,8 @@ class QuoteResponse(_Schema):
             price=quote.price,
             change=quote.change,
             change_percent=quote.change_percent,
+            day_open=quote.day_open,
+            previous_close=quote.previous_close,
             provenance=ProvenanceResponse.of(quote.provenance),
         )
 

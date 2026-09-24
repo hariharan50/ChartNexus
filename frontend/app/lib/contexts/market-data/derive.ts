@@ -13,6 +13,8 @@ import type {
   AiSummary,
   Bias,
   BuildUp,
+  GapReading,
+  GapSignal,
   IndexKey,
   IndexQuote,
   OptionRow,
@@ -42,6 +44,38 @@ export function indexCard(key: IndexKey, label: string, quote: Quote | undefined
   const card: IndexQuote = { key, label, value: num(quote.price) };
   if (quote.change_percent != null) card.changePercent = num(quote.change_percent);
   return card;
+}
+
+/**
+ * Below this the open is treated as level with the previous close. Roughly 35
+ * points on a 23,500 NIFTY — wide enough to swallow ordinary overnight noise,
+ * narrow enough that a gap a trader would act on still reads as one.
+ */
+export const FLAT_GAP_PERCENT = 0.15;
+
+/**
+ * The overnight gap: where the session opened against the previous close.
+ *
+ * `undefined` when the broker did not supply both prints — the card then says
+ * so, rather than deriving an open from `change` (which is measured against the
+ * previous close, so it would only restate the day's move).
+ */
+export function gapReading(label: string, quote: Quote | undefined): GapReading | undefined {
+  if (!quote) return undefined;
+
+  const open = num(quote.day_open);
+  const previousClose = num(quote.previous_close);
+  if (!Number.isFinite(open) || !Number.isFinite(previousClose) || previousClose === 0) {
+    return undefined;
+  }
+
+  const points = open - previousClose;
+  const percent = (points / previousClose) * 100;
+
+  let signal: GapSignal = 'flat';
+  if (Math.abs(percent) >= FLAT_GAP_PERCENT) signal = points > 0 ? 'gap_up' : 'gap_down';
+
+  return { label, open, previousClose, points, percent, signal };
 }
 
 /**

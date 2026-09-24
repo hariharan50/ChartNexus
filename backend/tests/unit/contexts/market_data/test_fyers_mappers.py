@@ -58,14 +58,50 @@ def test_symbols_map_both_ways() -> None:
 def test_quote_is_parsed() -> None:
     payload = {
         "s": "ok",
-        "d": [{"n": "NSE:NIFTY50-INDEX", "v": {"lp": 24123.45, "ch": -18.2, "chp": -0.42}}],
+        "d": [
+            {
+                "n": "NSE:NIFTY50-INDEX",
+                "v": {
+                    "lp": 24123.45,
+                    "ch": -18.2,
+                    "chp": -0.42,
+                    "open_price": 24180.0,
+                    "prev_close_price": 24141.65,
+                },
+            }
+        ],
     }
 
     quote = to_quote(payload, instrument=InstrumentSymbol("NIFTY"), fetched_at=NOW)
 
     assert quote.price == Decimal("24123.45")
     assert quote.change_percent == Decimal("-0.42")
+    assert quote.day_open == Decimal("24180.0")
+    assert quote.previous_close == Decimal("24141.65")
     assert quote.provenance.source is DataSource.LIVE
+
+
+def test_quote_accepts_the_abbreviated_open_and_previous_close_keys() -> None:
+    """The depth payload abbreviates what the quotes endpoint spells out."""
+    payload = {
+        "s": "ok",
+        "d": [{"n": "NSE:NIFTY50-INDEX", "v": {"lp": 24123.45, "o": 24180, "pc": 24141.65}}],
+    }
+
+    quote = to_quote(payload, instrument=InstrumentSymbol("NIFTY"), fetched_at=NOW)
+
+    assert quote.day_open == Decimal("24180")
+    assert quote.previous_close == Decimal("24141.65")
+
+
+def test_a_quote_without_an_open_stays_missing_rather_than_guessing() -> None:
+    """A gap read off a fabricated open would be worse than no gap at all."""
+    payload = {"s": "ok", "d": [{"n": "NSE:NIFTY50-INDEX", "v": {"lp": 24123.45}}]}
+
+    quote = to_quote(payload, instrument=InstrumentSymbol("NIFTY"), fetched_at=NOW)
+
+    assert quote.day_open is None
+    assert quote.previous_close is None
 
 
 def test_quote_without_a_price_is_rejected() -> None:

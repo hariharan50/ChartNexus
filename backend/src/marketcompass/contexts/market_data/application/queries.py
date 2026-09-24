@@ -117,6 +117,8 @@ class GetSpotPrice(_FallbackMixin):
                     price=previous.price,
                     change=previous.change,
                     change_percent=previous.change_percent,
+                    day_open=previous.day_open,
+                    previous_close=previous.previous_close,
                     provenance=_degrade(previous.provenance, self._clock.now()),
                 )
             # No real data has ever been seen for this instrument. Serving mock

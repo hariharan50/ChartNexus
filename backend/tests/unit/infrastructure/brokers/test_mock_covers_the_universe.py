@@ -59,6 +59,45 @@ def test_every_catalogued_instrument_quotes(symbol: str) -> None:
 
 
 @pytest.mark.parametrize("symbol", [row.symbol for row in CATALOG_FIXTURE])
+def test_a_quote_carries_an_opening_print_near_its_own_price(symbol: str) -> None:
+    """The gap card renders the open beside the spot, so the two must agree.
+
+    Both come off the one seeded walk, which caps a session's excursion. An
+    open drawn from anywhere else would show as an implausible overnight jump.
+    """
+    quote = build_quote(InstrumentSymbol(symbol), NOW)
+
+    assert quote.day_open is not None
+    assert quote.previous_close is not None
+    drift = abs(quote.day_open - quote.price) / quote.price
+    assert drift < Decimal("0.05")
+
+
+def test_the_overnight_gap_differs_from_one_session_to_the_next() -> None:
+    """A previous close taken from the flat base level would be identical
+    every day, leaving the indicator permanently stuck on one reading."""
+    nifty = InstrumentSymbol("NIFTY")
+    gaps = set()
+    for day in (4, 5, 6):
+        quote = build_quote(nifty, datetime(2026, 8, day, 6, 30, tzinfo=UTC))
+        assert quote.day_open is not None
+        assert quote.previous_close is not None
+        gaps.add(quote.day_open - quote.previous_close)
+
+    assert len(gaps) == 3
+
+
+def test_a_monday_gap_is_measured_against_friday() -> None:
+    """2026-08-10 is a Monday; its previous close is Friday the 7th's, not a
+    weekend session that never traded."""
+    nifty = InstrumentSymbol("NIFTY")
+    monday = build_quote(nifty, datetime(2026, 8, 10, 6, 30, tzinfo=UTC))
+    friday = build_quote(nifty, datetime(2026, 8, 7, 12, 0, tzinfo=UTC))
+
+    assert monday.previous_close == friday.price
+
+
+@pytest.mark.parametrize("symbol", [row.symbol for row in CATALOG_FIXTURE])
 def test_every_catalogued_instrument_builds_a_chain(symbol: str) -> None:
     chain = build_option_chain(InstrumentSymbol(symbol), NOW, None)
 
