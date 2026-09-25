@@ -29,6 +29,10 @@ import s from './SymbolAvatar.module.css';
  */
 interface Props {
   symbol: string;
+  /**
+   * Rendered edge, in px. The marks are served at 128px, so this is free to
+   * grow — the limit is the row it sits in, not the image.
+   */
   size?: number;
 }
 
@@ -42,7 +46,7 @@ const HUES = [212, 258, 284, 318, 34, 46, 190, 168];
  */
 const LOGOS = MANIFEST as Record<string, string>;
 
-export default function SymbolAvatar({ symbol, size = 22 }: Props) {
+export default function SymbolAvatar({ symbol, size = 26 }: Props) {
   const [failed, setFailed] = useState(false);
   const key = symbol.trim().toUpperCase();
 

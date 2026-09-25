@@ -113,7 +113,7 @@ function Side({
 
   const name = (
     <>
-      <SymbolAvatar symbol={row.symbol} size={20} />
+      <SymbolAvatar symbol={row.symbol} size={24} />
       <span className={s.symbol}>{row.symbol}</span>
     </>
   );

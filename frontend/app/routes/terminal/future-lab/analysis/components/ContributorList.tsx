@@ -50,7 +50,7 @@ export default function ContributorList({ title, rows, side }: Props) {
               <tr key={row.symbol}>
                 <td>
                   <span className={s.symbol}>
-                    <SymbolAvatar symbol={row.symbol} size={22} />
+                    <SymbolAvatar symbol={row.symbol} />
                     <span className={s.ticker}>{row.symbol}</span>
                   </span>
                 </td>
