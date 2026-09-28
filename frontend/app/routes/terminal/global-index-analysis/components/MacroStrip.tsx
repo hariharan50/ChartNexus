@@ -11,9 +11,11 @@ interface Props {
  * Crude, gold, the rupee and the US ten-year.
  *
  * Not scored into the composite and not placed on the timeline — these have no
- * session an Indian open hands off from. They are here because they are what
- * *explains* the indices above: a red S&P beside a spiking crude and a weak
- * rupee is a different morning from a red S&P with both of those calm.
+ * session an Indian open hands off from. They lead the page because they are
+ * the conditions everything below was trading under: a red S&P beside a
+ * spiking crude and a weak rupee is a different morning from a red S&P with
+ * both of those calm, and that is context to read first rather than a footnote
+ * to reach afterwards.
  */
 export default function MacroStrip({ markets }: Props) {
   const rows = markets.filter((row) => row.macro);

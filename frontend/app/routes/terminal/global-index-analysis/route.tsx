@@ -17,10 +17,15 @@ export const meta: Route.MetaFunction = () => [
 /**
  * GIA — the overnight handoff, read as one story.
  *
- * The page is ordered as the inference runs, not as the data arrives: the
- * timeline shows what happened and in what order, the composite weighs it, the
- * implied open quotes it directly, and the board is the evidence underneath.
- * Reading top to bottom should answer "where does NIFTY open, and why".
+ * The page is ordered as the inference runs, not as the data arrives: macro
+ * sets the backdrop, the timeline shows what happened and in what order, the
+ * composite weighs it, the implied open quotes it directly, and the board is
+ * the evidence underneath. Reading top to bottom should answer "where does
+ * NIFTY open, and why".
+ *
+ * Macro leads because crude, the rupee and the ten-year are the conditions
+ * every index below was trading under, and they are read once at the top
+ * rather than recalled from the bottom of the page after the fact.
  */
 export default function GlobalIndexAnalysis() {
   const viewQ = useGlobalViewQuery();
@@ -62,6 +67,8 @@ export default function GlobalIndexAnalysis() {
         </div>
       ) : (
         <>
+          <MacroStrip markets={view.markets} />
+
           <HandoffTimeline window={view.window} bands={view.bands} />
 
           <div className={s.reads}>
@@ -74,8 +81,6 @@ export default function GlobalIndexAnalysis() {
           </div>
 
           <IndexBoard markets={view.markets} regions={view.regions} labels={view.region_labels} />
-
-          <MacroStrip markets={view.markets} />
         </>
       )}
 
