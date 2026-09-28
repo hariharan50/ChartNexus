@@ -1,0 +1,626 @@
+{
+ "columns": [
+  "Download",
+  "Favorites"
+ ],
+ "data": [
+  {
+   "Next Day": [
+    {
+     "Session1": [
+      {
+       "key": "niccl.i4_new1NEXT",
+       "fileurl": "https://www.nseix.com/api/content/daily_report/niccl.20260928.i4.zip",
+       "file": "3rd Intra-day SPAN <sup> \u00ae </sup>File 08:00 AM",
+       "session": 1,
+       "date": "28-Sep-2026",
+       "FILEKEY": "niccl.i4_new"
+      },
+      {
+       "key": "niccl.i3_new1NEXT",
+       "fileurl": "https://www.nseix.com/api/content/daily_report/niccl.20260928.i3.zip",
+       "file": "2nd Intra-day SPAN <sup> \u00ae </sup>File 06:30 AM",
+       "session": 1,
+       "date": "28-Sep-2026",
+       "FILEKEY": "niccl.i3_new"
+      },
+      {
+       "key": "niccl.i2_new1NEXT",
+       "fileurl": "https://www.nseix.com/api/content/daily_report/niccl.20260928.i2.zip",
+       "file": "1st Intra-day SPAN <sup> \u00ae </sup>File 05:00 AM",
+       "session": 1,
+       "date": "28-Sep-2026",
+       "FILEKEY": "niccl.i2_new"
+      },
+      {
+       "key": "niccl.i1_new1NEXT",
+       "fileurl": "https://www.nseix.com/api/content/daily_report/niccl.20260928.i1.zip",
+       "file": "Begin day SPAN <sup> \u00ae </sup>File",
+       "session": 1,
+       "date": "28-Sep-2026",
+       "FILEKEY": "niccl.i1_new"
+      }
+     ],
+     "Session2": [
+      {
+       "key": "AEL_OTM_CONTRACTS_2NEXT",
+       "fileurl": "https://www.nseix.com/api/content/daily_report/AEL_OTM_CONTRACTS_28092026.csv",
+       "file": "Deep OTM ELM",
+       "session": 2,
+       "date": "28-Sep-2026",
+       "FILEKEY": "AEL_OTM_CONTRACTS_"
+      }
+     ]
+    }
+   ],
+   "Current Day": [
+    {
+     "Session1": [
+      {
+       "key": "G_T_Bhavcopy_FO_1CURR",
+       "fileurl": "https://www.nseix.com/api/content/daily_report/G_T_Bhavcopy_FO_250926.CSV",
+       "file": "Bhavcopy Futures",
+       "session": 1,
+       "date": "25-Sep-2026",
+       "FILEKEY": "G_T_Bhavcopy_FO_"
+      },
+      {
+       "key": "G_T_Bhavcopy_OP_1CURR",
+       "fileurl": "https://www.nseix.com/api/content/daily_report/G_T_Bhavcopy_OP_250926.CSV",
+       "file": "Bhavcopy Options",
+       "session": 1,
+       "date": "25-Sep-2026",
+       "FILEKEY": "G_T_Bhavcopy_OP_"
+      },
+      {
+       "key": "G_T_DSP_PRICE_1CURR",
+       "fileurl": "https://www.nseix.com/api/content/daily_report/G_T_DSP_PRICE_25092026.CSV",
+       "file": " Settlement Prices ",
+       "session": 1,
+       "date": "25-Sep-2026",
+       "FILEKEY": "G_T_DSP_PRICE_"
+      },
+      {
+       "key": "G_T_VOLT_1CURR",
+       "fileurl": "https://www.nseix.com/api/content/daily_report/G_T_VOLT_25092026.CSV",
+       "file": "Daily Volatility ",
+       "session": 1,
+       "date": "25-Sep-2026",
+       "FILEKEY": "G_T_VOLT_"
+      },
+      {
+       "key": "niccl.T_new1CURR",
+       "fileurl": "https://www.nseix.com/api/content/daily_report/niccl.20260925.T.zip",
+       "file": "End of Session 1 SPAN <sup> \u00ae </sup>File",
+       "session": 1,
+       "date": "25-Sep-2026",
+       "FILEKEY": "niccl.T_new"
+      },
+      {
+       "key": "niccl.i9_new1CURR",
+       "fileurl": "https://www.nseix.com/api/content/daily_report/niccl.20260925.i9.zip",
+       "file": "8th Intra-day SPAN <sup> \u00ae </sup>File 03:30 PM",
+       "session": 1,
+       "date": "25-Sep-2026",
+       "FILEKEY": "niccl.i9_new"
+      },
+      {
+       "key": "niccl.i8_new1CURR",
+       "fileurl": "https://www.nseix.com/api/content/daily_report/niccl.20260925.i8.zip",
+       "file": "7th Intra-day SPAN <sup> \u00ae </sup>File 02:00 PM",
+       "session": 1,
+       "date": "25-Sep-2026",
+       "FILEKEY": "niccl.i8_new"
+      },
+      {
+       "key": "niccl.i7_new1CURR",
+       "fileurl": "https://www.nseix.com/api/content/daily_report/niccl.20260925.i7.zip",
+       "file": "6th Intra-day SPAN <sup> \u00ae </sup>File 12:30 PM",
+       "session": 1,
+       "date": "25-Sep-2026",
+       "FILEKEY": "niccl.i7_new"
+      },
+      {
+       "key": "niccl.i6_new1CURR",
+       "fileurl": "https://www.nseix.com/api/content/daily_report/niccl.20260925.i6.zip",
+       "file": "5th Intra-day SPAN <sup> \u00ae </sup>File 11:00 AM",
+       "session": 1,
+       "date": "25-Sep-2026",
+       "FILEKEY": "niccl.i6_new"
+      },
+      {
+       "key": "niccl.i5_new1CURR",
+       "fileurl": "https://www.nseix.com/api/content/daily_report/niccl.20260925.i5.zip",
+       "file": "4th Intra-day SPAN <sup> \u00ae </sup>File 09:30 AM",
+       "session": 1,
+       "date": "25-Sep-2026",
+       "FILEKEY": "niccl.i5_new"
+      },
+      {
+       "key": "niccl.i4_new1CURR",
+       "fileurl": "https://www.nseix.com/api/content/daily_report/niccl.20260925.i4.zip",
+       "file": "3rd Intra-day SPAN <sup> \u00ae </sup>File 08:00 AM",
+       "session": 1,
+       "date": "25-Sep-2026",
+       "FILEKEY": "niccl.i4_new"
+      },
+      {
+       "key": "niccl.i3_new1CURR",
+       "fileurl": "https://www.nseix.com/api/content/daily_report/niccl.20260925.i3.zip",
+       "file": "2nd Intra-day SPAN <sup> \u00ae </sup>File 06:30 AM",
+       "session": 1,
+       "date": "25-Sep-2026",
+       "FILEKEY": "niccl.i3_new"
+      },
+      {
+       "key": "niccl.i2_new1CURR",
+       "fileurl": "https://www.nseix.com/api/content/daily_report/niccl.20260925.i2.zip",
+       "file": "1st Intra-day SPAN <sup> \u00ae </sup>File 05:00 AM",
+       "session": 1,
+       "date": "25-Sep-2026",
+       "FILEKEY": "niccl.i2_new"
+      },
+      {
+       "key": "niccl.i1_new1CURR",
+       "fileurl": "https://www.nseix.com/api/content/daily_report/niccl.20260925.i1.zip",
+       "file": "Begin day SPAN <sup> \u00ae </sup>File",
+       "session": 1,
+       "date": "25-Sep-2026",
+       "FILEKEY": "niccl.i1_new"
+      },
+      {
+       "key": "G_COMBINED_OI_1CURR",
+       "fileurl": "https://www.nseix.com/api/content/daily_report/G_COMBINED_OI_25092026.csv",
+       "file": "Index Combined OI",
+       "session": 1,
+       "date": "25-Sep-2026",
+       "FILEKEY": "G_COMBINED_OI_"
+      },
+      {
+       "key": "G_T_UL_INDEX_1CURR",
+       "fileurl": "https://www.nseix.com/api/content/daily_report/G_T_UL_INDEX_25092026.csv",
+       "file": "Underlying Price INDEX",
+       "session": 1,
+       "date": "25-Sep-2026",
+       "FILEKEY": "G_T_UL_INDEX_"
+      },
+      {
+       "key": "G_T_UL_PRICE_1CURR",
+       "fileurl": "https://www.nseix.com/api/content/daily_report/G_T_UL_PRICE_25092026.csv",
+       "file": "Underlying Price",
+       "session": 1,
+       "date": "25-Sep-2026",
+       "FILEKEY": "G_T_UL_PRICE_"
+      },
+      {
+       "key": "G_T_DSP_INDEX_1CURR",
+       "fileurl": "https://www.nseix.com/api/content/daily_report/G_T_DSP_INDEX_25092026.csv",
+       "file": " Settlement Prices INDEX",
+       "session": 1,
+       "date": "25-Sep-2026",
+       "FILEKEY": "G_T_DSP_INDEX_"
+      },
+      {
+       "key": "G_T_F_UL_PRICE_1CURR",
+       "fileurl": "https://www.nseix.com/api/content/daily_report/G_T_F_UL_PRICE_25092026.csv",
+       "file": "FUTCBI Underlying Price",
+       "session": 1,
+       "date": "25-Sep-2026",
+       "FILEKEY": "G_T_F_UL_PRICE_"
+      },
+      {
+       "key": "G_T_F_Bhavcopy_FO_1CURR",
+       "fileurl": "https://www.nseix.com/api/content/daily_report/G_T_F_Bhavcopy_FO_250926.CSV",
+       "file": "FUTCBI Bhavcopy Futures",
+       "session": 1,
+       "date": "25-Sep-2026",
+       "FILEKEY": "G_T_F_Bhavcopy_FO_"
+      },
+      {
+       "key": "G_T_F_DSP_PRICE_1CURR",
+       "fileurl": "https://www.nseix.com/api/content/daily_report/G_T_F_DSP_PRICE_25092026.CSV",
+       "file": "FUTCBI  Settlement Prices ",
+       "session": 1,
+       "date": "25-Sep-2026",
+       "FILEKEY": "G_T_F_DSP_PRICE_"
+      }
+     ],
+     "Session2": [
+      {
+       "key": "G_T1_Bhavcopy_FO_2CURR",
+       "fileurl": "https://www.nseix.com/api/content/daily_report/G_T1_Bhavcopy_FO_250926.CSV",
+       "file": "Bhavcopy Futures",
+       "session": 2,
+       "date": "25-Sep-2026",
+       "FILEKEY": "G_T1_Bhavcopy_FO_"
+      },
+      {
+       "key": "G_T1_Bhavcopy_OP_2CURR",
+       "fileurl": "https://www.nseix.com/api/content/daily_report/G_T1_Bhavcopy_OP_250926.CSV",
+       "file": "Bhavcopy Options",
+       "session": 2,
+       "date": "25-Sep-2026",
+       "FILEKEY": "G_T1_Bhavcopy_OP_"
+      },
+      {
+       "key": "G_T1_Bhavcopy_DR_2CURR",
+       "fileurl": "https://www.nseix.com/api/content/daily_report/G_T1_Bhavcopy_DR_250926.CSV",
+       "file": "Bhavcopy DR",
+       "session": 2,
+       "date": "25-Sep-2026",
+       "FILEKEY": "G_T1_Bhavcopy_DR_"
+      },
+      {
+       "key": "G_CN01_2CURR",
+       "fileurl": "https://www.nseix.com/api/content/daily_report/G_CN01_25092026.CSV",
+       "file": "Contract Price Info File",
+       "session": 2,
+       "date": "25-Sep-2026",
+       "FILEKEY": "G_CN01_"
+      },
+      {
+       "key": "G_T1_VOLT_2CURR",
+       "fileurl": "https://www.nseix.com/api/content/daily_report/G_T1_VOLT_25092026.CSV",
+       "file": "Daily Volatility ",
+       "session": 2,
+       "date": "25-Sep-2026",
+       "FILEKEY": "G_T1_VOLT_"
+      },
+      {
+       "key": "niccl.T1_new2CURR",
+       "fileurl": "https://www.nseix.com/api/content/daily_report/niccl.20260925.T1.zip",
+       "file": "End of day SPAN <sup> \u00ae </sup>File",
+       "session": 2,
+       "date": "25-Sep-2026",
+       "FILEKEY": "niccl.T1_new"
+      },
+      {
+       "key": "niccl.i14_new2CURR",
+       "fileurl": "https://www.nseix.com/api/content/daily_report/niccl.20260925.i14.zip",
+       "file": "13th Intra-day SPAN <sup> \u00ae </sup>File 12:30 AM",
+       "session": 2,
+       "date": "25-Sep-2026",
+       "FILEKEY": "niccl.i14_new"
+      },
+      {
+       "key": "niccl.i13_new2CURR",
+       "fileurl": "https://www.nseix.com/api/content/daily_report/niccl.20260925.i13.zip",
+       "file": "12th Intra-day SPAN <sup> \u00ae </sup>File 11:00 PM",
+       "session": 2,
+       "date": "25-Sep-2026",
+       "FILEKEY": "niccl.i13_new"
+      },
+      {
+       "key": "niccl.i12_new2CURR",
+       "fileurl": "https://www.nseix.com/api/content/daily_report/niccl.20260925.i12.zip",
+       "file": "11th Intra-day SPAN <sup> \u00ae </sup>File 09:30 PM",
+       "session": 2,
+       "date": "25-Sep-2026",
+       "FILEKEY": "niccl.i12_new"
+      },
+      {
+       "key": "niccl.i11_new2CURR",
+       "fileurl": "https://www.nseix.com/api/content/daily_report/niccl.20260925.i11.zip",
+       "file": "10th Intra-day SPAN <sup> \u00ae </sup>File 08:00 PM",
+       "session": 2,
+       "date": "25-Sep-2026",
+       "FILEKEY": "niccl.i11_new"
+      },
+      {
+       "key": "niccl.i10_new2CURR",
+       "fileurl": "https://www.nseix.com/api/content/daily_report/niccl.20260925.i10.zip",
+       "file": "9th Intra-day SPAN <sup> \u00ae </sup>File 06:30 PM",
+       "session": 2,
+       "date": "25-Sep-2026",
+       "FILEKEY": "niccl.i10_new"
+      },
+      {
+       "key": "AEL_OTM_CONTRACTS_2CURR",
+       "fileurl": "https://www.nseix.com/api/content/daily_report/AEL_OTM_CONTRACTS_25092026.csv",
+       "file": "Deep OTM ELM",
+       "session": 2,
+       "date": "25-Sep-2026",
+       "FILEKEY": "AEL_OTM_CONTRACTS_"
+      },
+      {
+       "key": "G_T1_UL_PRICE_2CURR",
+       "fileurl": "https://www.nseix.com/api/content/daily_report/G_T1_UL_PRICE_25092026.csv",
+       "file": "Underlying Price",
+       "session": 2,
+       "date": "25-Sep-2026",
+       "FILEKEY": "G_T1_UL_PRICE_"
+      }
+     ]
+    }
+   ],
+   "Previous Day": [
+    {
+     "Session1": [
+      {
+       "key": "G_T_Bhavcopy_FO_1PREV",
+       "fileurl": "https://www.nseix.com/api/content/daily_report/G_T_Bhavcopy_FO_240926.CSV",
+       "file": "Bhavcopy Futures",
+       "session": 1,
+       "date": "24-Sep-2026",
+       "FILEKEY": "G_T_Bhavcopy_FO_"
+      },
+      {
+       "key": "G_T_Bhavcopy_OP_1PREV",
+       "fileurl": "https://www.nseix.com/api/content/daily_report/G_T_Bhavcopy_OP_240926.CSV",
+       "file": "Bhavcopy Options",
+       "session": 1,
+       "date": "24-Sep-2026",
+       "FILEKEY": "G_T_Bhavcopy_OP_"
+      },
+      {
+       "key": "G_T_DSP_PRICE_1PREV",
+       "fileurl": "https://www.nseix.com/api/content/daily_report/G_T_DSP_PRICE_24092026.CSV",
+       "file": " Settlement Prices ",
+       "session": 1,
+       "date": "24-Sep-2026",
+       "FILEKEY": "G_T_DSP_PRICE_"
+      },
+      {
+       "key": "G_T_VOLT_1PREV",
+       "fileurl": "https://www.nseix.com/api/content/daily_report/G_T_VOLT_24092026.CSV",
+       "file": "Daily Volatility ",
+       "session": 1,
+       "date": "24-Sep-2026",
+       "FILEKEY": "G_T_VOLT_"
+      },
+      {
+       "key": "niccl.T_new1PREV",
+       "fileurl": "https://www.nseix.com/api/content/daily_report/niccl.20260924.T.zip",
+       "file": "End of Session 1 SPAN <sup> \u00ae </sup>File",
+       "session": 1,
+       "date": "24-Sep-2026",
+       "FILEKEY": "niccl.T_new"
+      },
+      {
+       "key": "niccl.i9_new1PREV",
+       "fileurl": "https://www.nseix.com/api/content/daily_report/niccl.20260924.i9.zip",
+       "file": "8th Intra-day SPAN <sup> \u00ae </sup>File 03:30 PM",
+       "session": 1,
+       "date": "24-Sep-2026",
+       "FILEKEY": "niccl.i9_new"
+      },
+      {
+       "key": "niccl.i8_new1PREV",
+       "fileurl": "https://www.nseix.com/api/content/daily_report/niccl.20260924.i8.zip",
+       "file": "7th Intra-day SPAN <sup> \u00ae </sup>File 02:00 PM",
+       "session": 1,
+       "date": "24-Sep-2026",
+       "FILEKEY": "niccl.i8_new"
+      },
+      {
+       "key": "niccl.i7_new1PREV",
+       "fileurl": "https://www.nseix.com/api/content/daily_report/niccl.20260924.i7.zip",
+       "file": "6th Intra-day SPAN <sup> \u00ae </sup>File 12:30 PM",
+       "session": 1,
+       "date": "24-Sep-2026",
+       "FILEKEY": "niccl.i7_new"
+      },
+      {
+       "key": "niccl.i6_new1PREV",
+       "fileurl": "https://www.nseix.com/api/content/daily_report/niccl.20260924.i6.zip",
+       "file": "5th Intra-day SPAN <sup> \u00ae </sup>File 11:00 AM",
+       "session": 1,
+       "date": "24-Sep-2026",
+       "FILEKEY": "niccl.i6_new"
+      },
+      {
+       "key": "niccl.i5_new1PREV",
+       "fileurl": "https://www.nseix.com/api/content/daily_report/niccl.20260924.i5.zip",
+       "file": "4th Intra-day SPAN <sup> \u00ae </sup>File 09:30 AM",
+       "session": 1,
+       "date": "24-Sep-2026",
+       "FILEKEY": "niccl.i5_new"
+      },
+      {
+       "key": "niccl.i4_new1PREV",
+       "fileurl": "https://www.nseix.com/api/content/daily_report/niccl.20260924.i4.zip",
+       "file": "3rd Intra-day SPAN <sup> \u00ae </sup>File 08:00 AM",
+       "session": 1,
+       "date": "24-Sep-2026",
+       "FILEKEY": "niccl.i4_new"
+      },
+      {
+       "key": "niccl.i3_new1PREV",
+       "fileurl": "https://www.nseix.com/api/content/daily_report/niccl.20260924.i3.zip",
+       "file": "2nd Intra-day SPAN <sup> \u00ae </sup>File 06:30 AM",
+       "session": 1,
+       "date": "24-Sep-2026",
+       "FILEKEY": "niccl.i3_new"
+      },
+      {
+       "key": "niccl.i2_new1PREV",
+       "fileurl": "https://www.nseix.com/api/content/daily_report/niccl.20260924.i2.zip",
+       "file": "1st Intra-day SPAN <sup> \u00ae </sup>File 05:00 AM",
+       "session": 1,
+       "date": "24-Sep-2026",
+       "FILEKEY": "niccl.i2_new"
+      },
+      {
+       "key": "niccl.i1_new1PREV",
+       "fileurl": "https://www.nseix.com/api/content/daily_report/niccl.20260924.i1.zip",
+       "file": "Begin day SPAN <sup> \u00ae </sup>File",
+       "session": 1,
+       "date": "24-Sep-2026",
+       "FILEKEY": "niccl.i1_new"
+      },
+      {
+       "key": "G_COMBINED_OI_1PREV",
+       "fileurl": "https://www.nseix.com/api/content/daily_report/G_COMBINED_OI_24092026.csv",
+       "file": "Index Combined OI",
+       "session": 1,
+       "date": "24-Sep-2026",
+       "FILEKEY": "G_COMBINED_OI_"
+      },
+      {
+       "key": "G_T_UL_INDEX_1PREV",
+       "fileurl": "https://www.nseix.com/api/content/daily_report/G_T_UL_INDEX_24092026.csv",
+       "file": "Underlying Price INDEX",
+       "session": 1,
+       "date": "24-Sep-2026",
+       "FILEKEY": "G_T_UL_INDEX_"
+      },
+      {
+       "key": "G_T_UL_PRICE_1PREV",
+       "fileurl": "https://www.nseix.com/api/content/daily_report/G_T_UL_PRICE_24092026.csv",
+       "file": "Underlying Price",
+       "session": 1,
+       "date": "24-Sep-2026",
+       "FILEKEY": "G_T_UL_PRICE_"
+      },
+      {
+       "key": "G_T_DSP_INDEX_1PREV",
+       "fileurl": "https://www.nseix.com/api/content/daily_report/G_T_DSP_INDEX_24092026.csv",
+       "file": " Settlement Prices INDEX",
+       "session": 1,
+       "date": "24-Sep-2026",
+       "FILEKEY": "G_T_DSP_INDEX_"
+      },
+      {
+       "key": "G_T_F_UL_PRICE_1PREV",
+       "fileurl": "https://www.nseix.com/api/content/daily_report/G_T_F_UL_PRICE_24092026.csv",
+       "file": "FUTCBI Underlying Price",
+       "session": 1,
+       "date": "24-Sep-2026",
+       "FILEKEY": "G_T_F_UL_PRICE_"
+      },
+      {
+       "key": "G_T_F_Bhavcopy_FO_1PREV",
+       "fileurl": "https://www.nseix.com/api/content/daily_report/G_T_F_Bhavcopy_FO_240926.CSV",
+       "file": "FUTCBI Bhavcopy Futures",
+       "session": 1,
+       "date": "24-Sep-2026",
+       "FILEKEY": "G_T_F_Bhavcopy_FO_"
+      },
+      {
+       "key": "G_T_F_DSP_PRICE_1PREV",
+       "fileurl": "https://www.nseix.com/api/content/daily_report/G_T_F_DSP_PRICE_24092026.CSV",
+       "file": "FUTCBI  Settlement Prices ",
+       "session": 1,
+       "date": "24-Sep-2026",
+       "FILEKEY": "G_T_F_DSP_PRICE_"
+      }
+     ],
+     "Session2": [
+      {
+       "key": "G_T1_Bhavcopy_FO_2PREV",
+       "fileurl": "https://www.nseix.com/api/content/daily_report/G_T1_Bhavcopy_FO_240926.CSV",
+       "file": "Bhavcopy Futures",
+       "session": 2,
+       "date": "24-Sep-2026",
+       "FILEKEY": "G_T1_Bhavcopy_FO_"
+      },
+      {
+       "key": "G_T1_Bhavcopy_OP_2PREV",
+       "fileurl": "https://www.nseix.com/api/content/daily_report/G_T1_Bhavcopy_OP_240926.CSV",
+       "file": "Bhavcopy Options",
+       "session": 2,
+       "date": "24-Sep-2026",
+       "FILEKEY": "G_T1_Bhavcopy_OP_"
+      },
+      {
+       "key": "G_T1_Bhavcopy_DR_2PREV",
+       "fileurl": "https://www.nseix.com/api/content/daily_report/G_T1_Bhavcopy_DR_240926.CSV",
+       "file": "Bhavcopy DR",
+       "session": 2,
+       "date": "24-Sep-2026",
+       "FILEKEY": "G_T1_Bhavcopy_DR_"
+      },
+      {
+       "key": "G_CN01_2PREV",
+       "fileurl": "https://www.nseix.com/api/content/daily_report/G_CN01_24092026.CSV",
+       "file": "Contract Price Info File",
+       "session": 2,
+       "date": "24-Sep-2026",
+       "FILEKEY": "G_CN01_"
+      },
+      {
+       "key": "G_T1_VOLT_2PREV",
+       "fileurl": "https://www.nseix.com/api/content/daily_report/G_T1_VOLT_24092026.CSV",
+       "file": "Daily Volatility ",
+       "session": 2,
+       "date": "24-Sep-2026",
+       "FILEKEY": "G_T1_VOLT_"
+      },
+      {
+       "key": "niccl.T1_new2PREV",
+       "fileurl": "https://www.nseix.com/api/content/daily_report/niccl.20260924.T1.zip",
+       "file": "End of day SPAN <sup> \u00ae </sup>File",
+       "session": 2,
+       "date": "24-Sep-2026",
+       "FILEKEY": "niccl.T1_new"
+      },
+      {
+       "key": "niccl.i14_new2PREV",
+       "fileurl": "https://www.nseix.com/api/content/daily_report/niccl.20260924.i14.zip",
+       "file": "13th Intra-day SPAN <sup> \u00ae </sup>File 12:30 AM",
+       "session": 2,
+       "date": "24-Sep-2026",
+       "FILEKEY": "niccl.i14_new"
+      },
+      {
+       "key": "niccl.i13_new2PREV",
+       "fileurl": "https://www.nseix.com/api/content/daily_report/niccl.20260924.i13.zip",
+       "file": "12th Intra-day SPAN <sup> \u00ae </sup>File 11:00 PM",
+       "session": 2,
+       "date": "24-Sep-2026",
+       "FILEKEY": "niccl.i13_new"
+      },
+      {
+       "key": "niccl.i12_new2PREV",
+       "fileurl": "https://www.nseix.com/api/content/daily_report/niccl.20260924.i12.zip",
+       "file": "11th Intra-day SPAN <sup> \u00ae </sup>File 09:30 PM",
+       "session": 2,
+       "date": "24-Sep-2026",
+       "FILEKEY": "niccl.i12_new"
+      },
+      {
+       "key": "niccl.i11_new2PREV",
+       "fileurl": "https://www.nseix.com/api/content/daily_report/niccl.20260924.i11.zip",
+       "file": "10th Intra-day SPAN <sup> \u00ae </sup>File 08:00 PM",
+       "session": 2,
+       "date": "24-Sep-2026",
+       "FILEKEY": "niccl.i11_new"
+      },
+      {
+       "key": "niccl.i10_new2PREV",
+       "fileurl": "https://www.nseix.com/api/content/daily_report/niccl.20260924.i10.zip",
+       "file": "9th Intra-day SPAN <sup> \u00ae </sup>File 06:30 PM",
+       "session": 2,
+       "date": "24-Sep-2026",
+       "FILEKEY": "niccl.i10_new"
+      },
+      {
+       "key": "AEL_OTM_CONTRACTS_2PREV",
+       "fileurl": "https://www.nseix.com/api/content/daily_report/AEL_OTM_CONTRACTS_24092026.csv",
+       "file": "Deep OTM ELM",
+       "session": 2,
+       "date": "24-Sep-2026",
+       "FILEKEY": "AEL_OTM_CONTRACTS_"
+      },
+      {
+       "key": "G_T1_UL_PRICE_2PREV",
+       "fileurl": "https://www.nseix.com/api/content/daily_report/G_T1_UL_PRICE_24092026.csv",
+       "file": "Underlying Price",
+       "session": 2,
+       "date": "24-Sep-2026",
+       "FILEKEY": "G_T1_UL_PRICE_"
+      }
+     ]
+    }
+   ]
+  }
+ ],
+ "timestamps": [
+  {
+   "nextDay": "28-Sep-2026",
+   "currentDay": "25-Sep-2026",
+   "prevDay": "24-Sep-2026",
+   "maxtime": "28-Sep-2026 08:04:01"
+  }
+ ]
+}

@@ -55,9 +55,23 @@ export default function GapIndicatorCard({ reading, loading = false, label }: Pr
             </div>
           </div>
 
-          <p className={cx(s.gap, s[reading.signal], 'mc-numeric')}>
-            {signed(reading.points, 2)} ({signed(reading.percent, 2)}%)
-          </p>
+          {/* The caveat belongs to the gap, so it is grouped with it rather
+              than left to the body's own spacing - a rule or a full row's gap
+              would read as a separate section and change the card's shape.
+
+              Why it is there: the open is the broker's first reported print,
+              not the exchange's pre-open auction price. The two are usually
+              within a few points and occasionally are not, and a gap quoted to
+              two decimals invites more precision than the input carries. */}
+          <div className={s.gapBlock}>
+            <p className={cx(s.gap, s[reading.signal], 'mc-numeric')}>
+              {signed(reading.points, 2)} ({signed(reading.percent, 2)}%)
+            </p>
+            <p className={s.note}>
+              Open is the broker&apos;s first reported print — an approximate opening level, not the
+              exchange&apos;s official open.
+            </p>
+          </div>
         </div>
       )}
     </Panel>

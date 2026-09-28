@@ -91,18 +91,69 @@ class TestToQuote:
         assert quote.provenance is not None
         assert quote.provenance.source is DataSource.LIVE
 
-    def test_close_is_the_previous_settlement_not_the_live_price(
+    def test_the_board_s_own_close_is_the_fallback_base(
         self, payload: dict[str, Any]
     ) -> None:
-        """Conflating the two would put the basis out by a full session."""
+        """With no settlement to hand the board's figures are kept as-is.
+
+        Imperfect - see the next test for why - but self-consistent, and it
+        keeps the level on screen when the end-of-day file cannot be read.
+        """
         row = front_month(payload)
         assert row is not None
 
         quote = to_quote(row, fetched_at=NOW)
 
         assert quote.previous_close == Decimal("23315.50")
-        assert quote.price != quote.previous_close
         assert quote.price - quote.previous_close == quote.change
+
+    def test_the_published_settlement_wins_over_the_board_s_close(
+        self, payload: dict[str, Any]
+    ) -> None:
+        """The bug the card was reported for, with the day's real numbers.
+
+        GIFT trades two sessions a day, and the board's ``CLOSE`` is struck
+        against the session boundary rather than the trading day's. On
+        28-Sep-2026 it read 23,236.00 where the exchange's own bhavcopy
+        settled the same contract at 23,188.50 - which is the base every other
+        screen in the market quotes the contract against.
+        """
+        row = front_month(payload)
+        assert row is not None
+        row = {**row, "LASTPRICE": "23140.50", "CLOSE": "23236.00", "CHANGE": "-95.50"}
+
+        quote = to_quote(row, fetched_at=NOW, settlement=Decimal("23188.5"))
+
+        assert quote.previous_close == Decimal("23188.5")
+        assert quote.change == Decimal("-48.00")
+        assert quote.change_percent == Decimal("-0.21")
+
+    def test_the_change_is_recomputed_never_copied_beside_a_new_base(
+        self, payload: dict[str, Any]
+    ) -> None:
+        """``CHANGE`` and ``PERCHANGE`` are struck against the board's own
+        ``CLOSE``. Keeping them beside a different previous close would print
+        a change that does not reconcile with the two levels next to it."""
+        row = front_month(payload)
+        assert row is not None
+
+        quote = to_quote(row, fetched_at=NOW, settlement=Decimal("23200.00"))
+
+        assert quote.change != Decimal(row["CHANGE"])
+        assert quote.previous_close is not None
+        assert quote.change is not None
+        assert quote.price - quote.previous_close == quote.change
+
+    def test_a_nonsense_settlement_falls_back_rather_than_dividing_by_zero(
+        self, payload: dict[str, Any]
+    ) -> None:
+        row = front_month(payload)
+        assert row is not None
+
+        quote = to_quote(row, fetched_at=NOW, settlement=Decimal("0"))
+
+        assert quote.previous_close == Decimal("23315.50")
+        assert quote.change == Decimal("-48.00")
 
     def test_a_row_with_no_last_price_is_rejected(self) -> None:
         with pytest.raises(ValueError, match="no last price"):

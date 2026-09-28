@@ -16,6 +16,9 @@ from marketcompass.infrastructure.global_markets.gap_journal import RedisGapJour
 from marketcompass.infrastructure.global_markets.nseix.gift_source import (
     NseIxGiftNiftySource,
 )
+from marketcompass.infrastructure.global_markets.nseix.settlement_source import (
+    NseIxSettlements,
+)
 from marketcompass.infrastructure.global_markets.simulated_source import (
     SimulatedGiftNiftySource,
     SimulatedGlobalQuoteSource,
@@ -41,6 +44,11 @@ def build_global_services(container: Any) -> GlobalServices:
     GIFT NIFTY reads NSE IX's own market watch, with the simulator behind it
     on the same terms. Its badge is separate from the board's: the two come
     from different providers and either can degrade without the other.
+
+    Its previous close comes from a second NSE IX read - the published
+    end-of-day settlement - because the live board's ``CLOSE`` is struck
+    against a session boundary rather than the trading day's. That read has
+    its own fallback and cannot take the level down with it.
     """
     clock = SystemClock()
     return GlobalServices(
@@ -54,6 +62,7 @@ def build_global_services(container: Any) -> GlobalServices:
                 container.http,
                 container.redis,
                 fallback=SimulatedGiftNiftySource(clock),
+                settlements=NseIxSettlements(container.http, container.redis),
             ),
             journal=RedisGapJournal(container.redis),
             clock=clock,

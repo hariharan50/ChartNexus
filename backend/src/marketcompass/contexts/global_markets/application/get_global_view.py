@@ -97,7 +97,7 @@ class GetGlobalView:
 
         bands = session_bands(window, quote_set, now)
         pressure = gap_pressure(window, quote_set, now)
-        implied = implied_open(gift, nifty)
+        implied = implied_open(gift, nifty, now)
 
         # Journalled on every read, keyed by target session so repeated polls
         # through the night overwrite rather than accumulate. The port promises

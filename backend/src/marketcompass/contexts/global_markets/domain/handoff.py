@@ -373,11 +373,23 @@ class ImpliedOpen:
     """What GIFT NIFTY is quoting the Indian open at."""
 
     gift_level: Decimal
+    #: GIFT's own session move, against its *own* previous settlement — the
+    #: figure every broker screen and chart prints beside the contract.
+    #: Carried so this card can be reconciled against them. It is a different
+    #: reading from the gap below, which is measured against NIFTY, and a card
+    #: that shows only one of the two invites the reader to conclude the other
+    #: is broken.
+    gift_change: Decimal | None
+    gift_change_percent: Decimal | None
     nifty_spot: Decimal
-    #: Where NIFTY last settled. Shown beside the spot because the gap is
-    #: measured from this and the basis from that, and a card printing two
-    #: different discounts without naming both bases reads as a contradiction.
-    nifty_previous_close: Decimal
+    #: The NIFTY close the target session will open *from*. While the cash
+    #: market is trading that is the previous settlement; once it has shut for
+    #: the day it is the close that just printed, which is ``nifty_spot``.
+    reference_close: Decimal
+    #: Whether the Indian cash market is trading right now. It is what decides
+    #: which close ``reference_close`` holds, so the card labels itself from
+    #: it rather than guessing from the numbers.
+    nifty_is_trading: bool
     #: GIFT minus spot. Positive is a premium, which is the normal state — the
     #: contract carries cost of carry — so the *change* in basis matters more
     #: than its sign. Shown, not interpreted.
@@ -388,43 +400,85 @@ class ImpliedOpen:
     signal: GapSignal
 
 
-def implied_open(gift: GlobalQuote | None, nifty: GlobalQuote | None) -> ImpliedOpen | None:
+def implied_open(
+    gift: GlobalQuote | None, nifty: GlobalQuote | None, now: datetime
+) -> ImpliedOpen | None:
     """The open GIFT NIFTY implies, or ``None`` if either leg is missing.
 
     The implied level *is* the GIFT level: the contract settles to NIFTY, so
     what it trades at is the market's own quote of where the index opens.
 
+    **The gap needs the right close, and which close that is moves with the
+    clock.** The gap is GIFT against the settlement the next Indian open will
+    start from. While the cash market is trading, that settlement is
+    *yesterday's* close and spot has already moved away from it. Once the
+    market shuts, the close that just printed becomes the one the next open
+    gaps from — and it is ``nifty.price``, because the provider's
+    ``previous_close`` has by then slipped a full session behind.
+
+    Reading ``previous_close`` in both states is the failure this function was
+    rewritten for: overnight it measured the gap from a close two sessions
+    old, which on any day the index moved put the card's sign *opposite* to
+    the truth — GAP UP printed over a contract trading below the close it
+    would open from.
+
     **Two different bases, deliberately.** The *basis* is GIFT against NIFTY
-    spot - the premium or discount right now. The *gap* is GIFT against NIFTY's
-    previous close - where it opens relative to where it last settled. During
-    Indian market hours those two are different numbers, and using spot for
-    both would report a gap measured from a level the market has already moved
-    away from. Before the open they coincide, which is exactly why the bug
-    hides until someone loads the page at noon.
+    spot; the *gap* is GIFT against the reference close. Intraday they are
+    different numbers. Overnight they converge, correctly: the index has
+    stopped moving, so the close it last printed *is* its spot.
     """
     if gift is None or nifty is None:
         return None
 
     spot = nifty.price
-    # Falls back to spot only when the provider gave no previous close; before
-    # the open the two are the same number anyway.
-    previous_close = nifty.previous_close if nifty.previous_close is not None else spot
-    if previous_close <= 0 or spot <= 0:
+    trading = nifty_is_trading(nifty, now)
+    # Only a live cash session makes the previous settlement the right base;
+    # the fallback to spot also covers a provider that published no previous
+    # close at all.
+    reference = (
+        nifty.previous_close
+        if trading and nifty.previous_close is not None
+        else spot
+    )
+    if reference <= 0 or spot <= 0:
         return None
 
-    gap_points = gift.price - previous_close
-    gap_percent = (gap_points / previous_close * Decimal(100)).quantize(Decimal("0.01"))
+    gap_points = gift.price - reference
+    gap_percent = (gap_points / reference * Decimal(100)).quantize(Decimal("0.01"))
 
     return ImpliedOpen(
         gift_level=gift.price,
+        gift_change=gift.change,
+        gift_change_percent=gift.change_percent,
         nifty_spot=spot,
-        nifty_previous_close=previous_close,
+        reference_close=reference,
+        nifty_is_trading=trading,
         basis=(gift.price - spot).quantize(Decimal("0.01")),
         implied_level=gift.price,
         gap_points=gap_points.quantize(Decimal("0.01")),
         gap_percent=gap_percent,
         signal=gap_signal(gap_percent),
     )
+
+
+def nifty_is_trading(nifty: GlobalQuote, now: datetime) -> bool:
+    """Whether the Indian cash session is actually live at ``now``.
+
+    The clock alone is not enough. 11:00 on a Saturday, or on Diwali, sits
+    inside 09:15-15:30 and nothing is trading — and treating those as live
+    would measure the gap from a close a session too far back, which is the
+    exact error this guard exists to stop. So the quote's own last print has
+    to be dated today as well.
+
+    A provider that publishes no print timestamp falls back to the hours,
+    which is right on every trading day and wrong only in the direction of
+    the old behaviour on a holiday.
+    """
+    local = now.astimezone(IST)
+    if not (NIFTY_OPEN <= local.time() < NIFTY_CLOSE):
+        return False
+    session = nifty.session
+    return session is None or session.astimezone(IST).date() == local.date()
 
 
 def gap_signal(percent: Decimal) -> GapSignal:

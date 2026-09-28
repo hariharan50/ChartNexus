@@ -87,9 +87,17 @@ export interface Pressure {
 
 export interface ImpliedOpen {
   gift_level: WireNumber;
+  /** The contract's own session move, as every broker screen prints it. */
+  gift_change: WireNumber | null;
+  gift_change_percent: WireNumber | null;
   nifty_spot: WireNumber;
-  /** Where NIFTY last settled — the base the gap is measured from. */
-  nifty_previous_close: WireNumber;
+  /**
+   * The NIFTY close the next open gaps from — the previous settlement while
+   * the cash market is trading, the close that just printed once it has shut.
+   */
+  reference_close: WireNumber;
+  /** Whether the Indian cash market is live; it is what picks that close. */
+  nifty_is_trading: boolean;
   /** GIFT against *spot*, which is a different number intraday. */
   basis: WireNumber;
   implied_level: WireNumber;

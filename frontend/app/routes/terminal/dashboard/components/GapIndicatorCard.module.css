@@ -76,6 +76,21 @@
   font-weight: 600;
 }
 
+/* Holds the gap and its caveat together, tighter than the body's own row
+   spacing: they are one reading, not two. */
+.gapBlock {
+  display: flex;
+  flex-direction: column;
+  gap: var(--mc-space-1);
+}
+
+.note {
+  margin: 0;
+  font-size: var(--mc-text-xs);
+  line-height: 1.45;
+  color: var(--mc-text-subtle);
+}
+
 .unavailable {
   margin: 0;
   font-size: var(--mc-text-xs);

@@ -151,8 +151,14 @@ class PressureResponse(_Schema):
 
 class ImpliedOpenResponse(_Schema):
     gift_level: Decimal
+    #: The contract's own session move, as every broker screen prints it.
+    gift_change: Decimal | None
+    gift_change_percent: Decimal | None
     nifty_spot: Decimal
-    nifty_previous_close: Decimal
+    #: The NIFTY close the target session opens from — the previous settlement
+    #: while the cash market trades, the close that just printed once it shuts.
+    reference_close: Decimal
+    nifty_is_trading: bool
     basis: Decimal
     implied_level: Decimal
     gap_points: Decimal
@@ -163,8 +169,11 @@ class ImpliedOpenResponse(_Schema):
     def of(cls, implied: ImpliedOpen) -> ImpliedOpenResponse:
         return cls(
             gift_level=implied.gift_level,
+            gift_change=implied.gift_change,
+            gift_change_percent=implied.gift_change_percent,
             nifty_spot=implied.nifty_spot,
-            nifty_previous_close=implied.nifty_previous_close,
+            reference_close=implied.reference_close,
+            nifty_is_trading=implied.nifty_is_trading,
             basis=implied.basis,
             implied_level=implied.implied_level,
             gap_points=implied.gap_points,

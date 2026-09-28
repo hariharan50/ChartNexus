@@ -23,6 +23,7 @@ from marketcompass.contexts.global_markets.domain.handoff import (
     gap_pressure,
     gap_signal,
     implied_open,
+    nifty_is_trading,
     overnight_window,
     region_rollup,
     session_bands,
@@ -48,7 +49,11 @@ def ist(year: int, month: int, day: int, hour: int, minute: int = 0) -> datetime
 
 
 def quote(
-    key: str, change_percent: str, price: str = "100", previous_close: str | None = None
+    key: str,
+    change_percent: str,
+    price: str = "100",
+    previous_close: str | None = None,
+    session: datetime | None = None,
 ) -> GlobalQuote:
     return GlobalQuote(
         key=key,
@@ -56,6 +61,7 @@ def quote(
         change=Decimal("1"),
         change_percent=Decimal(change_percent),
         previous_close=Decimal(previous_close if previous_close is not None else price),
+        session=session,
         provenance=Provenance(source=DataSource.LIVE, fetched_at=ist(2026, 9, 24, 8)),
     )
 
@@ -283,11 +289,16 @@ class TestGapPressure:
 
 
 class TestImpliedOpen:
+    #: Inside 09:15-15:30, so the cash market is trading.
+    INTRADAY = ist(2026, 9, 24, 11)
+    #: After the close: the session has settled and the next open gaps from it.
+    OVERNIGHT = ist(2026, 9, 24, 22)
+
     def test_a_premium_to_spot_implies_a_gap_up(self) -> None:
         gift = quote("GIFTNIFTY", "0.5", price="23600")
         nifty = quote("NIFTY", "0.1", price="23450")
 
-        implied = implied_open(gift, nifty)
+        implied = implied_open(gift, nifty, self.INTRADAY)
 
         assert implied is not None
         assert implied.gap_points == Decimal("150.00")
@@ -295,7 +306,9 @@ class TestImpliedOpen:
 
     def test_a_discount_implies_a_gap_down(self) -> None:
         implied = implied_open(
-            quote("GIFTNIFTY", "-0.5", price="23300"), quote("NIFTY", "0", price="23450")
+            quote("GIFTNIFTY", "-0.5", price="23300"),
+            quote("NIFTY", "0", price="23450"),
+            self.INTRADAY,
         )
 
         assert implied is not None
@@ -306,36 +319,81 @@ class TestImpliedOpen:
         """The same 0.15% dead-zone as the dashboard's gap card, so GAP UP /
         GAP DOWN / FLAT means one thing across the product."""
         implied = implied_open(
-            quote("GIFTNIFTY", "0", price="23470"), quote("NIFTY", "0", price="23450")
+            quote("GIFTNIFTY", "0", price="23470"),
+            quote("NIFTY", "0", price="23450"),
+            self.INTRADAY,
         )
 
         assert implied is not None
         assert abs(implied.gap_percent) < Decimal("0.15")
         assert implied.signal is GapSignal.FLAT
 
-    def test_the_gap_is_measured_from_the_previous_close_and_the_basis_from_spot(
-        self,
-    ) -> None:
-        """The bug the live NSE IX feed exposed.
-
-        Intraday, NIFTY spot and NIFTY's previous close are different numbers.
-        The *gap* is where GIFT opens relative to the last settlement; the
-        *basis* is its premium to where the index is trading right now. Using
-        spot for both reports a gap measured from a level the market has
-        already moved away from - and it hides completely before the open,
-        when the two coincide.
-        """
+    def test_while_nifty_trades_the_gap_is_from_the_previous_close(self) -> None:
+        """Intraday, NIFTY spot and NIFTY's previous close are different
+        numbers. The *gap* is where GIFT opens relative to the last
+        settlement; the *basis* is its premium to where the index is trading
+        right now. Using spot for both reports a gap measured from a level the
+        market has already moved away from."""
         gift = quote("GIFTNIFTY", "0", price="23267.50")
         nifty = quote("NIFTY", "0.57", price="23446.80", previous_close="23315.50")
 
-        implied = implied_open(gift, nifty)
+        implied = implied_open(gift, nifty, self.INTRADAY)
 
         assert implied is not None
+        assert implied.nifty_is_trading is True
         # Gap: against the previous close, 23,315.50.
+        assert implied.reference_close == Decimal("23315.50")
         assert implied.gap_points == Decimal("-48.00")
         # Basis: against spot, 23,446.80 - a different, larger discount.
         assert implied.basis == Decimal("-179.30")
         assert implied.signal is GapSignal.GAP_DOWN
+
+    def test_once_nifty_has_closed_the_gap_is_from_that_close(self) -> None:
+        """The overnight bug, with the numbers that exposed it.
+
+        At 22:00 the cash market has settled at 23,140.50 and GIFT is trading
+        23,103.50 - below the close the next session will open from. Measuring
+        from the provider's ``previous_close`` instead reaches back to
+        *yesterday's* 23,063.10 and prints GAP UP over a contract quoting a
+        gap down: not merely imprecise, the opposite sign.
+        """
+        gift = quote("GIFTNIFTY", "-0.37", price="23103.50", previous_close="23188.50")
+        nifty = quote("NIFTY", "0.34", price="23140.50", previous_close="23063.10")
+
+        implied = implied_open(gift, nifty, self.OVERNIGHT)
+
+        assert implied is not None
+        assert implied.nifty_is_trading is False
+        assert implied.reference_close == Decimal("23140.50")
+        assert implied.gap_points == Decimal("-37.00")
+        assert implied.gap_percent == Decimal("-0.16")
+        assert implied.signal is GapSignal.GAP_DOWN
+
+    def test_the_contract_carries_its_own_session_move(self) -> None:
+        """GIFT's change against its own previous settlement, which is what
+        every broker screen prints beside it. A card showing only the gap
+        against NIFTY cannot be reconciled with one of those screens."""
+        gift = quote("GIFTNIFTY", "-0.37", price="23103.50", previous_close="23188.50")
+        nifty = quote("NIFTY", "0.34", price="23140.50", previous_close="23063.10")
+
+        implied = implied_open(gift, nifty, self.OVERNIGHT)
+
+        assert implied is not None
+        assert implied.gift_change_percent == Decimal("-0.37")
+
+    def test_before_the_open_the_last_close_is_already_the_base(self) -> None:
+        """08:00: nothing has traded today, so the quote's own price is
+        yesterday's close - which is exactly the level this morning's open
+        gaps from."""
+        implied = implied_open(
+            quote("GIFTNIFTY", "0", price="23600"),
+            quote("NIFTY", "0.1", price="23450", previous_close="23400"),
+            ist(2026, 9, 24, 8),
+        )
+
+        assert implied is not None
+        assert implied.reference_close == Decimal("23450")
+        assert implied.gap_points == Decimal("150.00")
 
     def test_spot_stands_in_when_no_previous_close_was_published(self) -> None:
         gift = quote("GIFTNIFTY", "0", price="23600")
@@ -347,16 +405,17 @@ class TestImpliedOpen:
             previous_close=None,
         )
 
-        implied = implied_open(gift, nifty)
+        implied = implied_open(gift, nifty, ist(2026, 9, 24, 11))
 
         assert implied is not None
         assert implied.gap_points == Decimal("150.00")
 
     def test_there_is_no_reading_without_both_legs(self) -> None:
         nifty = quote("NIFTY", "0", price="23450")
+        now = ist(2026, 9, 24, 8)
 
-        assert implied_open(None, nifty) is None
-        assert implied_open(quote("GIFTNIFTY", "0", price="23600"), None) is None
+        assert implied_open(None, nifty, now) is None
+        assert implied_open(quote("GIFTNIFTY", "0", price="23600"), None, now) is None
 
     @pytest.mark.parametrize(
         ("percent", "expected"),
@@ -371,6 +430,32 @@ class TestImpliedOpen:
         assert gap_signal(Decimal(percent)) is expected
 
 
+class TestNiftyIsTrading:
+    """Market hours alone are not enough - see the function's docstring."""
+
+    def test_inside_the_session_on_a_day_that_printed(self) -> None:
+        nifty = quote("NIFTY", "0", session=ist(2026, 9, 24, 11))
+
+        assert nifty_is_trading(nifty, ist(2026, 9, 24, 11)) is True
+
+    def test_after_the_close(self) -> None:
+        nifty = quote("NIFTY", "0", session=ist(2026, 9, 24, 15, 30))
+
+        assert nifty_is_trading(nifty, ist(2026, 9, 24, 22)) is False
+
+    def test_the_clock_says_session_but_the_last_print_is_days_old(self) -> None:
+        """A Saturday, or a holiday: 11:00 falls inside 09:15-15:30 and
+        nothing is trading. Treating it as live would measure the gap from a
+        close a whole session too far back."""
+        stale = quote("NIFTY", "0", session=ist(2026, 9, 25, 15, 30))
+
+        assert nifty_is_trading(stale, ist(2026, 9, 26, 11)) is False
+
+    def test_no_print_timestamp_falls_back_to_the_hours(self) -> None:
+        assert nifty_is_trading(quote("NIFTY", "0"), ist(2026, 9, 24, 11)) is True
+        assert nifty_is_trading(quote("NIFTY", "0"), ist(2026, 9, 24, 22)) is False
+
+
 # -- agreement ----------------------------------------------------------------
 
 
@@ -383,7 +468,9 @@ class TestAgreement:
             window, quotes(SPX="-1.5", NASDAQ="-1.8"), ist(2026, 9, 24, 8)
         )
         gift_up = implied_open(
-            quote("GIFTNIFTY", "0", price="23600"), quote("NIFTY", "0", price="23450")
+            quote("GIFTNIFTY", "0", price="23600"),
+            quote("NIFTY", "0", price="23450"),
+            ist(2026, 9, 24, 8),
         )
 
         assert agreement(bearish, gift_up) is Agreement.DISAGREE
@@ -394,7 +481,9 @@ class TestAgreement:
             window, quotes(SPX="-1.5", NASDAQ="-1.8"), ist(2026, 9, 24, 8)
         )
         gift_down = implied_open(
-            quote("GIFTNIFTY", "0", price="23300"), quote("NIFTY", "0", price="23450")
+            quote("GIFTNIFTY", "0", price="23300"),
+            quote("NIFTY", "0", price="23450"),
+            ist(2026, 9, 24, 8),
         )
 
         assert agreement(bearish, gift_down) is Agreement.AGREE
@@ -403,7 +492,9 @@ class TestAgreement:
         window = overnight_window(ist(2026, 9, 24, 8))
         flat = gap_pressure(window, quotes(SPX="0.01"), ist(2026, 9, 24, 8))
         gift_down = implied_open(
-            quote("GIFTNIFTY", "0", price="23300"), quote("NIFTY", "0", price="23450")
+            quote("GIFTNIFTY", "0", price="23300"),
+            quote("NIFTY", "0", price="23450"),
+            ist(2026, 9, 24, 8),
         )
 
         assert agreement(flat, gift_down) is Agreement.UNKNOWN

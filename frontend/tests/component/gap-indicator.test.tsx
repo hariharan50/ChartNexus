@@ -44,6 +44,21 @@ describe('GapIndicatorCard', () => {
     expect(screen.getByText('−137.89 (−0.56%)')).toBeInTheDocument();
   });
 
+  it('qualifies the open as approximate', () => {
+    // It is the broker's first reported print, not the exchange's pre-open
+    // auction price, and a gap quoted to two decimals invites more precision
+    // than the input carries.
+    render(<GapIndicatorCard reading={reading} label="NIFTY 50" />);
+
+    expect(screen.getByText(/approximate opening level/)).toBeInTheDocument();
+  });
+
+  it('carries no such caveat when there is no reading to qualify', () => {
+    render(<GapIndicatorCard label="BANK NIFTY" />);
+
+    expect(screen.queryByText(/approximate opening level/)).not.toBeInTheDocument();
+  });
+
   it('says so when the broker supplied no opening print', () => {
     render(<GapIndicatorCard label="BANK NIFTY" />);
 

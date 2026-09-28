@@ -26,48 +26,33 @@
   color: var(--mc-text-subtle);
 }
 
-.signal {
-  display: inline-flex;
-  align-items: center;
-  min-height: var(--mc-control-h);
-  margin: 0;
-  padding: 0 var(--mc-control-px);
-  border: 1px solid currentcolor;
-  border-radius: var(--mc-radius);
-  font-size: var(--mc-text-sm);
-  font-weight: 700;
-  letter-spacing: 0.08em;
-}
-
 .up {
   color: var(--mc-bullish);
-}
-
-.signal.up {
-  background: var(--mc-bullish-weak);
 }
 
 .down {
   color: var(--mc-bearish);
 }
 
-.signal.down {
-  background: var(--mc-bearish-weak);
-}
-
 .flat {
   color: var(--mc-text-subtle);
 }
 
-.signal.flat {
-  background: var(--mc-surface-raised);
-  border-color: var(--mc-border-strong);
-}
-
 .gap {
-  margin: var(--mc-space-3) 0 0;
+  margin: 0;
   font-size: var(--mc-text-lg);
   font-weight: 700;
+}
+
+/* Names the headline figure. Without it the card opens on an unlabelled
+   signed number, and there are three different signed numbers on it. */
+.gapLabel {
+  margin: 0.125rem 0 0;
+  font-size: var(--mc-text-xs);
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--mc-text-subtle);
 }
 
 .figures {

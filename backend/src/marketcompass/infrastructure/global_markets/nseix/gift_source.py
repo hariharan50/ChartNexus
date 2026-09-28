@@ -17,8 +17,15 @@ further. Only the front month is GIFT NIFTY in the sense anyone means it, so
 the nearest unexpired date wins - picked by parsing the dates rather than by
 taking the first entry, because the board's order is not guaranteed.
 
-**``CLOSE`` is the previous settlement, not the current price.** ``LASTPRICE``
-is live. Mixing them up would put the basis out by a whole session's move.
+**``LASTPRICE`` is live; ``CLOSE`` is not the previous settlement.** It was
+read as one for a while, and it is not: GIFT trades two sessions a day and the
+board's ``CLOSE`` is struck against the session boundary rather than the
+trading day's. On 28-Sep-2026 it said 23,236.00 where the exchange's own
+settlement for the same contract was 23,188.50 - a 47.5-point difference that
+showed the contract down 0.43% on a morning every other screen had it down
+0.25%. The previous close therefore comes from ``settlement_source``, which
+reads the figure the exchange publishes end-of-day, and the board's ``CLOSE``
+is kept only as the fallback for when that file cannot be read.
 
 **It degrades to the simulator, visibly.** NSE IX is an undocumented endpoint
 on a site that can change without notice; if it fails, the card falls back and
@@ -42,6 +49,9 @@ from marketcompass.contexts.global_markets.domain.quotes import (
     Provenance,
 )
 from marketcompass.infrastructure.cache.redis.client import RedisClient
+from marketcompass.infrastructure.global_markets.nseix.settlement_source import (
+    NseIxSettlements,
+)
 from marketcompass.infrastructure.observability.structured_logging import get_logger
 
 log = get_logger(__name__)
@@ -92,11 +102,13 @@ class NseIxGiftNiftySource(GiftNiftySource):
         redis: RedisClient,
         *,
         fallback: GiftNiftySource,
+        settlements: NseIxSettlements | None = None,
         timeout_seconds: float = 10.0,
     ) -> None:
         self._http = http
         self._redis = redis
         self._fallback = fallback
+        self._settlements = settlements
         self._timeout = httpx.Timeout(timeout_seconds)
         # Flipped by any call that had to fall back, and read by `source`
         # afterwards, so the badge describes the request being rendered.
@@ -114,11 +126,30 @@ class NseIxGiftNiftySource(GiftNiftySource):
             if contract is None:
                 raise ValueError("No NIFTY futures row on the board.")
             self._live = True
-            return to_quote(contract, fetched_at=now)
+            # Looked up for the contract actually being quoted, not for the
+            # front month in the abstract: on the roll those are two different
+            # contracts and two different settlements.
+            settlement = await self._settlement_for(contract)
+            return to_quote(contract, fetched_at=now, settlement=settlement)
         except (httpx.HTTPError, ValueError, KeyError, TypeError) as exc:
             log.warning("gift_nifty_degraded", error=repr(exc))
             self._live = False
             return await self._fallback.get_quote(nifty_spot)
+
+    async def _settlement_for(self, contract: dict[str, Any]) -> Decimal | None:
+        """The contract's own previous settlement, or ``None`` to fall back.
+
+        Never fatal. A missing settlement costs the day-change row its correct
+        base; a raised exception would cost the whole card its live level, and
+        the level is the figure the page exists to show.
+        """
+        if self._settlements is None:
+            return None
+        symbol = contract.get("SYMBOL")
+        expiry = contract.get("EXPIRYDATE")
+        if not isinstance(symbol, str) or not isinstance(expiry, str):
+            return None
+        return await self._settlements.previous_settlement(symbol, expiry)
 
     async def _payload(self) -> dict[str, Any]:
         cached = await self._cache_get()
@@ -192,22 +223,43 @@ def front_month(payload: dict[str, Any]) -> dict[str, Any] | None:
     return None if best is None else best[1]
 
 
-def to_quote(row: dict[str, Any], *, fetched_at: datetime) -> GlobalQuote:
+def to_quote(
+    row: dict[str, Any], *, fetched_at: datetime, settlement: Decimal | None = None
+) -> GlobalQuote:
     """One board row as a canonical quote.
 
-    ``LASTPRICE`` is live and ``CLOSE`` is the previous settlement; conflating
-    them would put the basis out by a full session.
+    ``LASTPRICE`` is live and is used as-is. The *previous close* comes from
+    ``settlement`` when the exchange's end-of-day file could be read, and the
+    change is then recomputed from it rather than copied from the board -
+    ``CHANGE`` and ``PERCHANGE`` are struck against the board's own ``CLOSE``,
+    so keeping them beside a different base would print a change that does not
+    reconcile with the two levels next to it.
     """
     price = _decimal(row.get("LASTPRICE"))
     if price is None:
         raise ValueError("The GIFT board row carries no last price.")
 
+    # A non-positive settlement is no settlement: it would divide by zero on
+    # the percentage and, worse, print a previous close of 0.00 as fact.
+    base = settlement if settlement is not None and settlement > 0 else None
+    previous_close: Decimal | None
+    change: Decimal | None
+    change_percent: Decimal | None
+    if base is not None:
+        previous_close = base
+        change = (price - base).quantize(Decimal("0.01"))
+        change_percent = (change / base * Decimal(100)).quantize(Decimal("0.01"))
+    else:
+        previous_close = _decimal(row.get("CLOSE"))
+        change = _decimal(row.get("CHANGE"))
+        change_percent = _decimal(row.get("PERCHANGE"))
+
     return GlobalQuote(
         key=GIFT_KEY,
         price=price,
-        change=_decimal(row.get("CHANGE")),
-        change_percent=_decimal(row.get("PERCHANGE")),
-        previous_close=_decimal(row.get("CLOSE")),
+        change=change,
+        change_percent=change_percent,
+        previous_close=previous_close,
         day_open=_decimal(row.get("OPEN")),
         day_high=_decimal(row.get("HIGH")),
         day_low=_decimal(row.get("LOW")),
