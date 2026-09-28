@@ -121,6 +121,12 @@ const nav: NavItem[] = [
         href: '/global-index-analysis',
         icon: IconGlobe,
         desc: 'World benchmarks & the Indian open'
+      },
+      {
+        label: 'PMS — Pre Market Screener',
+        href: '/pre-market-screener',
+        icon: IconSearch,
+        desc: 'Screen the F&O universe before the open'
       }
     ]
   },
