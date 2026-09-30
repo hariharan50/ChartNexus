@@ -14,7 +14,6 @@ import type {
   Bias,
   BuildUp,
   GapReading,
-  GapSignal,
   IndexKey,
   IndexQuote,
   OptionRow,
@@ -47,35 +46,39 @@ export function indexCard(key: IndexKey, label: string, quote: Quote | undefined
 }
 
 /**
- * Below this the open is treated as level with the previous close. Roughly 35
- * points on a 23,500 NIFTY — wide enough to swallow ordinary overnight noise,
- * narrow enough that a gap a trader would act on still reads as one.
- */
-export const FLAT_GAP_PERCENT = 0.15;
-
-/**
  * The overnight gap: where the session opened against the previous close.
  *
- * `undefined` when the broker did not supply both prints — the card then says
- * so, rather than deriving an open from `change` (which is measured against the
- * previous close, so it would only restate the day's move).
+ * Read off `quote.gap`, which the backend latches for the session — *not*
+ * recomputed from `day_open` and `previous_close`. That is the whole point of
+ * the field. Those two carry whatever the latest fifteen-second poll returned,
+ * so a poll that degraded to the mock provider brought its own seeded open and
+ * its own previous close with it, and the card alternated between a gap up of
+ * ~125 and a gap down of ~120 as the broker's circuit breaker opened and reset.
+ *
+ * `undefined` when the session has no believable pair yet — the card then says
+ * so, rather than showing a zero that reads as "the market opened flat".
  */
 export function gapReading(label: string, quote: Quote | undefined): GapReading | undefined {
-  if (!quote) return undefined;
+  const gap = quote?.gap;
+  if (!gap) return undefined;
 
-  const open = num(quote.day_open);
-  const previousClose = num(quote.previous_close);
-  if (!Number.isFinite(open) || !Number.isFinite(previousClose) || previousClose === 0) {
-    return undefined;
-  }
+  const open = num(gap.opened_at);
+  const previousClose = num(gap.reference_close);
+  const points = num(gap.points);
+  const percent = num(gap.percent);
+  if (![open, previousClose, points, percent].every(Number.isFinite)) return undefined;
 
-  const points = open - previousClose;
-  const percent = (points / previousClose) * 100;
-
-  let signal: GapSignal = 'flat';
-  if (Math.abs(percent) >= FLAT_GAP_PERCENT) signal = points > 0 ? 'gap_up' : 'gap_down';
-
-  return { label, open, previousClose, points, percent, signal };
+  return {
+    label,
+    open,
+    previousClose,
+    points,
+    percent,
+    signal: gap.signal,
+    source: gap.source,
+    observedAt: new Date(gap.observed_at),
+    settled: gap.settled
+  };
 }
 
 /**

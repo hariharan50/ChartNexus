@@ -126,7 +126,7 @@ const nav: NavItem[] = [
         label: 'PMS — Pre Market Screener',
         href: '/pre-market-screener',
         icon: IconSearch,
-        desc: 'Screen the F&O universe before the open'
+        desc: 'Overnight context, levels and the open ahead'
       }
     ]
   },

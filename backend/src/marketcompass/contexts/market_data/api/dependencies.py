@@ -14,12 +14,14 @@ from marketcompass.contexts.market_data.application.queries import (
     GetHistory,
     GetMarketStatus,
     GetOptionChain,
+    GetSessionGap,
     GetSpotPrice,
 )
 from marketcompass.infrastructure.brokers.fyers.quota_manager import QuotaPolicy
 from marketcompass.infrastructure.brokers.mock.provider import MockMarketDataProvider
 from marketcompass.infrastructure.brokers.provider_resolver import TenantProviderResolver
 from marketcompass.infrastructure.cache.redis.iv_history import RedisIvHistoryRecorder
+from marketcompass.infrastructure.cache.redis.session_gap import RedisSessionGapStore
 from marketcompass.infrastructure.persistence.postgresql.repositories.integration.broker_connection_repository import (
     SqlAlchemyBrokerConnectionRepository,
 )
@@ -37,6 +39,7 @@ from marketcompass.infrastructure.transport.http.dependencies import (
 @dataclass(slots=True)
 class MarketServices:
     spot: GetSpotPrice
+    gap: GetSessionGap
     futures: GetFuturesQuote
     option_chain: GetOptionChain
     expiries: GetExpiries
@@ -83,6 +86,9 @@ def build_market_services_from(container: Any, session: AsyncSession) -> MarketS
 
     return MarketServices(
         spot=GetSpotPrice(resolver=resolver, fallback=fallback, clock=clock),
+        gap=GetSessionGap(
+            store=RedisSessionGapStore(container.redis), clock=clock, calendar=calendar
+        ),
         futures=GetFuturesQuote(resolver=resolver, fallback=fallback, clock=clock),
         option_chain=GetOptionChain(
             resolver=resolver,

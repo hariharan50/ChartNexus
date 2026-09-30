@@ -52,7 +52,13 @@ async def market_status(principal: CurrentPrincipal, services: Services) -> Mark
 @router.get(
     "/spot",
     response_model=QuoteResponse,
-    summary="Index spot price",
+    summary="Index spot price and the session's opening gap",
+    description=(
+        "The last price, plus the session's **latched** opening gap. The gap is "
+        "computed here rather than by the client because the opening print is a "
+        "fact of the session: once observed from a live quote it is frozen, so a "
+        "poll that degrades to cached or simulated data cannot rewrite it."
+    ),
     responses={422: {"description": "Unknown instrument"}},
 )
 async def spot(
@@ -63,7 +69,7 @@ async def spot(
     quote = await services.spot(
         QuoteQuery(tenant_id=principal.tenant_id, instrument=InstrumentSymbol.parse(instrument))
     )
-    return QuoteResponse.of(quote)
+    return QuoteResponse.of(quote, await services.gap(principal.tenant_id, quote))
 
 
 @router.get(

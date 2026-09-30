@@ -6,11 +6,15 @@ import GapIndicatorCard from '../../app/routes/terminal/dashboard/components/Gap
 /**
  * The dashboard rail's gap card.
  *
- * Three states have to stay distinguishable on screen: a resolved reading, the
- * spot query still in flight, and a broker that sent a price but no opening
- * print. The last one is the one worth pinning — rendering `NaN` there, or
- * silently showing a zero gap, would read as "the market opened flat" when the
- * truth is that nobody knows where it opened.
+ * Four states have to stay distinguishable on screen: the session's real
+ * opening print, a simulated one, the broker's pre-open placeholder, and no
+ * reading at all. The card used to show the first three identically, which is
+ * why nothing on it explained the gap changing sign between refreshes — it had
+ * silently swapped a live pair for the mock's.
+ *
+ * The last state is still the one worth pinning hardest: rendering `NaN` there,
+ * or a zero gap, would read as "the market opened flat" when the truth is that
+ * nobody knows where it opened.
  */
 const reading: GapReading = {
   label: 'NIFTY 50',
@@ -18,7 +22,10 @@ const reading: GapReading = {
   previousClose: 24540.99,
   points: 137.89,
   percent: 0.5619,
-  signal: 'gap_up'
+  signal: 'gap_up',
+  source: 'live',
+  observedAt: new Date('2026-09-28T03:45:30Z'),
+  settled: true
 };
 
 describe('GapIndicatorCard', () => {
@@ -44,22 +51,51 @@ describe('GapIndicatorCard', () => {
     expect(screen.getByText('−137.89 (−0.56%)')).toBeInTheDocument();
   });
 
-  it('qualifies the open as approximate', () => {
-    // It is the broker's first reported print, not the exchange's pre-open
-    // auction price, and a gap quoted to two decimals invites more precision
-    // than the input carries.
+  it('says when the opening print was taken, and that it will not move again', () => {
+    // 03:45:30Z is 09:15:30 IST. The time is the point: it tells the reader the
+    // figure is a print from the open rather than something recomputed on each
+    // fifteen-second poll, which is what it used to be.
     render(<GapIndicatorCard reading={reading} label="NIFTY 50" />);
 
-    expect(screen.getByText(/approximate opening level/)).toBeInTheDocument();
+    expect(screen.getByText(/09:15 IST/)).toBeInTheDocument();
+    expect(screen.getByText(/fixed for the session/)).toBeInTheDocument();
   });
 
-  it('carries no such caveat when there is no reading to qualify', () => {
+  it('still qualifies the open as the broker’s print rather than the exchange’s', () => {
+    render(<GapIndicatorCard reading={reading} label="NIFTY 50" />);
+
+    expect(screen.getByText(/an approximate open/)).toBeInTheDocument();
+  });
+
+  it('calls a simulated gap simulated rather than dressing it as a print', () => {
+    render(<GapIndicatorCard reading={{ ...reading, source: 'mock' }} label="NIFTY 50" />);
+
+    expect(screen.getByText(/Simulated/)).toBeInTheDocument();
+    expect(screen.queryByText(/fixed for the session/)).not.toBeInTheDocument();
+  });
+
+  it('shows a cached reading as the last live one, with its time', () => {
+    render(<GapIndicatorCard reading={{ ...reading, source: 'cached' }} label="NIFTY 50" />);
+
+    expect(screen.getByText(/Last live reading, taken at 09:15 IST/)).toBeInTheDocument();
+  });
+
+  it('flags a pre-open placeholder as provisional', () => {
+    // Brokers fill the open with the previous session's figure until the
+    // auction runs. Rendering that as the opening print is the failure.
+    render(<GapIndicatorCard reading={{ ...reading, settled: false }} label="NIFTY 50" />);
+
+    expect(screen.getByText(/Provisional/)).toBeInTheDocument();
+  });
+
+  it('carries no qualifier when there is no reading to qualify', () => {
     render(<GapIndicatorCard label="BANK NIFTY" />);
 
-    expect(screen.queryByText(/approximate opening level/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/fixed for the session/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/Simulated/)).not.toBeInTheDocument();
   });
 
-  it('says so when the broker supplied no opening print', () => {
+  it('says so when the session has no opening print yet', () => {
     render(<GapIndicatorCard label="BANK NIFTY" />);
 
     expect(screen.getByText('BANK NIFTY Gap')).toBeInTheDocument();

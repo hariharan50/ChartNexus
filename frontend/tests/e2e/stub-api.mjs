@@ -35,6 +35,42 @@ const SPOTS = {
   BANKNIFTY: { price: '52100.50', change: '340.10', change_percent: '0.66' }
 };
 
+/**
+ * The session's latched opening gap, as the real `/market/spot` now returns it.
+ *
+ * Fixed values, like everything else here: the point of this stub is a page
+ * that renders the same way on every run. `day_open` and `previous_close` are
+ * served alongside because the wire carries both, but the card reads `gap`.
+ */
+const GAPS = {
+  NIFTY: { opened_at: '24438.00', reference_close: '24387.85', points: '50.15', percent: '0.21' },
+  SENSEX: {
+    opened_at: '80120.00',
+    reference_close: '80431.00',
+    points: '-311.00',
+    percent: '-0.39'
+  },
+  BANKNIFTY: {
+    opened_at: '51960.00',
+    reference_close: '51760.40',
+    points: '199.60',
+    percent: '0.39'
+  }
+};
+
+function sessionGap(instrument) {
+  const gap = GAPS[instrument] ?? GAPS.NIFTY;
+  const points = Number.parseFloat(gap.points);
+  return {
+    ...gap,
+    signal:
+      Math.abs(Number.parseFloat(gap.percent)) < 0.15 ? 'flat' : points > 0 ? 'gap_up' : 'gap_down',
+    source: 'mock',
+    observed_at: '2026-01-01T03:45:30Z',
+    settled: true
+  };
+}
+
 const FUTURES = {
   NIFTY: { contract: 'NSE:NIFTY26JANFUT', price: '24540.00', change_percent: '0.48' },
   SENSEX: { contract: 'BSE:SENSEX26JANFUT', price: '80310.00', change_percent: '-0.20' },
@@ -497,7 +533,15 @@ const server = createServer((req, res) => {
 
   if (url.pathname === '/api/v1/market/spot') {
     const spot = SPOTS[instrument] ?? SPOTS.NIFTY;
-    return send(res, 200, { instrument, ...spot, provenance: PROVENANCE });
+    const gap = sessionGap(instrument);
+    return send(res, 200, {
+      instrument,
+      ...spot,
+      day_open: gap.opened_at,
+      previous_close: gap.reference_close,
+      gap,
+      provenance: PROVENANCE
+    });
   }
 
   if (url.pathname === '/api/v1/market/futures') {

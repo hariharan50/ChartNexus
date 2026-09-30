@@ -12,6 +12,7 @@ from decimal import Decimal
 
 from pydantic import BaseModel, ConfigDict
 
+from marketcompass.contexts.market_data.domain.gap import SessionGap
 from marketcompass.contexts.market_data.domain.market_data import (
     Candle,
     CandleSeries,
@@ -48,19 +49,63 @@ class ProvenanceResponse(_Schema):
         )
 
 
+class GapResponse(_Schema):
+    """The session's opening gap, latched.
+
+    Deliberately *not* something the client recomputes from ``day_open`` and
+    ``previous_close`` on every poll. Those two fields carry whatever the latest
+    broker payload said, mock included; this one carries the first believable
+    pair of the session and states where it came from, which is what stops the
+    reading changing sign between refreshes.
+    """
+
+    opened_at: Decimal
+    reference_close: Decimal
+    points: Decimal
+    percent: Decimal
+    signal: str
+    """``gap_up``, ``gap_down`` or ``flat``."""
+
+    source: str
+    """``live``, ``cached`` or ``mock`` - the provenance of *this pair*, which
+    can differ from the enclosing quote's once the broker degrades."""
+
+    observed_at: datetime
+    settled: bool
+    """False while the opening auction has not yet produced a real print."""
+
+    @classmethod
+    def of(cls, gap: SessionGap) -> GapResponse:
+        return cls(
+            opened_at=gap.opened_at,
+            reference_close=gap.reference_close,
+            points=gap.points.quantize(Decimal("0.01")),
+            percent=gap.percent.quantize(Decimal("0.01")),
+            signal=gap.signal.value,
+            source=gap.source.value,
+            observed_at=gap.observed_at,
+            settled=gap.settled,
+        )
+
+
 class QuoteResponse(_Schema):
     instrument: str
     price: Decimal
     change: Decimal | None
     change_percent: Decimal | None
-    #: The session's opening print and the prior session's close, so a client
-    #: can read the overnight gap without a second request.
+    #: The session's opening print and the prior session's close, exactly as the
+    #: latest payload reported them. Read ``gap`` instead for the overnight gap:
+    #: these two move with the feed, and a degraded poll rewrites them.
     day_open: Decimal | None
     previous_close: Decimal | None
+    #: The latched opening gap. ``None`` before the first believable pair of the
+    #: session - a missing gap is a real state and says so, rather than showing
+    #: a zero that reads as "opened flat".
+    gap: GapResponse | None = None
     provenance: ProvenanceResponse
 
     @classmethod
-    def of(cls, quote: Quote) -> QuoteResponse:
+    def of(cls, quote: Quote, gap: SessionGap | None = None) -> QuoteResponse:
         return cls(
             instrument=quote.instrument.value,
             price=quote.price,
@@ -68,6 +113,7 @@ class QuoteResponse(_Schema):
             change_percent=quote.change_percent,
             day_open=quote.day_open,
             previous_close=quote.previous_close,
+            gap=GapResponse.of(gap) if gap is not None else None,
             provenance=ProvenanceResponse.of(quote.provenance),
         )
 

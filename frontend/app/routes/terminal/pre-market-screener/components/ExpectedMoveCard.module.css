@@ -1,0 +1,70 @@
+.wrap {
+  display: flex;
+  flex-direction: column;
+  gap: var(--mc-space-3);
+}
+
+.rows {
+  display: flex;
+  flex-direction: column;
+  gap: var(--mc-space-3);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.row {
+  display: grid;
+  grid-template-columns: minmax(8rem, 1fr) auto;
+  align-items: baseline;
+  gap: 0.125rem var(--mc-space-3);
+}
+
+.label {
+  grid-row: 1;
+  font-size: var(--mc-text-xs);
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--mc-text-subtle);
+}
+
+.band {
+  grid-row: 1;
+  text-align: right;
+  font-size: var(--mc-text-sm);
+  font-weight: 700;
+}
+
+.size {
+  grid-column: 1 / -1;
+  grid-row: 2;
+  text-align: right;
+  font-size: var(--mc-text-xs);
+  color: var(--mc-text-muted);
+}
+
+.horizon,
+.caveat {
+  margin: 0;
+  font-size: var(--mc-text-xs);
+  color: var(--mc-text-subtle);
+}
+
+/* The disagreement between measures is a finding, so it gets the emphasis the
+   rows themselves do not. */
+.note {
+  margin: 0;
+  padding: var(--mc-space-2) var(--mc-space-3);
+  border-left: 2px solid var(--mc-accent);
+  background: var(--mc-surface-raised);
+  font-size: var(--mc-text-xs);
+  line-height: 1.5;
+  color: var(--mc-text);
+}
+
+.empty {
+  margin: 0;
+  font-size: var(--mc-text-xs);
+  color: var(--mc-text-subtle);
+}

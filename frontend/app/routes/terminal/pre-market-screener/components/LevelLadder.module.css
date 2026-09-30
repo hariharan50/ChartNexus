@@ -1,0 +1,115 @@
+.wrap {
+  display: flex;
+  flex-direction: column;
+  gap: var(--mc-space-3);
+}
+
+/* Confluence leads, because it is the only thing on this panel that is more
+   than one method's opinion. */
+.clusters {
+  padding: var(--mc-space-3);
+  border: 1px solid var(--mc-border-strong);
+  border-radius: var(--mc-radius);
+  background: var(--mc-surface-raised);
+}
+
+.clustersHead {
+  margin: 0 0 var(--mc-space-2);
+  font-size: var(--mc-text-xs);
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--mc-text-subtle);
+}
+
+.clusterList {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--mc-space-3);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.cluster {
+  display: flex;
+  flex-direction: column;
+}
+
+.clusterPrice {
+  font-size: var(--mc-text-sm);
+  font-weight: 700;
+}
+
+.clusterOrigins {
+  font-size: var(--mc-text-xs);
+  color: var(--mc-text-subtle);
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--mc-text-xs);
+}
+
+.caption {
+  margin-bottom: var(--mc-space-2);
+  text-align: left;
+  color: var(--mc-text-subtle);
+}
+
+.table th,
+.table td {
+  padding: var(--mc-space-2) var(--mc-space-2) var(--mc-space-2) 0;
+  border-bottom: 1px solid var(--mc-border);
+  text-align: left;
+  white-space: nowrap;
+}
+
+.table thead th {
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--mc-text-subtle);
+}
+
+.table tbody th {
+  font-weight: 600;
+}
+
+.right {
+  text-align: right;
+  padding-right: 0;
+}
+
+.origin {
+  color: var(--mc-text-subtle);
+}
+
+.sub {
+  display: block;
+  font-size: var(--mc-text-xs);
+  font-weight: 400;
+  color: var(--mc-text-subtle);
+}
+
+/* The price's own row, emphasised so the ladder reads as an axis rather than a
+   sorted list. */
+.spotRow th,
+.spotRow td {
+  border-bottom: 2px solid var(--mc-accent);
+  color: var(--mc-accent);
+  font-weight: 700;
+}
+
+.above {
+  color: var(--mc-bullish);
+}
+
+.below {
+  color: var(--mc-bearish);
+}
+
+.at {
+  color: var(--mc-text-subtle);
+}

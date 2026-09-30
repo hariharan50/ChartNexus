@@ -8,6 +8,8 @@
  * to the other.
  */
 
+import type { DataSourceName } from '$contexts/broker-connections/types';
+
 export type IndexKey = 'NIFTY50' | 'SENSEX' | 'BANKNIFTY';
 
 export type OptionType = 'CE' | 'PE';
@@ -29,6 +31,13 @@ export interface IndexQuote {
 /** How the session opened against the previous close. */
 export type GapSignal = 'gap_up' | 'gap_down' | 'flat';
 
+/**
+ * The session's opening gap, as the backend latched it.
+ *
+ * The card renders this rather than recomputing it: the opening print is a fact
+ * of the session, decided once, and a reading that changes every fifteen
+ * seconds was the bug, not the feature.
+ */
 export interface GapReading {
   /** The index this reading is for, e.g. `NIFTY 50`. */
   label: string;
@@ -38,6 +47,14 @@ export interface GapReading {
   points: number;
   percent: number;
   signal: GapSignal;
+  /** Where this pair came from. `mock` means the card is showing a simulated
+      open and must say so; `cached` means a real but earlier reading. */
+  source: DataSourceName;
+  /** When the pair was observed. Shown so the reader can see it is not ticking. */
+  observedAt: Date;
+  /** False before the opening auction has produced a real print — the reading
+      is the broker's pre-open placeholder and will be replaced. */
+  settled: boolean;
 }
 
 export interface OptionRow {

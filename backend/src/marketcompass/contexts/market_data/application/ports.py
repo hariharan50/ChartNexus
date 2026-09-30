@@ -7,6 +7,7 @@ from datetime import date, datetime
 from decimal import Decimal
 from typing import Protocol, runtime_checkable
 
+from marketcompass.contexts.market_data.domain.gap import SessionGap
 from marketcompass.contexts.market_data.domain.instruments import InstrumentSymbol
 from marketcompass.contexts.market_data.domain.market_data import (
     CandleInterval,
@@ -134,6 +135,34 @@ class HistoryCachePort(Protocol):
     async def recent(
         self, instrument: InstrumentSymbol, interval: CandleInterval, *, days: int, now: datetime
     ) -> CandleSeries | None: ...
+
+
+@runtime_checkable
+class SessionGapStore(Protocol):
+    """Where a session's latched opening gap lives between requests.
+
+    It has to outlive the request, and that is the whole point. The market
+    services are assembled per request, so anything held on the use case itself
+    is empty on arrival every time - which is how the gap card ended up
+    recomputing the opening print from each poll and flipping sign whenever one
+    of them degraded to the mock.
+
+    Keyed by tenant, instrument and session date. Implementations expire their
+    own entries after the session; a miss returns ``None`` and never raises.
+    """
+
+    async def read(
+        self, *, tenant_id: TenantId, instrument: InstrumentSymbol, session_date: date
+    ) -> SessionGap | None: ...
+
+    async def write(
+        self,
+        *,
+        tenant_id: TenantId,
+        instrument: InstrumentSymbol,
+        session_date: date,
+        gap: SessionGap,
+    ) -> None: ...
 
 
 @runtime_checkable

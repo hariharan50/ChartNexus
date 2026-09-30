@@ -4,11 +4,21 @@
   gap: var(--mc-space-3);
 }
 
+/* Verdict and magnitude are one statement - "GAP UP, by 284.70 points" - so
+   they share a row. Split across two blocks the way they were, the reader had
+   to travel past the two levels to find out how big the gap actually was. */
+.verdictRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--mc-space-3);
+  flex-wrap: wrap;
+}
+
 /* The verdict carries the read, so it gets the weight the numbers don't. */
 .verdict {
   display: inline-flex;
   align-items: center;
-  align-self: flex-start;
   min-height: var(--mc-control-h);
   margin: 0;
   padding: 0 var(--mc-control-px);
@@ -17,6 +27,7 @@
   font-size: var(--mc-text-sm);
   font-weight: 700;
   letter-spacing: 0.08em;
+  white-space: nowrap;
 }
 
 .gap_up {
@@ -72,16 +83,9 @@
 
 .gap {
   margin: 0;
-  font-size: var(--mc-text-sm);
-  font-weight: 600;
-}
-
-/* Holds the gap and its caveat together, tighter than the body's own row
-   spacing: they are one reading, not two. */
-.gapBlock {
-  display: flex;
-  flex-direction: column;
-  gap: var(--mc-space-1);
+  font-size: var(--mc-text-base);
+  font-weight: 700;
+  white-space: nowrap;
 }
 
 .note {
@@ -89,6 +93,12 @@
   font-size: var(--mc-text-xs);
   line-height: 1.45;
   color: var(--mc-text-subtle);
+}
+
+/* Reserved for the two states a reader must not mistake for a live opening
+   print: a simulated gap, and the broker's pre-open placeholder. */
+.noteWarn {
+  color: var(--mc-warning);
 }
 
 .unavailable {

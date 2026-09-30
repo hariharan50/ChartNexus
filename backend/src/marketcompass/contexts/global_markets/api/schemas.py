@@ -50,6 +50,11 @@ class MarketRowResponse(_Schema):
     change: Decimal | None
     change_percent: Decimal | None
     previous_close: Decimal | None
+    #: The session's own extremes. Carried because GIFT NIFTY trades through
+    #: the night: its high and low *are* the overnight range the Indian open
+    #: inherits, and no other row on the board can express that.
+    day_high: Decimal | None
+    day_low: Decimal | None
     spark: list[Decimal]
     #: The market's own session for the current window, in IST, so the board
     #: can print "19:00 - 01:30" without re-deriving a timezone client-side.
@@ -76,6 +81,8 @@ class MarketRowResponse(_Schema):
             change=quote.change if quote else None,
             change_percent=quote.change_percent if quote else None,
             previous_close=quote.previous_close if quote else None,
+            day_high=quote.day_high if quote else None,
+            day_low=quote.day_low if quote else None,
             spark=list(quote.spark) if quote else [],
             opens_ist=opens_ist,
             closes_ist=closes_ist,
@@ -225,6 +232,8 @@ class GlobalViewResponse(_Schema):
                 change=view.gift.change,
                 change_percent=view.gift.change_percent,
                 previous_close=view.gift.previous_close,
+                day_high=view.gift.day_high,
+                day_low=view.gift.day_low,
                 spark=list(view.gift.spark),
                 # GIFT runs two sessions spanning most of the day; printing a
                 # single window for it would be wrong, so it prints neither.

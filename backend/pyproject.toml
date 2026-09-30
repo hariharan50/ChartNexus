@@ -158,6 +158,14 @@ ignore_imports = [
     # edge so the transitive reach isn't counted as mme100 depending on other
     # contexts or infrastructure.
     "marketcompass.contexts.mme100.api.dependencies -> marketcompass.infrastructure.mme100.build_mme100",
+    # PMS composes four contexts' reads behind one endpoint and uses the same
+    # sanctioned-bridge pattern: its API dependency imports only
+    # `build_pre_market`, which assembles market_data, options_analytics,
+    # global_markets and market_breadth services and returns PMS's own ports.
+    # Exempt that single edge so the bridge's transitive reach is not counted
+    # as pre_market depending on those contexts. The AST boundary test needs no
+    # exemption — `contexts/pre_market` imports none of them directly.
+    "marketcompass.contexts.pre_market.api.dependencies -> marketcompass.infrastructure.pre_market.build_pre_market",
     # Messaging uses the same sanctioned-bridge pattern: its API dependency imports
     # only `build_messaging`, which assembles the channel repository + adapters from
     # the container. Exempt that single edge.

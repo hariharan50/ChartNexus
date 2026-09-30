@@ -12,7 +12,7 @@ the failure mode that matters, so degradation is recorded rather than hidden.
 from __future__ import annotations
 
 from dataclasses import dataclass, replace
-from datetime import date, datetime, timedelta, timezone
+from datetime import date, datetime, time, timedelta, timezone
 from typing import Final
 
 from marketcompass.contexts.market_data.application.ports import (
@@ -22,7 +22,9 @@ from marketcompass.contexts.market_data.application.ports import (
     MarketCalendar,
     MarketDataProvider,
     ProviderResolver,
+    SessionGapStore,
 )
+from marketcompass.contexts.market_data.domain.gap import SessionGap, measure, supersedes
 from marketcompass.contexts.market_data.domain.implied_volatility import (
     atm_implied_volatility,
     backfill_implied_volatility,
@@ -70,6 +72,52 @@ class HistoryQuery:
     days: int
 
 
+#: Entries kept per last-good store. The universe is 219 instruments across a
+#: handful of local tenants, so this holds a whole day's working set and still
+#: cannot grow without bound in a long-running worker.
+_LAST_GOOD_LIMIT: Final = 512
+
+
+class LastGood[T]:
+    """A bounded, process-lived store of the last real payload per key.
+
+    Deliberately *not* an attribute of the use case. ``build_market_services``
+    is a FastAPI dependency, so every request assembles a fresh ``GetSpotPrice``
+    with a fresh dictionary - which meant the last-good rung of the documented
+    ``fresh -> live -> last-good -> mock`` ladder could never fire even once.
+    Every transient broker error fell straight through to the mock provider,
+    and the dashboard's gap card alternated between a live gap and the mock's
+    seeded one every time the circuit breaker opened and reset.
+
+    Injectable so tests get a clean store instead of inheriting whatever the
+    last test left behind in the module-level one.
+    """
+
+    __slots__ = ("_entries", "_limit")
+
+    def __init__(self, limit: int = _LAST_GOOD_LIMIT) -> None:
+        self._entries: dict[str, T] = {}
+        self._limit = limit
+
+    def get(self, key: str) -> T | None:
+        return self._entries.get(key)
+
+    def put(self, key: str, value: T) -> None:
+        # Re-inserting moves the key to the end, so the eviction below drops the
+        # instrument nobody has asked about rather than the one being polled.
+        self._entries.pop(key, None)
+        self._entries[key] = value
+        while len(self._entries) > self._limit:
+            self._entries.pop(next(iter(self._entries)))
+
+
+#: Shared by every request in the process, one per payload shape.
+_SPOT_LAST_GOOD: LastGood[Quote] = LastGood()
+_FUTURES_LAST_GOOD: LastGood[FuturesQuote] = LastGood()
+_CHAIN_LAST_GOOD: LastGood[OptionChain] = LastGood()
+_HISTORY_LAST_GOOD: LastGood[CandleSeries] = LastGood()
+
+
 class _FallbackMixin:
     """Shared live-then-degrade behaviour."""
 
@@ -98,11 +146,12 @@ class GetSpotPrice(_FallbackMixin):
         resolver: ProviderResolver,
         fallback: MarketDataProvider,
         clock: Clock,
+        last_good: LastGood[Quote] | None = None,
     ) -> None:
         self._resolver = resolver
         self._fallback = fallback
         self._clock = clock
-        self._last_good: dict[str, Quote] = {}
+        self._last_good = last_good or _SPOT_LAST_GOOD
 
     async def __call__(self, query: QuoteQuery) -> Quote:
         provider, live = await self._providers(query.tenant_id)
@@ -127,8 +176,123 @@ class GetSpotPrice(_FallbackMixin):
             return await self._fallback.get_quote(query.instrument)
 
         if live:
-            self._last_good[key] = quote
+            self._last_good.put(key, quote)
         return quote
+
+
+#: How long after the bell the opening print is treated as provisional.
+#:
+#: Brokers fill ``open_price`` with the previous session's figure until the
+#: auction has actually run, and for a few seconds after it the field can still
+#: be corrected. Anything latched inside this window stays replaceable; anything
+#: latched after it is the session's opening print and is frozen.
+OPENING_SETTLE_MINUTES: Final = 5
+
+
+class GetSessionGap:
+    """The session's opening gap for one instrument, latched for the day.
+
+    Takes a quote that has already been fetched rather than fetching its own:
+    the dashboard is polling ``/market/spot`` for three indices every fifteen
+    seconds against a capped broker quota, and a gap is a read *over* that
+    quote, not a second call.
+
+    What it adds over the two-line subtraction it replaces is durability. The
+    first believable pair of the session is written to the store and served from
+    there afterwards, so a poll that degrades to the mock cannot rewrite an
+    opening print that was observed live. See
+    :func:`~marketcompass.contexts.market_data.domain.gap.supersedes` for the
+    only two cases in which a latched reading is replaced.
+    """
+
+    def __init__(
+        self,
+        *,
+        store: SessionGapStore,
+        clock: Clock,
+        calendar: MarketCalendar,
+    ) -> None:
+        self._store = store
+        self._clock = clock
+        self._calendar = calendar
+
+    async def __call__(self, tenant_id: TenantId, quote: Quote) -> SessionGap | None:
+        now = self._clock.now()
+        session_date, settled = self._anchor(now)
+
+        observed = measure(
+            quote.day_open,
+            quote.previous_close,
+            source=quote.provenance.source,
+            observed_at=now,
+            settled=settled,
+            reference_price=quote.price,
+        )
+
+        latched = await self._read(tenant_id, quote, session_date)
+        if latched is None:
+            if observed is not None:
+                await self._write(tenant_id, quote, session_date, observed)
+            return observed
+
+        if observed is not None and supersedes(observed, latched):
+            await self._write(tenant_id, quote, session_date, observed)
+            return observed
+        return latched
+
+    def _anchor(self, now: datetime) -> tuple[date, bool]:
+        """The session the gap belongs to, and whether its open has settled.
+
+        A weekend rolls back to Friday, whose session is over by definition -
+        without it a Saturday reader would be shown an empty card on a date the
+        market never traded. On a weekday the flag turns true once the auction
+        has had :data:`OPENING_SETTLE_MINUTES` to produce a real print.
+        """
+        local = now.astimezone(_IST)
+        session_date = local.date()
+
+        weekend_days = local.weekday() - 4
+        if weekend_days > 0:
+            return session_date - timedelta(days=weekend_days), True
+
+        opens_at = datetime.combine(session_date, self._session_open(), tzinfo=_IST)
+        return session_date, local >= opens_at + timedelta(minutes=OPENING_SETTLE_MINUTES)
+
+    def _session_open(self) -> time:
+        hour, _, minute = self._calendar.opens_at.partition(":")
+        return time(hour=int(hour), minute=int(minute or 0))
+
+    async def _read(
+        self, tenant_id: TenantId, quote: Quote, session_date: date
+    ) -> SessionGap | None:
+        """Read the latch, treating a store failure as a miss.
+
+        The latch is what keeps the card steady, not what makes it correct: if
+        Redis is unreachable the reading falls back to whatever this poll
+        carries, which is exactly the old behaviour and still better than an
+        error page.
+        """
+        try:
+            return await self._store.read(
+                tenant_id=tenant_id, instrument=quote.instrument, session_date=session_date
+            )
+        except Exception:
+            return None
+
+    async def _write(
+        self, tenant_id: TenantId, quote: Quote, session_date: date, gap: SessionGap
+    ) -> None:
+        try:
+            await self._store.write(
+                tenant_id=tenant_id,
+                instrument=quote.instrument,
+                session_date=session_date,
+                gap=gap,
+            )
+        except Exception:
+            # Best-effort, for the same reason as the read: a failed latch costs
+            # steadiness on the next poll, it must not cost the reader the card.
+            return
 
 
 class GetFuturesQuote(_FallbackMixin):
@@ -140,11 +304,12 @@ class GetFuturesQuote(_FallbackMixin):
         resolver: ProviderResolver,
         fallback: MarketDataProvider,
         clock: Clock,
+        last_good: LastGood[FuturesQuote] | None = None,
     ) -> None:
         self._resolver = resolver
         self._fallback = fallback
         self._clock = clock
-        self._last_good: dict[str, FuturesQuote] = {}
+        self._last_good = last_good or _FUTURES_LAST_GOOD
 
     async def __call__(self, query: QuoteQuery) -> FuturesQuote:
         provider, live = await self._providers(query.tenant_id)
@@ -170,7 +335,7 @@ class GetFuturesQuote(_FallbackMixin):
             return await self._fallback.get_futures_quote(query.instrument)
 
         if live:
-            self._last_good[key] = quote
+            self._last_good.put(key, quote)
         return quote
 
 
@@ -183,13 +348,14 @@ class GetOptionChain(_FallbackMixin):
         clock: Clock,
         risk_free_rate: float = 0.07,
         iv_history: IvHistoryRecorder | None = None,
+        last_good: LastGood[OptionChain] | None = None,
     ) -> None:
         self._resolver = resolver
         self._fallback = fallback
         self._clock = clock
         self._risk_free_rate = risk_free_rate
         self._iv_history = iv_history
-        self._last_good: dict[str, OptionChain] = {}
+        self._last_good = last_good or _CHAIN_LAST_GOOD
 
     async def __call__(self, query: OptionChainQuery) -> OptionChain:
         provider, live = await self._providers(query.tenant_id)
@@ -212,7 +378,7 @@ class GetOptionChain(_FallbackMixin):
         chain = await self._with_iv_percentile(chain, query.instrument.value, now)
 
         if live:
-            self._last_good[key] = chain
+            self._last_good.put(key, chain)
         return chain
 
     async def _with_iv_percentile(
@@ -290,6 +456,7 @@ class GetHistory(_FallbackMixin):
         clock: Clock,
         cache: HistoryCachePort | None = None,
         cache_retention_days: int = 3,
+        last_good: LastGood[CandleSeries] | None = None,
     ) -> None:
         self._resolver = resolver
         self._fallback = fallback
@@ -299,7 +466,7 @@ class GetHistory(_FallbackMixin):
         # ``_last_good`` is the only fallback, exactly as before.
         self._cache = cache
         self._cache_retention_days = cache_retention_days
-        self._last_good: dict[str, CandleSeries] = {}
+        self._last_good = last_good or _HISTORY_LAST_GOOD
 
     async def __call__(self, query: HistoryQuery) -> CandleSeries:
         provider, live = await self._providers(query.tenant_id)
@@ -315,7 +482,7 @@ class GetHistory(_FallbackMixin):
             return await self._degraded(query, days, key)
 
         if live:
-            self._last_good[key] = series
+            self._last_good.put(key, series)
             await self._write_through(series)
         return series
 

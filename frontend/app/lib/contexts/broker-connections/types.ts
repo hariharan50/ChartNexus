@@ -48,14 +48,42 @@ export interface MarketStatus {
   market_close: string;
 }
 
+export type GapSignalName = 'gap_up' | 'gap_down' | 'flat';
+
+/**
+ * The session's opening gap, latched by the backend.
+ *
+ * Not derived from `day_open` and `previous_close` below: those carry whatever
+ * the latest poll returned, so a poll that degraded to simulated data rewrote
+ * them and the card flipped sign between refreshes. This is the first
+ * believable pair of the session, frozen, and it says where it came from.
+ */
+export interface SessionGap {
+  opened_at: string;
+  reference_close: string;
+  points: string;
+  percent: string;
+  signal: GapSignalName;
+  /** Provenance of this pair, which can differ from the quote's once the
+      broker degrades — the gap holds its live reading, the price does not. */
+  source: DataSourceName;
+  observed_at: string;
+  /** False while the opening auction has not yet produced a real print. */
+  settled: boolean;
+}
+
 export interface Quote {
   instrument: string;
   price: string;
   change: string | null;
   change_percent: string | null;
-  /** The session's opening print and the prior session's close — the gap. */
+  /** The session's opening print and the prior session's close, as the latest
+      payload reported them. Read `gap` for the overnight gap — these two move
+      with the feed. */
   day_open: string | null;
   previous_close: string | null;
+  /** The latched opening gap. `null` until the session has a believable pair. */
+  gap: SessionGap | null;
   provenance: Provenance;
 }
 

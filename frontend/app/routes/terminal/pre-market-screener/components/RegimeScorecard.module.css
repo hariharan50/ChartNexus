@@ -1,0 +1,166 @@
+.wrap {
+  display: flex;
+  flex-direction: column;
+  gap: var(--mc-space-3);
+}
+
+.head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--mc-space-3);
+}
+
+.band {
+  display: inline-flex;
+  align-items: center;
+  min-height: var(--mc-control-h);
+  margin: 0;
+  padding: 0 var(--mc-control-px);
+  border: 1px solid currentcolor;
+  border-radius: var(--mc-radius);
+  font-size: var(--mc-text-sm);
+  font-weight: 700;
+  letter-spacing: 0.08em;
+}
+
+.score {
+  margin: 0;
+  font-size: var(--mc-text-2xl);
+  font-weight: 700;
+  line-height: 1;
+}
+
+.meter {
+  position: relative;
+  height: 0.5rem;
+}
+
+.track {
+  position: absolute;
+  inset: 0;
+  border-radius: 999px;
+  /* Bearish through neutral to bullish. The needle reads against it, so the
+     ends must be unambiguous even for a reader who cannot tell the two hues
+     apart — hence the needle's own position, not colour alone, is the signal. */
+  background: linear-gradient(
+    to right,
+    var(--mc-bearish-weak),
+    var(--mc-surface-raised),
+    var(--mc-bullish-weak)
+  );
+}
+
+.needle {
+  position: absolute;
+  top: -0.25rem;
+  width: 0.25rem;
+  height: 1rem;
+  margin-left: -0.125rem;
+  border-radius: 999px;
+  background: currentcolor;
+}
+
+.coverage {
+  margin: 0;
+  font-size: var(--mc-text-xs);
+  color: var(--mc-text-subtle);
+}
+
+.axes {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(6.5rem, 1fr));
+  gap: var(--mc-space-2);
+  margin: 0;
+  padding: var(--mc-space-3) 0 0;
+  border-top: 1px solid var(--mc-border);
+  list-style: none;
+}
+
+.axis {
+  display: flex;
+  flex-direction: column;
+  gap: 0.125rem;
+}
+
+/* An axis nothing answered for is dimmed rather than hidden: its absence is
+   part of the reading, and a six-axis card that silently becomes four looks
+   complete when it is not. */
+.muted {
+  opacity: 0.55;
+}
+
+.axisLabel {
+  font-size: var(--mc-text-xs);
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--mc-text-subtle);
+}
+
+.axisPoints {
+  font-size: var(--mc-text-sm);
+  font-weight: 700;
+}
+
+.factors {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--mc-text-xs);
+}
+
+.caption {
+  margin-bottom: var(--mc-space-2);
+  padding-top: var(--mc-space-3);
+  border-top: 1px solid var(--mc-border);
+  text-align: left;
+  color: var(--mc-text-subtle);
+}
+
+.factors th,
+.factors td {
+  padding: var(--mc-space-2) var(--mc-space-2) var(--mc-space-2) 0;
+  border-bottom: 1px solid var(--mc-border);
+  text-align: left;
+  vertical-align: top;
+}
+
+.factors thead th {
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--mc-text-subtle);
+}
+
+.factors tbody th {
+  font-weight: 600;
+}
+
+.right {
+  text-align: right;
+  padding-right: 0;
+}
+
+.factorNote {
+  display: block;
+  font-weight: 400;
+  color: var(--mc-text-subtle);
+}
+
+.up {
+  color: var(--mc-bullish);
+}
+
+.down {
+  color: var(--mc-bearish);
+}
+
+.flat {
+  color: var(--mc-text-subtle);
+}
+
+.caveat {
+  margin: 0;
+  font-size: var(--mc-text-xs);
+  color: var(--mc-text-subtle);
+}

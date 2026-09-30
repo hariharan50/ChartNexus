@@ -1,0 +1,49 @@
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(8rem, 1fr));
+  gap: var(--mc-space-3);
+  margin: 0 0 var(--mc-space-3);
+}
+
+.grid:last-child {
+  margin-bottom: 0;
+}
+
+.cell dt {
+  margin: 0 0 0.25rem;
+  font-size: var(--mc-text-xs);
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--mc-text-subtle);
+}
+
+.cell dd {
+  margin: 0;
+  font-size: var(--mc-text-sm);
+  font-weight: 700;
+}
+
+.sub {
+  display: block;
+  font-size: var(--mc-text-xs);
+  font-weight: 400;
+  color: var(--mc-text-subtle);
+}
+
+.up {
+  color: var(--mc-bullish);
+}
+
+.down {
+  color: var(--mc-bearish);
+}
+
+/* Every caveat on this page shares one treatment, so a reader learns once that
+   small grey text under a panel is the panel qualifying itself. */
+.footnote {
+  margin: var(--mc-space-2) 0 0;
+  font-size: var(--mc-text-xs);
+  line-height: 1.5;
+  color: var(--mc-text-subtle);
+}
