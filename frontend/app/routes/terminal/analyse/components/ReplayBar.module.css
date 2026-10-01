@@ -58,14 +58,9 @@
   white-space: nowrap;
 }
 
+/* `.speed` is a <Select>; the component paints it. */
 .speed {
-  height: 1.75rem;
-  border: 1px solid var(--mc-border);
-  border-radius: var(--mc-radius-sm);
-  background: var(--mc-surface);
-  color: var(--mc-text);
-  font-size: var(--mc-text-xs);
-  cursor: pointer;
+  display: inline-flex;
 }
 
 .exit {

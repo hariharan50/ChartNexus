@@ -5,6 +5,7 @@ import type { AiSettings, LlmProvider } from '$contexts/ai-settings/types';
 import { presentAuthError } from '$contexts/identity/messages';
 import Button from '$shared/ui/Button';
 import { cx } from '$shared/ui/cx';
+import Select from '$shared/ui/Select';
 import IconAlert from '$shared/ui/icons/IconAlert';
 import IconCheck from '$shared/ui/icons/IconCheck';
 import PasswordField from '$shared/ui/PasswordField';
@@ -184,35 +185,31 @@ export default function SettingsAi() {
         <h2>{configured ? 'Update your LLM key' : 'Add your LLM key'}</h2>
 
         <form className={s.form} onSubmit={save}>
-          <label className={s.formField}>
+          <div className={s.formField}>
             <span className={s.fieldLabel}>Provider</span>
-            <select
+            <Select
               className={s.select}
+              ariaLabel="Provider"
               value={provider}
-              onChange={(event) => setProvider(event.currentTarget.value as LlmProvider)}
-            >
-              {PROVIDERS.map((option) => (
-                <option key={option.id} value={option.id} disabled={!option.enabled}>
-                  {option.label}
-                </option>
-              ))}
-            </select>
-          </label>
+              onChange={(next) => setProvider(next as LlmProvider)}
+              options={PROVIDERS.map((option) => ({
+                value: option.id,
+                label: option.label,
+                disabled: !option.enabled
+              }))}
+            />
+          </div>
 
-          <label className={s.formField}>
+          <div className={s.formField}>
             <span className={s.fieldLabel}>Model</span>
-            <select
+            <Select
               className={s.select}
+              ariaLabel="Model"
               value={model}
-              onChange={(event) => setModel(event.currentTarget.value)}
-            >
-              {CLAUDE_MODELS.map((option) => (
-                <option key={option.id} value={option.id}>
-                  {option.label}
-                </option>
-              ))}
-            </select>
-          </label>
+              onChange={setModel}
+              options={CLAUDE_MODELS.map((option) => ({ value: option.id, label: option.label }))}
+            />
+          </div>
 
           <PasswordField
             className={s.formField}

@@ -6,6 +6,7 @@ import {
 } from '$contexts/futures-analytics/queries';
 import type { FuturesRow } from '$contexts/futures-analytics/types';
 import DataTable, { type Column } from '$shared/ui/DataTable';
+import Select from '$shared/ui/Select';
 import { SessionStatus } from './components/SessionHeader';
 import { cx } from '$shared/ui/cx';
 import ExpiryPicker from './components/ExpiryPicker';
@@ -133,21 +134,20 @@ export default function FutureDashboard() {
         {/* Sectors are not carried by the exchange symbol master, so the filter
             appears only once some other source has populated them. */}
         {sectors.length > 0 ? (
-          <label className={s.sector}>
+          <div className={s.sector}>
             <span className={s.toolLabel}>Sector</span>
-            <select
+            <Select
               className={s.select}
+              size="sm"
               value={sector}
-              onChange={(event) => setSector(event.currentTarget.value)}
-            >
-              <option value="">All sectors</option>
-              {sectors.map((name) => (
-                <option key={name} value={name}>
-                  {name}
-                </option>
-              ))}
-            </select>
-          </label>
+              ariaLabel="Sector"
+              onChange={setSector}
+              options={[
+                { value: '', label: 'All sectors' },
+                ...sectors.map((name) => ({ value: name, label: name }))
+              ]}
+            />
+          </div>
         ) : null}
 
         <span className={s.coverage}>

@@ -9,6 +9,9 @@ from fastapi import Depends, Request
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from marketcompass.contexts.options_analytics.application.gex_service import GetGex
+from marketcompass.contexts.options_analytics.application.greeks_series_service import (
+    GetGreeksSeries,
+)
 from marketcompass.contexts.options_analytics.application.iv_history_service import (
     GetIvHistory,
 )
@@ -54,6 +57,7 @@ class OptionsAnalyticsServices:
     max_pain_series: GetMaxPainSeries
     gex: GetGex
     iv_history: GetIvHistory
+    greeks_series: GetGreeksSeries
     skew: GetSkew
     term_structure: GetTermStructure
     vega: GetVega
@@ -95,6 +99,7 @@ def build_options_analytics_services_from(
             strike_span=container.settings.market.snapshot_max_series_strikes,
         ),
         iv_history=GetIvHistory(readings=SqlAlchemyDailyIvReader(session)),
+        greeks_series=GetGreeksSeries(provider=provider, snapshots=snapshots),
         term_structure=GetTermStructure(provider=provider),
         skew=GetSkew(
             provider=provider,

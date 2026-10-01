@@ -1,0 +1,157 @@
+/*
+ * The app's dropdown — a listbox, never a `<select>`.
+ *
+ * Sized against the shared control tokens so a trigger sits level with the
+ * search boxes, date pickers and toggles it stands beside. See `Select.tsx`
+ * for why the popup is ours rather than the operating system's.
+ */
+
+.select {
+  position: relative;
+  display: inline-flex;
+}
+
+.trigger {
+  display: inline-flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--mc-space-3);
+  width: 100%;
+  height: var(--mc-control-h);
+  padding: 0 var(--mc-space-2) 0 var(--mc-space-3);
+  border: 1px solid var(--mc-field-border);
+  border-radius: var(--mc-radius);
+  background: var(--mc-field-bg);
+  color: var(--mc-text);
+  font: inherit;
+  font-size: var(--mc-text-sm);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.triggerSm {
+  height: var(--mc-control-h-sm);
+}
+
+.trigger:hover:not(:disabled) {
+  border-color: var(--mc-border-strong);
+}
+
+.trigger:focus-visible {
+  outline: 2px solid var(--mc-focus);
+  outline-offset: 1px;
+}
+
+.trigger:disabled {
+  color: var(--mc-text-subtle);
+  cursor: default;
+}
+
+.triggerOpen {
+  border-color: var(--mc-accent);
+}
+
+.triggerLabel {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.caret {
+  display: inline-flex;
+  color: var(--mc-text-subtle);
+  transition: transform 120ms ease;
+}
+
+.caretOpen {
+  transform: rotate(180deg);
+}
+
+/* -- the popup ------------------------------------------------------------- */
+.list {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  z-index: 20;
+  min-width: 100%;
+  max-height: 18rem;
+  overflow-y: auto;
+  margin: 0;
+  padding: var(--mc-space-1);
+  list-style: none;
+  border: 1px solid var(--mc-border-strong);
+  border-radius: var(--mc-radius);
+  background: var(--mc-surface-raised);
+  box-shadow: var(--mc-shadow, 0 8px 24px rgb(0 0 0 / 35%));
+}
+
+/* For a control near the viewport edge: a list that grows rightwards off
+   screen is worse than one that grows back over its own button. */
+.listRight {
+  left: auto;
+  right: 0;
+}
+
+.option {
+  display: grid;
+  grid-template-columns: 1.125rem minmax(0, 1fr) max-content max-content;
+  align-items: center;
+  gap: var(--mc-space-2);
+  padding: var(--mc-space-2);
+  border-radius: var(--mc-radius-sm);
+  color: var(--mc-text);
+  font-size: var(--mc-text-sm);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.option:hover {
+  background: var(--mc-field-bg-hover);
+}
+
+/* Focus, not hover, is what the keyboard moves — and it has to be visible
+   without an outline that boxes in a full-width row. */
+.option:focus-visible,
+.option:focus {
+  outline: none;
+  background: var(--mc-field-bg-hover);
+  box-shadow: inset 0 0 0 1px var(--mc-accent);
+}
+
+.optionOn {
+  color: var(--mc-accent);
+  font-weight: 600;
+}
+
+.optionOff {
+  color: var(--mc-text-subtle);
+  cursor: not-allowed;
+}
+
+.tick {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--mc-accent);
+}
+
+.optionLabel {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Right-aligned in its own column so `6d` and `61d` end on the same pixel —
+   the whole reason these are columns and not one string. */
+.optionMeta {
+  text-align: right;
+  color: var(--mc-text-muted);
+  font-size: var(--mc-text-xs);
+}
+
+.optionHint {
+  color: var(--mc-text-subtle);
+  font-size: var(--mc-text-xs);
+  font-weight: 400;
+}

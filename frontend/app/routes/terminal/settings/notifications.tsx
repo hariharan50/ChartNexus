@@ -1,10 +1,11 @@
-import { useEffect, useRef, useState, type ChangeEvent } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import {
   useNotificationPreferencesStore,
   type NotificationToggleKey,
   type PushTimeout
 } from '$shared/ui/notification-preferences-store';
 import { cx } from '$shared/ui/cx';
+import Select from '$shared/ui/Select';
 import s from './notifications.module.css';
 import type { Route } from './+types/notifications';
 
@@ -85,8 +86,8 @@ export default function SettingsNotifications() {
     flashSaved();
   }
 
-  function handleTimeoutChange(event: ChangeEvent<HTMLSelectElement>) {
-    setStoredTimeout(event.currentTarget.value as PushTimeout);
+  function handleTimeoutChange(value: string) {
+    setStoredTimeout(value as PushTimeout);
     flashSaved();
   }
 
@@ -131,13 +132,13 @@ export default function SettingsNotifications() {
               How long an in-app alert stays visible before it dismisses itself.
             </p>
           </div>
-          <select className={s.select} value={pushTimeout} onChange={handleTimeoutChange}>
-            {pushTimeouts.map((opt) => (
-              <option value={opt.id} key={opt.id}>
-                {opt.label}
-              </option>
-            ))}
-          </select>
+          <Select
+            className={s.select}
+            ariaLabel="Push notification time-out"
+            value={pushTimeout}
+            onChange={handleTimeoutChange}
+            options={pushTimeouts.map((opt) => ({ value: opt.id, label: opt.label }))}
+          />
         </div>
       </section>
 

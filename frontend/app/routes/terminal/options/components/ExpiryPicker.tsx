@@ -1,6 +1,6 @@
 import { useExpiriesQuery } from '$contexts/market-data/queries';
 import { cx } from '$shared/ui/cx';
-import IconChevronDown from '$shared/ui/icons/IconChevronDown';
+import Select from '$shared/ui/Select';
 import s from './ExpiryPicker.module.css';
 
 interface Props {
@@ -32,6 +32,15 @@ interface Props {
    * control stayed silent on exactly the degraded reads it existed to explain.
    */
   dataQuality?: string | undefined;
+  /**
+   * Hides the "Expiry" caption above the control.
+   *
+   * For a single row of controls — Option Greeks sits this next to four other
+   * unlabelled selects, where one caption over one of them reads as a stray
+   * heading rather than as a label. The `aria-label` on the select is
+   * unaffected, so the control is still named for a screen reader.
+   */
+  hideLabel?: boolean | undefined;
   className?: string | undefined;
 }
 
@@ -50,6 +59,7 @@ export default function ExpiryPicker({
   resolved,
   archiveBound = false,
   dataQuality,
+  hideLabel = false,
   className
 }: Props) {
   const query = useExpiriesQuery(instrument);
@@ -62,29 +72,21 @@ export default function ExpiryPicker({
 
   return (
     <div className={cx(s.wrap, className)}>
-      <p className={s.label}>Expiry</p>
+      {hideLabel ? null : <p className={s.label}>Expiry</p>}
 
-      <div className={s.control}>
-        <select
-          className={s.select}
-          aria-label="Expiry"
-          value={value ?? ''}
-          disabled={expiries.length === 0}
-          onChange={(event) => onChange(event.currentTarget.value || undefined)}
-        >
-          {/* The empty value means "whatever the backend picks", which is the
-              nearest expiry and the one every tool opens on. */}
-          <option value="">{expiryLabel(resolved ?? null)}</option>
-          {expiries.map((iso) => (
-            <option key={iso} value={iso}>
-              {expiryLabel(iso)}
-            </option>
-          ))}
-        </select>
-        <span className={s.caret} aria-hidden="true">
-          <IconChevronDown />
-        </span>
-      </div>
+      <Select
+        className={s.control}
+        ariaLabel="Expiry"
+        value={value ?? ''}
+        disabled={expiries.length === 0}
+        onChange={(next) => onChange(next || undefined)}
+        // The empty value means "whatever the backend picks", which is the
+        // nearest expiry and the one every tool opens on.
+        options={[
+          { value: '', label: expiryLabel(resolved ?? null) },
+          ...expiries.map((iso) => ({ value: iso, label: expiryLabel(iso) }))
+        ]}
+      />
 
       {query.isError ? (
         <p className={s.hint}>Couldn&apos;t load the expiry list — showing the nearest.</p>

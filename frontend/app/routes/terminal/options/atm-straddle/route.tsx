@@ -5,6 +5,7 @@ import { buildMultiSeriesOption, type SeriesLine } from '$shared/charts/options/
 import { useChartTheme } from '$shared/charts/theme/use-chart-theme';
 import { lastTradingDayIST } from '$shared/formatting/ist-clock';
 import { cx } from '$shared/ui/cx';
+import Select from '$shared/ui/Select';
 import IconChart from '$shared/ui/icons/IconChart';
 import ExpiryPicker from '../components/ExpiryPicker';
 import HistoryMode, { type Mode } from '../components/HistoryMode';
@@ -282,18 +283,13 @@ export default function AtmStraddleChart() {
                   </div>
                   <div>
                     <p className={s.subLabel}>Timeframe</p>
-                    <select
+                    <Select
                       className={s.selectNative}
-                      aria-label="Timeframe"
+                      ariaLabel="Timeframe"
                       value={timeframe}
-                      onChange={(e) => setTimeframe(e.currentTarget.value as Timeframe)}
-                    >
-                      {TIMEFRAMES.map((tf) => (
-                        <option key={tf.value} value={tf.value}>
-                          {tf.label}
-                        </option>
-                      ))}
-                    </select>
+                      onChange={setTimeframe}
+                      options={TIMEFRAMES.map((tf) => ({ value: tf.value, label: tf.label }))}
+                    />
                   </div>
                 </div>
 

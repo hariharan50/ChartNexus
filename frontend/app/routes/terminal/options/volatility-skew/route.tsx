@@ -8,6 +8,7 @@ import {
 import { useChartTheme } from '$shared/charts/theme/use-chart-theme';
 import { isoDateIST, lastTradingDayIST } from '$shared/formatting/ist-clock';
 import { cx } from '$shared/ui/cx';
+import Select from '$shared/ui/Select';
 import IconChart from '$shared/ui/icons/IconChart';
 import IconEye from '$shared/ui/icons/IconEye';
 import IconEyeOff from '$shared/ui/icons/IconEyeOff';
@@ -324,18 +325,16 @@ export default function VolatilitySkew() {
                 </div>
 
                 <p className={s.subLabel}>Previous Days (T-Days)</p>
-                <select
+                <Select
                   className={s.selectNative}
-                  value={priorDays}
-                  aria-label="Previous days"
-                  onChange={(e) => setPriorDays(Number(e.currentTarget.value))}
-                >
-                  {PRIOR_DAYS.map((days) => (
-                    <option key={days} value={days}>
-                      {days === 0 ? '0 Days' : `${days} Day${days === 1 ? '' : 's'}`}
-                    </option>
-                  ))}
-                </select>
+                  value={String(priorDays)}
+                  ariaLabel="Previous days"
+                  onChange={(next) => setPriorDays(Number(next))}
+                  options={PRIOR_DAYS.map((days) => ({
+                    value: String(days),
+                    label: days === 0 ? '0 Days' : `${days} Day${days === 1 ? '' : 's'}`
+                  }))}
+                />
 
                 <Switch label="Show Lowest IV" on={showLowest} onChange={setShowLowest} />
                 <Switch

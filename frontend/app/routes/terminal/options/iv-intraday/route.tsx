@@ -7,6 +7,7 @@ import { useChartTheme } from '$shared/charts/theme/use-chart-theme';
 import { getExpiries } from '$contexts/broker-connections/api';
 import { lastTradingDayIST } from '$shared/formatting/ist-clock';
 import { cx } from '$shared/ui/cx';
+import Select from '$shared/ui/Select';
 import IconChart from '$shared/ui/icons/IconChart';
 import IconEye from '$shared/ui/icons/IconEye';
 import IconEyeOff from '$shared/ui/icons/IconEyeOff';
@@ -264,18 +265,16 @@ export default function IvIntradayChart() {
                     />
 
                     <p className={s.subLabel}>Timeframe</p>
-                    <select
+                    <Select
                       className={s.selectNative}
                       value={timeframe}
-                      aria-label="Timeframe"
-                      onChange={(e) => setTimeframe(e.currentTarget.value as Timeframe)}
-                    >
-                      {TIMEFRAMES.map((entry) => (
-                        <option key={entry.value} value={entry.value}>
-                          {entry.label}
-                        </option>
-                      ))}
-                    </select>
+                      ariaLabel="Timeframe"
+                      onChange={setTimeframe}
+                      options={TIMEFRAMES.map((entry) => ({
+                        value: entry.value,
+                        label: entry.label
+                      }))}
+                    />
                   </>
                 ) : (
                   <>

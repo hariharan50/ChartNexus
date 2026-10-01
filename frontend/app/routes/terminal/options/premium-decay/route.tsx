@@ -5,6 +5,7 @@ import { buildMultiSeriesOption, type SeriesLine } from '$shared/charts/options/
 import { useChartTheme } from '$shared/charts/theme/use-chart-theme';
 import { isoDateIST, lastTradingDayIST } from '$shared/formatting/ist-clock';
 import { cx } from '$shared/ui/cx';
+import Select from '$shared/ui/Select';
 import IconChart from '$shared/ui/icons/IconChart';
 import IconEye from '$shared/ui/icons/IconEye';
 import IconEyeOff from '$shared/ui/icons/IconEyeOff';
@@ -359,18 +360,13 @@ export default function PremiumDecay() {
                   </div>
                   <div>
                     <p className={s.subLabel}>Timeframe</p>
-                    <select
+                    <Select
                       className={s.selectNative}
-                      aria-label="Timeframe"
+                      ariaLabel="Timeframe"
                       value={timeframe}
-                      onChange={(e) => setTimeframe(e.currentTarget.value as Timeframe)}
-                    >
-                      {TIMEFRAMES.map((tf) => (
-                        <option key={tf.value} value={tf.value}>
-                          {tf.label}
-                        </option>
-                      ))}
-                    </select>
+                      onChange={setTimeframe}
+                      options={TIMEFRAMES.map((tf) => ({ value: tf.value, label: tf.label }))}
+                    />
                   </div>
                 </div>
 
@@ -418,21 +414,16 @@ export default function PremiumDecay() {
                   </div>
                   <div className={s.modeField}>
                     <span className={s.fieldLabel}>Center Strike</span>
-                    <select
+                    <Select
                       className={s.fieldSelect}
-                      aria-label="Center strike"
+                      ariaLabel="Center strike"
                       value={String(fixedStrike ?? atm ?? vw.strikes[0] ?? '')}
-                      onChange={(e) => {
-                        setFixedStrike(Number(e.currentTarget.value));
+                      onChange={(next) => {
+                        setFixedStrike(Number(next));
                         setMode('fixed');
                       }}
-                    >
-                      {vw.strikes.map((st) => (
-                        <option key={st} value={st}>
-                          {st}
-                        </option>
-                      ))}
-                    </select>
+                      options={vw.strikes.map((st) => ({ value: String(st), label: String(st) }))}
+                    />
                   </div>
                   <div className={s.modeField}>
                     <span className={s.fieldLabel}>Range</span>

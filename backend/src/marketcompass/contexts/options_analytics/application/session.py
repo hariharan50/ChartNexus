@@ -182,9 +182,7 @@ def live_proxy_frames(
     return [opening, current]
 
 
-def for_expiry(
-    snapshots: list[ChainSnapshot], expiry: str | None
-) -> list[ChainSnapshot]:
+def for_expiry(snapshots: list[ChainSnapshot], expiry: str | None) -> list[ChainSnapshot]:
     """Keep only the captures that priced ``expiry``.
 
     The archive holds whichever expiry the ingest worker follows - the nearest

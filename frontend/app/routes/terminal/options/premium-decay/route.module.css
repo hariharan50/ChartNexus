@@ -229,13 +229,6 @@
 
 .select-native {
   width: 100%;
-  padding: 0.5rem 0.625rem;
-  border: 1px solid var(--mc-border);
-  border-radius: var(--mc-radius);
-  background: var(--mc-surface-raised);
-  color: var(--mc-text);
-  font-weight: 600;
-  cursor: pointer;
 }
 
 .seg {
@@ -635,15 +628,6 @@
 
 .field-select {
   min-width: 6.5rem;
-  padding: 0.3125rem 0.5rem;
-  border: 1px solid var(--mc-border);
-  border-radius: var(--mc-radius-sm);
-  background: var(--mc-surface);
-  color: var(--mc-text);
-  font-size: var(--mc-text-sm);
-  font-weight: 700;
-  font-variant-numeric: tabular-nums;
-  cursor: pointer;
 }
 
 .select-btn {

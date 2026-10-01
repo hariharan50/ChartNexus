@@ -7,6 +7,7 @@ import { useChartTheme } from '$shared/charts/theme/use-chart-theme';
 import { isoDateIST, lastTradingDayIST } from '$shared/formatting/ist-clock';
 import DataSourceBadge from '$shared/ui/DataSourceBadge';
 import DatePicker from '$shared/ui/DatePicker';
+import Select from '$shared/ui/Select';
 import { cx } from '$shared/ui/cx';
 import IconChart from '$shared/ui/icons/IconChart';
 import IconChevronDown from '$shared/ui/icons/IconChevronDown';
@@ -272,18 +273,16 @@ export default function FuturePriceVsOi() {
                   </div>
                   <div>
                     <p className={s.subLabel}>Time</p>
-                    <select
+                    <Select
                       className={s.selectNative}
-                      aria-label="Time interval"
+                      ariaLabel="Time interval"
                       value={interval}
-                      onChange={(e) => setInterval(e.currentTarget.value as Interval)}
-                    >
-                      {INTERVALS.map((option) => (
-                        <option key={option.value} value={option.value}>
-                          {option.label}
-                        </option>
-                      ))}
-                    </select>
+                      onChange={setInterval}
+                      options={INTERVALS.map((option) => ({
+                        value: option.value,
+                        label: option.label
+                      }))}
+                    />
                   </div>
                 </div>
               </section>

@@ -44,15 +44,7 @@
 }
 
 .select {
-  height: var(--mc-control-h-sm);
   min-width: 8rem;
-  padding: 0 var(--mc-space-2);
-  border: 1px solid var(--mc-field-border);
-  border-radius: var(--mc-radius);
-  background: var(--mc-field-bg);
-  color: var(--mc-text);
-  font: inherit;
-  font-size: var(--mc-text-sm);
 }
 
 /* Read-only: the board is front-month only, so this states a fact rather than

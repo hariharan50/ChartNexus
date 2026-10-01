@@ -8,6 +8,7 @@ import {
 } from '$shared/charts/options/futures-heatmap';
 import { useChartTheme } from '$shared/charts/theme/use-chart-theme';
 import DataSourceBadge from '$shared/ui/DataSourceBadge';
+import Select from '$shared/ui/Select';
 import { cx } from '$shared/ui/cx';
 import IconGrid from '$shared/ui/icons/IconGrid';
 import ExpiryPicker from './components/ExpiryPicker';
@@ -110,21 +111,17 @@ export default function FutureHeatmap() {
           bare
         />
 
-        <label className={s.sizeBy}>
+        <div className={s.sizeBy}>
           <span className={s.label}>Size by</span>
-          <select
+          <Select
             className={s.select}
+            size="sm"
             value={size}
-            aria-label="Size cells by"
-            onChange={(event) => setSize(event.currentTarget.value as HeatmapSizeId)}
-          >
-            {SIZE_OPTIONS.map((entry) => (
-              <option key={entry.id} value={entry.id}>
-                {entry.label}
-              </option>
-            ))}
-          </select>
-        </label>
+            ariaLabel="Size cells by"
+            onChange={setSize}
+            options={SIZE_OPTIONS.map((entry) => ({ value: entry.id, label: entry.label }))}
+          />
+        </div>
 
         <span className={s.status}>
           {board.data?.source ? <DataSourceBadge source={board.data.source} /> : null}

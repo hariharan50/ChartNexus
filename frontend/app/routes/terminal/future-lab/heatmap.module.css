@@ -103,15 +103,9 @@
   gap: var(--mc-space-2);
 }
 
+/* `.select` is a <Select>; the component paints it. */
 .select {
-  height: var(--mc-control-h-sm);
-  padding: 0 var(--mc-space-2);
-  border: 1px solid var(--mc-field-border);
-  border-radius: var(--mc-radius);
-  background: var(--mc-field-bg);
-  color: var(--mc-text);
-  font: inherit;
-  font-size: var(--mc-text-sm);
+  display: inline-flex;
 }
 
 .status {

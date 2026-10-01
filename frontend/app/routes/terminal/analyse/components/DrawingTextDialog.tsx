@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { cx } from '$shared/ui/cx';
+import Select from '$shared/ui/Select';
 import type { DrawTextStyle, TextRequest } from '$shared/charts/tv/drawings/useDrawings';
 import s from './DrawingTextDialog.module.css';
 
@@ -88,18 +89,14 @@ export default function DrawingTextDialog({ request, onSubmit, onClose }: Props)
             value={value.color}
             onChange={(event) => patch({ color: event.target.value })}
           />
-          <select
+          <Select
             className={s.select}
-            aria-label="Font size"
-            value={value.fontSize}
-            onChange={(event) => patch({ fontSize: Number(event.target.value) })}
-          >
-            {SIZES.map((size) => (
-              <option key={size} value={size}>
-                {size}
-              </option>
-            ))}
-          </select>
+            size="sm"
+            ariaLabel="Font size"
+            value={String(value.fontSize)}
+            onChange={(next) => patch({ fontSize: Number(next) })}
+            options={SIZES.map((size) => ({ value: String(size), label: String(size) }))}
+          />
           <button
             type="button"
             className={cx(s.toggle, s.bold, value.bold && s.toggleOn)}

@@ -2,6 +2,7 @@ import { useQuery } from '@tanstack/react-query';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { SeriesLine } from '$shared/charts/options/multi-series';
 import { cx } from '$shared/ui/cx';
+import Select from '$shared/ui/Select';
 import IconChart from '$shared/ui/icons/IconChart';
 import { lastTradingDayIST } from '$shared/formatting/ist-clock';
 import ExpiryPicker from '../components/ExpiryPicker';
@@ -202,18 +203,17 @@ export default function PutCallRatio() {
                 />
 
                 <p className={s.subLabel}>Timeframe</p>
-                <select
+                <Select
                   className={s.selectNative}
-                  aria-label="Timeframe"
+                  ariaLabel="Timeframe"
                   value={timeframe}
-                  onChange={(e) => setTimeframe(e.currentTarget.value as Timeframe)}
-                >
-                  {TIMEFRAMES.map((option) => (
-                    <option key={option.value} value={option.value} disabled={option.disabled}>
-                      {option.label}
-                    </option>
-                  ))}
-                </select>
+                  onChange={setTimeframe}
+                  options={TIMEFRAMES.map((option) => ({
+                    value: option.value,
+                    label: option.label,
+                    disabled: option.disabled
+                  }))}
+                />
               </section>
             </aside>
           ) : (

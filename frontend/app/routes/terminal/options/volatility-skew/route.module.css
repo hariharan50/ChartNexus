@@ -214,13 +214,6 @@
 
 .select-native {
   width: 100%;
-  padding: 0.5rem 0.625rem;
-  border: 1px solid var(--mc-border);
-  border-radius: var(--mc-radius);
-  background: var(--mc-surface-raised);
-  color: var(--mc-text);
-  font-weight: 600;
-  cursor: pointer;
 }
 
 .seg-row {

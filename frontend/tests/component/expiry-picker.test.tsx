@@ -46,6 +46,14 @@ describe('expiryLabel', () => {
   });
 });
 
+/** The list only exists once it is open — this is a listbox, not a `<select>`. */
+async function openList() {
+  const trigger = screen.getByRole('button', { name: 'Expiry' });
+  await waitFor(() => expect(trigger).toBeEnabled());
+  await userEvent.click(trigger);
+  return screen.getAllByRole('option');
+}
+
 describe('ExpiryPicker', () => {
   it('lists every listed expiry, not just the nearest', async () => {
     renderPicker(
@@ -57,7 +65,7 @@ describe('ExpiryPicker', () => {
       />
     );
 
-    await waitFor(() => expect(screen.getAllByRole('option')).toHaveLength(4));
+    expect(await openList()).toHaveLength(4);
   });
 
   it('reports the expiry that was chosen', async () => {
@@ -70,9 +78,9 @@ describe('ExpiryPicker', () => {
         resolved="2026-09-29"
       />
     );
-    await waitFor(() => expect(screen.getAllByRole('option')).toHaveLength(4));
 
-    await userEvent.selectOptions(screen.getByRole('combobox', { name: 'Expiry' }), '2026-10-13');
+    const options = await openList();
+    await userEvent.click(options[3]!);
 
     expect(onChange).toHaveBeenCalledWith('2026-10-13');
   });
@@ -87,11 +95,27 @@ describe('ExpiryPicker', () => {
         resolved="2026-10-13"
       />
     );
-    await waitFor(() => expect(screen.getAllByRole('option')).toHaveLength(4));
 
-    await userEvent.selectOptions(screen.getByRole('combobox', { name: 'Expiry' }), '');
+    const options = await openList();
+    await userEvent.click(options[0]!);
 
     expect(onChange).toHaveBeenCalledWith(undefined);
+  });
+
+  it('ticks the expiry that is selected', async () => {
+    renderPicker(
+      <ExpiryPicker
+        instrument="NIFTY"
+        value="2026-10-06"
+        onChange={() => {}}
+        resolved="2026-10-06"
+      />
+    );
+
+    const options = await openList();
+    const selected = options.filter((option) => option.getAttribute('aria-selected') === 'true');
+    expect(selected).toHaveLength(1);
+    expect(selected[0]).toHaveTextContent('6 Oct 2026');
   });
 
   it('warns when the answer that came back really was degraded', async () => {
@@ -126,7 +150,7 @@ describe('ExpiryPicker', () => {
         dataQuality="intraday"
       />
     );
-    await waitFor(() => expect(screen.getAllByRole('option')).toHaveLength(4));
+    await openList();
 
     expect(screen.queryByText(/archive holds/)).not.toBeInTheDocument();
   });
@@ -142,7 +166,7 @@ describe('ExpiryPicker', () => {
         dataQuality="live_proxy"
       />
     );
-    await waitFor(() => expect(screen.getAllByRole('option')).toHaveLength(4));
+    await openList();
 
     expect(screen.queryByText(/archive holds/)).not.toBeInTheDocument();
   });
@@ -157,8 +181,28 @@ describe('ExpiryPicker', () => {
         dataQuality="live_proxy"
       />
     );
-    await waitFor(() => expect(screen.getAllByRole('option')).toHaveLength(4));
+    await openList();
 
     expect(screen.queryByText(/archive holds/)).not.toBeInTheDocument();
+  });
+
+  it('hides its caption when the toolbar already prints one', async () => {
+    const { rerender } = renderPicker(
+      <ExpiryPicker instrument="NIFTY" value={undefined} onChange={() => {}} resolved={null} />
+    );
+    expect(screen.getByText('Expiry', { selector: 'p' })).toBeInTheDocument();
+
+    rerender(
+      <QueryClientProvider client={new QueryClient()}>
+        <ExpiryPicker
+          instrument="NIFTY"
+          value={undefined}
+          onChange={() => {}}
+          resolved={null}
+          hideLabel
+        />
+      </QueryClientProvider>
+    );
+    expect(screen.queryByText('Expiry', { selector: 'p' })).not.toBeInTheDocument();
   });
 });

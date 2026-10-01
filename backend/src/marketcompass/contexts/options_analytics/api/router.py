@@ -15,6 +15,7 @@ from fastapi import APIRouter, Path, Query, Request
 from marketcompass.contexts.options_analytics.api.dependencies import Services
 from marketcompass.contexts.options_analytics.api.schemas import (
     GexResponse,
+    GreeksSeriesResponse,
     IvHistoryResponse,
     MaxPainSeriesResponse,
     OiSeriesResponse,
@@ -72,6 +73,14 @@ ExpiryParam = Annotated[
 ]
 
 
+#: A specific strike to read, instead of the at-the-money one. Tools that let a
+#: reader walk the ladder pass it; everything else leaves it out.
+StrikeParam = Annotated[
+    float | None,
+    Query(gt=0, description="Strike to read; defaults to the at-the-money strike."),
+]
+
+
 def _trade_date(date_: date | None) -> datetime | None:
     """A picked date as an instant safely inside its IST trading day.
 
@@ -115,7 +124,9 @@ async def open_interest(
     if cached is not None:
         return OiViewResponse.model_validate_json(cached)
 
-    payload = await services.oi_view(principal.tenant_id, symbol, expiry=expiry, trade_date=_trade_date(date_))
+    payload = await services.oi_view(
+        principal.tenant_id, symbol, expiry=expiry, trade_date=_trade_date(date_)
+    )
     response = OiViewResponse.of(payload)
     await redis.client.set(cache_key, response.model_dump_json(), ex=_CACHE_TTL_SECONDS)
     return response
@@ -164,7 +175,12 @@ async def oi_series(
         return OiSeriesResponse.model_validate_json(cached)
 
     payload = await services.oi_series(
-        principal.tenant_id, symbol, interval=interval, window=window, expiry=expiry, trade_date=_trade_date(date_)
+        principal.tenant_id,
+        symbol,
+        interval=interval,
+        window=window,
+        expiry=expiry,
+        trade_date=_trade_date(date_),
     )
     response = OiSeriesResponse.of(payload)
     await redis.client.set(cache_key, response.model_dump_json(), ex=_CACHE_TTL_SECONDS)
@@ -251,7 +267,9 @@ async def pcr_series(
     if cached is not None:
         return PcrSeriesResponse.model_validate_json(cached)
 
-    payload = await services.pcr_series(principal.tenant_id, symbol, expiry=expiry, trade_date=_trade_date(date_))
+    payload = await services.pcr_series(
+        principal.tenant_id, symbol, expiry=expiry, trade_date=_trade_date(date_)
+    )
     response = PcrSeriesResponse.of(payload)
     await redis.client.set(cache_key, response.model_dump_json(), ex=_CACHE_TTL_SECONDS)
     return response
@@ -331,7 +349,9 @@ async def gex(
     if cached is not None:
         return GexResponse.model_validate_json(cached)
 
-    payload = await services.gex(principal.tenant_id, symbol, expiry=expiry, trade_date=_trade_date(date_))
+    payload = await services.gex(
+        principal.tenant_id, symbol, expiry=expiry, trade_date=_trade_date(date_)
+    )
     response = GexResponse.of(payload)
     await redis.client.set(cache_key, response.model_dump_json(), ex=_CACHE_TTL_SECONDS)
     return response
@@ -371,8 +391,66 @@ async def vega(
     if cached is not None:
         return VegaResponse.model_validate_json(cached)
 
-    payload = await services.vega(principal.tenant_id, symbol, expiry=expiry, trade_date=_trade_date(date_))
+    payload = await services.vega(
+        principal.tenant_id, symbol, expiry=expiry, trade_date=_trade_date(date_)
+    )
     response = VegaResponse.of(payload)
+    await redis.client.set(cache_key, response.model_dump_json(), ex=_CACHE_TTL_SECONDS)
+    return response
+
+
+@router.get(
+    "/greeks/{instrument_id}",
+    response_model=GreeksSeriesResponse,
+    summary="Intraday greeks for one strike's call and put",
+    description=(
+        "IV, delta, gamma, theta and vega through the session for a single "
+        "strike, both legs, at every capture. The strike is pinned — the "
+        "at-the-money one of the latest capture unless `strike` names another — "
+        "because the charts are titled with the contract's own symbol and a "
+        "rolling strike under a fixed title describes a contract that is no "
+        "longer there. Greeks are derived from each capture's quoted implied "
+        "volatility with Black-Scholes; a leg quoted no volatility reads as a "
+        "gap, never a zero. The client buckets to the timeframe it draws. "
+        "Powers Option Greeks."
+    ),
+    responses={422: {"description": "Unknown instrument"}},
+)
+async def greeks_series(
+    request: Request,
+    principal: CurrentPrincipal,
+    services: Services,
+    instrument_id: InstrumentParam,
+    *,
+    expiry: ExpiryParam = None,
+    strike: StrikeParam = None,
+    date_: DateParam = None,
+) -> GreeksSeriesResponse:
+    symbol = instrument_id.strip().upper()
+    redis = get_container(request).redis
+    # The timeframe is applied on the client, so one entry per
+    # tenant/symbol/expiry/strike/day serves every reader of that session.
+    cache_key = redis.key(
+        "lab:greeks",
+        str(principal.tenant_id),
+        symbol,
+        expiry or "near",
+        "atm" if strike is None else str(strike),
+        _day_key(date_),
+    )
+
+    cached = await redis.client.get(cache_key)
+    if cached is not None:
+        return GreeksSeriesResponse.model_validate_json(cached)
+
+    payload = await services.greeks_series(
+        principal.tenant_id,
+        symbol,
+        expiry=expiry,
+        strike=strike,
+        trade_date=_trade_date(date_),
+    )
+    response = GreeksSeriesResponse.of(payload)
     await redis.client.set(cache_key, response.model_dump_json(), ex=_CACHE_TTL_SECONDS)
     return response
 
@@ -494,7 +572,9 @@ async def skew(
     if cached is not None:
         return SkewResponse.model_validate_json(cached)
 
-    payload = await services.skew(principal.tenant_id, symbol, expiry=expiry, trade_date=_trade_date(date_))
+    payload = await services.skew(
+        principal.tenant_id, symbol, expiry=expiry, trade_date=_trade_date(date_)
+    )
     response = SkewResponse.of(payload)
     await redis.client.set(cache_key, response.model_dump_json(), ex=_CACHE_TTL_SECONDS)
     return response

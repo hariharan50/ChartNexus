@@ -348,6 +348,60 @@ class VegaResponse(_Schema):
         return cls.model_validate(payload)
 
 
+class GreekLegResponse(_Schema):
+    """One leg's five series, aligned index-for-index with the payload's `t`.
+
+    Every value is nullable: a capture whose leg the broker quoted no implied
+    volatility on has nothing to state, and a gap in the line is the honest
+    render of that. Zero would draw as a real, calm reading.
+    """
+
+    #: Implied volatility in points (14.25 means 14.25%).
+    iv: list[float | None]
+    #: Per unit of underlying; positive for calls, negative for puts.
+    delta: list[float | None]
+    #: Delta change per one-point move in the underlying.
+    gamma: list[float | None]
+    #: Rupees per calendar day; negative for a long option.
+    theta: list[float | None]
+    #: Rupees per one-point (1%) move in implied volatility.
+    vega: list[float | None]
+    #: The leg's own last traded price.
+    ltp: list[float | None]
+
+
+class GreeksSeriesResponse(_Schema):
+    """Intraday greeks for one strike behind the Option Greeks tool."""
+
+    instrument_id: str
+    symbol: str
+    expiry_date: str | None
+    lot_size: int | None
+    #: The pinned strike every series is read at; `None` only on an empty payload.
+    strike: float | None
+    atm_strike: float | None
+    spot: float
+    #: Display symbols for the two legs, e.g. `NIFTY06OCT2622400CE`.
+    ce_symbol: str | None
+    pe_symbol: str | None
+    open_ts: str
+    now_ts: str
+    #: `intraday` (archived captures), `live` (one point from the live chain) or
+    #: `empty`.
+    data_quality: str
+    #: Share of frames, 0-1, where both legs carried a usable implied volatility.
+    iv_coverage: float
+    t: list[str]
+    #: The tradable future at each capture, for context under the greek.
+    underlying: list[float]
+    ce: GreekLegResponse
+    pe: GreekLegResponse
+
+    @classmethod
+    def of(cls, payload: dict[str, Any]) -> GreeksSeriesResponse:
+        return cls.model_validate(payload)
+
+
 class IvSessionResponse(_Schema):
     """One session's closing at-the-money implied volatility."""
 

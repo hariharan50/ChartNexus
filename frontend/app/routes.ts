@@ -49,7 +49,15 @@ export default [
     route('pre-market-screener', 'routes/terminal/pre-market-screener/route.tsx'),
     route('option-chain', 'routes/terminal/option-chain/route.tsx'),
     route('analyse', 'routes/terminal/analyse/route.tsx'),
-    route('tools', 'routes/terminal/tools.tsx'),
+
+    // Tools — a card grid of the advanced graphical tools. Each box opens its
+    // own page; `:tool` serves the slots that are not built yet, and a tool
+    // gets a static route of its own as it lands (static wins over the param).
+    ...prefix('tools', [
+      index('routes/terminal/tools/route.tsx'),
+      route('option-greeks', 'routes/terminal/tools/option-greeks/route.tsx'),
+      route(':tool', 'routes/terminal/tools/tool.tsx')
+    ]),
 
     // Advance Tools — a main-nav home for power tools, each on its own page.
     ...prefix('advance-tool', [

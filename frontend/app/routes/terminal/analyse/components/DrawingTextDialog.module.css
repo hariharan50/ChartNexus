@@ -74,14 +74,9 @@
   cursor: not-allowed;
 }
 
+/* `.select` is a <Select>; the component paints it. */
 .select {
-  height: 1.75rem;
-  padding: 0 0.375rem;
-  border: 1px solid var(--mc-border);
-  border-radius: var(--mc-radius-sm);
-  background: var(--mc-surface-raised);
-  color: var(--mc-text);
-  font-size: var(--mc-text-xs);
+  display: inline-flex;
 }
 
 .toggle {

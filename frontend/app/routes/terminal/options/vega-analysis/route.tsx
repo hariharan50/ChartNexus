@@ -5,6 +5,7 @@ import { buildVegaAnalysisOption, type VegaLine } from '$shared/charts/options/v
 import { useChartTheme } from '$shared/charts/theme/use-chart-theme';
 import { lastTradingDayIST } from '$shared/formatting/ist-clock';
 import { cx } from '$shared/ui/cx';
+import Select from '$shared/ui/Select';
 import IconChart from '$shared/ui/icons/IconChart';
 import IconEye from '$shared/ui/icons/IconEye';
 import IconEyeOff from '$shared/ui/icons/IconEyeOff';
@@ -269,18 +270,13 @@ export default function VegaAnalysis() {
                   </div>
                   <div>
                     <p className={s.subLabel}>Timeframe</p>
-                    <select
+                    <Select
                       className={s.selectNative}
-                      aria-label="Timeframe"
+                      ariaLabel="Timeframe"
                       value={timeframe}
-                      onChange={(e) => setTimeframe(e.currentTarget.value as Timeframe)}
-                    >
-                      {TIMEFRAMES.map((tf) => (
-                        <option key={tf.value} value={tf.value}>
-                          {tf.label}
-                        </option>
-                      ))}
-                    </select>
+                      onChange={setTimeframe}
+                      options={TIMEFRAMES.map((tf) => ({ value: tf.value, label: tf.label }))}
+                    />
                   </div>
                 </div>
 

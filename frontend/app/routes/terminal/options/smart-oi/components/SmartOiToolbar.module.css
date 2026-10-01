@@ -88,43 +88,16 @@
 }
 
 /* -- selects -------------------------------------------------------------- */
+/* Both are <Select>s now: the component paints the control, so all these rules
+   still own is where it sits in the toolbar. */
 
 .expiry {
-  position: relative;
   display: inline-flex;
-  align-items: center;
-}
-
-.expiry-select,
-.span-select {
-  height: var(--mc-control-h-sm);
-  padding: 0 1.75rem 0 0.625rem;
-  border: 1px solid var(--mc-border);
-  border-radius: var(--mc-radius);
-  background: var(--mc-surface-raised);
-  color: var(--mc-text);
-  font-size: var(--mc-text-sm);
-  font-weight: 600;
-  cursor: pointer;
-  appearance: none;
+  min-width: 11rem;
 }
 
 .span-select {
-  padding-right: 0.625rem;
-  appearance: auto;
-}
-
-.caret {
-  position: absolute;
-  right: 0.5rem;
   display: inline-flex;
-  color: var(--mc-text-subtle);
-  pointer-events: none;
-}
-
-.caret svg {
-  width: 0.875rem;
-  height: 0.875rem;
 }
 
 .strike-input {

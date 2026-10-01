@@ -4,6 +4,7 @@ import EChart from '$shared/charts/EChart';
 import { buildIvHvIvpOption, type IvHvIvpVisible } from '$shared/charts/options/iv-hv-ivp';
 import { useChartTheme } from '$shared/charts/theme/use-chart-theme';
 import { cx } from '$shared/ui/cx';
+import Select from '$shared/ui/Select';
 import IconChart from '$shared/ui/icons/IconChart';
 import IconEye from '$shared/ui/icons/IconEye';
 import IconEyeOff from '$shared/ui/icons/IconEyeOff';
@@ -239,32 +240,22 @@ export default function IvHvIvpChart() {
                 </div>
 
                 <p className={s.subLabel}>IVP/IVR Range</p>
-                <select
+                <Select
                   className={s.selectNative}
                   value={range}
-                  aria-label="IVP and IVR range"
-                  onChange={(e) => setRange(e.currentTarget.value as RangeKey)}
-                >
-                  {RANGES.map((entry) => (
-                    <option key={entry.value} value={entry.value}>
-                      {entry.label}
-                    </option>
-                  ))}
-                </select>
+                  ariaLabel="IVP and IVR range"
+                  onChange={setRange}
+                  options={RANGES.map((entry) => ({ value: entry.value, label: entry.label }))}
+                />
 
                 <p className={s.subLabel}>HV Range</p>
-                <select
+                <Select
                   className={s.selectNative}
                   value={hvWindow}
-                  aria-label="HV range"
-                  onChange={(e) => setHvWindow(e.currentTarget.value as HvWindowKey)}
-                >
-                  {HV_WINDOWS.map((entry) => (
-                    <option key={entry.value} value={entry.value}>
-                      {entry.label}
-                    </option>
-                  ))}
-                </select>
+                  ariaLabel="HV range"
+                  onChange={setHvWindow}
+                  options={HV_WINDOWS.map((entry) => ({ value: entry.value, label: entry.label }))}
+                />
 
                 <p className={s.hint}>
                   HV is the annualised close-to-close move over that window. RV reads each day’s own

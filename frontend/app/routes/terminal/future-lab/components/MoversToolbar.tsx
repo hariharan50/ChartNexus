@@ -1,4 +1,5 @@
 import { cx } from '$shared/ui/cx';
+import Select from '$shared/ui/Select';
 import IconSearch from '$shared/ui/icons/IconSearch';
 import { STATES } from '../stocks-data';
 import ExpiryPicker from './ExpiryPicker';
@@ -76,40 +77,36 @@ export default function MoversToolbar({
       {/* Sectors come from a curated table; if none is loaded the filter would
           have a single option, so it is hidden rather than shown empty. */}
       {sectors.length > 0 ? (
-        <label className={s.field}>
+        <div className={s.field}>
           <span className={s.caption}>Sector</span>
-          <select
+          <Select
             className={s.select}
+            size="sm"
             value={sector}
-            aria-label="Sector"
-            onChange={(event) => onSector(event.currentTarget.value)}
-          >
-            <option value="">All</option>
-            {sectors.map((name) => (
-              <option key={name} value={name}>
-                {name}
-              </option>
-            ))}
-          </select>
-        </label>
+            ariaLabel="Sector"
+            onChange={onSector}
+            options={[
+              { value: '', label: 'All' },
+              ...sectors.map((name) => ({ value: name, label: name }))
+            ]}
+          />
+        </div>
       ) : null}
 
-      <label className={s.field}>
+      <div className={s.field}>
         <span className={s.caption}>Filter</span>
-        <select
+        <Select
           className={s.select}
+          size="sm"
           value={state}
-          aria-label="Build-up filter"
-          onChange={(event) => onState(event.currentTarget.value)}
-        >
-          <option value="">All</option>
-          {STATES.map((entry) => (
-            <option key={entry.id} value={entry.id}>
-              {entry.label}
-            </option>
-          ))}
-        </select>
-      </label>
+          ariaLabel="Build-up filter"
+          onChange={onState}
+          options={[
+            { value: '', label: 'All' },
+            ...STATES.map((entry) => ({ value: entry.id, label: entry.label }))
+          ]}
+        />
+      </div>
 
       <div className={s.right}>
         <div className={s.viewToggle} role="group" aria-label="View">

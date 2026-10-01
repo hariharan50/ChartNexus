@@ -2,6 +2,7 @@ import { useQuery } from '@tanstack/react-query';
 import { useEffect, useMemo, useState } from 'react';
 import { seriesColor, type SeriesLine } from '$shared/charts/options/multi-series';
 import { cx } from '$shared/ui/cx';
+import Select from '$shared/ui/Select';
 import IconChart from '$shared/ui/icons/IconChart';
 import { lastTradingDayIST } from '$shared/formatting/ist-clock';
 import ContractPicker from './components/ContractPicker';
@@ -206,18 +207,17 @@ export default function MultiOiVolume() {
                     {/* Labelled on the control itself. A visually-hidden <span>
                         would depend on a global utility class, which a CSS module
                         cannot see — the first version rendered the label text. */}
-                    <select
+                    <Select
                       className={s.selectNative}
-                      aria-label="Time interval"
+                      ariaLabel="Time interval"
                       value={interval}
-                      onChange={(e) => setInterval(e.currentTarget.value as Interval)}
-                    >
-                      {INTERVALS.map((option) => (
-                        <option key={option.value} value={option.value} disabled={option.disabled}>
-                          {option.label}
-                        </option>
-                      ))}
-                    </select>
+                      onChange={setInterval}
+                      options={INTERVALS.map((option) => ({
+                        value: option.value,
+                        label: option.label,
+                        disabled: option.disabled
+                      }))}
+                    />
                   </div>
                 </div>
 
@@ -385,18 +385,14 @@ function StrikeSource({
       <div className={s.sourceHead}>
         <span className={s.sourceTitle}>{title}</span>
         {active && countable ? (
-          <select
+          <Select
             className={s.selectNative}
-            aria-label={`${title} count`}
-            value={count}
-            onChange={(e) => onCount(Number(e.currentTarget.value))}
-          >
-            {TOP_N_CHOICES.map((n) => (
-              <option key={n} value={n}>
-                {n}
-              </option>
-            ))}
-          </select>
+            size="sm"
+            ariaLabel={`${title} count`}
+            value={String(count)}
+            onChange={(next) => onCount(Number(next))}
+            options={TOP_N_CHOICES.map((n) => ({ value: String(n), label: String(n) }))}
+          />
         ) : null}
         {active && !countable ? (
           <button type="button" className={s.link} onClick={onEdit}>

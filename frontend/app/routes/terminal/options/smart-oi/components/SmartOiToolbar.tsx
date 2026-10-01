@@ -1,6 +1,6 @@
 import { cx } from '$shared/ui/cx';
+import Select from '$shared/ui/Select';
 import DatePicker from '$shared/ui/DatePicker';
-import IconChevronDown from '$shared/ui/icons/IconChevronDown';
 import { isoDateIST } from '$shared/formatting/ist-clock';
 import type { Mode } from '../../components/HistoryMode';
 import {
@@ -94,26 +94,19 @@ export default function SmartOiToolbar(props: Props) {
           </span>
         </div>
 
-        <div className={s.expiry}>
-          <select
-            className={s.expirySelect}
-            aria-label="Expiry"
-            value={props.expiry ?? ''}
-            onChange={(e) => props.onExpiry(e.currentTarget.value || undefined)}
-          >
-            {/* The empty option is "whatever the backend picks", which is the
-                nearest expiry and the only one the snapshot archive holds. */}
-            <option value="">{expiryLabel(props.resolvedExpiry)}</option>
-            {props.expiries.map((iso) => (
-              <option key={iso} value={iso}>
-                {expiryLabel(iso)}
-              </option>
-            ))}
-          </select>
-          <span className={s.caret} aria-hidden="true">
-            <IconChevronDown />
-          </span>
-        </div>
+        <Select
+          className={s.expiry}
+          size="sm"
+          ariaLabel="Expiry"
+          value={props.expiry ?? ''}
+          onChange={(next) => props.onExpiry(next || undefined)}
+          // The empty option is "whatever the backend picks", which is the
+          // nearest expiry and the only one the snapshot archive holds.
+          options={[
+            { value: '', label: expiryLabel(props.resolvedExpiry) },
+            ...props.expiries.map((iso) => ({ value: iso, label: expiryLabel(iso) }))
+          ]}
+        />
 
         <div className={s.seg} role="group" aria-label="Interval">
           {INTERVALS.map((entry) => (
@@ -244,24 +237,17 @@ export default function SmartOiToolbar(props: Props) {
             </div>
 
             <span className={s.label}>± Range:</span>
-            <select
+            <Select
               className={s.spanSelect}
-              aria-label="Strike range"
+              size="sm"
+              ariaLabel="Strike range"
               value={props.span === null ? 'all' : String(props.span)}
-              onChange={(e) => {
-                const raw = e.currentTarget.value;
-                props.onSpan(raw === 'all' ? null : Number(raw));
-              }}
-            >
-              {SPANS.map((entry) => (
-                <option
-                  key={entry.label}
-                  value={entry.value === null ? 'all' : String(entry.value)}
-                >
-                  {entry.label}
-                </option>
-              ))}
-            </select>
+              onChange={(next) => props.onSpan(next === 'all' ? null : Number(next))}
+              options={SPANS.map((entry) => ({
+                value: entry.value === null ? 'all' : String(entry.value),
+                label: entry.label
+              }))}
+            />
           </>
         ) : (
           <>

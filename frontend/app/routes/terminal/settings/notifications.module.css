@@ -124,14 +124,6 @@
 
 .select {
   flex: none;
-  padding: 0.5rem 0.75rem;
-  border: 1px solid var(--mc-border-strong);
-  border-radius: var(--mc-radius);
-  background: var(--mc-surface);
-  color: var(--mc-text);
-  font-size: var(--mc-text-sm);
-  font-weight: 600;
-  cursor: pointer;
 }
 
 @media (max-width: 30rem) {

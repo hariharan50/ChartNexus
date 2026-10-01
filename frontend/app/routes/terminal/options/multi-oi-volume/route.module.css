@@ -221,15 +221,6 @@
 
 .select-native {
   width: 100%;
-  height: var(--mc-control-h);
-  padding: 0 0.5rem;
-  border: 1px solid var(--mc-border);
-  border-radius: var(--mc-radius);
-  background: var(--mc-surface-raised);
-  color: var(--mc-text);
-  font-size: var(--mc-text-sm);
-  font-weight: 600;
-  cursor: pointer;
 }
 
 /* -- strike sources -- */

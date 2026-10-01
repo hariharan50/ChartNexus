@@ -4,6 +4,7 @@ import EChart from '$shared/charts/EChart';
 import { buildIvHvOption, type IvHvVisible } from '$shared/charts/options/iv-hv';
 import { useChartTheme } from '$shared/charts/theme/use-chart-theme';
 import { cx } from '$shared/ui/cx';
+import Select from '$shared/ui/Select';
 import IconChart from '$shared/ui/icons/IconChart';
 import IconEye from '$shared/ui/icons/IconEye';
 import IconEyeOff from '$shared/ui/icons/IconEyeOff';
@@ -226,32 +227,22 @@ export default function IvHvChart() {
                 </div>
 
                 <p className={s.subLabel}>Range</p>
-                <select
+                <Select
                   className={s.selectNative}
                   value={range}
-                  aria-label="Date range"
-                  onChange={(e) => setRange(e.currentTarget.value as RangeKey)}
-                >
-                  {RANGES.map((entry) => (
-                    <option key={entry.value} value={entry.value}>
-                      {entry.label}
-                    </option>
-                  ))}
-                </select>
+                  ariaLabel="Date range"
+                  onChange={setRange}
+                  options={RANGES.map((entry) => ({ value: entry.value, label: entry.label }))}
+                />
 
                 <p className={s.subLabel}>HV Range</p>
-                <select
+                <Select
                   className={s.selectNative}
                   value={hvWindow}
-                  aria-label="HV range"
-                  onChange={(e) => setHvWindow(e.currentTarget.value as HvWindowKey)}
-                >
-                  {HV_WINDOWS.map((entry) => (
-                    <option key={entry.value} value={entry.value}>
-                      {entry.label}
-                    </option>
-                  ))}
-                </select>
+                  ariaLabel="HV range"
+                  onChange={setHvWindow}
+                  options={HV_WINDOWS.map((entry) => ({ value: entry.value, label: entry.label }))}
+                />
 
                 <p className={s.hint}>
                   A green bar means implied volatility sat above what the index actually did —

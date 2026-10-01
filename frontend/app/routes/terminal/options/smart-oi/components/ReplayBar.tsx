@@ -1,4 +1,5 @@
 import { cx } from '$shared/ui/cx';
+import Select from '$shared/ui/Select';
 import { timeLabel } from '../smart-oi-data';
 import s from './ReplayBar.module.css';
 
@@ -90,18 +91,17 @@ export default function ReplayBar({
         </span>
       </span>
 
-      <select
+      <Select
         className={s.speed}
-        value={speed}
-        onChange={(e) => onSpeed(Number(e.currentTarget.value) as ReplaySpeed)}
-        aria-label="Replay speed"
-      >
-        {REPLAY_SPEEDS.map((option) => (
-          <option key={option} value={option}>
-            {option}×
-          </option>
-        ))}
-      </select>
+        size="sm"
+        value={String(speed)}
+        onChange={(next) => onSpeed(Number(next) as ReplaySpeed)}
+        ariaLabel="Replay speed"
+        options={REPLAY_SPEEDS.map((option) => ({
+          value: String(option),
+          label: `${option}×`
+        }))}
+      />
 
       <button type="button" className={cx(s.btn, s.exit)} onClick={onExit} title="Exit replay">
         Exit
