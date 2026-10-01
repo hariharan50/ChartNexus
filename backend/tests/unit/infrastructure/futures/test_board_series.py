@@ -122,6 +122,7 @@ def build(provider: object, cache: object | None = None) -> CatalogFuturesBoardS
         Resolver(provider),  # type: ignore[arg-type]
         MockMarketDataProvider(FixedClock(NOW)),
         oi_cache=cache,  # type: ignore[arg-type]
+        clock=FixedClock(NOW),
     )
 
 

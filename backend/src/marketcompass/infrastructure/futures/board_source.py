@@ -20,7 +20,7 @@ from __future__ import annotations
 
 from collections import Counter
 from dataclasses import replace
-from datetime import date, datetime, timedelta, timezone
+from datetime import date, timedelta, timezone
 from decimal import Decimal
 
 from marketcompass.contexts.futures_analytics.application.ports import (
@@ -41,6 +41,7 @@ from marketcompass.infrastructure.brokers.mock.provider import (
 from marketcompass.infrastructure.catalog import registry
 from marketcompass.infrastructure.futures.oi_cache import RedisOpenInterestCache
 from marketcompass.infrastructure.observability.structured_logging import get_logger
+from marketcompass.infrastructure.time.clock import ReadableClock, SystemClock
 from marketcompass.shared_kernel.types.identifiers import TenantId
 
 log = get_logger(__name__)
@@ -57,9 +58,11 @@ class CatalogFuturesBoardSource:
         resolver: ProviderResolver,
         fallback: MarketDataProvider,
         oi_cache: RedisOpenInterestCache | None = None,
+        clock: ReadableClock | None = None,
     ) -> None:
         self._resolver = resolver
         self._fallback = fallback
+        self._clock = clock or SystemClock()
         # Optional so a caller without Redis still gets a board — minus the
         # open-interest columns, which is the honest degradation.
         self._oi_cache = oi_cache
@@ -163,7 +166,7 @@ class CatalogFuturesBoardSource:
 
     def _today(self) -> date:
         """The exchange's date. A listed expiry is an exchange-local fact."""
-        return datetime.now(_IST).date()
+        return self._clock.now().astimezone(_IST).date()
 
     async def _merge_open_interest(
         self, readings: list[FuturesReading], series: int

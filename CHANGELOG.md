@@ -4,7 +4,125 @@ Notable changes to MarketCompass. Format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); the project is
 pre-release and does not yet version its API.
 
+Releases 1.2.0 through 1.5.0 were tagged without changelog entries; their
+changes are not recorded here.
+
 ## [Unreleased]
+
+## [1.6.0] — 2026-10-01
+
+Futures: a real instrument universe, the Future Lab build-out, institutional
+flow and index internals, global markets and a pre-market screener.
+
+### Added
+
+**The F&O universe (`instrument_catalog`)**
+
+- The tradeable universe is now the full NSE F&O list — 210 stocks plus the
+  index contracts, 219 catalog rows — carrying lot size, strike step, tick size,
+  expiry style and the broker symbols needed to quote each one.
+- Refreshed daily at 07:30 IST from the exchange's public symbol master, not
+  pinned in a seed migration: NSE revises the list and the lot sizes by
+  circular several times a year. The master files are public, so this needs no
+  broker account and spends no API quota. New worker:
+  `uv run marketcompass-catalog`.
+- Reference prices, index membership and front-expiry columns, each with its own
+  migration, so a page can rank or group the universe without a quote call.
+- Stock expiries are monthly-only and strike steps are fractional for some
+  names; both are modelled rather than assumed away.
+
+**Future Lab**
+
+- Stocks board, market movers (board, table and heatmap views), price-vs-OI and
+  a session header with a data-source badge.
+- An expiry picker that takes a *series index* — 0 near month, 1 next, 2 far —
+  rather than a date, so a board stays valid across a rollover.
+- Build-up classification (long build-up, short build-up, long unwinding, short
+  covering) from price and open-interest change, with a legend.
+- Open-interest sweep worker (`uv run marketcompass-futures-oi`): the broker's
+  OI endpoint takes one contract per request, so the sweep is rate-limited to a
+  small slice of the broker's throughput, runs every 300s, caches for 45
+  minutes, and covers two series by default. Series past that depth still show
+  price, volume and range, and the page says OI was not swept for them rather
+  than drawing an empty board.
+- Futures board capture worker (`uv run marketcompass-futures-history`): one
+  frame a minute from batched quotes into `futures_board_snapshots`, 30 trading
+  days retained, with `--once`, `--prune` and a guarded `--seed <date>` that
+  fabricates a full 09:15–15:30 session stamped `mock`. Live boards only —
+  generated numbers are never archived.
+- `futures_analytics` context: the board dashboard and the price/OI series.
+
+**Analysis — institutional flow and index internals (`market_breadth`)**
+
+- Six pages under Future Lab: FII/DII summary, FII/DII cash, index
+  contributors, advance/decline, index weightage and sector rotation.
+- FII/DII reads four real NSE files. The cash segment has no archive, so it is
+  journalled locally as it is observed.
+- Intraday advance/decline is derived from the futures board archive; there is
+  no separate breadth store.
+- Index point contribution, a diverging board and a sector-breadth chart, all
+  computed from catalog weights.
+
+**Global Index Analysis (`global_markets`)**
+
+- `/global-index-analysis`: overnight global markets and the handoff into the
+  Indian session, with GIFT Nifty and settlement sources from NSE IX, Yahoo
+  quotes and charts, and a simulated source so the page works with no feed.
+- A gap journal, since the overnight gap cannot be reconstructed after the fact.
+
+**Pre-Market Screener (`pre_market`)**
+
+- `/pre-market-screener`: gap reading, expected move, regime and composed
+  pre-market view, built on the shared level and statistics helpers now in the
+  shared kernel.
+
+**Options Lab**
+
+- Intraday max-pain with a magnet-zone gauge on the Max Pain page, backed by a
+  new max-pain series service.
+- The expiry picker is now shared across the Options Lab pages, and the ingest
+  can archive more than the front expiry (`MC_INGEST_EXPIRIES`, bounded by the
+  same 42-day horizon the picker uses) so the series charts have a real session
+  for further contracts.
+
+**Dashboard**
+
+- A gap indicator card, replacing quick actions.
+- Self-hosted company logos in `frontend/public/logos/` with a symbol avatar
+  fallback; the domain table is hand-authored on purpose.
+
+### Changed
+
+- `instrument_catalog` is now the source of truth for symbol resolution; the
+  FYERS and mock adapters, the symbol/quote/option-chain mappers and the ingest
+  loop all resolve through it.
+- Ingest symbol selection defaults to every index in the catalog instead of a
+  hard-coded pair, and is deliberately not the whole universe: an option-chain
+  fetch is one broker call per symbol per tick against a 100k/day quota.
+- Nifty 50 gap card rearranged on the dashboard; the Analyse page's symbol
+  picker was replaced by the shared picker.
+- `docs/RUNNING.md` documents the three new workers; `README.md` and
+  `docs/architecture/bounded-contexts.md` now reflect fifteen implemented
+  contexts.
+
+### Fixed
+
+- GIFT Nifty value mismatch between the dashboard card and the global view.
+- The instrument-catalog registry retries its load, so a startup DB race no
+  longer kills every page that needs symbol resolution.
+- Future Lab expiry-dropdown behaviour across rollovers, and several FII/DII
+  parsing and display bugs.
+- Ampersand tickers (`M&M`, `L&TFH`) now resolve: they survive URL and broker
+  symbol construction.
+- The futures expiry picker reads the exchange date from its injected clock
+  instead of the wall clock, so a pinned instant actually pins it.
+
+### Removed
+
+- Future Lab's `intraday` and `sentiment-cycle` routes, superseded by the board
+  capture and the Analysis pages.
+
+## [1.0.0] — 2026-08-13
 
 ### Changed
 
