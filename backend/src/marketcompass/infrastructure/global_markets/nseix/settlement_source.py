@@ -137,9 +137,7 @@ class NseIxSettlements:
         if cached is not None:
             return {key: Decimal(value) for key, value in cached.items()}
 
-        response = await self._http.get(
-            url, headers=BROWSER_HEADERS, timeout=self._timeout
-        )
+        response = await self._http.get(url, headers=BROWSER_HEADERS, timeout=self._timeout)
         response.raise_for_status()
         table = parse_bhavcopy(response.text)
         if not table:
@@ -181,9 +179,7 @@ class NseIxSettlements:
 
     async def _cache_set(self, url: str, table: dict[str, Decimal]) -> None:
         payload = json.dumps({key: str(value) for key, value in table.items()})
-        await self._redis_set(
-            self._redis.key(_NAMESPACE, _slug(url)), payload, _TABLE_TTL_SECONDS
-        )
+        await self._redis_set(self._redis.key(_NAMESPACE, _slug(url)), payload, _TABLE_TTL_SECONDS)
 
     async def _redis_get(self, key: str) -> str | None:
         try:

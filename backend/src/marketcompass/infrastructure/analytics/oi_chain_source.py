@@ -57,6 +57,16 @@ class NullSnapshotReader:
     ) -> list[ChainSnapshot]:
         return []
 
+    async def recent_session_snapshots(
+        self,
+        tenant_id: TenantId,  # noqa: ARG002
+        symbol: str,  # noqa: ARG002
+        *,
+        end_utc: datetime,  # noqa: ARG002
+        sessions: int,  # noqa: ARG002
+    ) -> list[ChainSnapshot]:
+        return []
+
 
 class SqlAlchemySnapshotReader:
     """Implements ``SnapshotReader`` over the captured snapshot tables.
@@ -88,6 +98,22 @@ class SqlAlchemySnapshotReader:
         trade_date_utc: datetime,
     ) -> list[ChainSnapshot]:
         records = await self._repo.snapshots_for(symbol, _ist_session_date(trade_date_utc))
+        return [_to_chain_snapshot(record) for record in records]
+
+    async def recent_session_snapshots(
+        self,
+        tenant_id: TenantId,  # noqa: ARG002
+        symbol: str,
+        *,
+        end_utc: datetime,
+        sessions: int,
+    ) -> list[ChainSnapshot]:
+        dates = await self._repo.recent_session_dates(
+            symbol, on_or_before=_ist_session_date(end_utc), limit=max(1, sessions)
+        )
+        if not dates:
+            return []
+        records = await self._repo.snapshots_between(symbol, dates[0], dates[-1])
         return [_to_chain_snapshot(record) for record in records]
 
 

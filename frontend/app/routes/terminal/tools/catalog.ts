@@ -32,12 +32,20 @@ const BUILT: readonly ToolEntry[] = [
     name: 'Option Greeks',
     description: 'Historical IV, Delta, Theta, Vega and Gamma charts for the at-the-money contract',
     tone: 'violet'
+  },
+  {
+    slug: 'straddle-chart',
+    code: 'SC',
+    name: 'Straddle Chart',
+    description:
+      'Rolling at-the-money straddle with spot and the synthetic futures forward overlaid',
+    tone: 'emerald'
   }
 ];
 
 /** The slots still to be filled, numbered from where the built ones stop. */
-const RESERVED: readonly ToolEntry[] = Array.from({ length: 11 }, (_, index) => {
-  const n = index + 2;
+const RESERVED: readonly ToolEntry[] = Array.from({ length: 10 }, (_, index) => {
+  const n = index + 3;
   return {
     slug: `b${n}`,
     code: `B${n}`,
@@ -64,7 +72,8 @@ export function toolBySlug(slug: string | undefined): ToolEntry | undefined {
  * date after which someone's bookmark stops being their bookmark.
  */
 const RETIRED: Readonly<Record<string, string>> = {
-  b1: 'option-greeks'
+  b1: 'option-greeks',
+  b2: 'straddle-chart'
 };
 
 /** Where a retired slug should land, or `undefined` if it was never a tool. */

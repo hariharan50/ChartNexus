@@ -94,9 +94,9 @@ def _quote(key: str, now: datetime) -> GlobalQuote:
     swing = _SWING.get(key, _DEFAULT_SWING)
 
     change_percent = Decimal(str(round(rng.uniform(-swing, swing), 2)))
-    previous_close = (base * (Decimal(1) + Decimal(str(round(rng.uniform(-0.01, 0.01), 4))))).quantize(
-        Decimal("0.01")
-    )
+    previous_close = (
+        base * (Decimal(1) + Decimal(str(round(rng.uniform(-0.01, 0.01), 4))))
+    ).quantize(Decimal("0.01"))
     price = (previous_close * (Decimal(1) + change_percent / Decimal(100))).quantize(
         Decimal("0.01")
     )

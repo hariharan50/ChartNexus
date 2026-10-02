@@ -1,0 +1,192 @@
+.page {
+  padding: var(--mc-space-6);
+  display: flex;
+  flex-direction: column;
+  gap: var(--mc-space-4);
+}
+
+.head {
+  display: flex;
+  align-items: baseline;
+  gap: var(--mc-space-3);
+}
+
+.title {
+  margin: 0;
+  font-size: var(--mc-text-xl, 1.375rem);
+  font-weight: 800;
+  color: var(--mc-text);
+}
+
+/* -- controls -------------------------------------------------------------- */
+.controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--mc-space-3);
+}
+
+.field {
+  min-width: 120px;
+}
+
+.expiry {
+  min-width: 160px;
+}
+
+.refresh {
+  min-height: var(--mc-control-h);
+  padding: 0 var(--mc-space-4);
+  border: 1px solid var(--mc-field-border);
+  border-radius: var(--mc-radius);
+  background: var(--mc-field-bg);
+  color: var(--mc-text);
+  font-size: var(--mc-text-sm);
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.refresh:hover:not(:disabled) {
+  border-color: var(--mc-accent);
+  color: var(--mc-accent);
+}
+
+.refresh:disabled {
+  cursor: progress;
+  color: var(--mc-text-muted);
+}
+
+/* -- the right edge -------------------------------------------------------- */
+.context {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--mc-space-4);
+  font-size: var(--mc-text-sm);
+}
+
+.ctxItem {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 0.375rem;
+}
+
+.ctxLabel {
+  color: var(--mc-text-muted);
+}
+
+.ctxItem b {
+  color: var(--mc-text);
+  font-weight: 700;
+}
+
+/* -- the plot -------------------------------------------------------------- */
+.panel {
+  display: flex;
+  flex-direction: column;
+  gap: var(--mc-space-2);
+  padding: var(--mc-space-4);
+  border: 1px solid var(--mc-border);
+  border-radius: var(--mc-radius-lg);
+  background: var(--mc-surface);
+  min-width: 0;
+}
+
+/* Qualified by `.panel`: `EChart.module.css` also defines a `.chart`, and with
+   equal specificity the winner is emit order. */
+.panel .chart {
+  height: 520px;
+  width: 100%;
+}
+
+.empty {
+  display: grid;
+  place-items: center;
+  height: 520px;
+  margin: 0;
+  color: var(--mc-text-muted);
+  font-size: var(--mc-text-sm);
+}
+
+/* The chip row above the plot, as on MultiStrike. */
+.legend {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--mc-space-2);
+}
+
+/* Pushes Reset zoom to the far end, so the chips stay a group. */
+.spacer {
+  flex: 1;
+}
+
+.zoom-reset {
+  padding: 0.25rem 0.5rem;
+  border: 1px solid var(--mc-border);
+  border-radius: var(--mc-radius-sm);
+  background: var(--mc-surface-raised);
+  color: var(--mc-text-muted);
+  font-size: var(--mc-text-xs);
+  font-weight: 600;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.zoom-reset:hover {
+  border-color: var(--mc-border-strong);
+  color: var(--mc-text);
+}
+
+/* -- footnotes ------------------------------------------------------------- */
+.quality {
+  margin: 0;
+  font-size: var(--mc-text-sm);
+  color: var(--mc-warning, #f59e0b);
+}
+
+.disclaimer {
+  margin: 0;
+  font-size: var(--mc-text-xs, 0.75rem);
+  color: var(--mc-text-subtle, var(--mc-text-muted));
+  line-height: 1.6;
+  max-width: 90ch;
+}
+
+.panelError {
+  display: flex;
+  align-items: center;
+  gap: var(--mc-space-3);
+  padding: var(--mc-space-5);
+  border: 1px solid var(--mc-border);
+  border-radius: var(--mc-radius-lg);
+  background: var(--mc-surface);
+}
+
+.panelError p {
+  margin: 0;
+  color: var(--mc-text-muted);
+  font-size: var(--mc-text-sm);
+}
+
+.panelError button {
+  min-height: var(--mc-control-h);
+  padding: 0 var(--mc-space-4);
+  border: 1px solid var(--mc-field-border);
+  border-radius: var(--mc-radius);
+  background: var(--mc-field-bg);
+  color: var(--mc-text);
+  font-weight: 700;
+  cursor: pointer;
+}
+
+@media (max-width: 640px) {
+  .page {
+    padding: var(--mc-space-4);
+  }
+
+  .chart,
+  .empty {
+    height: 380px;
+  }
+}

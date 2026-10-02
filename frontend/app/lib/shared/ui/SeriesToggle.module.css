@@ -1,0 +1,61 @@
+/*
+ * The legend chip every chart with switchable series uses. Lifted from
+ * MultiStrike so the behaviour and the look travel together.
+ */
+
+.entry {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  padding: 0.25rem 0.5rem;
+  border: 1px solid var(--mc-border);
+  border-radius: var(--mc-radius);
+  background: var(--mc-surface-raised);
+  color: var(--mc-text);
+  font-size: var(--mc-text-xs);
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.entry:hover {
+  border-color: var(--mc-border-strong);
+}
+
+.entry:focus-visible {
+  outline: 2px solid var(--mc-focus);
+  outline-offset: 1px;
+}
+
+.entry.off {
+  color: var(--mc-text-subtle);
+}
+
+/* Struck through as well as dimmed: on a dense toolbar the colour difference
+   alone is easy to miss, and this is the one state that changes the chart. */
+.entry.off .label {
+  text-decoration: line-through;
+}
+
+.eye {
+  display: inline-flex;
+  color: var(--mc-text-muted);
+}
+
+.eye svg {
+  width: 0.875rem;
+  height: 0.875rem;
+}
+
+.swatch {
+  width: 0.75rem;
+  height: 0.75rem;
+  border-radius: 3px;
+  flex: none;
+}
+
+.dash {
+  width: 0.875rem;
+  height: 0;
+  border-top: 2px dotted currentColor;
+  flex: none;
+}

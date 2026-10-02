@@ -40,7 +40,8 @@ describe('Tools landing', () => {
 describe('tool lookup', () => {
   it('resolves a known slug and refuses an unknown one', () => {
     expect(toolBySlug('option-greeks')?.name).toBe('Option Greeks');
-    expect(toolBySlug('b2')?.name).toBe('B2');
+    expect(toolBySlug('straddle-chart')?.name).toBe('Straddle Chart');
+    expect(toolBySlug('b3')?.name).toBe('B3');
     expect(toolBySlug('nope')).toBeUndefined();
   });
 });
@@ -50,11 +51,13 @@ describe('retired slugs', () => {
     // B1 became Option Greeks; an open tab on /tools/b1 must land on the tool,
     // not on a 404.
     expect(retiredSlugTarget('b1')).toBe('option-greeks');
-    expect(retiredSlugTarget('b2')).toBeUndefined();
+    expect(retiredSlugTarget('b2')).toBe('straddle-chart');
+    expect(retiredSlugTarget('b3')).toBeUndefined();
     expect(retiredSlugTarget(undefined)).toBeUndefined();
   });
 
   it('keeps every retired slug pointing at a tool that exists', () => {
     expect(toolBySlug('option-greeks')).toBeDefined();
+    expect(toolBySlug('straddle-chart')).toBeDefined();
   });
 });

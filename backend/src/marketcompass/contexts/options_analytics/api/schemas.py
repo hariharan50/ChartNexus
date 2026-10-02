@@ -348,6 +348,50 @@ class VegaResponse(_Schema):
         return cls.model_validate(payload)
 
 
+class StraddleChartSeriesResponse(_Schema):
+    """The plotted arrays, all aligned index-for-index with `t`."""
+
+    t: list[str]
+    #: The at-the-money strike each point was priced at — it rolls.
+    strike: list[float]
+    ce: list[float | None]
+    pe: list[float | None]
+    straddle: list[float]
+    spot: list[float | None]
+    #: Put-call parity forward, falling back to the tradable future.
+    synthetic: list[float | None]
+
+
+class StraddleChartResponse(_Schema):
+    """The rolling at-the-money straddle behind the Straddle Chart tool."""
+
+    instrument_id: str
+    symbol: str
+    expiry_date: str | None
+    lot_size: int | None
+    #: The right edge of the chart: what it costs to be at the money now.
+    straddle_price: float | None
+    atm_strike: float | None
+    ce_ltp: float | None
+    pe_ltp: float | None
+    spot: float | None
+    synthetic_future: float | None
+    requested_sessions: int
+    #: Sessions actually covered. The archive accrues forward and is pruned, so
+    #: a request for three days may honestly answer with one.
+    covered_sessions: int
+    open_ts: str
+    now_ts: str
+    #: `intraday`, `live` (one point from the live chain) or `empty`.
+    data_quality: str
+    rolling_strike: bool
+    series: StraddleChartSeriesResponse
+
+    @classmethod
+    def of(cls, payload: dict[str, Any]) -> StraddleChartResponse:
+        return cls.model_validate(payload)
+
+
 class GreekLegResponse(_Schema):
     """One leg's five series, aligned index-for-index with the payload's `t`.
 

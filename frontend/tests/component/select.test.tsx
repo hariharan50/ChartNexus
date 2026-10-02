@@ -131,6 +131,39 @@ describe('Select', () => {
     expect(screen.queryByRole('listbox')).not.toBeInTheDocument();
   });
 
+  // Every options page keeps a one-second clock for its countdowns, so the
+  // owner re-renders while the list is open and hands down a freshly built
+  // `options` array each time. Closing on that array's identity made the popup
+  // vanish a second after it was opened, on every dropdown in the terminal.
+  it('stays open when its owner re-renders with an equal options list', async () => {
+    const owner = () => (
+      <Select
+        value="near"
+        options={OPTIONS.map((option) => ({ ...option }))}
+        onChange={() => {}}
+        ariaLabel="Expiry"
+      />
+    );
+    const { rerender } = render(owner());
+    await open();
+
+    rerender(owner());
+
+    expect(screen.getByRole('listbox')).toBeInTheDocument();
+  });
+
+  it('closes when the rows themselves change', async () => {
+    const owner = (rows: SelectOption[]) => (
+      <Select value="near" options={rows} onChange={() => {}} ariaLabel="Expiry" />
+    );
+    const { rerender } = render(owner(OPTIONS));
+    await open();
+
+    rerender(owner(OPTIONS.slice(1)));
+
+    expect(screen.queryByRole('listbox')).not.toBeInTheDocument();
+  });
+
   it('drives a controlled value through its owner', async () => {
     function Harness() {
       const [value, setValue] = useState('near');

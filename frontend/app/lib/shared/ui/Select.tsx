@@ -92,8 +92,11 @@ export default function Select<T extends string>({
 
   // An options list can change under a control — an expiry settles, a symbol
   // leaves the catalogue — and a popup left open over rows that have shifted
-  // would choose the wrong one.
-  useEffect(() => setOpen(false), [options]);
+  // would choose the wrong one. Keyed on the rows themselves, not on the array:
+  // callers build `options` inline, so a new array arrives on every render, and
+  // a page that polls would otherwise slam its own popup shut mid-choice.
+  const signature = JSON.stringify(options.map((option) => [option.value, option.label]));
+  useEffect(() => setOpen(false), [signature]);
 
   function choose(option: SelectOption<T>): void {
     if (option.disabled) return;

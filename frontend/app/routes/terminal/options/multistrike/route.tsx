@@ -12,8 +12,7 @@ import { lastTradingDayIST } from '$shared/formatting/ist-clock';
 import { cx } from '$shared/ui/cx';
 import Select from '$shared/ui/Select';
 import IconChart from '$shared/ui/icons/IconChart';
-import IconEye from '$shared/ui/icons/IconEye';
-import IconEyeOff from '$shared/ui/icons/IconEyeOff';
+import SeriesToggle from '$shared/ui/SeriesToggle';
 import ExpiryPicker from '../components/ExpiryPicker';
 import HistoryMode, { type Mode } from '../components/HistoryMode';
 import StrikeLadder from './components/StrikeLadder';
@@ -444,14 +443,14 @@ export default function MultistrikeChart() {
               </div>
 
               <div className={s.legend}>
-                <Toggle
+                <SeriesToggle
                   label="Future"
-                  dotted
+                  dashed
                   on={showFuture}
                   onToggle={() => setShowFuture((on) => !on)}
                 />
                 {plot.lines.map((line) => (
-                  <Toggle
+                  <SeriesToggle
                     key={line.id}
                     label={line.label}
                     color={line.color}
@@ -496,39 +495,5 @@ export default function MultistrikeChart() {
         </div>
       ) : null}
     </div>
-  );
-}
-
-/** A legend chip that shows/hides its series, with an eye that follows the state. */
-function Toggle({
-  label,
-  color,
-  dotted,
-  on,
-  onToggle
-}: {
-  label: string;
-  color?: string;
-  dotted?: boolean;
-  on: boolean;
-  onToggle: () => void;
-}) {
-  return (
-    <button
-      type="button"
-      className={cx(s.entry, !on && s.off)}
-      aria-pressed={on}
-      onClick={onToggle}
-    >
-      <span className={s.eye} aria-hidden="true">
-        {on ? <IconEye /> : <IconEyeOff />}
-      </span>
-      {dotted ? (
-        <span className={s.dash} aria-hidden="true" />
-      ) : (
-        <span className={s.swatch} style={{ background: color }} />
-      )}
-      <span className={s.label}>{label}</span>
-    </button>
   );
 }

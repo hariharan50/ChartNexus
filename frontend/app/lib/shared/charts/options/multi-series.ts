@@ -62,6 +62,15 @@ export interface SeriesLine {
    * strikes and were never the answer to anything.
    */
   step?: boolean;
+  /**
+   * Draw the line dotted rather than solid.
+   *
+   * For a series that is context rather than subject and sits close enough to
+   * another to be confused with it — the synthetic forward, which tracks spot
+   * within a few points all day. Solid, the two read as one thick line and the
+   * gap between them, which is the actual information, disappears.
+   */
+  dashed?: boolean;
 }
 
 export interface MultiSeriesInput {
@@ -79,6 +88,22 @@ export interface MultiSeriesInput {
   /** A horizontal marker on the value axis, e.g. PCR = 1. */
   referenceLine?: { value: number; label: string } | undefined;
   showFutures: boolean;
+  /**
+   * Extra lines measured in the *price* unit, drawn on the left axis beside
+   * the future.
+   *
+   * `futures` is one line and some charts have two of the same kind: Straddle
+   * Chart plots spot and the put-call-parity forward together, both index
+   * levels, against a premium on the right. They belong on the price axis
+   * because that is the unit they are in — putting them on the value axis
+   * would scale an index level against a premium and make the premium flat.
+   */
+  priceLines?: SeriesLine[] | undefined;
+  /**
+   * Names the left axis. "Future" by default, which is what plots there on
+   * every chart that does not say otherwise.
+   */
+  priceAxisName?: string | undefined;
   /**
    * Plot the value lines on the *price* axis instead of their own.
    *
@@ -258,6 +283,7 @@ export function buildMultiSeriesOption(
 ): EChartsCoreOption {
   const { timestamps, futures, lines, formatValue, formatPrice, valueAxisName } = input;
   const { referenceLine, showFutures, compact, rightGutter, zoomable } = input;
+  const priceLines = input.priceLines ?? [];
   const sharedAxis = input.sharedPriceAxis === true;
   // On a shared scale the lines belong to the price axis, and the right axis
   // has nothing left of its own to measure.
@@ -353,7 +379,7 @@ export function buildMultiSeriesOption(
         position: 'left',
         // Named at the top rather than rotated up the side: a rotated title
         // costs horizontal room the plot needs more, and this chart is wide.
-        name: 'Future',
+        name: input.priceAxisName ?? 'Future',
         nameLocation: 'end',
         nameGap: 14,
         nameTextStyle: { ...axisName, align: 'left' },
@@ -386,6 +412,8 @@ export function buildMultiSeriesOption(
     ],
     series: [
       ...(showFutures ? [futuresSeries(xs, futures, latestFuture, theme, formatPrice)] : []),
+      // On the price axis, so their pills read in the same unit as its labels.
+      ...priceLines.map((line) => contractSeries(xs, line, formatPrice, 0)),
       ...lines.map((line) => contractSeries(xs, line, formatValue, valueAxisIndex)),
       ...(referenceLine ? [markerSeries(referenceLine, theme, valueAxisIndex)] : [])
     ]
@@ -525,7 +553,11 @@ function contractSeries(
     // Holds each value to the next point rather than sloping between them —
     // see `SeriesLine.step`. Omitted entirely when off, so nothing else changes.
     ...(line.step ? { step: 'end' as const } : {}),
-    lineStyle: { width: 2, color: line.color },
+    lineStyle: {
+      width: line.dashed ? 1.25 : 2,
+      color: line.color,
+      ...(line.dashed ? { type: 'dotted' as const } : {})
+    },
     itemStyle: { color: line.color },
     // A faint fill under the line when the caller asks for one. Left off the
     // object entirely otherwise, so a stack of lines is never quietly banded.

@@ -83,6 +83,42 @@ class SqlAlchemyOptionChainSnapshotRepository:
         )
         return result.scalars().all()
 
+    async def recent_session_dates(
+        self, symbol: str, *, on_or_before: date, limit: int
+    ) -> list[date]:
+        """The last ``limit`` trading dates this symbol was captured on, oldest first.
+
+        Stored sessions rather than calendar days: a reader asking for three
+        days means three sessions, and counting backwards on the calendar would
+        silently hand them one and a half over a long weekend.
+        """
+        result = await self._session.execute(
+            select(OptionChainSnapshotRecord.session_date)
+            .where(
+                OptionChainSnapshotRecord.symbol == symbol,
+                OptionChainSnapshotRecord.session_date <= on_or_before,
+            )
+            .group_by(OptionChainSnapshotRecord.session_date)
+            .order_by(OptionChainSnapshotRecord.session_date.desc())
+            .limit(limit)
+        )
+        return sorted(result.scalars().all())
+
+    async def snapshots_between(
+        self, symbol: str, start: date, end: date
+    ) -> Sequence[OptionChainSnapshotRecord]:
+        """Every snapshot for a symbol across an inclusive range of trading dates."""
+        result = await self._session.execute(
+            select(OptionChainSnapshotRecord)
+            .where(
+                OptionChainSnapshotRecord.symbol == symbol,
+                OptionChainSnapshotRecord.session_date >= start,
+                OptionChainSnapshotRecord.session_date <= end,
+            )
+            .order_by(OptionChainSnapshotRecord.captured_at.asc())
+        )
+        return result.scalars().all()
+
     async def latest(
         self, symbol: str, session_date: date, expiry: str | None = None
     ) -> OptionChainSnapshotRecord | None:

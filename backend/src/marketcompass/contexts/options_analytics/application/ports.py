@@ -154,3 +154,16 @@ class SnapshotReader(Protocol):
     async def day_snapshots(
         self, tenant_id: TenantId, symbol: str, *, trade_date_utc: datetime
     ) -> list[ChainSnapshot]: ...
+
+    async def recent_session_snapshots(
+        self, tenant_id: TenantId, symbol: str, *, end_utc: datetime, sessions: int
+    ) -> list[ChainSnapshot]:
+        """The last ``sessions`` *stored* trading days up to ``end_utc``, oldest first.
+
+        Sessions, not calendar days: a chart offering "3 Days" means three
+        sessions of trading, and counting back on the calendar hands a reader
+        one and a half of them over a long weekend — with no way to tell that
+        from a quiet market. A day the archive never captured is simply not one
+        of the three.
+        """
+        ...

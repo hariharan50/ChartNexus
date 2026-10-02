@@ -207,9 +207,7 @@ class OptionsAdapter:
             iv_percentile=_d(getattr(chain, "iv_percentile", None)) if chain else None,
             atm_straddle=self._straddle(chain),
             india_vix=_d(getattr(chain, "india_vix", None)) if chain else None,
-            india_vix_change_percent=_d(
-                getattr(chain, "india_vix_change_percent", None)
-            )
+            india_vix_change_percent=_d(getattr(chain, "india_vix_change_percent", None))
             if chain
             else None,
             source=_source_of(chain.provenance) if chain is not None else "live",
@@ -350,9 +348,7 @@ class BreadthAdapter:
             # No weight table for this index — an absence, not a fault.
             return None
 
-        view = await self._breadth.advance_decline(
-            IndexQuery(tenant_id=self._tenant_id, index=key)
-        )
+        view = await self._breadth.advance_decline(IndexQuery(tenant_id=self._tenant_id, index=key))
         return BreadthReading(
             advances=getattr(view, "advances", None),
             declines=getattr(view, "declines", None),
@@ -370,9 +366,7 @@ class FlowAdapter:
         self._tenant_id = tenant_id
 
     async def get_flows(self) -> FlowReading | None:
-        summary = await self._breadth.fii_dii_summary(
-            FlowQuery(tenant_id=self._tenant_id)
-        )
+        summary = await self._breadth.fii_dii_summary(FlowQuery(tenant_id=self._tenant_id))
         cash = getattr(summary, "cash", None)
         if cash is None:
             return None

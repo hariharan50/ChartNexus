@@ -24,6 +24,7 @@ from marketcompass.contexts.options_analytics.api.schemas import (
     PriceOiSeriesResponse,
     SkewResponse,
     SmartOiResponse,
+    StraddleChartResponse,
     StraddleSeriesResponse,
     StrikeSeriesResponse,
     TermStructureResponse,
@@ -39,6 +40,10 @@ from marketcompass.contexts.options_analytics.application.smart_oi_service impor
     INTERVALS as SMART_OI_INTERVALS,
     MAX_SPAN,
     MODE_AUTO,
+)
+from marketcompass.contexts.options_analytics.application.straddle_chart_service import (
+    DEFAULT_SESSIONS,
+    MAX_SESSIONS,
 )
 from marketcompass.infrastructure.transport.http.dependencies import (
     CurrentPrincipal,
@@ -395,6 +400,63 @@ async def vega(
         principal.tenant_id, symbol, expiry=expiry, trade_date=_trade_date(date_)
     )
     response = VegaResponse.of(payload)
+    await redis.client.set(cache_key, response.model_dump_json(), ex=_CACHE_TTL_SECONDS)
+    return response
+
+
+@router.get(
+    "/straddle-chart/{instrument_id}",
+    response_model=StraddleChartResponse,
+    summary="The rolling at-the-money straddle across sessions",
+    description=(
+        "What it costs to own the at-the-money call and put together, at every "
+        "capture, with the index and the put-call-parity synthetic forward "
+        "beside it. The strike **rolls**: each point is priced at its own "
+        "at-the-money strike and carries it, because the subject is the cost of "
+        "being at the money rather than the price of one contract. `sessions` "
+        "counts stored trading days, so three days is three sessions of trading "
+        "and not three calendar days. Powers Straddle Chart."
+    ),
+    responses={422: {"description": "Unknown instrument"}},
+)
+async def straddle_chart(
+    request: Request,
+    principal: CurrentPrincipal,
+    services: Services,
+    instrument_id: InstrumentParam,
+    *,
+    expiry: ExpiryParam = None,
+    sessions: Annotated[
+        int,
+        Query(ge=1, le=MAX_SESSIONS, description="Trading sessions to cover, latest last"),
+    ] = DEFAULT_SESSIONS,
+    date_: DateParam = None,
+) -> StraddleChartResponse:
+    symbol = instrument_id.strip().upper()
+    redis = get_container(request).redis
+    # Keyed by the window too: it changes the payload, so sharing one entry
+    # across ranges would serve whichever arrived first.
+    cache_key = redis.key(
+        "lab:straddle-chart",
+        str(principal.tenant_id),
+        symbol,
+        expiry or "near",
+        str(sessions),
+        _day_key(date_),
+    )
+
+    cached = await redis.client.get(cache_key)
+    if cached is not None:
+        return StraddleChartResponse.model_validate_json(cached)
+
+    payload = await services.straddle_chart(
+        principal.tenant_id,
+        symbol,
+        expiry=expiry,
+        sessions=sessions,
+        trade_date=_trade_date(date_),
+    )
+    response = StraddleChartResponse.of(payload)
     await redis.client.set(cache_key, response.model_dump_json(), ex=_CACHE_TTL_SECONDS)
     return response
 

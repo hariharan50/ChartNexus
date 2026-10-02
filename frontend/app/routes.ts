@@ -56,6 +56,7 @@ export default [
     ...prefix('tools', [
       index('routes/terminal/tools/route.tsx'),
       route('option-greeks', 'routes/terminal/tools/option-greeks/route.tsx'),
+      route('straddle-chart', 'routes/terminal/tools/straddle-chart/route.tsx'),
       route(':tool', 'routes/terminal/tools/tool.tsx')
     ]),
 

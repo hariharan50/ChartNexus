@@ -113,9 +113,7 @@ class YahooGlobalQuoteSource(GlobalQuoteSource):
                 quotes[result.key] = result
                 continue
             if isinstance(result, BaseException):
-                log.warning(
-                    "global_quote_failed", symbol=symbol, error=repr(result)
-                )
+                log.warning("global_quote_failed", symbol=symbol, error=repr(result))
 
         if not quotes:
             # Nothing at all came back: the endpoint is unreachable or has

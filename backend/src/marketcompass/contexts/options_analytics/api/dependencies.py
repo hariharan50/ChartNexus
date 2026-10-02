@@ -26,6 +26,9 @@ from marketcompass.contexts.options_analytics.application.price_oi_series_servic
 )
 from marketcompass.contexts.options_analytics.application.skew_series_service import GetSkew
 from marketcompass.contexts.options_analytics.application.smart_oi_service import GetSmartOi
+from marketcompass.contexts.options_analytics.application.straddle_chart_service import (
+    GetStraddleChart,
+)
 from marketcompass.contexts.options_analytics.application.straddle_series_service import (
     GetStraddleSeries,
 )
@@ -62,6 +65,7 @@ class OptionsAnalyticsServices:
     term_structure: GetTermStructure
     vega: GetVega
     straddle_series: GetStraddleSeries
+    straddle_chart: GetStraddleChart
     strike_series: GetStrikeSeries
     smart_oi: GetSmartOi
 
@@ -111,6 +115,7 @@ def build_options_analytics_services_from(
             snapshots=snapshots,
             strike_span=container.settings.market.snapshot_max_series_strikes,
         ),
+        straddle_chart=GetStraddleChart(provider=provider, snapshots=snapshots),
         straddle_series=GetStraddleSeries(
             provider=provider,
             snapshots=snapshots,
