@@ -7,7 +7,7 @@ skills, and the composed prompt only carries the chosen skills' instructions.
 
 from __future__ import annotations
 
-from marketcompass.contexts.copilot.domain import persona, skills
+from chartnexus.contexts.copilot.domain import persona, skills
 
 
 def test_default_ids_are_all_known() -> None:

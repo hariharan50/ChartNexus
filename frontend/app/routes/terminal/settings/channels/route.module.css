@@ -1,44 +1,44 @@
 .page {
   display: flex;
   flex-direction: column;
-  gap: var(--mc-space-4);
+  gap: var(--cn-space-4);
   max-width: 720px;
 }
 
 .head {
   display: flex;
   flex-direction: column;
-  gap: var(--mc-space-2);
+  gap: var(--cn-space-2);
 }
 
 .title {
   margin: 0;
-  font-size: var(--mc-text-lg, 1.125rem);
+  font-size: var(--cn-text-lg, 1.125rem);
   font-weight: 700;
-  color: var(--mc-text);
+  color: var(--cn-text);
 }
 
 .sub {
   margin: 0;
-  font-size: var(--mc-text-sm);
-  color: var(--mc-text-muted);
+  font-size: var(--cn-text-sm);
+  color: var(--cn-text-muted);
   line-height: 1.6;
 }
 
 .sub a,
 .hint a {
-  color: var(--mc-accent);
+  color: var(--cn-accent);
 }
 
 /* -- banners --------------------------------------------------------------- */
 .banner {
   display: flex;
   align-items: center;
-  gap: var(--mc-space-2);
-  border: 1px solid var(--mc-border);
-  border-radius: var(--mc-radius-md, 0.5rem);
-  padding: var(--mc-space-3);
-  font-size: var(--mc-text-sm);
+  gap: var(--cn-space-2);
+  border: 1px solid var(--cn-border);
+  border-radius: var(--cn-radius-md, 0.5rem);
+  padding: var(--cn-space-3);
+  font-size: var(--cn-text-sm);
   line-height: 1.5;
 }
 
@@ -47,34 +47,34 @@
 }
 
 .error {
-  border-color: color-mix(in srgb, #dc2626 45%, var(--mc-border));
+  border-color: color-mix(in srgb, #dc2626 45%, var(--cn-border));
   background: color-mix(in srgb, #dc2626 8%, transparent);
-  color: var(--mc-text);
+  color: var(--cn-text);
 }
 
 .ok {
-  border-color: color-mix(in srgb, #059669 45%, var(--mc-border));
+  border-color: color-mix(in srgb, #059669 45%, var(--cn-border));
   background: color-mix(in srgb, #059669 8%, transparent);
-  color: var(--mc-text);
+  color: var(--cn-text);
 }
 
 /* -- channel card ---------------------------------------------------------- */
 .card {
   --agent-accent: #229ed9; /* Telegram blue by default; overridden per card */
-  border: 1px solid var(--mc-border);
-  border-radius: var(--mc-radius-lg);
-  background: var(--mc-surface);
-  box-shadow: var(--mc-shadow);
-  padding: var(--mc-space-4);
+  border: 1px solid var(--cn-border);
+  border-radius: var(--cn-radius-lg);
+  background: var(--cn-surface);
+  box-shadow: var(--cn-shadow);
+  padding: var(--cn-space-4);
   display: flex;
   flex-direction: column;
-  gap: var(--mc-space-4);
+  gap: var(--cn-space-4);
 }
 
 .cardHead {
   display: flex;
   align-items: center;
-  gap: var(--mc-space-3);
+  gap: var(--cn-space-3);
 }
 
 .mark {
@@ -93,14 +93,14 @@
 
 .cardTitle {
   margin: 0;
-  font-size: var(--mc-text-sm);
+  font-size: var(--cn-text-sm);
   font-weight: 700;
-  color: var(--mc-text);
+  color: var(--cn-text);
 }
 
 .cardKicker {
-  font-size: var(--mc-text-xs);
-  color: var(--mc-text-muted);
+  font-size: var(--cn-text-xs);
+  color: var(--cn-text-muted);
 }
 
 .statusPill {
@@ -110,9 +110,9 @@
   letter-spacing: 0.02em;
   border-radius: 999px;
   padding: 3px 10px;
-  border: 1px solid var(--mc-border);
-  color: var(--mc-text-muted);
-  background: var(--mc-surface-raised, var(--mc-surface));
+  border: 1px solid var(--cn-border);
+  color: var(--cn-text-muted);
+  background: var(--cn-surface-raised, var(--cn-surface));
   white-space: nowrap;
 }
 
@@ -131,9 +131,9 @@
 /* -- guided steps ---------------------------------------------------------- */
 .step {
   display: flex;
-  gap: var(--mc-space-3);
-  padding-top: var(--mc-space-3);
-  border-top: 1px solid var(--mc-border);
+  gap: var(--cn-space-3);
+  padding-top: var(--cn-space-3);
+  border-top: 1px solid var(--cn-border);
 }
 
 .stepNum {
@@ -154,35 +154,35 @@
   flex: 1;
   display: flex;
   flex-direction: column;
-  gap: var(--mc-space-2);
+  gap: var(--cn-space-2);
   min-width: 0;
 }
 
 .stepTitle {
-  font-size: var(--mc-text-sm);
+  font-size: var(--cn-text-sm);
   font-weight: 600;
-  color: var(--mc-text);
+  color: var(--cn-text);
 }
 
 .hint {
   margin: 0;
-  font-size: var(--mc-text-xs);
-  color: var(--mc-text-muted);
+  font-size: var(--cn-text-xs);
+  color: var(--cn-text-muted);
   line-height: 1.55;
 }
 
 .code {
-  font-family: var(--mc-font-mono, ui-monospace, monospace);
+  font-family: var(--cn-font-mono, ui-monospace, monospace);
   font-size: 0.85em;
-  background: var(--mc-surface-raised, var(--mc-surface));
-  border: 1px solid var(--mc-border);
+  background: var(--cn-surface-raised, var(--cn-surface));
+  border: 1px solid var(--cn-border);
   border-radius: 4px;
   padding: 1px 5px;
 }
 
 .row {
   display: flex;
-  gap: var(--mc-space-2);
+  gap: var(--cn-space-2);
   align-items: flex-end;
   flex-wrap: wrap;
 }
@@ -194,14 +194,14 @@
 
 .actions {
   display: flex;
-  gap: var(--mc-space-2);
+  gap: var(--cn-space-2);
   flex-wrap: wrap;
   align-items: center;
 }
 
 .linkedTarget {
-  font-size: var(--mc-text-xs);
-  color: var(--mc-text-muted);
+  font-size: var(--cn-text-xs);
+  color: var(--cn-text-muted);
 }
 
 /* -- enable toggle --------------------------------------------------------- */
@@ -209,7 +209,7 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: var(--mc-space-4);
+  gap: var(--cn-space-4);
 }
 
 .switch {
@@ -217,9 +217,9 @@
   width: 46px;
   height: 26px;
   flex: none;
-  border: 1px solid var(--mc-border);
+  border: 1px solid var(--cn-border);
   border-radius: 999px;
-  background: color-mix(in srgb, var(--mc-text-muted) 22%, transparent);
+  background: color-mix(in srgb, var(--cn-text-muted) 22%, transparent);
   cursor: pointer;
   transition: background 0.15s ease;
   padding: 0;
@@ -260,8 +260,8 @@
   margin-left: auto;
   font-size: 11px;
   font-weight: 700;
-  color: var(--mc-text-subtle);
-  border: 1px solid var(--mc-border);
+  color: var(--cn-text-subtle);
+  border: 1px solid var(--cn-border);
   border-radius: 999px;
   padding: 3px 10px;
 }

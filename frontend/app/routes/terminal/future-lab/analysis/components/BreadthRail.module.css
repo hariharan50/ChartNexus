@@ -10,11 +10,11 @@
 .card {
   display: flex;
   flex-direction: column;
-  gap: var(--mc-space-2);
-  padding: var(--mc-space-3) var(--mc-space-3) var(--mc-space-2);
-  border: 1px solid var(--mc-border);
-  border-radius: var(--mc-radius-lg);
-  background: var(--mc-surface);
+  gap: var(--cn-space-2);
+  padding: var(--cn-space-3) var(--cn-space-3) var(--cn-space-2);
+  border: 1px solid var(--cn-border);
+  border-radius: var(--cn-radius-lg);
+  background: var(--cn-surface);
   min-width: 0;
 }
 
@@ -26,7 +26,7 @@
   overscroll-behavior: contain;
   /* Firefox: thin and themed, always there to grab. */
   scrollbar-width: thin;
-  scrollbar-color: var(--mc-border-strong) transparent;
+  scrollbar-color: var(--cn-border-strong) transparent;
 }
 
 /*
@@ -44,7 +44,7 @@
 }
 
 .scroller::-webkit-scrollbar-thumb {
-  background: var(--mc-border-strong);
+  background: var(--cn-border-strong);
   border-radius: 4px;
   /* Inset so the thumb floats clear of the rows rather than butting them. */
   border: 2px solid transparent;
@@ -52,7 +52,7 @@
 }
 
 .scroller::-webkit-scrollbar-thumb:hover {
-  background: var(--mc-text-subtle);
+  background: var(--cn-text-subtle);
   background-clip: padding-box;
 }
 
@@ -60,7 +60,7 @@
   width: 100%;
   table-layout: fixed;
   border-collapse: collapse;
-  font-size: var(--mc-text-sm);
+  font-size: var(--cn-text-sm);
   font-variant-numeric: tabular-nums;
 }
 
@@ -76,11 +76,11 @@
   position: sticky;
   top: 0;
   z-index: 1;
-  padding: var(--mc-space-2) var(--mc-space-1);
-  border-bottom: 1px solid var(--mc-border);
-  background: var(--mc-surface);
-  color: var(--mc-text-subtle);
-  font-size: var(--mc-text-xs);
+  padding: var(--cn-space-2) var(--cn-space-1);
+  border-bottom: 1px solid var(--cn-border);
+  background: var(--cn-surface);
+  color: var(--cn-text-subtle);
+  font-size: var(--cn-text-xs);
   font-weight: 600;
   text-align: left;
   white-space: nowrap;
@@ -94,35 +94,35 @@
   /* Short on purpose: this heading shares a narrow column with two numeric
      ones, and "all F&O" clipped to "all F8". A clipped label is worse than a
      terse one. */
-  margin-left: var(--mc-space-2);
+  margin-left: var(--cn-space-2);
   font-weight: 400;
   opacity: 0.7;
 }
 
 .table td {
   padding: 0;
-  border-bottom: 1px solid var(--mc-border);
-  color: var(--mc-text);
+  border-bottom: 1px solid var(--cn-border);
+  color: var(--cn-text);
   white-space: nowrap;
   overflow: hidden;
 }
 
 .table tbody tr:hover td {
-  background: var(--mc-surface-raised);
+  background: var(--cn-surface-raised);
 }
 
 /* The selected scope, marked by a rule rather than a fill: a filled row beside
    a column of coloured percentages starts competing with them. */
 .selected td {
-  background: var(--mc-surface-raised);
+  background: var(--cn-surface-raised);
 }
 
 .selected td:first-child {
-  box-shadow: inset 2px 0 0 var(--mc-accent);
+  box-shadow: inset 2px 0 0 var(--cn-accent);
 }
 
 .selected .pick {
-  color: var(--mc-accent);
+  color: var(--cn-accent);
   font-weight: 700;
 }
 
@@ -131,7 +131,7 @@
 .pick {
   display: block;
   width: 100%;
-  padding: var(--mc-space-2) var(--mc-space-1);
+  padding: var(--cn-space-2) var(--cn-space-1);
   border: 0;
   background: none;
   color: inherit;
@@ -144,43 +144,43 @@
 }
 
 .pick:focus-visible {
-  outline: 2px solid var(--mc-focus);
+  outline: 2px solid var(--cn-focus);
   outline-offset: -2px;
 }
 
 .numeric {
-  padding-right: var(--mc-space-1);
+  padding-right: var(--cn-space-1);
   text-align: right;
 }
 
 .breadth {
-  font-size: var(--mc-text-xs);
+  font-size: var(--cn-text-xs);
 }
 
 .slash {
   padding: 0 0.125rem;
-  color: var(--mc-text-subtle);
+  color: var(--cn-text-subtle);
 }
 
 .empty {
   margin: 0;
-  padding: var(--mc-space-4) var(--mc-space-2);
-  color: var(--mc-text-subtle);
-  font-size: var(--mc-text-xs);
+  padding: var(--cn-space-4) var(--cn-space-2);
+  color: var(--cn-text-subtle);
+  font-size: var(--cn-text-xs);
 }
 
 .footnote {
   margin: 0;
-  padding-top: var(--mc-space-2);
-  border-top: 1px solid var(--mc-border);
-  color: var(--mc-text-subtle);
-  font-size: var(--mc-text-xs);
+  padding-top: var(--cn-space-2);
+  border-top: 1px solid var(--cn-border);
+  color: var(--cn-text-subtle);
+  font-size: var(--cn-text-xs);
 }
 
 .up {
-  color: var(--mc-bullish);
+  color: var(--cn-bullish);
 }
 
 .down {
-  color: var(--mc-bearish);
+  color: var(--cn-bearish);
 }

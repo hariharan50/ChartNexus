@@ -7,7 +7,7 @@
  * reproducible rather than dependent on whatever cookies happen to be around.
  *
  * Authentication is deliberately crude — a request is signed in when it carries
- * `mc_session=test`. Tests opt in by setting that cookie.
+ * `cn_session=test`. Tests opt in by setting that cookie.
  *
  * Market data is fully deterministic (fixed prices, fixed clock, seeded strike
  * ladder). The parity suite pixel-compares two apps against this, so anything
@@ -19,7 +19,7 @@ const PORT = Number(process.env.STUB_API_PORT ?? 8099);
 
 const USER = {
   id: '00000000-0000-4000-8000-000000000001',
-  email: 'test@marketcompass.local',
+  email: 'test@chartnexus.local',
   phone: '+919876543210',
   display_name: 'Test User',
   status: 'active',
@@ -494,7 +494,7 @@ function problem(res, status, code, detail) {
 
 const server = createServer((req, res) => {
   const url = new URL(req.url ?? '/', `http://localhost:${PORT}`);
-  const signedIn = (req.headers.cookie ?? '').includes('mc_session=test');
+  const signedIn = (req.headers.cookie ?? '').includes('cn_session=test');
   const instrument = url.searchParams.get('instrument') ?? 'NIFTY';
 
   if (url.pathname === '/__stub/health') {

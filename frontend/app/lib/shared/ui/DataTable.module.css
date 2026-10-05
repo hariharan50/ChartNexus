@@ -2,22 +2,22 @@
    sideways. */
 .scroll {
   overflow-x: auto;
-  border: 1px solid var(--mc-border);
-  border-radius: var(--mc-radius-lg);
-  background: var(--mc-surface);
+  border: 1px solid var(--cn-border);
+  border-radius: var(--cn-radius-lg);
+  background: var(--cn-surface);
 }
 
 .table {
   width: 100%;
   border-collapse: collapse;
-  font-size: var(--mc-text-sm);
+  font-size: var(--cn-text-sm);
   font-variant-numeric: tabular-nums;
 }
 
 .caption {
-  padding: var(--mc-space-3) var(--mc-space-4);
-  color: var(--mc-text-muted);
-  font-size: var(--mc-text-xs);
+  padding: var(--cn-space-3) var(--cn-space-4);
+  color: var(--cn-text-muted);
+  font-size: var(--cn-text-xs);
   text-align: left;
 }
 
@@ -25,11 +25,11 @@
   position: sticky;
   top: 0;
   z-index: 1;
-  padding: var(--mc-space-2) var(--mc-space-3);
-  border-bottom: 1px solid var(--mc-border);
-  background: var(--mc-surface-raised);
-  color: var(--mc-text-muted);
-  font-size: var(--mc-text-xs);
+  padding: var(--cn-space-2) var(--cn-space-3);
+  border-bottom: 1px solid var(--cn-border);
+  background: var(--cn-surface-raised);
+  color: var(--cn-text-muted);
+  font-size: var(--cn-text-xs);
   font-weight: 600;
   letter-spacing: 0.04em;
   text-align: left;
@@ -38,8 +38,8 @@
 }
 
 .table tbody td {
-  padding: var(--mc-space-2) var(--mc-space-3);
-  border-bottom: 1px solid var(--mc-border);
+  padding: var(--cn-space-2) var(--cn-space-3);
+  border-bottom: 1px solid var(--cn-border);
   white-space: nowrap;
 }
 
@@ -48,7 +48,7 @@
 }
 
 .table tbody tr:hover td {
-  background: var(--mc-surface-raised);
+  background: var(--cn-surface-raised);
 }
 
 .right {
@@ -70,16 +70,16 @@
 }
 
 .sortBtn:hover {
-  color: var(--mc-text);
+  color: var(--cn-text);
 }
 
 .sortBtn:focus-visible {
-  outline: 2px solid var(--mc-accent);
+  outline: 2px solid var(--cn-accent);
   outline-offset: 2px;
 }
 
 .sortActive {
-  color: var(--mc-text);
+  color: var(--cn-text);
 }
 
 /* Dimmed until the column is the active sort, so the header row does not read
@@ -99,12 +99,12 @@
 
 .empty {
   margin: 0;
-  padding: var(--mc-space-6);
-  border: 1px solid var(--mc-border);
-  border-radius: var(--mc-radius-lg);
-  background: var(--mc-surface);
-  color: var(--mc-text-muted);
-  font-size: var(--mc-text-sm);
+  padding: var(--cn-space-6);
+  border: 1px solid var(--cn-border);
+  border-radius: var(--cn-radius-lg);
+  background: var(--cn-surface);
+  color: var(--cn-text-muted);
+  font-size: var(--cn-text-sm);
   text-align: center;
 }
 
@@ -114,11 +114,11 @@
   position: sticky;
   left: 0;
   z-index: 1;
-  background: var(--mc-surface);
+  background: var(--cn-surface);
 }
 
 .table tbody tr:hover .stickyCell {
-  background: var(--mc-surface-raised);
+  background: var(--cn-surface-raised);
 }
 
 .stickyHead {

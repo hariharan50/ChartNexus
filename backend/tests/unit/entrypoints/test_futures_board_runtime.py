@@ -12,9 +12,9 @@ from decimal import Decimal
 
 import pytest
 
-from marketcompass.contexts.futures_analytics.application.ports import BoardSnapshot
-from marketcompass.contexts.futures_analytics.domain.buildup import FuturesReading
-from marketcompass.entrypoints.futures_board_runtime import (
+from chartnexus.contexts.futures_analytics.application.ports import BoardSnapshot
+from chartnexus.contexts.futures_analytics.domain.buildup import FuturesReading
+from chartnexus.entrypoints.futures_board_runtime import (
     _bucket,
     frames_from,
     session_date_of,

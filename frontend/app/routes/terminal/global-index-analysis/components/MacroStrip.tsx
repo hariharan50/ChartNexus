@@ -28,8 +28,8 @@ export default function MacroStrip({ markets }: Props) {
         return (
           <div className={s.cell} key={row.key}>
             <p className={s.label}>{row.label}</p>
-            <p className={cx(s.value, 'mc-numeric')}>{fmtLevel(row.price)}</p>
-            <p className={cx(s.move, 'mc-numeric', s[t ?? 'none'])}>
+            <p className={cx(s.value, 'cn-numeric')}>{fmtLevel(row.price)}</p>
+            <p className={cx(s.move, 'cn-numeric', s[t ?? 'none'])}>
               {fmtPercent(row.change_percent)}
             </p>
           </div>

@@ -12,8 +12,8 @@ import uuid
 from collections.abc import AsyncIterator
 from datetime import UTC, date, datetime
 
-from marketcompass.contexts.mme100.application.mme100_service import Mme100Service
-from marketcompass.contexts.mme100.application.ports import (
+from chartnexus.contexts.mme100.application.mme100_service import Mme100Service
+from chartnexus.contexts.mme100.application.ports import (
     AgentDone,
     AgentEvent,
     Briefing,
@@ -21,8 +21,8 @@ from marketcompass.contexts.mme100.application.ports import (
     TextDelta,
     Turn,
 )
-from marketcompass.contexts.mme100.application.run_briefing import RunMme100Briefing
-from marketcompass.shared_kernel.types.identifiers import TenantId
+from chartnexus.contexts.mme100.application.run_briefing import RunMme100Briefing
+from chartnexus.shared_kernel.types.identifiers import TenantId
 
 TENANT = TenantId(uuid.uuid4())
 TICK = datetime(2026, 8, 24, 3, 0, tzinfo=UTC)  # 08:30 IST Monday

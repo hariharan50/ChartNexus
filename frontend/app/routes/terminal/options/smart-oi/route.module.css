@@ -9,8 +9,8 @@
 .page {
   display: flex;
   flex-direction: column;
-  gap: var(--mc-space-4);
-  padding: var(--mc-space-5);
+  gap: var(--cn-space-4);
+  padding: var(--cn-space-5);
 }
 
 .layout {
@@ -21,14 +21,14 @@
      not using. `minmax(0, …)` on both tracks so neither can be pushed wider
      than its half by its own content. */
   grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-  gap: var(--mc-space-4);
+  gap: var(--cn-space-4);
   align-items: start;
 }
 
 .side {
   display: flex;
   flex-direction: column;
-  gap: var(--mc-space-4);
+  gap: var(--cn-space-4);
   min-width: 0;
 }
 
@@ -36,75 +36,75 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: var(--mc-space-3);
-  padding: var(--mc-space-4);
-  border: 1px solid var(--mc-bearish);
-  border-radius: var(--mc-radius-lg);
-  color: var(--mc-text);
+  gap: var(--cn-space-3);
+  padding: var(--cn-space-4);
+  border: 1px solid var(--cn-bearish);
+  border-radius: var(--cn-radius-lg);
+  color: var(--cn-text);
 }
 
 .retry {
-  height: var(--mc-control-h-sm);
-  padding: 0 var(--mc-space-3);
-  border: 1px solid var(--mc-border);
-  border-radius: var(--mc-radius);
-  background: var(--mc-surface-raised);
-  color: var(--mc-text);
+  height: var(--cn-control-h-sm);
+  padding: 0 var(--cn-space-3);
+  border: 1px solid var(--cn-border);
+  border-radius: var(--cn-radius);
+  background: var(--cn-surface-raised);
+  color: var(--cn-text);
   font-weight: 600;
   cursor: pointer;
 }
 
 .loading {
   margin: 0;
-  padding: var(--mc-space-10) var(--mc-space-4);
+  padding: var(--cn-space-10) var(--cn-space-4);
   text-align: center;
-  color: var(--mc-text-muted);
+  color: var(--cn-text-muted);
 }
 
 .note {
   margin: 0;
-  padding: var(--mc-space-3) var(--mc-space-4);
-  border: 1px solid var(--mc-border);
-  border-left: 3px solid var(--mc-warning);
-  border-radius: var(--mc-radius);
-  background: var(--mc-surface);
-  color: var(--mc-text-muted);
-  font-size: var(--mc-text-sm);
+  padding: var(--cn-space-3) var(--cn-space-4);
+  border: 1px solid var(--cn-border);
+  border-left: 3px solid var(--cn-warning);
+  border-radius: var(--cn-radius);
+  background: var(--cn-surface);
+  color: var(--cn-text-muted);
+  font-size: var(--cn-text-sm);
 }
 
 .note.stale {
-  border-left-color: var(--mc-bearish);
-  color: var(--mc-bearish);
+  border-left-color: var(--cn-bearish);
+  color: var(--cn-bearish);
 }
 
 .footer {
   display: flex;
   align-items: center;
-  gap: var(--mc-space-3);
+  gap: var(--cn-space-3);
 }
 
 .meta {
-  font-size: var(--mc-text-xs);
-  color: var(--mc-text-subtle);
+  font-size: var(--cn-text-xs);
+  color: var(--cn-text-subtle);
   font-variant-numeric: tabular-nums;
 }
 
 .download {
   margin-left: auto;
-  height: var(--mc-control-h-sm);
+  height: var(--cn-control-h-sm);
   padding: 0 0.625rem;
-  border: 1px solid var(--mc-border);
-  border-radius: var(--mc-radius);
-  background: var(--mc-surface-raised);
-  color: var(--mc-text-muted);
-  font-size: var(--mc-text-xs);
+  border: 1px solid var(--cn-border);
+  border-radius: var(--cn-radius);
+  background: var(--cn-surface-raised);
+  color: var(--cn-text-muted);
+  font-size: var(--cn-text-xs);
   font-weight: 600;
   white-space: nowrap;
   cursor: pointer;
 }
 
 .download:hover {
-  color: var(--mc-text);
+  color: var(--cn-text);
 }
 
 /* No intermediate step any more: an even split is already fluid, so the two

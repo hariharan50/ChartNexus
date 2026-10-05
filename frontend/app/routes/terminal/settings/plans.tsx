@@ -1,7 +1,7 @@
 import s from './plans.module.css';
 import type { Route } from './+types/plans';
 
-export const meta: Route.MetaFunction = () => [{ title: 'My Plans · Settings · MarketCompass' }];
+export const meta: Route.MetaFunction = () => [{ title: 'My Plans · Settings · ChartNexus' }];
 
 export default function SettingsPlans() {
   return (

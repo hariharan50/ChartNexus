@@ -1,8 +1,8 @@
 .wrap {
-  border: 1px solid var(--mc-border);
-  border-radius: var(--mc-radius-lg);
-  background: var(--mc-surface);
-  padding: var(--mc-space-2);
+  border: 1px solid var(--cn-border);
+  border-radius: var(--cn-radius-lg);
+  background: var(--cn-surface);
+  padding: var(--cn-space-2);
 }
 
 .chart {
@@ -12,8 +12,8 @@
 
 .empty {
   margin: 0;
-  padding: var(--mc-space-6);
-  color: var(--mc-text-muted);
-  font-size: var(--mc-text-sm);
+  padding: var(--cn-space-6);
+  color: var(--cn-text-muted);
+  font-size: var(--cn-text-sm);
   text-align: center;
 }

@@ -3,7 +3,7 @@ import { THEME_OPTIONS, useThemeStore, type Theme } from '$shared/ui/theme-store
 import s from './appearance.module.css';
 import type { Route } from './+types/appearance';
 
-export const meta: Route.MetaFunction = () => [{ title: 'Layout · Settings · MarketCompass' }];
+export const meta: Route.MetaFunction = () => [{ title: 'Layout · Settings · ChartNexus' }];
 
 /**
  * A mini snapshot of each theme, built from that theme's *fixed* palette rather
@@ -88,8 +88,8 @@ export default function SettingsAppearance() {
     <>
       <h1 className={s.heading}>Layout</h1>
       <p className={s.intro}>
-        Choose how MarketCompass looks. Light is the crisp daytime layout; the dark layouts are
-        tuned for long, low-light trading sessions. Your choice is saved on this device and applies
+        Choose how ChartNexus looks. Light is the crisp daytime layout; the dark layouts are tuned
+        for long, low-light trading sessions. Your choice is saved on this device and applies
         everywhere in the app.
       </p>
 

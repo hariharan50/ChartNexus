@@ -10,7 +10,7 @@ from __future__ import annotations
 
 import pytest
 
-from marketcompass.infrastructure.security.encryption import AesGcmCipher, DecryptionError
+from chartnexus.infrastructure.security.encryption import AesGcmCipher, DecryptionError
 
 pytestmark = pytest.mark.unit
 

@@ -43,10 +43,10 @@ export default function ExpectedMoveCard({ move }: Props) {
         {rows.map(([key, estimate]) => (
           <li key={key} className={s.row}>
             <span className={s.label}>{MOVE_LABELS[key]}</span>
-            <span className={cx(s.band, 'mc-numeric')}>
+            <span className={cx(s.band, 'cn-numeric')}>
               {fmtLevel(estimate.lower)} — {fmtLevel(estimate.upper)}
             </span>
-            <span className={cx(s.size, 'mc-numeric')}>
+            <span className={cx(s.size, 'cn-numeric')}>
               ±{fmtLevel(estimate.points)} ({fmtPercent(estimate.percent)})
             </span>
           </li>

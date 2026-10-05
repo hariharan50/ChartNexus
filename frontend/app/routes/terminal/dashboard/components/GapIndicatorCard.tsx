@@ -105,7 +105,7 @@ export default function GapIndicatorCard({ reading, loading = false, label }: Pr
         <div className={s.body}>
           <div className={s.verdictRow}>
             <p className={cx(s.verdict, s[reading.signal])}>{VERDICT[reading.signal]}</p>
-            <p className={cx(s.gap, s[reading.signal], 'mc-numeric')}>
+            <p className={cx(s.gap, s[reading.signal], 'cn-numeric')}>
               {signed(reading.points, 2)} ({signed(reading.percent, 2)}%)
             </p>
           </div>
@@ -113,11 +113,11 @@ export default function GapIndicatorCard({ reading, loading = false, label }: Pr
           <div className={s.figures}>
             <div className={s.cell}>
               <p className={s.key}>Open</p>
-              <p className={cx(s.figure, 'mc-numeric')}>{level(reading.open)}</p>
+              <p className={cx(s.figure, 'cn-numeric')}>{level(reading.open)}</p>
             </div>
             <div className={s.cell}>
               <p className={s.key}>Prev Close</p>
-              <p className={cx(s.figure, 'mc-numeric')}>{level(reading.previousClose)}</p>
+              <p className={cx(s.figure, 'cn-numeric')}>{level(reading.previousClose)}</p>
             </div>
           </div>
 

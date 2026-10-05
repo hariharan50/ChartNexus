@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import pytest
 
-from marketcompass.contexts.signals.domain.training import (
+from chartnexus.contexts.signals.domain.training import (
     LabeledRow,
     backtest,
     build_calibration,

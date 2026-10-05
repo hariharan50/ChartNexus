@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from datetime import UTC, datetime, timedelta, timezone
 
-from marketcompass.contexts.hugin.domain.schedule import (
+from chartnexus.contexts.hugin.domain.schedule import (
     SessionWindow,
     is_aligned_tick,
     is_session_open,

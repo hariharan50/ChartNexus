@@ -40,9 +40,9 @@ export default function HeadlineCards({ cards, focus, onFocus }: Props) {
             onClick={() => onFocus(card.symbol)}
           >
             <span className={s.label}>{card.label}</span>
-            <span className={cx(s.price, 'mc-numeric')}>{fmtLevel(card.price)}</span>
+            <span className={cx(s.price, 'cn-numeric')}>{fmtLevel(card.price)}</span>
 
-            <span className={cx(s.change, 'mc-numeric', s[tone(card.change_percent) ?? 'flat'])}>
+            <span className={cx(s.change, 'cn-numeric', s[tone(card.change_percent) ?? 'flat'])}>
               {fmtChange(card.change)} ({fmtPercent(card.change_percent)})
             </span>
 
@@ -51,7 +51,7 @@ export default function HeadlineCards({ cards, focus, onFocus }: Props) {
                 <span className={cx(s.gapTag, s[gapTone(gap.bucket) ?? 'flat'])}>
                   {GAP_LABELS[gap.bucket]}
                 </span>
-                <span className={cx(s.gapFigure, 'mc-numeric')}>
+                <span className={cx(s.gapFigure, 'cn-numeric')}>
                   {fmtPercent(gap.percent)}
                   {gap.basis === 'atr' ? ` · ${fmtAtr(gap.atr_multiple)} ATR` : ''}
                 </span>

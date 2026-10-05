@@ -1,11 +1,11 @@
 """LLM-backed eval: does the planner route questions to the right skill?
 
 This calls the real model, so it is gated: skipped unless the ``agent`` extra is
-installed AND ``MC_LLM_ANTHROPIC_API_KEY`` is set. It is not part of the default
+installed AND ``CN_LLM_ANTHROPIC_API_KEY`` is set. It is not part of the default
 test run (see the Taskfile / pytest markers) — run it on demand to catch skill-
 selection regressions after prompt or registry changes:
 
-    MC_LLM_ANTHROPIC_API_KEY=sk-ant-... uv run --extra agent pytest tests/eval -m eval
+    CN_LLM_ANTHROPIC_API_KEY=sk-ant-... uv run --extra agent pytest tests/eval -m eval
 
 Each case asserts the expected skill is *among* the planner's selection (it may
 legitimately pick more than one), which is the property the executor relies on.
@@ -19,15 +19,15 @@ import pytest
 
 pytest.importorskip("langchain_anthropic")
 
-from marketcompass.contexts.copilot.domain import skills
-from marketcompass.infrastructure.agent.langgraph.llm import build_chat_model
-from marketcompass.infrastructure.agent.langgraph.planner import select_skills
+from chartnexus.contexts.copilot.domain import skills
+from chartnexus.infrastructure.agent.langgraph.llm import build_chat_model
+from chartnexus.infrastructure.agent.langgraph.planner import select_skills
 
 pytestmark = [
     pytest.mark.eval,
     pytest.mark.skipif(
-        not os.getenv("MC_LLM_ANTHROPIC_API_KEY"),
-        reason="MC_LLM_ANTHROPIC_API_KEY not set — the planner eval calls the real model",
+        not os.getenv("CN_LLM_ANTHROPIC_API_KEY"),
+        reason="CN_LLM_ANTHROPIC_API_KEY not set — the planner eval calls the real model",
     ),
     pytest.mark.filterwarnings("ignore::DeprecationWarning"),
 ]
@@ -45,8 +45,8 @@ _CASES = [
 def _model():
     return build_chat_model(
         provider="anthropic",
-        api_key=os.environ["MC_LLM_ANTHROPIC_API_KEY"],
-        model=os.getenv("MC_LLM_MODEL", "claude-sonnet-5"),
+        api_key=os.environ["CN_LLM_ANTHROPIC_API_KEY"],
+        model=os.getenv("CN_LLM_MODEL", "claude-sonnet-5"),
         max_output_tokens=512,
         request_timeout_seconds=30.0,
     )

@@ -34,7 +34,7 @@ RUN --mount=type=cache,target=/root/.cache/uv \
 COPY backend/ ./
 RUN --mount=type=cache,target=/root/.cache/uv uv sync --frozen
 EXPOSE 8000
-CMD ["uv", "run", "uvicorn", "marketcompass.entrypoints.main_api:create_app", \
+CMD ["uv", "run", "uvicorn", "chartnexus.entrypoints.main_api:create_app", \
      "--factory", "--host", "0.0.0.0", "--port", "8000", "--reload"]
 
 # --------------------------------------------------------------------------
@@ -63,6 +63,6 @@ HEALTHCHECK --interval=30s --timeout=3s --start-period=20s --retries=3 \
     CMD curl -fsS http://localhost:8000/health/live || exit 1
 
 # Overridden per service (ingest / score / realtime) in Helm and compose.
-CMD ["uvicorn", "marketcompass.entrypoints.main_api:create_app", \
+CMD ["uvicorn", "chartnexus.entrypoints.main_api:create_app", \
      "--factory", "--host", "0.0.0.0", "--port", "8000", \
      "--workers", "2", "--no-access-log"]

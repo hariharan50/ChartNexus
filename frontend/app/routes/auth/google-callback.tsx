@@ -9,7 +9,7 @@ import s from './google-callback.module.css';
 import type { Route } from './+types/google-callback';
 
 /**
- * Where Google returns the user (MC_GOOGLE_REDIRECT_URI).
+ * Where Google returns the user (CN_GOOGLE_REDIRECT_URI).
  *
  * The `code` lands in the browser's address bar, so this page hands it
  * straight to the API and replaces the history entry — a code left in history
@@ -17,7 +17,7 @@ import type { Route } from './+types/google-callback';
  */
 
 export const meta: Route.MetaFunction = () => [
-  { title: 'Signing in · MarketCompass' },
+  { title: 'Signing in · ChartNexus' },
   { name: 'robots', content: 'noindex' }
 ];
 

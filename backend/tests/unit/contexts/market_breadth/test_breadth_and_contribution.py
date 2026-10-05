@@ -6,22 +6,22 @@ from decimal import Decimal
 
 import pytest
 
-from marketcompass.contexts.market_breadth.domain.breadth import (
+from chartnexus.contexts.market_breadth.domain.breadth import (
     UNCLASSIFIED,
     breadth_by_sector,
     count_breadth,
     weighted_change,
 )
-from marketcompass.contexts.market_breadth.domain.constituents import (
+from chartnexus.contexts.market_breadth.domain.constituents import (
     Constituent,
     IndexSnapshot,
 )
-from marketcompass.contexts.market_breadth.domain.contribution import (
+from chartnexus.contexts.market_breadth.domain.contribution import (
     contributions,
     normalised_weights,
     weight_slices,
 )
-from marketcompass.contexts.market_breadth.domain.rotation import (
+from chartnexus.contexts.market_breadth.domain.rotation import (
     Quadrant,
     classify,
     positions,

@@ -6,12 +6,12 @@ import uuid
 from datetime import UTC, datetime
 from decimal import Decimal
 
-from marketcompass.contexts.hugin.application.run_cycle import RunHuginCycle
-from marketcompass.contexts.hugin.domain.cycle import CycleStatus, ReflectInput, ReflectOutput
-from marketcompass.contexts.hugin.domain.grade import GradeOutcome
-from marketcompass.contexts.hugin.domain.lesson import Lesson
-from marketcompass.contexts.hugin.domain.observation import Bias, Grade, Observation
-from marketcompass.shared_kernel.types.identifiers import TenantId
+from chartnexus.contexts.hugin.application.run_cycle import RunHuginCycle
+from chartnexus.contexts.hugin.domain.cycle import CycleStatus, ReflectInput, ReflectOutput
+from chartnexus.contexts.hugin.domain.grade import GradeOutcome
+from chartnexus.contexts.hugin.domain.lesson import Lesson
+from chartnexus.contexts.hugin.domain.observation import Bias, Grade, Observation
+from chartnexus.shared_kernel.types.identifiers import TenantId
 
 TENANT = TenantId(uuid.uuid4())
 

@@ -20,7 +20,7 @@ export function loader({ params }: Route.LoaderArgs) {
 }
 
 export const meta: Route.MetaFunction = ({ params }) => [
-  { title: `${toolBySlug(params.tool)?.name ?? 'Tool'} · MarketCompass` }
+  { title: `${toolBySlug(params.tool)?.name ?? 'Tool'} · ChartNexus` }
 ];
 
 /** A reserved tool slot. Replaced by the tool's own page as each is built. */

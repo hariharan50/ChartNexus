@@ -13,7 +13,7 @@ from decimal import Decimal
 
 import pytest
 
-from marketcompass.contexts.market_breadth.domain.breadth_series import (
+from chartnexus.contexts.market_breadth.domain.breadth_series import (
     PricePoint,
     breadth_series,
     within_session,

@@ -16,8 +16,8 @@ from typing import Any
 
 import pytest
 
-from marketcompass.contexts.global_markets.domain.quotes import DataSource
-from marketcompass.infrastructure.global_markets.yahoo.chart_parser import (
+from chartnexus.contexts.global_markets.domain.quotes import DataSource
+from chartnexus.infrastructure.global_markets.yahoo.chart_parser import (
     UnknownSymbolError,
     to_quote,
 )
@@ -98,9 +98,7 @@ class TestToQuote:
         """Rather than leaving the board's previous-close column empty."""
         body = {
             "chart": {
-                "result": [
-                    {"meta": {"regularMarketPrice": 110, "regularMarketChangePercent": 10}}
-                ],
+                "result": [{"meta": {"regularMarketPrice": 110, "regularMarketChangePercent": 10}}],
                 "error": None,
             }
         }

@@ -1,8 +1,8 @@
 .page {
   display: flex;
   flex-direction: column;
-  gap: var(--mc-space-3);
-  padding: var(--mc-space-5);
+  gap: var(--cn-space-3);
+  padding: var(--cn-space-5);
 }
 
 .header {
@@ -10,26 +10,26 @@
   flex-wrap: wrap;
   align-items: flex-start;
   justify-content: space-between;
-  gap: var(--mc-space-4);
+  gap: var(--cn-space-4);
 }
 
 .title {
   margin: 0;
-  font-size: var(--mc-text-lg);
+  font-size: var(--cn-text-lg);
   font-weight: 600;
 }
 
 .subtitle {
-  margin: var(--mc-space-1) 0 0;
+  margin: var(--cn-space-1) 0 0;
   max-width: 68ch;
-  color: var(--mc-text-muted);
-  font-size: var(--mc-text-sm);
+  color: var(--cn-text-muted);
+  font-size: var(--cn-text-sm);
 }
 
 .status {
   display: inline-flex;
   align-items: center;
-  gap: var(--mc-space-2);
+  gap: var(--cn-space-2);
 }
 
 @keyframes pulse {
@@ -42,20 +42,20 @@
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: var(--mc-space-3);
-  padding-top: var(--mc-space-1);
-  border-top: 1px solid var(--mc-border);
+  gap: var(--cn-space-3);
+  padding-top: var(--cn-space-1);
+  border-top: 1px solid var(--cn-border);
 }
 
 .count {
   margin-left: auto;
-  color: var(--mc-text-muted);
-  font-size: var(--mc-text-xs);
+  color: var(--cn-text-muted);
+  font-size: var(--cn-text-xs);
   font-variant-numeric: tabular-nums;
 }
 
 .partial {
-  color: var(--mc-warning);
+  color: var(--cn-warning);
 }
 
 /* Board and rail. The rail drops beneath the table when there is no room for
@@ -63,7 +63,7 @@
 .body {
   display: flex;
   align-items: flex-start;
-  gap: var(--mc-space-3);
+  gap: var(--cn-space-3);
 }
 
 .main {
@@ -84,22 +84,22 @@
 .placeholder,
 .error {
   margin: 0;
-  padding: var(--mc-space-6);
-  border: 1px solid var(--mc-border);
-  border-radius: var(--mc-radius-lg);
-  background: var(--mc-surface);
-  color: var(--mc-text-muted);
-  font-size: var(--mc-text-sm);
+  padding: var(--cn-space-6);
+  border: 1px solid var(--cn-border);
+  border-radius: var(--cn-radius-lg);
+  background: var(--cn-surface);
+  color: var(--cn-text-muted);
+  font-size: var(--cn-text-sm);
   text-align: center;
 }
 
 .error {
-  border-color: var(--mc-bearish);
-  background: var(--mc-bearish-weak);
-  color: var(--mc-text);
+  border-color: var(--cn-bearish);
+  background: var(--cn-bearish-weak);
+  color: var(--cn-text);
 }
 
 .detail {
-  color: var(--mc-text-muted);
-  font-size: var(--mc-text-xs);
+  color: var(--cn-text-muted);
+  font-size: var(--cn-text-xs);
 }

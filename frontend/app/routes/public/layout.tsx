@@ -41,7 +41,7 @@ export default function PublicLayout() {
             <span className={s.mark} aria-hidden="true">
               <IconBolt />
             </span>
-            <span className={s.name}>MarketCompass</span>
+            <span className={s.name}>ChartNexus</span>
           </div>
 
           <div className={s.pitch}>

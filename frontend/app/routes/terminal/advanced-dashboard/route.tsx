@@ -23,7 +23,7 @@ import SpotCard from './components/SpotCard';
 import s from './route.module.css';
 import type { Route } from './+types/route';
 
-export const meta: Route.MetaFunction = () => [{ title: 'Advanced Dashboard · MarketCompass' }];
+export const meta: Route.MetaFunction = () => [{ title: 'Advanced Dashboard · ChartNexus' }];
 
 const dec = (v: string | null | undefined) => (v != null ? Number.parseFloat(v) : undefined);
 

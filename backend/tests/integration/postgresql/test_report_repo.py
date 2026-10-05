@@ -10,16 +10,16 @@ from collections.abc import AsyncIterator
 
 import pytest
 
-from marketcompass.bootstrap.settings import DatabaseSettings
-from marketcompass.infrastructure.persistence.postgresql.repositories.report.enrollment_repository import (
+from chartnexus.bootstrap.settings import DatabaseSettings
+from chartnexus.infrastructure.persistence.postgresql.repositories.report.enrollment_repository import (
     SqlAlchemyReportEnrollmentRepository,
 )
-from marketcompass.infrastructure.persistence.postgresql.session import Database
-from marketcompass.shared_kernel.types.identifiers import TenantId
+from chartnexus.infrastructure.persistence.postgresql.session import Database
+from chartnexus.shared_kernel.types.identifiers import TenantId
 
 pytestmark = pytest.mark.integration
 
-ASYNC_DSN = "postgresql+asyncpg://marketcompass:marketcompass@localhost:5433/marketcompass"
+ASYNC_DSN = "postgresql+asyncpg://chartnexus:chartnexus@localhost:5433/chartnexus"
 
 
 @pytest.fixture

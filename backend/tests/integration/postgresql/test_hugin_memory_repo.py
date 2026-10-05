@@ -17,18 +17,18 @@ from decimal import Decimal
 
 import pytest
 
-from marketcompass.bootstrap.settings import DatabaseSettings
-from marketcompass.contexts.hugin.domain.lesson import Lesson
-from marketcompass.contexts.hugin.domain.observation import Bias, Grade, Observation
-from marketcompass.infrastructure.persistence.postgresql.repositories.hugin.memory_repository import (
+from chartnexus.bootstrap.settings import DatabaseSettings
+from chartnexus.contexts.hugin.domain.lesson import Lesson
+from chartnexus.contexts.hugin.domain.observation import Bias, Grade, Observation
+from chartnexus.infrastructure.persistence.postgresql.repositories.hugin.memory_repository import (
     SqlAlchemyHuginMemoryRepository,
 )
-from marketcompass.infrastructure.persistence.postgresql.session import Database
-from marketcompass.shared_kernel.types.identifiers import TenantId
+from chartnexus.infrastructure.persistence.postgresql.session import Database
+from chartnexus.shared_kernel.types.identifiers import TenantId
 
 pytestmark = pytest.mark.integration
 
-ASYNC_DSN = "postgresql+asyncpg://marketcompass:marketcompass@localhost:5433/marketcompass"
+ASYNC_DSN = "postgresql+asyncpg://chartnexus:chartnexus@localhost:5433/chartnexus"
 
 
 @pytest.fixture

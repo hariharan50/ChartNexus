@@ -4,18 +4,18 @@ from __future__ import annotations
 
 import pytest
 
-from marketcompass.contexts.identity.application.authenticate import (
+from chartnexus.contexts.identity.application.authenticate import (
     LoginCommand,
     LoginWithPassword,
     RegisterUser,
     RegisterUserCommand,
     RegistrationPolicy,
 )
-from marketcompass.contexts.identity.application.session_service import (
+from chartnexus.contexts.identity.application.session_service import (
     SessionPolicy,
     SessionService,
 )
-from marketcompass.contexts.identity.domain.errors import (
+from chartnexus.contexts.identity.domain.errors import (
     AccountSuspendedError,
     EmailAlreadyRegisteredError,
     InvalidCredentialsError,
@@ -23,16 +23,16 @@ from marketcompass.contexts.identity.domain.errors import (
     PhoneAlreadyRegisteredError,
     RegistrationDisabledError,
 )
-from marketcompass.contexts.identity.domain.password_policy import PasswordPolicy
-from marketcompass.contexts.identity.domain.user import User
-from marketcompass.contexts.identity.domain.value_objects import (
+from chartnexus.contexts.identity.domain.password_policy import PasswordPolicy
+from chartnexus.contexts.identity.domain.user import User
+from chartnexus.contexts.identity.domain.value_objects import (
     EmailAddress,
     PhoneNumber,
     UserStatus,
 )
-from marketcompass.infrastructure.security.token_signer import JwtAccessTokenIssuer
-from marketcompass.shared_kernel.domain.errors import RateLimitError, ValidationError
-from marketcompass.shared_kernel.types.identifiers import TenantId, new_id
+from chartnexus.infrastructure.security.token_signer import JwtAccessTokenIssuer
+from chartnexus.shared_kernel.domain.errors import RateLimitError, ValidationError
+from chartnexus.shared_kernel.types.identifiers import TenantId, new_id
 from tests.unit.contexts.identity.conftest import START
 
 pytestmark = pytest.mark.unit

@@ -15,23 +15,23 @@ from typing import Any
 
 import pytest
 
-from marketcompass.contexts.instrument_catalog.domain.instrument import (
+from chartnexus.contexts.instrument_catalog.domain.instrument import (
     Instrument,
     InstrumentKind,
 )
-from marketcompass.contexts.market_data.domain.instruments import InstrumentSymbol
-from marketcompass.contexts.market_data.domain.market_data import (
+from chartnexus.contexts.market_data.domain.instruments import InstrumentSymbol
+from chartnexus.contexts.market_data.domain.market_data import (
     DataSource,
     FuturesQuote,
     Provenance,
 )
-from marketcompass.infrastructure.brokers.futures_contract import contract_for
-from marketcompass.infrastructure.brokers.mock.provider import MockMarketDataProvider
-from marketcompass.infrastructure.catalog import registry
-from marketcompass.infrastructure.futures.board_source import CatalogFuturesBoardSource
-from marketcompass.infrastructure.futures.oi_cache import CachedOpenInterest
-from marketcompass.infrastructure.time.clock import FixedClock
-from marketcompass.shared_kernel.types.identifiers import TenantId, new_id
+from chartnexus.infrastructure.brokers.futures_contract import contract_for
+from chartnexus.infrastructure.brokers.mock.provider import MockMarketDataProvider
+from chartnexus.infrastructure.catalog import registry
+from chartnexus.infrastructure.futures.board_source import CatalogFuturesBoardSource
+from chartnexus.infrastructure.futures.oi_cache import CachedOpenInterest
+from chartnexus.infrastructure.time.clock import FixedClock
+from chartnexus.shared_kernel.types.identifiers import TenantId, new_id
 
 pytestmark = pytest.mark.unit
 

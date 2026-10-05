@@ -14,10 +14,10 @@ from typing import Any
 
 import pytest
 
-from marketcompass.contexts.market_data.domain.instruments import InstrumentSymbol
-from marketcompass.infrastructure.brokers.fyers import client as fyers_client
-from marketcompass.infrastructure.brokers.fyers.client import FyersMarketDataProvider
-from marketcompass.infrastructure.brokers.fyers.option_chain_mapper import parse_expiry_epochs
+from chartnexus.contexts.market_data.domain.instruments import InstrumentSymbol
+from chartnexus.infrastructure.brokers.fyers import client as fyers_client
+from chartnexus.infrastructure.brokers.fyers.client import FyersMarketDataProvider
+from chartnexus.infrastructure.brokers.fyers.option_chain_mapper import parse_expiry_epochs
 
 pytestmark = pytest.mark.unit
 
@@ -50,7 +50,12 @@ class RecordingRest:
         self.timestamps: list[str] = []
 
     async def fetch_option_chain(
-        self, *, app_id: str, access_token: str, symbol: str, strike_count: int = 20,
+        self,
+        *,
+        app_id: str,
+        access_token: str,
+        symbol: str,
+        strike_count: int = 20,
         timestamp: str = "",
     ) -> dict[str, Any]:
         self.timestamps.append(timestamp)
@@ -106,7 +111,9 @@ class TestExpiryReachesTheBroker:
     starts working and the code can be trusted again.
     """
 
-    @pytest.mark.xfail(strict=True, reason="expiryData epoch shape not yet confirmed from a live payload")
+    @pytest.mark.xfail(
+        strict=True, reason="expiryData epoch shape not yet confirmed from a live payload"
+    )
     async def test_a_requested_expiry_is_sent_as_its_broker_timestamp(self) -> None:
         rest = RecordingRest()
 
@@ -116,7 +123,9 @@ class TestExpiryReachesTheBroker:
         assert "1791728000" in rest.timestamps
         assert chain.expiry == "2026-10-19"
 
-    @pytest.mark.xfail(strict=True, reason="expiryData epoch shape not yet confirmed from a live payload")
+    @pytest.mark.xfail(
+        strict=True, reason="expiryData epoch shape not yet confirmed from a live payload"
+    )
     async def test_the_far_contract_s_own_book_comes_back(self) -> None:
         """The assertion that would have caught the bug.
 

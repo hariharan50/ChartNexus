@@ -10,12 +10,12 @@ from __future__ import annotations
 import uuid
 from datetime import UTC, datetime, timedelta
 
-from marketcompass.contexts.options_analytics.application.gex_service import GetGex
-from marketcompass.contexts.options_analytics.application.ports import (
+from chartnexus.contexts.options_analytics.application.gex_service import GetGex
+from chartnexus.contexts.options_analytics.application.ports import (
     ChainSnapshot,
     ProviderChain,
 )
-from marketcompass.contexts.options_analytics.domain.gex_math import (
+from chartnexus.contexts.options_analytics.domain.gex_math import (
     StrikeGex,
     bs_gamma,
     call_wall,
@@ -25,8 +25,8 @@ from marketcompass.contexts.options_analytics.domain.gex_math import (
     strike_profile,
     zero_gamma,
 )
-from marketcompass.contexts.options_analytics.domain.oi_math import ChainRow
-from marketcompass.shared_kernel.types.identifiers import TenantId
+from chartnexus.contexts.options_analytics.domain.oi_math import ChainRow
+from chartnexus.shared_kernel.types.identifiers import TenantId
 
 TENANT = TenantId(uuid.uuid4())
 # 08:00 UTC == 13:30 IST, inside the session on 2026-08-04.

@@ -6,7 +6,7 @@
 
 ## Context
 
-MarketCompass needs live NSE index and option-chain data. FYERS was chosen as
+ChartNexus needs live NSE index and option-chain data. FYERS was chosen as
 the broker. A reference architecture from another application (StrikeFluency)
 described a working integration and explicitly separated what that application
 does today from what a multi-user port must do instead.
@@ -25,7 +25,7 @@ partial index on `(tenant_id, broker) WHERE status = 'active'`.
 what the reference implementation does (`user_id = None`). Index data is
 identical for every user, so a shared feed is defensible and much simpler.
 
-**Why.** MarketCompass is multi-tenant; every user already carries a
+**Why.** ChartNexus is multi-tenant; every user already carries a
 `tenant_id`. A shared account means one tenant's usage consumes the rate limit
 of all, and only an administrator could ever connect. Per-tenant also keeps the
 blast radius of a leaked token to one tenant.
@@ -107,7 +107,7 @@ rejected identically, so the endpoint reveals nothing.
 ## Consequences
 
 - Secrets and tokens are AES-256-GCM ciphertext at rest, with the key derived
-  from `MC_SECURITY_ENCRYPTION_KEY` via HKDF. The envelope is
+  from `CN_SECURITY_ENCRYPTION_KEY` via HKDF. The envelope is
   `mcv1.<kid>.<base64url(nonce‖ciphertext‖tag)>`; the key id lets a rotated
   deployment pick the right key instead of trial-decrypting, and is derived
   under its own HKDF label so publishing it does not hand out a verifier for the
@@ -120,7 +120,7 @@ rejected identically, so the endpoint reveals nothing.
 - Changing the encryption key makes existing connections unreadable; they
   degrade to "expired" and can be reconnected, rather than raising on every
   request. To rotate without that, list the old key in
-  `MC_SECURITY_PREVIOUS_ENCRYPTION_KEYS` — values decrypt under any listed key
+  `CN_SECURITY_PREVIOUS_ENCRYPTION_KEYS` — values decrypt under any listed key
   and are re-encrypted under the current one on their next write.
   `AesGcmCipher.needs_rotation` identifies rows still on an old key, for an
   operator-run sweep.

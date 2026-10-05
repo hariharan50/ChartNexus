@@ -1,14 +1,14 @@
 .grid {
   display: flex;
   flex-direction: column;
-  gap: var(--mc-space-4);
+  gap: var(--cn-space-4);
 }
 
 .panel {
-  padding: var(--mc-space-4);
-  background: var(--mc-surface);
-  border: 1px solid var(--mc-border);
-  border-radius: var(--mc-radius-lg);
+  padding: var(--cn-space-4);
+  background: var(--cn-surface);
+  border: 1px solid var(--cn-border);
+  border-radius: var(--cn-radius-lg);
 }
 
 .wide {
@@ -16,40 +16,40 @@
 }
 
 .head {
-  margin-bottom: var(--mc-space-4);
+  margin-bottom: var(--cn-space-4);
 }
 
 .title {
   margin: 0;
-  font-size: var(--mc-text-sm);
+  font-size: var(--cn-text-sm);
   font-weight: 700;
 }
 
 .sub {
   margin: 0.125rem 0 0;
-  font-size: var(--mc-text-xs);
+  font-size: var(--cn-text-xs);
   line-height: 1.5;
-  color: var(--mc-text-subtle);
+  color: var(--cn-text-subtle);
 }
 
 .empty {
   margin: 0;
-  font-size: var(--mc-text-sm);
-  color: var(--mc-text-subtle);
+  font-size: var(--cn-text-sm);
+  color: var(--cn-text-subtle);
 }
 
-/* Direction is carried by the global `.mc-up` / `.mc-down` utilities, not by
+/* Direction is carried by the global `.cn-up` / `.cn-down` utilities, not by
    classes local to this file — see the note beside them in app.css. Elements
    that paint a fill read them through `currentcolor`. */
 
 /* -- who is on which side --------------------------------------------------- */
 
 .headline {
-  margin: 0 0 var(--mc-space-4);
-  font-size: var(--mc-text-base);
+  margin: 0 0 var(--cn-space-4);
+  font-size: var(--cn-text-base);
   font-weight: 600;
   line-height: 1.5;
-  color: var(--mc-text);
+  color: var(--cn-text);
 }
 
 .splits {
@@ -58,14 +58,14 @@
   padding: 0;
   display: flex;
   flex-direction: column;
-  gap: var(--mc-space-3);
+  gap: var(--cn-space-3);
 }
 
 .split {
   display: grid;
   grid-template-columns: 4rem minmax(0, 1fr) 11rem;
   align-items: center;
-  gap: var(--mc-space-3);
+  gap: var(--cn-space-3);
 }
 
 @media (max-width: 44rem) {
@@ -80,7 +80,7 @@
 }
 
 .split-name {
-  font-size: var(--mc-text-sm);
+  font-size: var(--cn-text-sm);
   font-weight: 700;
 }
 
@@ -89,13 +89,13 @@
 .split-bar {
   display: flex;
   height: 1.75rem;
-  border-radius: var(--mc-radius);
+  border-radius: var(--cn-radius);
   overflow: hidden;
-  background: var(--mc-surface-raised);
+  background: var(--cn-surface-raised);
 }
 
 .split-empty {
-  border: 1px dashed var(--mc-border-strong);
+  border: 1px dashed var(--cn-border-strong);
   background: transparent;
 }
 
@@ -105,12 +105,12 @@
   justify-content: center;
   min-width: 0;
   background: currentcolor;
-  transition: width var(--mc-duration-fast) ease;
+  transition: width var(--cn-duration-fast) ease;
 }
 
 /* White on the filled side, so the label reads at any width. */
 .side-text {
-  font-size: var(--mc-text-xs);
+  font-size: var(--cn-text-xs);
   font-weight: 700;
   color: #fff;
   white-space: nowrap;
@@ -122,12 +122,12 @@
   align-items: center;
   gap: 0.375rem;
   justify-content: flex-end;
-  font-size: var(--mc-text-xs);
+  font-size: var(--cn-text-xs);
   font-weight: 600;
 }
 
 .split-sep {
-  color: var(--mc-text-subtle);
+  color: var(--cn-text-subtle);
   font-weight: 400;
 }
 
@@ -136,11 +136,11 @@
   align-items: center;
   gap: 0.375rem;
   flex-wrap: wrap;
-  margin: var(--mc-space-4) 0 0;
-  padding-top: var(--mc-space-3);
-  border-top: 1px solid var(--mc-border);
-  font-size: var(--mc-text-xs);
-  color: var(--mc-text-subtle);
+  margin: var(--cn-space-4) 0 0;
+  padding-top: var(--cn-space-3);
+  border-top: 1px solid var(--cn-border);
+  font-size: var(--cn-text-xs);
+  color: var(--cn-text-subtle);
 }
 
 .key {
@@ -151,7 +151,7 @@
 }
 
 .key + .key {
-  margin-left: var(--mc-space-3);
+  margin-left: var(--cn-space-3);
 }
 
 .legend-note {
@@ -179,11 +179,11 @@
 .row-head {
   display: flex;
   align-items: center;
-  font-size: var(--mc-text-xs);
+  font-size: var(--cn-text-xs);
   font-weight: 600;
   letter-spacing: 0.04em;
   text-transform: uppercase;
-  color: var(--mc-text-subtle);
+  color: var(--cn-text-subtle);
 }
 
 .col-head {
@@ -195,11 +195,11 @@
   display: flex;
   align-items: center;
   justify-content: flex-end;
-  min-height: var(--mc-control-h);
+  min-height: var(--cn-control-h);
   padding: 0 0.625rem;
   border: 1px solid transparent;
-  border-radius: var(--mc-radius);
-  font-size: var(--mc-text-sm);
+  border-radius: var(--cn-radius);
+  font-size: var(--cn-text-sm);
   font-weight: 700;
   font-variant-numeric: tabular-nums;
   /* White on a filled cell: the background is already carrying the direction,
@@ -211,8 +211,8 @@
 /* An unpublished pair keeps its place in the grid rather than collapsing it —
    the matrix is read positionally. */
 .cell-empty {
-  color: var(--mc-text-subtle);
-  border-color: var(--mc-border-strong);
+  color: var(--cn-text-subtle);
+  border-color: var(--cn-border-strong);
   border-style: dashed;
   font-weight: 600;
 }
@@ -232,15 +232,15 @@
   display: grid;
   grid-template-columns: 9rem minmax(0, 1fr) 7rem;
   align-items: center;
-  gap: var(--mc-space-3);
-  font-size: var(--mc-text-sm);
+  gap: var(--cn-space-3);
+  font-size: var(--cn-text-sm);
 }
 
 .flow-label {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  color: var(--mc-text-subtle);
+  color: var(--cn-text-subtle);
 }
 
 /* Bars diverge from a centre rule, so a row's side is its sign — direction
@@ -248,8 +248,8 @@
 .track {
   position: relative;
   height: 1.125rem;
-  background: var(--mc-surface-raised);
-  border-radius: var(--mc-radius);
+  background: var(--cn-surface-raised);
+  border-radius: var(--cn-radius);
 }
 
 .mid {
@@ -258,7 +258,7 @@
   top: 0;
   bottom: 0;
   width: 1px;
-  background: var(--mc-border-strong);
+  background: var(--cn-border-strong);
 }
 
 .bar {

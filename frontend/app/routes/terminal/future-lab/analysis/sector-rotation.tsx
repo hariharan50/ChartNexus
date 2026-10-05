@@ -24,7 +24,7 @@ import s from './analysis.module.css';
 import type { Route } from './+types/sector-rotation';
 
 export const meta: Route.MetaFunction = () => [
-  { title: 'Sector Rotation · Future Lab · MarketCompass' }
+  { title: 'Sector Rotation · Future Lab · ChartNexus' }
 ];
 
 const EMPTY: RotationPoint[] = [];

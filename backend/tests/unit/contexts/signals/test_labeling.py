@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import pytest
 
-from marketcompass.contexts.signals.domain import labeling
+from chartnexus.contexts.signals.domain import labeling
 
 pytestmark = pytest.mark.unit
 

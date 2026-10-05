@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from marketcompass.contexts.mme100.domain import compliance, persona, skill
+from chartnexus.contexts.mme100.domain import compliance, persona, skill
 
 
 def test_analysis_prompt_folds_in_the_six_section_framework() -> None:

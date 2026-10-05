@@ -13,7 +13,7 @@ import { expect, test, type Page } from '@playwright/test';
  *
  * Running this against both apps gives byte-identical results — `/login` 2,
  * `/dashboard` 38, `/option-chain` 29, `/settings/global` 5, every one of them
- * `color-contrast`. They come from the `--mc-*` palette in app.css, which the
+ * `color-contrast`. They come from the `--cn-*` palette in app.css, which the
  * migration copied unchanged, so they are inherited design debt rather than
  * anything the port did.
  *
@@ -34,7 +34,7 @@ interface PageCase {
    * Remaining colour-contrast nodes.
    *
    * These were inherited from the SvelteKit app and ran to ~105 nodes. Raising
-   * `--mc-text-subtle` to clear AA on all four themes cleared about ninety of
+   * `--cn-text-subtle` to clear AA on all four themes cleared about ninety of
    * them; what is left is a handful of other token pairs, page by page.
    */
   contrastBudget: number;
@@ -63,7 +63,7 @@ for (const { path, name, signedIn, contrastBudget } of PAGES) {
   test(`${name} is accessible`, async ({ page, context, baseURL }) => {
     if (signedIn) {
       await context.addCookies([
-        { name: 'mc_session', value: 'test', url: baseURL ?? 'http://localhost:4173' }
+        { name: 'cn_session', value: 'test', url: baseURL ?? 'http://localhost:4173' }
       ]);
     }
 

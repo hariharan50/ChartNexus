@@ -7,7 +7,7 @@
 .cell {
   display: inline-flex;
   align-items: center;
-  gap: var(--mc-space-2);
+  gap: var(--cn-space-2);
   min-width: 0;
 }
 

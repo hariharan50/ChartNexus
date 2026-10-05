@@ -13,16 +13,16 @@ from decimal import Decimal
 
 import pytest
 
-from marketcompass.contexts.futures_analytics.application.get_price_oi_series import (
+from chartnexus.contexts.futures_analytics.application.get_price_oi_series import (
     GetFuturesPriceOiSeries,
     PriceOiSeriesQuery,
 )
-from marketcompass.contexts.futures_analytics.application.ports import (
+from chartnexus.contexts.futures_analytics.application.ports import (
     BoardFrame,
     BoardSnapshot,
 )
-from marketcompass.contexts.futures_analytics.domain.buildup import FuturesReading
-from marketcompass.shared_kernel.types.identifiers import TenantId, new_id
+from chartnexus.contexts.futures_analytics.domain.buildup import FuturesReading
+from chartnexus.shared_kernel.types.identifiers import TenantId, new_id
 
 pytestmark = pytest.mark.unit
 

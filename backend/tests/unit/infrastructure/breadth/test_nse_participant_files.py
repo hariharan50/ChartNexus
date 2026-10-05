@@ -16,14 +16,14 @@ from pathlib import Path
 
 import pytest
 
-from marketcompass.contexts.market_breadth.domain.flows import Participant, Segment
-from marketcompass.contexts.market_breadth.domain.open_interest import (
+from chartnexus.contexts.market_breadth.domain.flows import Participant, Segment
+from chartnexus.contexts.market_breadth.domain.open_interest import (
     OI_SEGMENTS,
     PARTICIPANT_ORDER,
     FutureLegs,
     OptionLegs,
 )
-from marketcompass.infrastructure.breadth.nse.participant_files import (
+from chartnexus.infrastructure.breadth.nse.participant_files import (
     NotPublishedError,
     cash_activity_url,
     fii_derivative_stats_url,

@@ -7,12 +7,12 @@ from fastapi import FastAPI
 from fastapi.testclient import TestClient
 from pydantic import BaseModel
 
-from marketcompass.infrastructure.transport.http.exception_handlers import (
+from chartnexus.infrastructure.transport.http.exception_handlers import (
     PROBLEM_CONTENT_TYPE,
     register_exception_handlers,
 )
-from marketcompass.infrastructure.transport.http.request_id import RequestIdMiddleware
-from marketcompass.shared_kernel.domain.errors import (
+from chartnexus.infrastructure.transport.http.request_id import RequestIdMiddleware
+from chartnexus.shared_kernel.domain.errors import (
     EntitlementError,
     NotFoundError,
     RateLimitError,

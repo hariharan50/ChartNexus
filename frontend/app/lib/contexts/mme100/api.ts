@@ -41,7 +41,7 @@ export async function getMme100BriefingToday(
 }
 
 const STREAM_PATH = (symbol: string) => `/api/v1/mme100/${encodeURIComponent(symbol)}/ask/stream`;
-const CSRF_COOKIE = 'mc_csrf';
+const CSRF_COOKIE = 'cn_csrf';
 const CSRF_HEADER = 'X-CSRF-Token';
 const REFRESH_PATH = '/api/v1/auth/refresh';
 

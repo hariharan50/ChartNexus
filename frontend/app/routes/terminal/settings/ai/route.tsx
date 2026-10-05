@@ -12,7 +12,7 @@ import PasswordField from '$shared/ui/PasswordField';
 import s from './route.module.css';
 import type { Route } from './+types/route';
 
-export const meta: Route.MetaFunction = () => [{ title: 'AI Settings · MarketCompass' }];
+export const meta: Route.MetaFunction = () => [{ title: 'AI Settings · ChartNexus' }];
 
 type AuthError = ReturnType<typeof presentAuthError>;
 type Busy = 'save' | 'clear' | null;
@@ -163,11 +163,11 @@ export default function SettingsAi() {
             </div>
             <div>
               <dt>Model</dt>
-              <dd className="mc-numeric">{settings.model}</dd>
+              <dd className="cn-numeric">{settings.model}</dd>
             </div>
             <div>
               <dt>API key</dt>
-              <dd className="mc-numeric">{settings.masked_api_key}</dd>
+              <dd className="cn-numeric">{settings.masked_api_key}</dd>
             </div>
           </dl>
         ) : null}

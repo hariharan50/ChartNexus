@@ -3,17 +3,17 @@
    The top bar lives in ../components/ConsoleHeader.module.css. */
 
 .page {
-  padding: var(--mc-space-6);
+  padding: var(--cn-space-6);
   display: flex;
   flex-direction: column;
-  gap: var(--mc-space-5, 1.25rem);
+  gap: var(--cn-space-5, 1.25rem);
 }
 
 /* -- Layout ---------------------------------------------------------------- */
 .layout {
   display: grid;
   grid-template-columns: 1.35fr 1fr;
-  gap: var(--mc-space-5, 1.25rem);
+  gap: var(--cn-space-5, 1.25rem);
   /* Stretch, not start: the hero card grows to the height of the taller
      Levels + Scaffold column so the two columns end on the same line. The hero
      pins its disclaimer to the bottom (below), so the alignment reads as a
@@ -30,37 +30,37 @@
 .column {
   display: flex;
   flex-direction: column;
-  gap: var(--mc-space-5, 1.25rem);
+  gap: var(--cn-space-5, 1.25rem);
   min-width: 0;
 }
 
 .panel {
   position: relative;
-  border: 1px solid var(--mc-border);
-  border-radius: var(--mc-radius-lg);
+  border: 1px solid var(--cn-border);
+  border-radius: var(--cn-radius-lg);
   background: linear-gradient(
     180deg,
-    var(--mc-surface-raised, var(--mc-surface)),
-    var(--mc-surface)
+    var(--cn-surface-raised, var(--cn-surface)),
+    var(--cn-surface)
   );
-  box-shadow: var(--mc-shadow);
-  padding: var(--mc-space-4);
+  box-shadow: var(--cn-shadow);
+  padding: var(--cn-space-4);
   overflow: hidden;
 }
 
 .panelTitle {
-  font-size: var(--mc-text-xs);
+  font-size: var(--cn-text-xs);
   text-transform: uppercase;
   letter-spacing: 0.08em;
-  color: var(--mc-text-subtle);
-  margin: 0 0 var(--mc-space-3);
+  color: var(--cn-text-subtle);
+  margin: 0 0 var(--cn-space-3);
 }
 
 .state {
-  padding: var(--mc-space-6);
+  padding: var(--cn-space-6);
   text-align: center;
-  color: var(--mc-text-muted);
-  font-size: var(--mc-text-sm);
+  color: var(--cn-text-muted);
+  font-size: var(--cn-text-sm);
   animation: pulse 1.6s ease-in-out infinite;
 }
 
@@ -78,7 +78,7 @@
 .hero {
   display: flex;
   flex-direction: column;
-  gap: var(--mc-space-3);
+  gap: var(--cn-space-3);
   /* Fill the stretched column so its bottom lines up with the right column. */
   flex: 1;
 }
@@ -94,15 +94,15 @@
 }
 
 .hero.buy {
-  --glow: color-mix(in srgb, var(--mc-bullish, #16a34a) 55%, transparent);
+  --glow: color-mix(in srgb, var(--cn-bullish, #16a34a) 55%, transparent);
 }
 
 .hero.sell {
-  --glow: color-mix(in srgb, var(--mc-bearish, #dc2626) 55%, transparent);
+  --glow: color-mix(in srgb, var(--cn-bearish, #dc2626) 55%, transparent);
 }
 
 .hero.hold {
-  --glow: color-mix(in srgb, var(--mc-text-subtle, #6b7280) 45%, transparent);
+  --glow: color-mix(in srgb, var(--cn-text-subtle, #6b7280) 45%, transparent);
 }
 
 .heroMain {
@@ -110,49 +110,49 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: var(--mc-space-4);
-  padding: var(--mc-space-2) 0;
+  gap: var(--cn-space-4);
+  padding: var(--cn-space-2) 0;
 }
 
 .heroLeft {
   display: flex;
   align-items: center;
-  gap: var(--mc-space-3);
+  gap: var(--cn-space-3);
 }
 
 .chip {
-  font-size: var(--mc-text-lg, 1.15rem);
+  font-size: var(--cn-text-lg, 1.15rem);
   font-weight: 800;
   letter-spacing: 0.03em;
   padding: 6px 16px;
-  border-radius: var(--mc-radius);
+  border-radius: var(--cn-radius);
   color: #fff;
 }
 
 .chip.buy {
-  background: linear-gradient(135deg, var(--mc-bullish, #16a34a), #22c55e);
-  box-shadow: 0 6px 18px -6px var(--mc-bullish, #16a34a);
+  background: linear-gradient(135deg, var(--cn-bullish, #16a34a), #22c55e);
+  box-shadow: 0 6px 18px -6px var(--cn-bullish, #16a34a);
 }
 
 .chip.sell {
-  background: linear-gradient(135deg, var(--mc-bearish, #dc2626), #ef4444);
-  box-shadow: 0 6px 18px -6px var(--mc-bearish, #dc2626);
+  background: linear-gradient(135deg, var(--cn-bearish, #dc2626), #ef4444);
+  box-shadow: 0 6px 18px -6px var(--cn-bearish, #dc2626);
 }
 
 .chip.hold {
-  background: linear-gradient(135deg, var(--mc-text-subtle, #6b7280), #9ca3af);
+  background: linear-gradient(135deg, var(--cn-text-subtle, #6b7280), #9ca3af);
 }
 
 .symbol {
-  font-size: var(--mc-text-lg, 1.15rem);
+  font-size: var(--cn-text-lg, 1.15rem);
   font-weight: 750;
-  color: var(--mc-text);
+  color: var(--cn-text);
   line-height: 1.1;
 }
 
 .decisionWord {
-  font-size: var(--mc-text-sm);
-  color: var(--mc-text-muted);
+  font-size: var(--cn-text-sm);
+  color: var(--cn-text-muted);
 }
 
 /* Confidence ring */
@@ -164,7 +164,7 @@
 
 .ringTrack {
   fill: none;
-  stroke: var(--mc-border);
+  stroke: var(--cn-border);
   stroke-width: 7;
 }
 
@@ -178,26 +178,26 @@
 }
 
 .ringFill.buy {
-  stroke: var(--mc-bullish, #16a34a);
+  stroke: var(--cn-bullish, #16a34a);
 }
 
 .ringFill.sell {
-  stroke: var(--mc-bearish, #dc2626);
+  stroke: var(--cn-bearish, #dc2626);
 }
 
 .ringFill.hold {
-  stroke: var(--mc-text-subtle, #6b7280);
+  stroke: var(--cn-text-subtle, #6b7280);
 }
 
 .ringText {
-  fill: var(--mc-text);
+  fill: var(--cn-text);
   font-size: 20px;
   font-weight: 800;
   text-anchor: middle;
 }
 
 .ringUnit {
-  fill: var(--mc-text-subtle);
+  fill: var(--cn-text-subtle);
   font-size: 8px;
   letter-spacing: 0.04em;
   text-anchor: middle;
@@ -210,26 +210,26 @@
 
 .rationale {
   position: relative;
-  font-size: var(--mc-text-sm);
-  color: var(--mc-text-base, var(--mc-text));
+  font-size: var(--cn-text-sm);
+  color: var(--cn-text-base, var(--cn-text));
   line-height: 1.55;
   margin: 0;
 }
 
 .warning {
   position: relative;
-  font-size: var(--mc-text-xs);
-  color: var(--mc-bearish, #dc2626);
+  font-size: var(--cn-text-xs);
+  color: var(--cn-bearish, #dc2626);
   margin: 0;
 }
 
 .disclaimer {
   position: relative;
-  font-size: var(--mc-text-xs);
-  color: var(--mc-text-subtle);
+  font-size: var(--cn-text-xs);
+  color: var(--cn-text-subtle);
   line-height: 1.5;
-  border-top: 1px dashed var(--mc-border);
-  padding-top: var(--mc-space-3);
+  border-top: 1px dashed var(--cn-border);
+  padding-top: var(--cn-space-3);
   /* Pinned to the bottom of the (stretched) hero card, so its lower edge lines
      up with the Levels/Scaffold column beside it. */
   margin: auto 0 0;
@@ -241,7 +241,7 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: var(--mc-space-3);
+  gap: var(--cn-space-3);
 }
 
 .regime {
@@ -251,19 +251,19 @@
   text-transform: uppercase;
   padding: 3px 10px;
   border-radius: 999px;
-  color: var(--mc-text-muted);
-  background: var(--mc-surface-raised, var(--mc-surface));
-  border: 1px solid var(--mc-border);
+  color: var(--cn-text-muted);
+  background: var(--cn-surface-raised, var(--cn-surface));
+  border: 1px solid var(--cn-border);
 }
 
 .regime.buy {
-  color: var(--mc-bullish, #16a34a);
-  border-color: color-mix(in srgb, var(--mc-bullish, #16a34a) 40%, var(--mc-border));
+  color: var(--cn-bullish, #16a34a);
+  border-color: color-mix(in srgb, var(--cn-bullish, #16a34a) 40%, var(--cn-border));
 }
 
 .regime.sell {
-  color: var(--mc-bearish, #dc2626);
-  border-color: color-mix(in srgb, var(--mc-bearish, #dc2626) 40%, var(--mc-border));
+  color: var(--cn-bearish, #dc2626);
+  border-color: color-mix(in srgb, var(--cn-bearish, #dc2626) 40%, var(--cn-border));
 }
 
 .switcher {
@@ -272,9 +272,9 @@
   grid-template-columns: repeat(3, 1fr);
   gap: 4px;
   padding: 4px;
-  border-radius: var(--mc-radius);
-  background: var(--mc-surface);
-  border: 1px solid var(--mc-border);
+  border-radius: var(--cn-radius);
+  background: var(--cn-surface);
+  border: 1px solid var(--cn-border);
 }
 
 .switchBtn {
@@ -284,35 +284,35 @@
   gap: 2px;
   padding: 8px 6px;
   border: 1px solid transparent;
-  border-radius: var(--mc-radius-sm, 6px);
+  border-radius: var(--cn-radius-sm, 6px);
   background: transparent;
   cursor: pointer;
-  color: var(--mc-text-muted);
+  color: var(--cn-text-muted);
   transition:
-    background var(--mc-duration-fast, 120ms) ease,
-    color var(--mc-duration-fast, 120ms) ease;
+    background var(--cn-duration-fast, 120ms) ease,
+    color var(--cn-duration-fast, 120ms) ease;
 }
 
 .switchBtn:hover {
-  color: var(--mc-text);
+  color: var(--cn-text);
 }
 
 .switchOn {
-  background: var(--mc-surface-raised, var(--mc-surface));
-  border-color: var(--mc-border);
-  color: var(--mc-text);
-  box-shadow: var(--mc-shadow);
+  background: var(--cn-surface-raised, var(--cn-surface));
+  border-color: var(--cn-border);
+  color: var(--cn-text);
+  box-shadow: var(--cn-shadow);
 }
 
 .switchLabel {
-  font-size: var(--mc-text-xs);
+  font-size: var(--cn-text-xs);
   font-weight: 700;
 }
 
 .switchFrame {
   font-size: 10px;
   letter-spacing: 0.02em;
-  color: var(--mc-text-subtle);
+  color: var(--cn-text-subtle);
 }
 
 /* -- Driver breakdown ------------------------------------------------------ */
@@ -320,16 +320,16 @@
   position: relative;
   display: flex;
   flex-direction: column;
-  gap: var(--mc-space-2);
-  padding-top: var(--mc-space-2);
-  border-top: 1px solid var(--mc-border);
+  gap: var(--cn-space-2);
+  padding-top: var(--cn-space-2);
+  border-top: 1px solid var(--cn-border);
 }
 
 .driversHead {
   display: flex;
   align-items: baseline;
   justify-content: space-between;
-  gap: var(--mc-space-2);
+  gap: var(--cn-space-2);
 }
 
 .driversHead .panelTitle {
@@ -337,13 +337,13 @@
 }
 
 .prob {
-  font-size: var(--mc-text-xs);
-  color: var(--mc-text-subtle);
+  font-size: var(--cn-text-xs);
+  color: var(--cn-text-subtle);
   font-variant-numeric: tabular-nums;
 }
 
 .prob strong {
-  color: var(--mc-text);
+  color: var(--cn-text);
 }
 
 .driverChips {
@@ -353,30 +353,30 @@
 }
 
 .driverChip {
-  font-size: var(--mc-text-xs);
+  font-size: var(--cn-text-xs);
   font-weight: 600;
   padding: 4px 10px;
   border-radius: 999px;
-  color: var(--mc-text-muted);
-  background: var(--mc-surface);
-  border: 1px solid var(--mc-border);
+  color: var(--cn-text-muted);
+  background: var(--cn-surface);
+  border: 1px solid var(--cn-border);
 }
 
 .driversEmpty {
-  font-size: var(--mc-text-xs);
-  color: var(--mc-text-subtle);
+  font-size: var(--cn-text-xs);
+  color: var(--cn-text-subtle);
   margin: 0;
 }
 
 /* -- Levels position bar --------------------------------------------------- */
 .posWrap {
-  margin-bottom: var(--mc-space-4);
+  margin-bottom: var(--cn-space-4);
 }
 
 .posEnds {
   display: flex;
   justify-content: space-between;
-  margin-bottom: var(--mc-space-3);
+  margin-bottom: var(--cn-space-3);
 }
 
 .posEnd {
@@ -392,13 +392,13 @@
   font-size: 10px;
   text-transform: uppercase;
   letter-spacing: 0.06em;
-  color: var(--mc-text-subtle);
+  color: var(--cn-text-subtle);
 }
 
 .posEndVal {
-  font-size: var(--mc-text-sm);
+  font-size: var(--cn-text-sm);
   font-weight: 700;
-  color: var(--mc-text);
+  color: var(--cn-text);
   font-variant-numeric: tabular-nums;
 }
 
@@ -408,9 +408,9 @@
   border-radius: 999px;
   background: linear-gradient(
     90deg,
-    color-mix(in srgb, var(--mc-bullish, #16a34a) 45%, var(--mc-border)),
-    var(--mc-border) 50%,
-    color-mix(in srgb, var(--mc-bearish, #dc2626) 45%, var(--mc-border))
+    color-mix(in srgb, var(--cn-bullish, #16a34a) 45%, var(--cn-border)),
+    var(--cn-border) 50%,
+    color-mix(in srgb, var(--cn-bearish, #dc2626) 45%, var(--cn-border))
   );
   margin-top: 22px;
 }
@@ -431,9 +431,9 @@
   width: 14px;
   height: 14px;
   border-radius: 50%;
-  background: var(--mc-text);
-  border: 3px solid var(--mc-surface);
-  box-shadow: 0 0 0 2px var(--mc-accent, #6366f1);
+  background: var(--cn-text);
+  border: 3px solid var(--cn-surface);
+  box-shadow: 0 0 0 2px var(--cn-accent, #6366f1);
 }
 
 .posSpotVal {
@@ -444,10 +444,10 @@
   white-space: nowrap;
   font-size: 11px;
   font-weight: 700;
-  color: var(--mc-text);
-  background: var(--mc-surface-raised, var(--mc-surface));
-  border: 1px solid var(--mc-border);
-  border-radius: var(--mc-radius-sm);
+  color: var(--cn-text);
+  background: var(--cn-surface-raised, var(--cn-surface));
+  border: 1px solid var(--cn-border);
+  border-radius: var(--cn-radius-sm);
   padding: 2px 6px;
   font-variant-numeric: tabular-nums;
 }
@@ -467,29 +467,29 @@
 .chipsRow {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: var(--mc-space-2);
+  gap: var(--cn-space-2);
 }
 
 .levelChip {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: var(--mc-space-2);
+  gap: var(--cn-space-2);
   padding: 8px 10px;
-  border-radius: var(--mc-radius);
-  background: var(--mc-surface);
-  border: 1px solid var(--mc-border);
+  border-radius: var(--cn-radius);
+  background: var(--cn-surface);
+  border: 1px solid var(--cn-border);
 }
 
 .levelKey {
-  font-size: var(--mc-text-xs);
-  color: var(--mc-text-muted);
+  font-size: var(--cn-text-xs);
+  color: var(--cn-text-muted);
 }
 
 .levelVal {
-  font-size: var(--mc-text-sm);
+  font-size: var(--cn-text-sm);
   font-weight: 700;
-  color: var(--mc-text);
+  color: var(--cn-text);
   font-variant-numeric: tabular-nums;
 }
 
@@ -497,17 +497,17 @@
 .row {
   display: flex;
   justify-content: space-between;
-  gap: var(--mc-space-3);
-  font-size: var(--mc-text-sm);
-  padding: 6px 0 var(--mc-space-3);
+  gap: var(--cn-space-3);
+  font-size: var(--cn-text-sm);
+  padding: 6px 0 var(--cn-space-3);
 }
 
 .rowKey {
-  color: var(--mc-text-muted);
+  color: var(--cn-text-muted);
 }
 
 .rowVal {
-  color: var(--mc-text);
+  color: var(--cn-text);
   font-weight: 700;
   font-variant-numeric: tabular-nums;
 }
@@ -516,7 +516,7 @@
 .statGrid {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
-  gap: var(--mc-space-2);
+  gap: var(--cn-space-2);
 }
 
 @media (max-width: 640px) {
@@ -529,56 +529,56 @@
   display: flex;
   flex-direction: column;
   gap: 3px;
-  padding: var(--mc-space-3);
-  border-radius: var(--mc-radius);
-  background: var(--mc-surface);
-  border: 1px solid var(--mc-border);
+  padding: var(--cn-space-3);
+  border-radius: var(--cn-radius);
+  background: var(--cn-surface);
+  border: 1px solid var(--cn-border);
 }
 
 .statKey {
   font-size: 10px;
   text-transform: uppercase;
   letter-spacing: 0.06em;
-  color: var(--mc-text-subtle);
+  color: var(--cn-text-subtle);
 }
 
 .statVal {
-  font-size: var(--mc-text-lg, 1.1rem);
+  font-size: var(--cn-text-lg, 1.1rem);
   font-weight: 750;
-  color: var(--mc-text);
+  color: var(--cn-text);
   font-variant-numeric: tabular-nums;
 }
 
 .statVal.pos {
-  color: var(--mc-bullish, #16a34a);
+  color: var(--cn-bullish, #16a34a);
 }
 
 .statVal.neg {
-  color: var(--mc-bearish, #dc2626);
+  color: var(--cn-bearish, #dc2626);
 }
 
 .contract {
-  margin: var(--mc-space-3) 0 0;
-  font-size: var(--mc-text-xs);
-  color: var(--mc-text-muted);
+  margin: var(--cn-space-3) 0 0;
+  font-size: var(--cn-text-xs);
+  color: var(--cn-text-muted);
   padding: 8px 10px;
-  border-radius: var(--mc-radius);
-  background: var(--mc-surface-raised, var(--mc-surface));
-  border: 1px dashed var(--mc-border);
+  border-radius: var(--cn-radius);
+  background: var(--cn-surface-raised, var(--cn-surface));
+  border: 1px dashed var(--cn-border);
 }
 
 .illustrative {
-  font-size: var(--mc-text-xs);
-  color: var(--mc-text-subtle);
+  font-size: var(--cn-text-xs);
+  color: var(--cn-text-subtle);
   font-style: italic;
-  margin: var(--mc-space-2) 0 0;
+  margin: var(--cn-space-2) 0 0;
 }
 
 /* -- Context cards + status bar -------------------------------------------- */
 .cards {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
-  gap: var(--mc-space-4);
+  gap: var(--cn-space-4);
 }
 
 @media (max-width: 1100px) {
@@ -598,15 +598,15 @@
   display: flex;
   flex-direction: column;
   gap: 6px;
-  padding: var(--mc-space-4);
-  border: 1px solid var(--mc-border);
-  border-radius: var(--mc-radius-lg);
+  padding: var(--cn-space-4);
+  border: 1px solid var(--cn-border);
+  border-radius: var(--cn-radius-lg);
   background: linear-gradient(
     180deg,
-    var(--mc-surface-raised, var(--mc-surface)),
-    var(--mc-surface)
+    var(--cn-surface-raised, var(--cn-surface)),
+    var(--cn-surface)
   );
-  box-shadow: var(--mc-shadow);
+  box-shadow: var(--cn-shadow);
   overflow: hidden;
 }
 
@@ -696,59 +696,59 @@
 }
 
 .cardTitle {
-  font-size: var(--mc-text-xs);
+  font-size: var(--cn-text-xs);
   font-weight: 600;
   letter-spacing: 0.02em;
-  color: var(--mc-text-muted);
+  color: var(--cn-text-muted);
 }
 
 .cardBig {
   font-size: 1.9rem;
   font-weight: 800;
   line-height: 1.05;
-  color: var(--mc-text);
+  color: var(--cn-text);
   font-variant-numeric: tabular-nums;
 }
 
 .cardBig.buy {
-  color: var(--mc-bullish, #16a34a);
+  color: var(--cn-bullish, #16a34a);
 }
 
 .cardBig.sell {
-  color: var(--mc-bearish, #dc2626);
+  color: var(--cn-bearish, #dc2626);
 }
 
 .cardRegime {
   font-size: 1.5rem;
   font-weight: 800;
   line-height: 1.1;
-  color: var(--mc-text);
+  color: var(--cn-text);
 }
 
 .cardSub {
-  font-size: var(--mc-text-sm);
+  font-size: var(--cn-text-sm);
   font-weight: 600;
-  color: var(--mc-accent, #8b5cf6);
+  color: var(--cn-accent, #8b5cf6);
 }
 
 .cardNote {
-  font-size: var(--mc-text-xs);
-  color: var(--mc-text-subtle);
+  font-size: var(--cn-text-xs);
+  color: var(--cn-text-subtle);
 }
 
 .cardDelta {
-  font-size: var(--mc-text-sm);
+  font-size: var(--cn-text-sm);
   font-weight: 700;
   font-variant-numeric: tabular-nums;
-  color: var(--mc-text-muted);
+  color: var(--cn-text-muted);
 }
 
 .cardDelta.pos {
-  color: var(--mc-bullish, #16a34a);
+  color: var(--cn-bullish, #16a34a);
 }
 
 .cardDelta.neg {
-  color: var(--mc-bearish, #dc2626);
+  color: var(--cn-bearish, #dc2626);
 }
 
 .pill {
@@ -758,9 +758,9 @@
   font-weight: 600;
   padding: 4px 12px;
   border-radius: 999px;
-  color: var(--mc-text-muted);
-  background: var(--mc-surface);
-  border: 1px solid var(--mc-border);
+  color: var(--cn-text-muted);
+  background: var(--cn-surface);
+  border: 1px solid var(--cn-border);
 }
 
 .certainty {
@@ -772,13 +772,13 @@
 
 .certaintyLabel {
   font-size: 11px;
-  color: var(--mc-text-subtle);
+  color: var(--cn-text-subtle);
 }
 
 .certaintyTrack {
   height: 6px;
   border-radius: 3px;
-  background: var(--mc-border);
+  background: var(--cn-border);
   overflow: hidden;
 }
 
@@ -786,29 +786,29 @@
   display: block;
   height: 100%;
   border-radius: 3px;
-  background: linear-gradient(90deg, var(--mc-accent, #8b5cf6), #a78bfa);
+  background: linear-gradient(90deg, var(--cn-accent, #8b5cf6), #a78bfa);
   transition: width 500ms cubic-bezier(0.2, 0.8, 0.2, 1);
 }
 
 .certaintyFill.buy {
-  background: linear-gradient(90deg, var(--mc-bullish, #16a34a), #22c55e);
+  background: linear-gradient(90deg, var(--cn-bullish, #16a34a), #22c55e);
 }
 
 .certaintyFill.sell {
-  background: linear-gradient(90deg, var(--mc-bearish, #dc2626), #ef4444);
+  background: linear-gradient(90deg, var(--cn-bearish, #dc2626), #ef4444);
 }
 
 .statusBar {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: var(--mc-space-3);
-  padding: var(--mc-space-3) var(--mc-space-4);
-  border: 1px solid var(--mc-border);
-  border-radius: var(--mc-radius-lg);
-  background: var(--mc-surface);
-  font-size: var(--mc-text-xs);
-  color: var(--mc-text-muted);
+  gap: var(--cn-space-3);
+  padding: var(--cn-space-3) var(--cn-space-4);
+  border: 1px solid var(--cn-border);
+  border-radius: var(--cn-radius-lg);
+  background: var(--cn-surface);
+  font-size: var(--cn-text-xs);
+  color: var(--cn-text-muted);
 }
 
 .statusItem {
@@ -818,12 +818,12 @@
 }
 
 .statusItem strong {
-  color: var(--mc-text);
+  color: var(--cn-text);
   font-weight: 700;
 }
 
 .statusCenter {
-  color: var(--mc-text-subtle);
+  color: var(--cn-text-subtle);
 }
 
 .dot {
@@ -833,12 +833,12 @@
 }
 
 .dot.open {
-  background: var(--mc-bullish, #16a34a);
-  box-shadow: 0 0 0 3px color-mix(in srgb, var(--mc-bullish, #16a34a) 25%, transparent);
+  background: var(--cn-bullish, #16a34a);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--cn-bullish, #16a34a) 25%, transparent);
 }
 
 .dot.closed {
-  background: var(--mc-text-subtle, #6b7280);
+  background: var(--cn-text-subtle, #6b7280);
 }
 
 @media (max-width: 560px) {

@@ -5,7 +5,7 @@
 # Source is bind-mounted and both servers hot-reload, so a code change does not
 # require an image rebuild.
 
-name: marketcompass
+name: chartnexus
 
 services:
   api:
@@ -14,20 +14,20 @@ services:
       dockerfile: deploy/docker/backend.Dockerfile
       target: development
     command: >
-      uv run uvicorn marketcompass.entrypoints.main_api:create_app
+      uv run uvicorn chartnexus.entrypoints.main_api:create_app
       --factory --host 0.0.0.0 --port 8000 --reload --reload-dir /app/src
     environment: &backend-env
-      MC_ENVIRONMENT: local
-      MC_DEBUG: "true"
-      MC_DB_URL: postgresql+asyncpg://marketcompass:marketcompass@postgres:5432/marketcompass
-      MC_REDIS_URL: redis://redis:6379/0
-      MC_OTEL_LOG_FORMAT: console
-      MC_SECURITY_COOKIE_SECURE: "false"
-      MC_BROKER_PROVIDER: ${MC_BROKER_PROVIDER:-mock}
+      CN_ENVIRONMENT: local
+      CN_DEBUG: "true"
+      CN_DB_URL: postgresql+asyncpg://chartnexus:chartnexus@postgres:5432/chartnexus
+      CN_REDIS_URL: redis://redis:6379/0
+      CN_OTEL_LOG_FORMAT: console
+      CN_SECURITY_COOKIE_SECURE: "false"
+      CN_BROKER_PROVIDER: ${CN_BROKER_PROVIDER:-mock}
       # LLM keys are per-user (set in-app at Settings -> AI, stored encrypted),
-      # so no MC_LLM_* provider/key is injected here. Operational knobs
-      # (MC_LLM_MAX_OUTPUT_TOKENS, MC_LLM_REQUEST_TIMEOUT_SECONDS,
-      # MC_LLM_AGENT_DISCLAIMER) default sensibly and can be added if needed.
+      # so no CN_LLM_* provider/key is injected here. Operational knobs
+      # (CN_LLM_MAX_OUTPUT_TOKENS, CN_LLM_REQUEST_TIMEOUT_SECONDS,
+      # CN_LLM_AGENT_DISCLAIMER) default sensibly and can be added if needed.
     volumes:
       - ../../backend/src:/app/src:ro
       - ../../backend/migrations:/app/migrations:ro
@@ -42,16 +42,16 @@ services:
       context: ../..
       dockerfile: deploy/docker/backend.Dockerfile
       target: development
-    command: uv run python -m marketcompass.entrypoints.main_ingest
+    command: uv run python -m chartnexus.entrypoints.main_ingest
     environment:
       <<: *backend-env
       # Dev only. Without it a developer with no FYERS connection gets
       # `skipped_mock` on every tick forever, the archive stays empty, and the
       # Open Interest timeline has nothing to scrub over.
-      MC_MARKET_INGEST_ALLOW_MOCK: "true"
+      CN_MARKET_INGEST_ALLOW_MOCK: "true"
       # Matches `task dev:ingest`. Faster than the 180s default so the page
       # visibly gains a bar while you are looking at it.
-      MC_MARKET_SNAPSHOT_INTERVAL_SECONDS: "60"
+      CN_MARKET_SNAPSHOT_INTERVAL_SECONDS: "60"
     volumes:
       - ../../backend/src:/app/src:ro
     depends_on:
@@ -68,7 +68,7 @@ services:
       context: ../..
       dockerfile: deploy/docker/backend.Dockerfile
       target: development
-    command: uv run python -m marketcompass.entrypoints.main_score
+    command: uv run python -m chartnexus.entrypoints.main_score
     environment: *backend-env
     volumes:
       - ../../backend/src:/app/src:ro
@@ -82,7 +82,7 @@ services:
       context: ../..
       dockerfile: deploy/docker/backend.Dockerfile
       target: development
-    command: uv run python -m marketcompass.entrypoints.main_realtime
+    command: uv run python -m chartnexus.entrypoints.main_realtime
     environment: *backend-env
     volumes:
       - ../../backend/src:/app/src:ro

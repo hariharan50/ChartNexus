@@ -3,13 +3,13 @@
   align-items: center;
   gap: 0.4375rem;
   padding: 0.375rem 0.75rem;
-  border: 1px solid var(--mc-border);
+  border: 1px solid var(--cn-border);
   border-radius: 999px;
-  background: var(--mc-surface);
-  box-shadow: var(--mc-shadow);
-  font-size: var(--mc-text-xs);
+  background: var(--cn-surface);
+  box-shadow: var(--cn-shadow);
+  font-size: var(--cn-text-xs);
   font-weight: 600;
-  color: var(--mc-text-muted);
+  color: var(--cn-text-muted);
   white-space: nowrap;
 }
 
@@ -17,12 +17,12 @@
   width: 0.5rem;
   height: 0.5rem;
   border-radius: 50%;
-  background: var(--mc-stale);
+  background: var(--cn-stale);
 }
 
 .live .dot {
-  background: var(--mc-live);
-  box-shadow: 0 0 0 3px color-mix(in srgb, var(--mc-live) 22%, transparent);
+  background: var(--cn-live);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--cn-live) 22%, transparent);
   animation: pulse 2s ease-in-out infinite;
 }
 

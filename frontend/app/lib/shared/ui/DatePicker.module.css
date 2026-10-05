@@ -10,13 +10,13 @@
   justify-content: space-between;
   gap: 0.375rem;
   width: 100%;
-  height: var(--mc-control-h);
+  height: var(--cn-control-h);
   padding: 0 0.625rem;
-  border: 1px solid var(--mc-border);
-  border-radius: var(--mc-radius);
-  background: var(--mc-surface-raised);
-  color: var(--mc-text);
-  font-size: var(--mc-text-sm);
+  border: 1px solid var(--cn-border);
+  border-radius: var(--cn-radius);
+  background: var(--cn-surface-raised);
+  color: var(--cn-text);
+  font-size: var(--cn-text-sm);
   font-weight: 600;
   cursor: pointer;
 }
@@ -30,29 +30,29 @@
 
 .pop {
   position: absolute;
-  z-index: var(--mc-z-dropdown, 50);
+  z-index: var(--cn-z-dropdown, 50);
   top: calc(100% + 0.375rem);
   left: 0;
   width: 17rem;
   max-width: min(17rem, calc(100vw - 2rem));
-  padding: var(--mc-space-3);
-  border: 1px solid var(--mc-border);
-  border-radius: var(--mc-radius-lg);
-  background: var(--mc-surface);
-  box-shadow: var(--mc-shadow-lg, var(--mc-shadow));
+  padding: var(--cn-space-3);
+  border: 1px solid var(--cn-border);
+  border-radius: var(--cn-radius-lg);
+  background: var(--cn-surface);
+  box-shadow: var(--cn-shadow-lg, var(--cn-shadow));
 }
 
 .head {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: var(--mc-space-2);
+  margin-bottom: var(--cn-space-2);
 }
 
 .month {
-  font-size: var(--mc-text-sm);
+  font-size: var(--cn-text-sm);
   font-weight: 700;
-  color: var(--mc-text);
+  color: var(--cn-text);
 }
 
 .nav {
@@ -61,21 +61,21 @@
   width: 1.75rem;
   height: 1.75rem;
   border: 1px solid transparent;
-  border-radius: var(--mc-radius-sm);
+  border-radius: var(--cn-radius-sm);
   background: transparent;
-  color: var(--mc-text-muted);
+  color: var(--cn-text-muted);
   font-size: 1.1rem;
   line-height: 1;
   cursor: pointer;
 }
 
 .nav:hover:not(:disabled) {
-  background: var(--mc-surface-raised);
-  color: var(--mc-text);
+  background: var(--cn-surface-raised);
+  color: var(--cn-text);
 }
 
 .nav:disabled {
-  color: var(--mc-text-subtle);
+  color: var(--cn-text-subtle);
   cursor: not-allowed;
   opacity: 0.5;
 }
@@ -89,9 +89,9 @@
 .weekday {
   padding: 0.25rem 0;
   text-align: center;
-  font-size: var(--mc-text-xs);
+  font-size: var(--cn-text-xs);
   font-weight: 600;
-  color: var(--mc-text-subtle);
+  color: var(--cn-text-subtle);
 }
 
 .grid {
@@ -106,32 +106,32 @@
   border: 0;
   border-radius: 50%;
   background: transparent;
-  color: var(--mc-text);
-  font-size: var(--mc-text-sm);
+  color: var(--cn-text);
+  font-size: var(--cn-text-sm);
   font-variant-numeric: tabular-nums;
   cursor: pointer;
   transition:
-    background var(--mc-duration-fast, 120ms) ease,
-    color var(--mc-duration-fast, 120ms) ease;
+    background var(--cn-duration-fast, 120ms) ease,
+    color var(--cn-duration-fast, 120ms) ease;
 }
 
 .day:hover:not(:disabled):not(.selected) {
-  background: var(--mc-surface-raised);
+  background: var(--cn-surface-raised);
 }
 
 .day.outside {
-  color: var(--mc-text-subtle);
+  color: var(--cn-text-subtle);
 }
 
 .day:disabled {
-  color: var(--mc-border-strong, var(--mc-text-subtle));
+  color: var(--cn-border-strong, var(--cn-text-subtle));
   cursor: not-allowed;
 }
 
 /* The selection: a filled circle, like the reference's black disc — tinted to
    the app's accent so it reads in both themes. */
 .day.selected {
-  background: var(--mc-accent);
+  background: var(--cn-accent);
   color: #fff;
   font-weight: 700;
 }
@@ -146,5 +146,5 @@
   width: 0.25rem;
   height: 0.25rem;
   border-radius: 50%;
-  background: var(--mc-accent);
+  background: var(--cn-accent);
 }

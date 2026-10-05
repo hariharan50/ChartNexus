@@ -1,32 +1,32 @@
 .wrap {
   display: flex;
   flex-direction: column;
-  gap: var(--mc-space-3);
+  gap: var(--cn-space-3);
 }
 
 .head {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: var(--mc-space-3);
+  gap: var(--cn-space-3);
 }
 
 .band {
   display: inline-flex;
   align-items: center;
-  min-height: var(--mc-control-h);
+  min-height: var(--cn-control-h);
   margin: 0;
-  padding: 0 var(--mc-control-px);
+  padding: 0 var(--cn-control-px);
   border: 1px solid currentcolor;
-  border-radius: var(--mc-radius);
-  font-size: var(--mc-text-sm);
+  border-radius: var(--cn-radius);
+  font-size: var(--cn-text-sm);
   font-weight: 700;
   letter-spacing: 0.08em;
 }
 
 .score {
   margin: 0;
-  font-size: var(--mc-text-2xl);
+  font-size: var(--cn-text-2xl);
   font-weight: 700;
   line-height: 1;
 }
@@ -45,9 +45,9 @@
      apart — hence the needle's own position, not colour alone, is the signal. */
   background: linear-gradient(
     to right,
-    var(--mc-bearish-weak),
-    var(--mc-surface-raised),
-    var(--mc-bullish-weak)
+    var(--cn-bearish-weak),
+    var(--cn-surface-raised),
+    var(--cn-bullish-weak)
   );
 }
 
@@ -63,17 +63,17 @@
 
 .coverage {
   margin: 0;
-  font-size: var(--mc-text-xs);
-  color: var(--mc-text-subtle);
+  font-size: var(--cn-text-xs);
+  color: var(--cn-text-subtle);
 }
 
 .axes {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(6.5rem, 1fr));
-  gap: var(--mc-space-2);
+  gap: var(--cn-space-2);
   margin: 0;
-  padding: var(--mc-space-3) 0 0;
-  border-top: 1px solid var(--mc-border);
+  padding: var(--cn-space-3) 0 0;
+  border-top: 1px solid var(--cn-border);
   list-style: none;
 }
 
@@ -91,36 +91,36 @@
 }
 
 .axisLabel {
-  font-size: var(--mc-text-xs);
+  font-size: var(--cn-text-xs);
   font-weight: 600;
   letter-spacing: 0.05em;
   text-transform: uppercase;
-  color: var(--mc-text-subtle);
+  color: var(--cn-text-subtle);
 }
 
 .axisPoints {
-  font-size: var(--mc-text-sm);
+  font-size: var(--cn-text-sm);
   font-weight: 700;
 }
 
 .factors {
   width: 100%;
   border-collapse: collapse;
-  font-size: var(--mc-text-xs);
+  font-size: var(--cn-text-xs);
 }
 
 .caption {
-  margin-bottom: var(--mc-space-2);
-  padding-top: var(--mc-space-3);
-  border-top: 1px solid var(--mc-border);
+  margin-bottom: var(--cn-space-2);
+  padding-top: var(--cn-space-3);
+  border-top: 1px solid var(--cn-border);
   text-align: left;
-  color: var(--mc-text-subtle);
+  color: var(--cn-text-subtle);
 }
 
 .factors th,
 .factors td {
-  padding: var(--mc-space-2) var(--mc-space-2) var(--mc-space-2) 0;
-  border-bottom: 1px solid var(--mc-border);
+  padding: var(--cn-space-2) var(--cn-space-2) var(--cn-space-2) 0;
+  border-bottom: 1px solid var(--cn-border);
   text-align: left;
   vertical-align: top;
 }
@@ -129,7 +129,7 @@
   font-weight: 600;
   letter-spacing: 0.05em;
   text-transform: uppercase;
-  color: var(--mc-text-subtle);
+  color: var(--cn-text-subtle);
 }
 
 .factors tbody th {
@@ -144,23 +144,23 @@
 .factorNote {
   display: block;
   font-weight: 400;
-  color: var(--mc-text-subtle);
+  color: var(--cn-text-subtle);
 }
 
 .up {
-  color: var(--mc-bullish);
+  color: var(--cn-bullish);
 }
 
 .down {
-  color: var(--mc-bearish);
+  color: var(--cn-bearish);
 }
 
 .flat {
-  color: var(--mc-text-subtle);
+  color: var(--cn-text-subtle);
 }
 
 .caveat {
   margin: 0;
-  font-size: var(--mc-text-xs);
-  color: var(--mc-text-subtle);
+  font-size: var(--cn-text-xs);
+  color: var(--cn-text-subtle);
 }

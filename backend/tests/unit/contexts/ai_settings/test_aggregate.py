@@ -7,9 +7,9 @@ from datetime import UTC, datetime
 
 import pytest
 
-from marketcompass.contexts.ai_settings.domain.aggregate import AiSettings
-from marketcompass.contexts.ai_settings.domain.value_objects import LlmCredentials, LlmProvider
-from marketcompass.shared_kernel.types.identifiers import TenantId, UserId
+from chartnexus.contexts.ai_settings.domain.aggregate import AiSettings
+from chartnexus.contexts.ai_settings.domain.value_objects import LlmCredentials, LlmProvider
+from chartnexus.shared_kernel.types.identifiers import TenantId, UserId
 
 pytestmark = pytest.mark.unit
 

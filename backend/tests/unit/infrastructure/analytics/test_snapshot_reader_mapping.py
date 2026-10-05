@@ -11,7 +11,7 @@ from datetime import UTC, datetime
 from decimal import Decimal
 from types import SimpleNamespace
 
-from marketcompass.infrastructure.analytics.oi_chain_source import (
+from chartnexus.infrastructure.analytics.oi_chain_source import (
     _ist_session_date,
     _to_chain_snapshot,
 )

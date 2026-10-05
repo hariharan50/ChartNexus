@@ -28,7 +28,7 @@ import type { IndexKey } from './dashboard-data';
 import s from './route.module.css';
 import type { Route } from './+types/route';
 
-export const meta: Route.MetaFunction = () => [{ title: 'Intelligence Dashboard · MarketCompass' }];
+export const meta: Route.MetaFunction = () => [{ title: 'Intelligence Dashboard · ChartNexus' }];
 
 export default function Dashboard() {
   const [focused, setFocused] = useState<IndexKey>('NIFTY50');
@@ -134,7 +134,7 @@ export default function Dashboard() {
       {ai ? <AiSummaryCard summary={ai} /> : null}
 
       <p className={s.disclaimer}>
-        For educational and informational purposes only. MarketCompass is not a SEBI-registered
+        For educational and informational purposes only. ChartNexus is not a SEBI-registered
         investment adviser. Nothing here is investment advice, a recommendation, or a solicitation
         to buy or sell any security. Levels and signals are illustrative and derived from automated
         models that may be delayed or inaccurate. Markets carry risk — consult a registered

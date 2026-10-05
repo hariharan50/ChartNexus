@@ -279,7 +279,7 @@ export class LightweightHost implements HostChart {
    */
   private fromOverlay(event: Event): boolean {
     const target = event.target;
-    return target instanceof Element && target.closest('[data-mc-chart-overlay]') !== null;
+    return target instanceof Element && target.closest('[data-cn-chart-overlay]') !== null;
   }
 
   /** Container coordinates, plus what they mean in chart space. */

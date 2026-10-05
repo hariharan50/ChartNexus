@@ -14,33 +14,33 @@ from decimal import Decimal
 
 import pytest
 
-from marketcompass.contexts.instrument_catalog.domain.instrument import (
+from chartnexus.contexts.instrument_catalog.domain.instrument import (
     Instrument,
     InstrumentKind,
 )
-from marketcompass.contexts.market_data.domain.instruments import InstrumentSymbol
-from marketcompass.contexts.market_data.domain.market_data import DataSource
-from marketcompass.infrastructure.brokers.futures_contract import (
+from chartnexus.contexts.market_data.domain.instruments import InstrumentSymbol
+from chartnexus.contexts.market_data.domain.market_data import DataSource
+from chartnexus.infrastructure.brokers.futures_contract import (
     front_month_for,
     local_front_month,
     to_futures_symbol,
 )
-from marketcompass.infrastructure.brokers.mock.option_chain_factory import build_option_chain
-from marketcompass.infrastructure.brokers.mock.quote_factory import (
+from chartnexus.infrastructure.brokers.mock.option_chain_factory import build_option_chain
+from chartnexus.infrastructure.brokers.mock.quote_factory import (
     build_quote,
     open_interest_at,
     previous_open_interest,
     previous_volume_at,
     volume_at,
 )
-from marketcompass.infrastructure.brokers.mock.session_model import (
+from chartnexus.infrastructure.brokers.mock.session_model import (
     IST,
     base_level,
     lot_size,
     strike_step,
 )
-from marketcompass.infrastructure.catalog import registry
-from marketcompass.shared_kernel.domain.errors import ValidationError
+from chartnexus.infrastructure.catalog import registry
+from chartnexus.shared_kernel.domain.errors import ValidationError
 from tests.conftest import CATALOG_FIXTURE
 
 pytestmark = pytest.mark.unit

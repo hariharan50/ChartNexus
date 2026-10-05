@@ -1,15 +1,15 @@
 .rail {
   display: flex;
   flex-direction: column;
-  gap: var(--mc-space-3);
+  gap: var(--cn-space-3);
   width: 17rem;
   flex: 0 0 auto;
 }
 
 .panel {
-  border: 1px solid var(--mc-border);
-  border-radius: var(--mc-radius-lg);
-  background: var(--mc-surface);
+  border: 1px solid var(--cn-border);
+  border-radius: var(--cn-radius-lg);
+  background: var(--cn-surface);
   overflow: hidden;
 }
 
@@ -23,11 +23,11 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: var(--mc-space-2) var(--mc-space-3);
-  border-bottom: 1px solid var(--mc-border);
-  background: var(--mc-surface-raised);
-  color: var(--mc-text-muted);
-  font-size: var(--mc-text-xs);
+  padding: var(--cn-space-2) var(--cn-space-3);
+  border-bottom: 1px solid var(--cn-border);
+  background: var(--cn-surface-raised);
+  color: var(--cn-text-muted);
+  font-size: var(--cn-text-xs);
   font-weight: 600;
   letter-spacing: 0.04em;
   text-transform: uppercase;
@@ -43,11 +43,11 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: var(--mc-space-2);
+  gap: var(--cn-space-2);
   width: 100%;
-  padding: var(--mc-space-2) var(--mc-space-3);
-  border-bottom: 1px solid var(--mc-border);
-  font-size: var(--mc-text-sm);
+  padding: var(--cn-space-2) var(--cn-space-3);
+  border-bottom: 1px solid var(--cn-border);
+  font-size: var(--cn-text-sm);
 }
 
 .list li:last-child .row {
@@ -61,22 +61,22 @@
   background: transparent;
   color: inherit;
   font: inherit;
-  font-size: var(--mc-text-sm);
+  font-size: var(--cn-text-sm);
   text-align: left;
   cursor: pointer;
 }
 
 .rowBtn:hover {
-  background: var(--mc-surface-raised);
+  background: var(--cn-surface-raised);
 }
 
 .rowBtn:focus-visible {
-  outline: 2px solid var(--mc-accent);
+  outline: 2px solid var(--cn-accent);
   outline-offset: -2px;
 }
 
 .selected {
-  background: var(--mc-accent-weak);
+  background: var(--cn-accent-weak);
 }
 
 .name {
@@ -95,15 +95,15 @@
 }
 
 .up {
-  color: var(--mc-bullish);
+  color: var(--cn-bullish);
   font-weight: 600;
 }
 
 .down {
-  color: var(--mc-bearish);
+  color: var(--cn-bearish);
   font-weight: 600;
 }
 
 .slash {
-  color: var(--mc-text-subtle);
+  color: var(--cn-text-subtle);
 }

@@ -88,7 +88,7 @@ render, give that element its own class. The parity suite is what caught this.
 **3. `:global(.child-class)` cannot work.** A parent reaching into a child's
 internals (`form :global(.field)`, `td.ce.oi :global(.track)`) has nothing to
 grab, because the child's class is hashed. Those became `className` props on
-`TextField` and `OIBar`. `:global(.mc-numeric)` and friends stay as-is — those
+`TextField` and `OIBar`. `:global(.cn-numeric)` and friends stay as-is — those
 classes live in `app.css` and are genuinely global.
 
 ### JSX whitespace
@@ -155,7 +155,7 @@ Everything else is byte-for-byte behaviour. These are not:
 6. **The OI chart is token-themed.** It picked from two hard-coded palettes off
    an `isDark` boolean, which collapsed `warm` onto the light set and `terminal`
    onto the dark one — so the cream `warm` theme got light-grey axis text on
-   near-white. Chrome now resolves from `--mc-*`; Call/Put keep the Open Interest
+   near-white. Chrome now resolves from `--cn-*`; Call/Put keep the Open Interest
    tool's own palette, which is a domain signal rather than chrome.
 
 7. **No theme flash.** `app.html` hard-coded `data-theme="dark"` and ran no
@@ -208,8 +208,8 @@ and fails above a 0.1% pixel difference (`tests/parity/`). **96/96 passed** acro
 It needs the SvelteKit app running alongside, which is no longer in the tree:
 
 ```
-git worktree add ../mc-svelte 7a3144b
-cd ../mc-svelte/frontend && pnpm install
+git worktree add ../cn-svelte 7a3144b
+cd ../cn-svelte/frontend && pnpm install
 API_PROXY_TARGET=http://localhost:8099 pnpm dev     # :5173
 
 cd frontend && node tests/e2e/stub-api.mjs          # :8099, same data for both
@@ -238,7 +238,7 @@ builder, pure and DOM-free), the store tests, and the accessibility suite.
 The accessibility suite asserts zero *structural* violations and pins the
 inherited colour-contrast count per page. Both apps score identically —
 `/login` 2, `/dashboard` 38, `/option-chain` 29, `/settings/global` 5, all
-`color-contrast` from the `--mc-*` palette. The port introduced none of them, and
+`color-contrast` from the `--cn-*` palette. The port introduced none of them, and
 fixing them means changing the palette.
 
 ## Environment note

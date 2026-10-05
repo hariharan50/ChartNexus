@@ -10,7 +10,7 @@ from __future__ import annotations
 
 import pytest
 
-from marketcompass.shared_kernel.domain.levels import (
+from chartnexus.shared_kernel.domain.levels import (
     Bar,
     LevelOrigin,
     LevelSide,

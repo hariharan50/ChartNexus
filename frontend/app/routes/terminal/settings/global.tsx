@@ -4,7 +4,7 @@ import s from './global.module.css';
 import type { Route } from './+types/global';
 
 export const meta: Route.MetaFunction = () => [
-  { title: 'Global Settings · Settings · MarketCompass' }
+  { title: 'Global Settings · Settings · ChartNexus' }
 ];
 
 const callPut: { id: CallPutScheme; label: string; call: string; put: string }[] = [

@@ -3,7 +3,7 @@ import { useCallback, useEffect, useState } from 'react';
 /**
  * Light/dark theme, scoped to the marketing landing page alone.
  *
- * Deliberately independent of the app-wide theme store (`mc-theme` /
+ * Deliberately independent of the app-wide theme store (`cn-theme` /
  * `<html data-theme>`): the landing carries a bespoke dark design and must not
  * flip the terminal's theme, so it uses its own attribute and storage key.
  *
@@ -12,7 +12,7 @@ import { useCallback, useEffect, useState } from 'react';
  * light-mode visitor sees no dark flash. This hook is the only client writer of
  * the attribute, mirroring how the app's theme store owns `data-theme`.
  */
-const STORAGE_KEY = 'mc-landing-theme';
+const STORAGE_KEY = 'cn-landing-theme';
 const ATTR = 'data-lp-theme';
 
 type LandingTheme = 'light' | 'dark';

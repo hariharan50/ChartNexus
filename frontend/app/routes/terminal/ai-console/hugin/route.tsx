@@ -17,7 +17,7 @@ import ConsoleHeader from '../components/ConsoleHeader';
 import s from './route.module.css';
 import type { Route } from './+types/route';
 
-export const meta: Route.MetaFunction = () => [{ title: 'HUGIN · Market Memory · MarketCompass' }];
+export const meta: Route.MetaFunction = () => [{ title: 'HUGIN · Market Memory · ChartNexus' }];
 
 const AGENT_NAME = 'HUGIN';
 

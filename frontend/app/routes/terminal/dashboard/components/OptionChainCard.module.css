@@ -6,19 +6,19 @@
   display: inline-flex;
   padding: 2px;
   gap: 2px;
-  border: 1px solid var(--mc-border);
-  border-radius: var(--mc-radius);
-  background: var(--mc-surface-raised);
+  border: 1px solid var(--cn-border);
+  border-radius: var(--cn-radius);
+  background: var(--cn-surface-raised);
 }
 
 .strike-toggle button {
   min-width: 2rem;
   padding: 0.25rem 0.5rem;
   border: none;
-  border-radius: calc(var(--mc-radius) - 2px);
+  border-radius: calc(var(--cn-radius) - 2px);
   background: transparent;
-  color: var(--mc-text-subtle);
-  font-size: var(--mc-text-xs);
+  color: var(--cn-text-subtle);
+  font-size: var(--cn-text-xs);
   font-weight: 600;
   font-variant-numeric: tabular-nums;
   cursor: pointer;
@@ -28,37 +28,37 @@
 }
 
 .strike-toggle button:hover {
-  color: var(--mc-text);
+  color: var(--cn-text);
 }
 
 .strike-toggle button.active {
-  background: var(--mc-accent);
-  color: var(--mc-accent-contrast, #fff);
+  background: var(--cn-accent);
+  color: var(--cn-accent-contrast, #fff);
 }
 
 .empty {
   margin: 0;
-  padding: var(--mc-space-6) var(--mc-space-3);
+  padding: var(--cn-space-6) var(--cn-space-3);
   text-align: center;
-  font-size: var(--mc-text-sm);
-  color: var(--mc-text-subtle);
+  font-size: var(--cn-text-sm);
+  color: var(--cn-text-subtle);
 }
 
 .scroll table {
   width: 100%;
   border-collapse: collapse;
-  font-size: var(--mc-text-sm);
+  font-size: var(--cn-text-sm);
 }
 
 .scroll th {
-  padding: 0 var(--mc-space-3) var(--mc-space-2);
+  padding: 0 var(--cn-space-3) var(--cn-space-2);
   text-align: left;
-  font-size: var(--mc-text-xs);
+  font-size: var(--cn-text-xs);
   font-weight: 600;
   letter-spacing: 0.06em;
   text-transform: uppercase;
-  color: var(--mc-text-subtle);
-  border-bottom: 1px solid var(--mc-border);
+  color: var(--cn-text-subtle);
+  border-bottom: 1px solid var(--cn-border);
   white-space: nowrap;
 }
 
@@ -67,8 +67,8 @@
 }
 
 .scroll td {
-  padding: var(--mc-space-2) var(--mc-space-3);
-  border-bottom: 1px solid var(--mc-border);
+  padding: var(--cn-space-2) var(--cn-space-3);
+  border-bottom: 1px solid var(--cn-border);
   white-space: nowrap;
 }
 
@@ -77,26 +77,26 @@
 }
 
 .scroll tbody tr:hover {
-  background: var(--mc-surface-raised);
+  background: var(--cn-surface-raised);
 }
 
 .scroll tr.atm {
-  background: color-mix(in srgb, var(--mc-accent) 6%, transparent);
+  background: color-mix(in srgb, var(--cn-accent) 6%, transparent);
 }
 
 .scroll tr.atm:hover {
-  background: color-mix(in srgb, var(--mc-accent) 10%, transparent);
+  background: color-mix(in srgb, var(--cn-accent) 10%, transparent);
 }
 
 .strike {
   display: flex;
   align-items: center;
-  gap: var(--mc-space-2);
+  gap: var(--cn-space-2);
   font-weight: 600;
 }
 
 .scroll td.strike {
-  font-size: var(--mc-text-base);
+  font-size: var(--cn-text-base);
 }
 
 .num {
@@ -104,15 +104,15 @@
 }
 
 .muted {
-  color: var(--mc-text-muted);
+  color: var(--cn-text-muted);
 }
 
 .up {
-  color: var(--mc-bullish);
+  color: var(--cn-bullish);
   font-weight: 600;
 }
 
 .down {
-  color: var(--mc-bearish);
+  color: var(--cn-bearish);
   font-weight: 600;
 }

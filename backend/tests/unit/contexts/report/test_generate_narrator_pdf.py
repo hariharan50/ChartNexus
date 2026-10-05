@@ -5,9 +5,9 @@ from __future__ import annotations
 import uuid
 from datetime import UTC, date, datetime
 
-from marketcompass.contexts.report.application.generate import GenerateReport
-from marketcompass.contexts.report.application.ports import ReportInputs
-from marketcompass.contexts.report.domain.report import (
+from chartnexus.contexts.report.application.generate import GenerateReport
+from chartnexus.contexts.report.application.ports import ReportInputs
+from chartnexus.contexts.report.domain.report import (
     Candle,
     InstrumentSummary,
     Level,
@@ -17,10 +17,10 @@ from marketcompass.contexts.report.domain.report import (
     ReportNarrative,
     TechnicalRead,
 )
-from marketcompass.contexts.report.domain.scoring import compute_score
-from marketcompass.infrastructure.report.narrator import Mme100ReportNarrator
-from marketcompass.infrastructure.report.pdf_renderer import ReportPdfRenderer
-from marketcompass.shared_kernel.types.identifiers import TenantId
+from chartnexus.contexts.report.domain.scoring import compute_score
+from chartnexus.infrastructure.report.narrator import Mme100ReportNarrator
+from chartnexus.infrastructure.report.pdf_renderer import ReportPdfRenderer
+from chartnexus.shared_kernel.types.identifiers import TenantId
 
 TENANT = TenantId(uuid.uuid4())
 
@@ -161,7 +161,7 @@ def test_pdf_renderer_produces_a_pdf() -> None:
         narrative=ReportNarrative("a", "b", "c", "d"),
         source="live",
         generated_at=datetime.now(UTC),
-        sources=("NSE", "MarketCompass"),
+        sources=("NSE", "ChartNexus"),
     )
     pdf = ReportPdfRenderer().render(report)
     assert pdf[:5] == b"%PDF-"

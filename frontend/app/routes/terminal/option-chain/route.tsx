@@ -192,7 +192,7 @@ export default function OptionChain() {
           <div className={s.stats}>
             <span className={s.stat}>
               <span className={s.statLabel}>Spot</span>
-              <span className={cx(s.statValue, 'mc-numeric')}>
+              <span className={cx(s.statValue, 'cn-numeric')}>
                 {spot != null ? formatPrice(spot) : '—'}
               </span>
               {spotChange != null ? (
@@ -203,13 +203,13 @@ export default function OptionChain() {
             </span>
             <span className={s.stat}>
               <span className={s.statLabel}>Future</span>
-              <span className={cx(s.statValue, 'mc-numeric')}>
+              <span className={cx(s.statValue, 'cn-numeric')}>
                 {future != null ? formatPrice(future) : '—'}
               </span>
             </span>
             <span className={s.stat}>
               <span className={s.statLabel}>VIX</span>
-              <span className={cx(s.statValue, 'mc-numeric')}>—</span>
+              <span className={cx(s.statValue, 'cn-numeric')}>—</span>
             </span>
           </div>
 
@@ -218,7 +218,7 @@ export default function OptionChain() {
             <span className={s.clockIco} aria-hidden="true">
               <IconClock />
             </span>
-            <span className="mc-numeric">{clock} IST</span>
+            <span className="cn-numeric">{clock} IST</span>
             <span className={cx(s.dot, refreshing && s.pulse)} aria-hidden="true" />
           </div>
         </div>
@@ -328,7 +328,7 @@ export default function OptionChain() {
                           {signedPct(ceChg, 0)}
                         </td>
                         <td className={cx(s.ce, s.num, s.oi)}>
-                          <span className={cx(s.oiVal, 'mc-numeric')}>
+                          <span className={cx(s.oiVal, 'cn-numeric')}>
                             {compactIndian(row.ce?.oi)}
                           </span>
                           <OIBar
@@ -344,7 +344,7 @@ export default function OptionChain() {
 
                         {/* center */}
                         <td className={cx(s.center, s.strike, s.bl)}>
-                          <span className={cx('mc-numeric', s.strikeVal)}>
+                          <span className={cx('cn-numeric', s.strikeVal)}>
                             {formatInt(row.strike)}
                           </span>{' '}
                           {isMaxPain ? (
@@ -358,7 +358,7 @@ export default function OptionChain() {
                         {/* PE */}
                         <td className={cx(s.pe, s.num, s.ltp, s.putLtp)}>{ltpText(row.pe)}</td>
                         <td className={cx(s.pe, s.num, s.oi)}>
-                          <span className={cx(s.oiVal, 'mc-numeric')}>
+                          <span className={cx(s.oiVal, 'cn-numeric')}>
                             {compactIndian(row.pe?.oi)}
                           </span>
                           <OIBar

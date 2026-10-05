@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from datetime import datetime, timedelta, timezone
 
-from marketcompass.contexts.mme100.domain.schedule import (
+from chartnexus.contexts.mme100.domain.schedule import (
     is_trading_day,
     next_briefing_wake,
     parse_hhmm,

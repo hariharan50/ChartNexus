@@ -17,7 +17,7 @@ const STUB_API = `http://localhost:${process.env.STUB_API_PORT ?? 8099}`;
 
 test.beforeEach(async ({ context, baseURL, page }) => {
   await context.addCookies([
-    { name: 'mc_session', value: 'test', url: baseURL ?? 'http://localhost:4173' }
+    { name: 'cn_session', value: 'test', url: baseURL ?? 'http://localhost:4173' }
   ]);
 
   await page.route('**/api/v1/**', async (route) => {
@@ -58,7 +58,7 @@ test('mounts the price chart', async ({ page }) => {
   // The library renders into canvases. One existing means the dynamic import
   // resolved client-side — the whole SSR strategy in one assertion.
   await expect(page.locator('canvas').first()).toBeVisible();
-  await expect(page).toHaveTitle('Analyse · MarketCompass');
+  await expect(page).toHaveTitle('Analyse · ChartNexus');
 });
 
 test('summarises the drawn range rather than the day', async ({ page }) => {

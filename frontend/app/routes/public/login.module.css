@@ -1,5 +1,5 @@
 .intro {
-  margin-bottom: var(--mc-space-6);
+  margin-bottom: var(--cn-space-6);
 }
 
 .intro h1 {
@@ -11,8 +11,8 @@
 
 .intro p {
   margin: 0;
-  color: var(--mc-text-muted);
-  font-size: var(--mc-text-sm);
+  color: var(--cn-text-muted);
+  font-size: var(--cn-text-sm);
 }
 
 .form {
@@ -25,59 +25,59 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: var(--mc-space-4);
+  gap: var(--cn-space-4);
 }
 
 .remember {
   display: inline-flex;
   align-items: center;
   gap: 0.4375rem;
-  font-size: var(--mc-text-sm);
-  color: var(--mc-text-muted);
+  font-size: var(--cn-text-sm);
+  color: var(--cn-text-muted);
   cursor: pointer;
 }
 
 .remember input {
   width: 0.875rem;
   height: 0.875rem;
-  accent-color: var(--mc-brand);
+  accent-color: var(--cn-brand);
   cursor: pointer;
 }
 
 .muted-link {
-  font-size: var(--mc-text-sm);
-  color: var(--mc-brand);
+  font-size: var(--cn-text-sm);
+  color: var(--cn-brand);
   font-weight: 500;
 }
 
 .banner {
   display: flex;
-  gap: var(--mc-space-2);
-  margin-bottom: var(--mc-space-4);
+  gap: var(--cn-space-2);
+  margin-bottom: var(--cn-space-4);
   padding: 0.625rem 0.75rem;
-  font-size: var(--mc-text-sm);
+  font-size: var(--cn-text-sm);
   line-height: 1.45;
-  border: 1px solid color-mix(in srgb, var(--mc-danger) 40%, transparent);
-  border-radius: var(--mc-radius);
-  background: color-mix(in srgb, var(--mc-danger) 12%, transparent);
+  border: 1px solid color-mix(in srgb, var(--cn-danger) 40%, transparent);
+  border-radius: var(--cn-radius);
+  background: color-mix(in srgb, var(--cn-danger) 12%, transparent);
 }
 
 .banner-icon {
-  color: var(--mc-danger);
+  color: var(--cn-danger);
   flex-shrink: 0;
   padding-top: 0.1rem;
 }
 
 /* Same shape as the error banner, recoloured — this one is good news.
-   --mc-live is the palette's green; the auth surface is dark in both themes,
+   --cn-live is the palette's green; the auth surface is dark in both themes,
    so it needs no light-theme counterpart. */
 .banner.success {
-  border-color: color-mix(in srgb, var(--mc-live) 40%, transparent);
-  background: color-mix(in srgb, var(--mc-live) 12%, transparent);
+  border-color: color-mix(in srgb, var(--cn-live) 40%, transparent);
+  background: color-mix(in srgb, var(--cn-live) 12%, transparent);
 }
 
 .banner.success .banner-icon {
-  color: var(--mc-live);
+  color: var(--cn-live);
 }
 
 .banner p {
@@ -86,17 +86,17 @@
 
 .banner a {
   display: inline-block;
-  margin-top: var(--mc-space-1);
-  color: var(--mc-brand);
+  margin-top: var(--cn-space-1);
+  color: var(--cn-brand);
 }
 
 .divider {
   display: flex;
   align-items: center;
-  gap: var(--mc-space-3);
-  margin: var(--mc-space-4) 0 var(--mc-space-3);
-  color: var(--mc-text-subtle);
-  font-size: var(--mc-text-xs);
+  gap: var(--cn-space-3);
+  margin: var(--cn-space-4) 0 var(--cn-space-3);
+  color: var(--cn-text-subtle);
+  font-size: var(--cn-text-xs);
 }
 
 .divider::before,
@@ -104,17 +104,17 @@
   content: '';
   flex: 1;
   height: 1px;
-  background: var(--mc-auth-border);
+  background: var(--cn-auth-border);
 }
 
 .footer {
-  margin: var(--mc-space-6) 0 0;
+  margin: var(--cn-space-6) 0 0;
   text-align: center;
-  font-size: var(--mc-text-sm);
-  color: var(--mc-text-muted);
+  font-size: var(--cn-text-sm);
+  color: var(--cn-text-muted);
 }
 
 .footer a {
-  color: var(--mc-brand);
+  color: var(--cn-brand);
   font-weight: 600;
 }

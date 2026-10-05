@@ -98,7 +98,7 @@ export default function FiiDiiCard({ summary, loading = false }: Props) {
                 <p
                   className={cx(
                     s.value,
-                    'mc-numeric',
+                    'cn-numeric',
                     flow.net > 0 && s.up,
                     flow.net < 0 && s.down
                   )}
@@ -115,8 +115,8 @@ export default function FiiDiiCard({ summary, loading = false }: Props) {
       {summary && !loading && windowSessions > 0 ? (
         <p className={s.window}>
           Last {windowSessions} {windowSessions === 1 ? 'session' : 'sessions'} —{' '}
-          <span className="mc-numeric">FII {money(flows[0]?.week ?? 0)}</span>,{' '}
-          <span className="mc-numeric">DII {money(flows[1]?.week ?? 0)}</span>
+          <span className="cn-numeric">FII {money(flows[0]?.week ?? 0)}</span>,{' '}
+          <span className="cn-numeric">DII {money(flows[1]?.week ?? 0)}</span>
         </p>
       ) : null}
     </Panel>

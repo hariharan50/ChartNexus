@@ -1,46 +1,46 @@
 .wrap {
-  background: var(--mc-surface);
-  border: 1px solid var(--mc-border);
-  border-radius: var(--mc-radius-lg);
-  box-shadow: var(--mc-shadow);
-  padding: var(--mc-space-4);
+  background: var(--cn-surface);
+  border: 1px solid var(--cn-border);
+  border-radius: var(--cn-radius-lg);
+  box-shadow: var(--cn-shadow);
+  padding: var(--cn-space-4);
 }
 
 .head {
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
-  gap: var(--mc-space-3);
-  margin-bottom: var(--mc-space-3);
+  gap: var(--cn-space-3);
+  margin-bottom: var(--cn-space-3);
 }
 
 .title {
   margin: 0;
-  font-size: var(--mc-text-base);
+  font-size: var(--cn-text-base);
   font-weight: 700;
 }
 
 .sub {
   margin: 0.125rem 0 0;
-  font-size: var(--mc-text-xs);
-  color: var(--mc-text-subtle);
+  font-size: var(--cn-text-xs);
+  color: var(--cn-text-subtle);
 }
 
 .up {
-  color: var(--mc-bullish);
+  color: var(--cn-bullish);
 }
 
 .down {
-  color: var(--mc-bearish);
+  color: var(--cn-bearish);
 }
 
 .flat {
-  color: var(--mc-text-subtle);
+  color: var(--cn-text-subtle);
 }
 
 .gap {
   margin: 0;
-  font-size: var(--mc-text-lg);
+  font-size: var(--cn-text-lg);
   font-weight: 700;
 }
 
@@ -48,60 +48,60 @@
    signed number, and there are three different signed numbers on it. */
 .gapLabel {
   margin: 0.125rem 0 0;
-  font-size: var(--mc-text-xs);
+  font-size: var(--cn-text-xs);
   font-weight: 600;
   letter-spacing: 0.05em;
   text-transform: uppercase;
-  color: var(--mc-text-subtle);
+  color: var(--cn-text-subtle);
 }
 
 .figures {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
-  gap: var(--mc-space-3);
-  margin: var(--mc-space-4) 0 0;
-  padding-top: var(--mc-space-3);
-  border-top: 1px solid var(--mc-border);
+  gap: var(--cn-space-3);
+  margin: var(--cn-space-4) 0 0;
+  padding-top: var(--cn-space-3);
+  border-top: 1px solid var(--cn-border);
 }
 
 .cell dt {
   margin: 0 0 0.25rem;
-  font-size: var(--mc-text-xs);
+  font-size: var(--cn-text-xs);
   font-weight: 600;
   letter-spacing: 0.05em;
   text-transform: uppercase;
-  color: var(--mc-text-subtle);
+  color: var(--cn-text-subtle);
 }
 
 .cell dd {
   margin: 0;
-  font-size: var(--mc-text-sm);
+  font-size: var(--cn-text-sm);
   font-weight: 700;
 }
 
 .bases {
-  margin: var(--mc-space-2) 0 0;
-  font-size: var(--mc-text-xs);
-  color: var(--mc-text-subtle);
+  margin: var(--cn-space-2) 0 0;
+  font-size: var(--cn-text-xs);
+  color: var(--cn-text-subtle);
 }
 
 .verdict {
-  margin: var(--mc-space-4) 0 0;
-  padding-top: var(--mc-space-3);
-  border-top: 1px solid var(--mc-border);
-  font-size: var(--mc-text-xs);
-  color: var(--mc-text-subtle);
+  margin: var(--cn-space-4) 0 0;
+  padding-top: var(--cn-space-3);
+  border-top: 1px solid var(--cn-border);
+  font-size: var(--cn-text-xs);
+  color: var(--cn-text-subtle);
 }
 
 /* A disagreement is a finding, not a fault — it gets emphasis, not an alarm. */
 .verdict.flagged {
-  color: var(--mc-text);
+  color: var(--cn-text);
   font-weight: 600;
 }
 
 .empty,
 .caveat {
-  margin: var(--mc-space-3) 0 0;
-  font-size: var(--mc-text-xs);
-  color: var(--mc-text-subtle);
+  margin: var(--cn-space-3) 0 0;
+  font-size: var(--cn-text-xs);
+  color: var(--cn-text-subtle);
 }

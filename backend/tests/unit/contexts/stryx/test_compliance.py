@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from marketcompass.contexts.stryx.domain import compliance
+from chartnexus.contexts.stryx.domain import compliance
 
 
 def test_needs_disclaimer_when_missing() -> None:

@@ -13,8 +13,8 @@ from decimal import Decimal
 
 import pytest
 
-from marketcompass.contexts.market_ingestion.application.capture import CaptureChainSnapshots
-from marketcompass.contexts.market_ingestion.application.ports import (
+from chartnexus.contexts.market_ingestion.application.capture import CaptureChainSnapshots
+from chartnexus.contexts.market_ingestion.application.ports import (
     ChainObservation,
     ChainRowToWrite,
     SnapshotToWrite,

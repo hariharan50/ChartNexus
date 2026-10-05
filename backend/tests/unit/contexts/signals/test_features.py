@@ -4,8 +4,8 @@ from __future__ import annotations
 
 import pytest
 
-from marketcompass.contexts.signals.domain import features
-from marketcompass.contexts.signals.domain.features import FeatureInputs, Regime
+from chartnexus.contexts.signals.domain import features
+from chartnexus.contexts.signals.domain.features import FeatureInputs, Regime
 
 
 def _rising(n: int, base: float = 100.0) -> tuple[float, ...]:

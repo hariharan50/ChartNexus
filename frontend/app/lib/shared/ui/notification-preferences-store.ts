@@ -20,8 +20,8 @@ const DEFAULTS: NotificationToggleKey = {
   weeklyDigest: false
 };
 
-const STORAGE_KEY = 'mc-pref-notifications';
-const TIMEOUT_KEY = 'mc-pref-push-timeout';
+const STORAGE_KEY = 'cn-pref-notifications';
+const TIMEOUT_KEY = 'cn-pref-push-timeout';
 
 interface NotificationPreferencesState {
   toggles: NotificationToggleKey;

@@ -5,9 +5,9 @@ from __future__ import annotations
 import uuid
 from datetime import UTC, date, datetime
 
-from marketcompass.contexts.hugin.application.get_history import GetHuginHistory
-from marketcompass.contexts.hugin.domain.observation import Bias, Grade, Observation
-from marketcompass.shared_kernel.types.identifiers import TenantId
+from chartnexus.contexts.hugin.application.get_history import GetHuginHistory
+from chartnexus.contexts.hugin.domain.observation import Bias, Grade, Observation
+from chartnexus.shared_kernel.types.identifiers import TenantId
 
 TENANT = TenantId(uuid.uuid4())
 

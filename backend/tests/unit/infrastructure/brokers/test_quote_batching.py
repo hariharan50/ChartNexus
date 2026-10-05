@@ -10,8 +10,8 @@ from __future__ import annotations
 
 import pytest
 
-from marketcompass.infrastructure.brokers.fyers.futures_mapper import split_quote_batch
-from marketcompass.infrastructure.brokers.fyers.rest_client import (
+from chartnexus.infrastructure.brokers.fyers.futures_mapper import split_quote_batch
+from chartnexus.infrastructure.brokers.fyers.rest_client import (
     QUOTE_BATCH_SIZE,
     batch_symbols,
 )

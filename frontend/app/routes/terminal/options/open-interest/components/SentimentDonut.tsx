@@ -15,7 +15,7 @@ export default function SentimentDonut({ label, percent }: Props) {
   return (
     <div className={s.donut}>
       <svg viewBox="0 0 140 140" width="140" height="140" className={s.ring} aria-hidden="true">
-        <circle cx="70" cy="70" r={R} fill="none" stroke="var(--mc-border)" strokeWidth="14" />
+        <circle cx="70" cy="70" r={R} fill="none" stroke="var(--cn-border)" strokeWidth="14" />
         <circle
           cx="70"
           cy="70"

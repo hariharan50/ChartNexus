@@ -1,14 +1,14 @@
-"""The deterministic MarketCompass score — same inputs, same score; bands & cards."""
+"""The deterministic ChartNexus score — same inputs, same score; bands & cards."""
 
 from __future__ import annotations
 
-from marketcompass.contexts.report.domain.report import (
+from chartnexus.contexts.report.domain.report import (
     InstrumentSummary,
     OptionsSummary,
     Stance,
     TechnicalRead,
 )
-from marketcompass.contexts.report.domain.scoring import compute_score
+from chartnexus.contexts.report.domain.scoring import compute_score
 
 
 def _summary(ltp: float | None = 100.0, chg: float | None = 0.0) -> InstrumentSummary:

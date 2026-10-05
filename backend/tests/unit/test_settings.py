@@ -5,7 +5,7 @@ from __future__ import annotations
 import pytest
 from pydantic import ValidationError as PydanticValidationError
 
-from marketcompass.bootstrap.settings import (
+from chartnexus.bootstrap.settings import (
     DatabaseSettings,
     Environment,
     SecuritySettings,

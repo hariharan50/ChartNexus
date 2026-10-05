@@ -1,31 +1,31 @@
 .wrap {
-  background: var(--mc-surface);
-  border: 1px solid var(--mc-border);
-  border-radius: var(--mc-radius-lg);
-  box-shadow: var(--mc-shadow);
-  padding: var(--mc-space-4);
+  background: var(--cn-surface);
+  border: 1px solid var(--cn-border);
+  border-radius: var(--cn-radius-lg);
+  box-shadow: var(--cn-shadow);
+  padding: var(--cn-space-4);
 }
 
 .head {
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
-  gap: var(--mc-space-4);
+  gap: var(--cn-space-4);
   flex-wrap: wrap;
-  margin-bottom: var(--mc-space-4);
+  margin-bottom: var(--cn-space-4);
 }
 
 .title {
   margin: 0;
-  font-size: var(--mc-text-base);
+  font-size: var(--cn-text-base);
   font-weight: 700;
   letter-spacing: -0.01em;
 }
 
 .sub {
   margin: 0.125rem 0 0;
-  font-size: var(--mc-text-xs);
-  color: var(--mc-text-subtle);
+  font-size: var(--cn-text-xs);
+  color: var(--cn-text-subtle);
 }
 
 .legend {
@@ -33,19 +33,19 @@
   align-items: center;
   gap: 0.375rem;
   margin: 0;
-  font-size: var(--mc-text-xs);
-  color: var(--mc-text-subtle);
+  font-size: var(--cn-text-xs);
+  color: var(--cn-text-subtle);
 }
 
 .key {
   width: 0.75rem;
   height: 0.75rem;
   border-radius: 3px;
-  border: 1px solid var(--mc-border-strong);
+  border: 1px solid var(--cn-border-strong);
 }
 
 .key + .key {
-  margin-left: var(--mc-space-3);
+  margin-left: var(--cn-space-3);
 }
 
 /* Wide content scrolls inside its own container; the page never scrolls
@@ -71,7 +71,7 @@
   top: 0;
   bottom: 0;
   width: 1px;
-  background: var(--mc-border);
+  background: var(--cn-border);
   opacity: 0.6;
 }
 
@@ -80,7 +80,7 @@
   top: 0;
   bottom: 1.5rem;
   width: 2px;
-  background: var(--mc-accent);
+  background: var(--cn-accent);
   z-index: 2;
 }
 
@@ -92,13 +92,13 @@
   font-weight: 700;
   letter-spacing: 0.08em;
   text-transform: uppercase;
-  color: var(--mc-accent);
+  color: var(--cn-accent);
 }
 
 .lanes {
   display: flex;
   flex-direction: column;
-  gap: var(--mc-space-2);
+  gap: var(--cn-space-2);
   position: relative;
 }
 
@@ -117,20 +117,20 @@
   gap: 0.0625rem;
   min-width: 0;
   padding: 0 0.5rem;
-  border: 1px solid var(--mc-border-strong);
-  border-radius: var(--mc-radius);
-  background: var(--mc-surface-raised);
+  border: 1px solid var(--cn-border-strong);
+  border-radius: var(--cn-radius);
+  background: var(--cn-surface-raised);
   overflow: hidden;
 }
 
 .band.up {
-  background: var(--mc-bullish-weak);
-  border-color: var(--mc-bullish);
+  background: var(--cn-bullish-weak);
+  border-color: var(--cn-bullish);
 }
 
 .band.down {
-  background: var(--mc-bearish-weak);
-  border-color: var(--mc-bearish);
+  background: var(--cn-bearish-weak);
+  border-color: var(--cn-bearish);
 }
 
 /* A session that has not started carries no move to colour, so it reads as an
@@ -141,11 +141,11 @@
 }
 
 .band.live {
-  box-shadow: 0 0 0 1px var(--mc-accent);
+  box-shadow: 0 0 0 1px var(--cn-accent);
 }
 
 .bandLabel {
-  font-size: var(--mc-text-xs);
+  font-size: var(--cn-text-xs);
   font-weight: 700;
   white-space: nowrap;
   overflow: hidden;
@@ -154,15 +154,15 @@
 
 .bandMove {
   font-size: 0.6875rem;
-  color: var(--mc-text-subtle);
+  color: var(--cn-text-subtle);
 }
 
 .band.up .bandMove {
-  color: var(--mc-bullish);
+  color: var(--cn-bullish);
 }
 
 .band.down .bandMove {
-  color: var(--mc-bearish);
+  color: var(--cn-bearish);
 }
 
 .axis {
@@ -178,12 +178,12 @@
   top: 0.25rem;
   transform: translateX(-50%);
   font-size: 0.625rem;
-  color: var(--mc-text-subtle);
+  color: var(--cn-text-subtle);
   white-space: nowrap;
 }
 
 .foot {
-  margin: var(--mc-space-3) 0 0;
-  font-size: var(--mc-text-xs);
-  color: var(--mc-text-subtle);
+  margin: var(--cn-space-3) 0 0;
+  font-size: var(--cn-text-xs);
+  color: var(--cn-text-subtle);
 }

@@ -1,9 +1,9 @@
 /* ---------------------------------------------------------------------------
-   MarketCompass marketing landing page — dark in every theme.
+   ChartNexus marketing landing page — dark in every theme.
 
    The redesign adopts the StrikeFluency reference's dark visual system
    (charcoal ground, burnt-orange accent, pill buttons, rounded-2xl cards, a
-   warm cream footer) but keeps MarketCompass's name and its truthful, read-only
+   warm cream footer) but keeps ChartNexus's name and its truthful, read-only
    analytics copy. Every token below is re-pinned *inside* `.landing` so the
    subtree ignores the app theme without touching the app's own tokens — the
    same technique the auth layout uses.
@@ -12,32 +12,32 @@
 .landing {
   /* Generic app tokens, re-pinned to the reference palette so reused chrome
      (the ChainWidget, DataSourceBadge) inherits the new look for free. */
-  --mc-bg: #131313;
-  --mc-surface: #1a1a1a;
-  --mc-surface-raised: #1f1f1f;
-  --mc-border: #262626;
-  --mc-border-strong: #333333;
-  --mc-field-bg: #1f1f1f;
-  --mc-field-border: #333333;
+  --cn-bg: #131313;
+  --cn-surface: #1a1a1a;
+  --cn-surface-raised: #1f1f1f;
+  --cn-border: #262626;
+  --cn-border-strong: #333333;
+  --cn-field-bg: #1f1f1f;
+  --cn-field-border: #333333;
 
-  --mc-text: #e3e3e3;
-  --mc-text-muted: #8a8a8a; /* 5.1:1 on #131313 */
-  --mc-text-subtle: #9a9aa2; /* 6.3:1 — the reference's #6a6a6a fails AA on this ground */
+  --cn-text: #e3e3e3;
+  --cn-text-muted: #8a8a8a; /* 5.1:1 on #131313 */
+  --cn-text-subtle: #9a9aa2; /* 6.3:1 — the reference's #6a6a6a fails AA on this ground */
 
-  --mc-accent: #cf5a30;
-  --mc-accent-weak: #2a140b;
+  --cn-accent: #cf5a30;
+  --cn-accent-weak: #2a140b;
 
-  /* The reused ChainWidget reads a few `--mc-landing-*` tokens directly; re-pin
+  /* The reused ChainWidget reads a few `--cn-landing-*` tokens directly; re-pin
      them here so it wears the rust palette. */
-  --mc-landing-accent: #cf5a30;
-  --mc-landing-accent-weak: #2a140b;
-  --mc-landing-text: #ffffff;
+  --cn-landing-accent: #cf5a30;
+  --cn-landing-accent-weak: #2a140b;
+  --cn-landing-text: #ffffff;
 
-  --mc-bullish: #31dd6a;
-  --mc-bullish-weak: rgba(49, 221, 106, 0.12);
-  --mc-bearish: #ff5c5c;
-  --mc-bearish-weak: rgba(255, 92, 92, 0.12);
-  --mc-brand: #cf5a30;
+  --cn-bullish: #31dd6a;
+  --cn-bullish-weak: rgba(49, 221, 106, 0.12);
+  --cn-bearish: #ff5c5c;
+  --cn-bearish-weak: rgba(255, 92, 92, 0.12);
+  --cn-brand: #cf5a30;
 
   /* Landing-local design tokens (`--lp-*`), not part of the app contract.
 
@@ -94,13 +94,13 @@
   --lp-grid-gap: clamp(0.75rem, 1vw, 1.25rem);
   --lp-card-pad: clamp(1rem, 0.85rem + 0.55vw, 1.375rem);
 
-  color: var(--mc-text);
+  color: var(--cn-text);
   color-scheme: dark;
-  background: var(--mc-bg);
+  background: var(--cn-bg);
   min-height: 100vh;
   min-height: 100dvh;
   overflow-x: clip;
-  font-family: var(--mc-font-sans);
+  font-family: var(--cn-font-sans);
   -webkit-font-smoothing: antialiased;
 }
 
@@ -139,30 +139,30 @@
    with no per-component edits. Independent of the app-wide `data-theme`.
    --------------------------------------------------------------------------- */
 :global(html[data-lp-theme='light']) .landing {
-  --mc-bg: #f7f4ed;
-  --mc-surface: #ffffff;
-  --mc-surface-raised: #f2eee5;
-  --mc-border: #e5e0d4;
-  --mc-border-strong: #d2ccbb;
-  --mc-field-bg: #ffffff;
-  --mc-field-border: #d2ccbb;
+  --cn-bg: #f7f4ed;
+  --cn-surface: #ffffff;
+  --cn-surface-raised: #f2eee5;
+  --cn-border: #e5e0d4;
+  --cn-border-strong: #d2ccbb;
+  --cn-field-bg: #ffffff;
+  --cn-field-border: #d2ccbb;
 
-  --mc-text: #2a2620;
-  --mc-text-muted: #5f594c; /* 6.3:1 on #f7f4ed */
-  --mc-text-subtle: #6f695a; /* 5.1:1 */
+  --cn-text: #2a2620;
+  --cn-text-muted: #5f594c; /* 6.3:1 on #f7f4ed */
+  --cn-text-subtle: #6f695a; /* 5.1:1 */
 
-  --mc-accent: #b0401d;
-  --mc-accent-weak: #f6e3d9;
+  --cn-accent: #b0401d;
+  --cn-accent-weak: #f6e3d9;
 
-  --mc-landing-accent: #b0401d;
-  --mc-landing-accent-weak: #f6e3d9;
-  --mc-landing-text: #2a2620;
+  --cn-landing-accent: #b0401d;
+  --cn-landing-accent-weak: #f6e3d9;
+  --cn-landing-text: #2a2620;
 
-  --mc-bullish: #14a44a;
-  --mc-bullish-weak: rgba(20, 164, 74, 0.14);
-  --mc-bearish: #d33a2f;
-  --mc-bearish-weak: rgba(211, 58, 47, 0.12);
-  --mc-brand: #b0401d;
+  --cn-bullish: #14a44a;
+  --cn-bullish-weak: rgba(20, 164, 74, 0.14);
+  --cn-bearish: #d33a2f;
+  --cn-bearish-weak: rgba(211, 58, 47, 0.12);
+  --cn-brand: #b0401d;
 
   /* Rust accent, deepened so it clears AA on the light ground (~5.3:1 as text,
      ~5.8:1 as a fill under white button text). */
@@ -238,7 +238,7 @@
   max-width: 46rem;
   font-size: var(--lp-lead);
   line-height: 1.6;
-  color: var(--mc-text-muted);
+  color: var(--cn-text-muted);
 }
 
 /* -- buttons -------------------------------------------------------------- */
@@ -288,14 +288,14 @@
 }
 
 .btn-ghost {
-  background: var(--mc-surface);
-  color: var(--mc-text-muted);
-  border-color: var(--mc-border-strong);
+  background: var(--cn-surface);
+  color: var(--cn-text-muted);
+  border-color: var(--cn-border-strong);
 }
 
 .btn-ghost:hover {
   color: var(--lp-heading);
-  border-color: var(--mc-text-subtle);
+  border-color: var(--cn-text-subtle);
 }
 
 .btn-lg {
@@ -309,16 +309,16 @@
   position: sticky;
   top: 0;
   z-index: 50;
-  background: color-mix(in srgb, var(--mc-bg) 88%, transparent);
+  background: color-mix(in srgb, var(--cn-bg) 88%, transparent);
   backdrop-filter: blur(10px);
-  border-bottom: 1px solid var(--mc-border);
+  border-bottom: 1px solid var(--cn-border);
 }
 
 .nav {
   position: relative;
   display: flex;
   align-items: center;
-  gap: var(--mc-space-4);
+  gap: var(--cn-space-4);
   height: 4.25rem;
 }
 
@@ -359,7 +359,7 @@
   border-radius: var(--lp-r-pill);
   font-size: 0.875rem;
   font-weight: 500;
-  color: var(--mc-text-muted);
+  color: var(--cn-text-muted);
   text-decoration: none;
   transition:
     color 0.15s ease,
@@ -368,14 +368,14 @@
 
 .nav-link:hover {
   color: var(--lp-heading);
-  background: var(--mc-surface);
+  background: var(--cn-surface);
 }
 
 /* The current section, tracked as you scroll: a soft accent pill rather than a
    browser underline. */
 .nav-link.active {
   color: var(--lp-primary);
-  background: var(--mc-accent-weak);
+  background: var(--cn-accent-weak);
   font-weight: 600;
 }
 
@@ -399,9 +399,9 @@
   height: 2.375rem;
   margin-left: auto;
   border-radius: var(--lp-r-pill);
-  border: 1px solid var(--mc-border-strong);
-  background: var(--mc-surface);
-  color: var(--mc-text);
+  border: 1px solid var(--cn-border-strong);
+  background: var(--cn-surface);
+  color: var(--cn-text);
   cursor: pointer;
 }
 
@@ -420,9 +420,9 @@
   width: 2.375rem;
   height: 2.375rem;
   border-radius: var(--lp-r-pill);
-  border: 1px solid var(--mc-border-strong);
-  background: var(--mc-surface);
-  color: var(--mc-text);
+  border: 1px solid var(--cn-border-strong);
+  background: var(--cn-surface);
+  color: var(--cn-text);
   cursor: pointer;
   transition:
     color 0.15s ease,
@@ -432,7 +432,7 @@
 
 .theme-toggle:hover {
   color: var(--lp-heading);
-  border-color: var(--mc-text-subtle);
+  border-color: var(--cn-text-subtle);
 }
 
 .theme-toggle span {
@@ -483,8 +483,8 @@
   top: 0;
   left: 0;
   right: 0;
-  background: var(--mc-bg);
-  border-bottom: 1px solid var(--mc-border);
+  background: var(--cn-bg);
+  border-bottom: 1px solid var(--cn-border);
   box-shadow: var(--lp-shadow-nav);
   padding: 1rem var(--lp-gutter) 1.5rem;
 }
@@ -510,9 +510,9 @@
   width: 2.75rem;
   height: 2.75rem;
   border-radius: var(--lp-r-pill);
-  border: 1px solid var(--mc-border-strong);
-  background: var(--mc-surface);
-  color: var(--mc-text);
+  border: 1px solid var(--cn-border-strong);
+  background: var(--cn-surface);
+  color: var(--cn-text);
   cursor: pointer;
 }
 
@@ -529,8 +529,8 @@
   padding: 0.875rem 0.25rem;
   font-size: 1rem;
   font-weight: 600;
-  color: var(--mc-text);
-  border-bottom: 1px solid var(--mc-border);
+  color: var(--cn-text);
+  border-bottom: 1px solid var(--cn-border);
 }
 
 .drawer-dot {
@@ -605,17 +605,17 @@
   gap: 0.5rem;
   padding: 0.375rem 0.875rem;
   border-radius: var(--lp-r-pill);
-  background: var(--mc-surface);
+  background: var(--cn-surface);
   border: 1px solid transparent;
   background-image:
-    linear-gradient(var(--mc-surface), var(--mc-surface)), var(--lp-accent-gradient);
+    linear-gradient(var(--cn-surface), var(--cn-surface)), var(--lp-accent-gradient);
   background-origin: border-box;
   background-clip: padding-box, border-box;
   font-size: 0.6875rem;
   font-weight: 700;
   letter-spacing: 0.1em;
   text-transform: uppercase;
-  color: var(--mc-text-muted);
+  color: var(--cn-text-muted);
 }
 
 .badge-dot {
@@ -655,7 +655,7 @@
   max-width: 40rem;
   font-size: var(--lp-lead);
   line-height: 1.55;
-  color: var(--mc-text-muted);
+  color: var(--cn-text-muted);
 }
 
 .hero-actions {
@@ -670,7 +670,7 @@
   max-width: 34rem;
   font-size: 0.75rem;
   line-height: 1.5;
-  color: var(--mc-text-subtle);
+  color: var(--cn-text-subtle);
 }
 
 .stats {
@@ -690,14 +690,14 @@
 .stat-caption {
   margin-top: 0.25rem;
   font-size: 0.8125rem;
-  color: var(--mc-text-muted);
+  color: var(--cn-text-muted);
 }
 
 /* the desk mock frame around the reused ChainWidget */
 .desk {
-  border: 1px solid var(--mc-border);
+  border: 1px solid var(--cn-border);
   border-radius: var(--lp-r-card);
-  background: var(--mc-surface);
+  background: var(--cn-surface);
   box-shadow: var(--lp-shadow-md);
   padding: 1.25rem;
 }
@@ -731,7 +731,7 @@
   gap: 0.375rem;
   padding: 0.3125rem 0.625rem;
   border-radius: var(--lp-r-pill);
-  background: var(--mc-bullish-weak);
+  background: var(--cn-bullish-weak);
   color: var(--lp-gain-text);
   font-size: 0.6875rem;
   font-weight: 600;
@@ -742,7 +742,7 @@
   width: 0.4375rem;
   height: 0.4375rem;
   border-radius: 50%;
-  background: var(--mc-bullish);
+  background: var(--cn-bullish);
 }
 
 .desk-note {
@@ -751,11 +751,11 @@
   gap: 0.625rem;
   margin-top: 1rem;
   padding: 0.75rem 0.875rem;
-  border: 1px solid var(--mc-border);
+  border: 1px solid var(--cn-border);
   border-radius: 12px;
-  background: var(--mc-bg);
+  background: var(--cn-bg);
   font-size: 0.8125rem;
-  color: var(--mc-text-muted);
+  color: var(--cn-text-muted);
 }
 
 .desk-note svg {
@@ -768,7 +768,7 @@
 /* -- generic section ------------------------------------------------------ */
 .section {
   padding-block: var(--lp-section-y);
-  border-top: 1px solid var(--mc-border);
+  border-top: 1px solid var(--cn-border);
 }
 
 /* The first (and usually only) section of a standalone marketing page: no top
@@ -808,9 +808,9 @@
 
 .card {
   padding: var(--lp-card-pad);
-  border: 1px solid var(--mc-border);
+  border: 1px solid var(--cn-border);
   border-radius: var(--lp-r-card);
-  background: var(--mc-surface);
+  background: var(--cn-surface);
   transition:
     transform 0.16s ease,
     border-color 0.16s ease,
@@ -819,7 +819,7 @@
 
 .card:hover {
   transform: translateY(-2px);
-  border-color: var(--mc-border-strong);
+  border-color: var(--cn-border-strong);
   box-shadow: var(--lp-shadow-md);
 }
 
@@ -831,7 +831,7 @@
   height: 2.5rem;
   margin-bottom: 0.875rem;
   border-radius: 12px;
-  background: var(--mc-accent-weak);
+  background: var(--cn-accent-weak);
   color: var(--lp-primary);
 }
 
@@ -851,7 +851,7 @@
   margin: 0.5rem 0 0;
   font-size: var(--lp-body);
   line-height: 1.55;
-  color: var(--mc-text-muted);
+  color: var(--cn-text-muted);
 }
 
 /* -- numbered rows (coverage ladder) ------------------------------------- */
@@ -871,16 +871,16 @@
   align-items: center;
   gap: 0.875rem;
   padding: 0.875rem 1.125rem;
-  border: 1px solid var(--mc-border);
+  border: 1px solid var(--cn-border);
   border-radius: var(--lp-r-pill);
-  background: var(--mc-surface);
+  background: var(--cn-surface);
   transition:
     border-color 0.16s ease,
     transform 0.16s ease;
 }
 
 .row:hover {
-  border-color: var(--mc-border-strong);
+  border-color: var(--cn-border-strong);
   transform: translateY(-1px);
 }
 
@@ -892,7 +892,7 @@
   height: 1.875rem;
   flex: none;
   border-radius: 50%;
-  background: var(--mc-accent-weak);
+  background: var(--cn-accent-weak);
   color: var(--lp-primary);
   font-size: 0.8125rem;
   font-weight: 800;
@@ -921,7 +921,7 @@
   height: 2.75rem;
   margin-bottom: 1rem;
   border-radius: 12px;
-  background: var(--mc-accent-weak);
+  background: var(--cn-accent-weak);
   color: var(--lp-primary);
   font-size: 1.0625rem;
   font-weight: 800;
@@ -935,10 +935,10 @@
   justify-content: space-between;
   gap: 1.5rem;
   padding: clamp(1.75rem, 4vw, 2.75rem);
-  border: 1px solid var(--mc-border-strong);
+  border: 1px solid var(--cn-border-strong);
   border-radius: var(--lp-r-card);
   background:
-    radial-gradient(120% 140% at 0% 0%, rgba(191, 74, 42, 0.16), transparent 55%), var(--mc-surface);
+    radial-gradient(120% 140% at 0% 0%, rgba(191, 74, 42, 0.16), transparent 55%), var(--cn-surface);
 }
 
 .cta-eyebrow {
@@ -970,7 +970,7 @@
   max-width: 34rem;
   font-size: 0.9375rem;
   line-height: 1.55;
-  color: var(--mc-text-muted);
+  color: var(--cn-text-muted);
 }
 
 /* -- footer (warm cream) -------------------------------------------------- */
@@ -1177,9 +1177,9 @@
   display: grid;
   gap: 1rem 1.5rem;
   padding: var(--lp-card-pad);
-  border: 1px solid var(--mc-border);
+  border: 1px solid var(--cn-border);
   border-radius: var(--lp-r-card);
-  background: var(--mc-surface);
+  background: var(--cn-surface);
 }
 
 @media (min-width: 48rem) {
@@ -1206,7 +1206,7 @@
   margin: 0;
   font-size: var(--lp-body);
   line-height: 1.6;
-  color: var(--mc-text-muted);
+  color: var(--cn-text-muted);
 }
 
 .deep-points {
@@ -1223,7 +1223,7 @@
   gap: 0.625rem;
   font-size: var(--lp-body);
   line-height: 1.5;
-  color: var(--mc-text);
+  color: var(--cn-text);
 }
 
 .deep-points svg {
@@ -1251,9 +1251,9 @@
   align-items: flex-start;
   gap: 0.875rem;
   padding: 1rem 1.125rem;
-  border: 1px solid var(--mc-border);
+  border: 1px solid var(--cn-border);
   border-radius: var(--lp-r-card);
-  background: var(--mc-surface);
+  background: var(--cn-surface);
 }
 
 .legend-chip {
@@ -1272,7 +1272,7 @@
 
 .legend-chip.live {
   color: var(--lp-gain-text);
-  background: var(--mc-bullish-weak);
+  background: var(--cn-bullish-weak);
   border-color: color-mix(in srgb, var(--lp-gain) 40%, transparent);
 }
 
@@ -1283,14 +1283,14 @@
 }
 
 .legend-chip.stale {
-  color: var(--mc-text-subtle);
-  background: color-mix(in srgb, var(--mc-text-subtle) 12%, transparent);
-  border-color: var(--mc-border-strong);
+  color: var(--cn-text-subtle);
+  background: color-mix(in srgb, var(--cn-text-subtle) 12%, transparent);
+  border-color: var(--cn-border-strong);
 }
 
 .legend-chip.sim {
   color: var(--lp-primary);
-  background: var(--mc-accent-weak);
+  background: var(--cn-accent-weak);
   border-color: color-mix(in srgb, var(--lp-primary) 40%, transparent);
 }
 
@@ -1298,15 +1298,15 @@
   margin: 0;
   font-size: var(--lp-body);
   line-height: 1.5;
-  color: var(--mc-text-muted);
+  color: var(--cn-text-muted);
 }
 
 /* -- spec table (Coverage matrix, provenance spec) ----------------------- */
 .spec-wrap {
   overflow-x: auto;
-  border: 1px solid var(--mc-border);
+  border: 1px solid var(--cn-border);
   border-radius: var(--lp-r-card);
-  background: var(--mc-surface);
+  background: var(--cn-surface);
 }
 
 .spec-table {
@@ -1320,7 +1320,7 @@
   padding: 0.875rem 1.125rem;
   text-align: left;
   white-space: nowrap;
-  border-bottom: 1px solid var(--mc-border);
+  border-bottom: 1px solid var(--cn-border);
 }
 
 .spec-table thead th {
@@ -1328,8 +1328,8 @@
   font-weight: 700;
   letter-spacing: 0.06em;
   text-transform: uppercase;
-  color: var(--mc-text-subtle);
-  background: var(--mc-surface-raised);
+  color: var(--cn-text-subtle);
+  background: var(--cn-surface-raised);
 }
 
 .spec-table tbody tr:last-child td {
@@ -1342,7 +1342,7 @@
 }
 
 .spec-table td {
-  color: var(--mc-text-muted);
+  color: var(--cn-text-muted);
 }
 
 /* -- live vs. coming-soon compare (Coverage) ----------------------------- */
@@ -1359,9 +1359,9 @@
 
 .compare-col {
   padding: var(--lp-card-pad);
-  border: 1px solid var(--mc-border);
+  border: 1px solid var(--cn-border);
   border-radius: var(--lp-r-card);
-  background: var(--mc-surface);
+  background: var(--cn-surface);
 }
 
 .compare-col.soon {
@@ -1390,12 +1390,12 @@
 
 .compare-title .tag.now {
   color: var(--lp-gain-text);
-  background: var(--mc-bullish-weak);
+  background: var(--cn-bullish-weak);
 }
 
 .compare-title .tag.later {
-  color: var(--mc-text-subtle);
-  background: color-mix(in srgb, var(--mc-text-subtle) 12%, transparent);
+  color: var(--cn-text-subtle);
+  background: color-mix(in srgb, var(--cn-text-subtle) 12%, transparent);
 }
 
 .compare-list {
@@ -1422,16 +1422,16 @@
 }
 
 .compare-list.yes li {
-  color: var(--mc-text);
+  color: var(--cn-text);
 }
 .compare-list.yes svg {
   color: var(--lp-gain-text);
 }
 .compare-list.no li {
-  color: var(--mc-text-muted);
+  color: var(--cn-text-muted);
 }
 .compare-list.no svg {
-  color: var(--mc-text-subtle);
+  color: var(--cn-text-subtle);
 }
 
 /* -- numbered timeline (How it works) ------------------------------------ */
@@ -1463,7 +1463,7 @@
   bottom: 0;
   left: calc(1.375rem - 1px);
   width: 2px;
-  background: var(--mc-border-strong);
+  background: var(--cn-border-strong);
 }
 
 .timeline-item > .step-badge {
@@ -1483,7 +1483,7 @@
   margin: 0.375rem 0 0;
   font-size: var(--lp-body);
   line-height: 1.55;
-  color: var(--mc-text-muted);
+  color: var(--cn-text-muted);
 }
 
 /* -- needs / skip checklist (How it works) ------------------------------- */
@@ -1500,9 +1500,9 @@
 
 .check-col {
   padding: var(--lp-card-pad);
-  border: 1px solid var(--mc-border);
+  border: 1px solid var(--cn-border);
   border-radius: var(--lp-r-card);
-  background: var(--mc-surface);
+  background: var(--cn-surface);
 }
 
 .check-col h3 {
@@ -1526,7 +1526,7 @@
   gap: 0.625rem;
   font-size: var(--lp-body);
   line-height: 1.5;
-  color: var(--mc-text);
+  color: var(--cn-text);
 }
 
 .check-list svg {
@@ -1541,10 +1541,10 @@
 }
 
 .check-list.skip li {
-  color: var(--mc-text-muted);
+  color: var(--cn-text-muted);
 }
 .check-list.skip svg {
-  color: var(--mc-text-subtle);
+  color: var(--cn-text-subtle);
 }
 
 /* -- FAQ accordion (How it works) — HTML <details>, no JS ---------------- */
@@ -1554,14 +1554,14 @@
 }
 
 .faq-item {
-  border: 1px solid var(--mc-border);
+  border: 1px solid var(--cn-border);
   border-radius: var(--lp-r-card);
-  background: var(--mc-surface);
+  background: var(--cn-surface);
   overflow: hidden;
 }
 
 .faq-item[open] {
-  border-color: var(--mc-border-strong);
+  border-color: var(--cn-border-strong);
 }
 
 .faq-q {
@@ -1606,7 +1606,7 @@
   padding: 0 1.25rem 1.25rem;
   font-size: var(--lp-body);
   line-height: 1.6;
-  color: var(--mc-text-muted);
+  color: var(--cn-text-muted);
 }
 
 /* -- callout band (provenance / disclaimer) ------------------------------ */
@@ -1615,10 +1615,10 @@
   align-items: flex-start;
   gap: 1rem;
   padding: clamp(1.25rem, 3vw, 1.75rem);
-  border: 1px solid var(--mc-border-strong);
+  border: 1px solid var(--cn-border-strong);
   border-radius: var(--lp-r-card);
   background:
-    radial-gradient(120% 140% at 0% 0%, rgba(191, 74, 42, 0.14), transparent 55%), var(--mc-surface);
+    radial-gradient(120% 140% at 0% 0%, rgba(191, 74, 42, 0.14), transparent 55%), var(--cn-surface);
 }
 
 .callout-icon {
@@ -1629,7 +1629,7 @@
   width: 2.5rem;
   height: 2.5rem;
   border-radius: 12px;
-  background: var(--mc-accent-weak);
+  background: var(--cn-accent-weak);
   color: var(--lp-primary);
 }
 
@@ -1650,14 +1650,14 @@
   max-width: 46rem;
   font-size: 0.9375rem;
   line-height: 1.6;
-  color: var(--mc-text-muted);
+  color: var(--cn-text-muted);
 }
 
 .disclaimer {
   margin: 1.25rem 0 0;
   font-size: 0.8125rem;
   line-height: 1.6;
-  color: var(--mc-text-subtle);
+  color: var(--cn-text-subtle);
 }
 
 /* -- home highlight teasers (linkable cards) ----------------------------- */

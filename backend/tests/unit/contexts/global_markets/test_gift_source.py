@@ -15,9 +15,9 @@ from typing import Any
 
 import pytest
 
-from marketcompass.contexts.global_markets.domain.markets import GIFT_KEY
-from marketcompass.contexts.global_markets.domain.quotes import DataSource
-from marketcompass.infrastructure.global_markets.nseix.gift_source import (
+from chartnexus.contexts.global_markets.domain.markets import GIFT_KEY
+from chartnexus.contexts.global_markets.domain.quotes import DataSource
+from chartnexus.infrastructure.global_markets.nseix.gift_source import (
     front_month,
     to_quote,
 )
@@ -43,9 +43,7 @@ class TestFrontMonth:
         assert row["EXPIRYDATE"] == "29-Sep-2026"
         assert row["LASTPRICE"] == "23267.50"
 
-    def test_the_pick_does_not_depend_on_the_boards_order(
-        self, payload: dict[str, Any]
-    ) -> None:
+    def test_the_pick_does_not_depend_on_the_boards_order(self, payload: dict[str, Any]) -> None:
         """The order is undocumented and has no reason to be stable."""
         groups = payload["MBP_data_Market_Watch"]
         reversed_payload = {"MBP_data_Market_Watch": list(reversed(groups))}
@@ -76,9 +74,7 @@ class TestFrontMonth:
 
 
 class TestToQuote:
-    def test_the_captured_row_maps_to_its_published_figures(
-        self, payload: dict[str, Any]
-    ) -> None:
+    def test_the_captured_row_maps_to_its_published_figures(self, payload: dict[str, Any]) -> None:
         row = front_month(payload)
         assert row is not None
 
@@ -91,9 +87,7 @@ class TestToQuote:
         assert quote.provenance is not None
         assert quote.provenance.source is DataSource.LIVE
 
-    def test_the_board_s_own_close_is_the_fallback_base(
-        self, payload: dict[str, Any]
-    ) -> None:
+    def test_the_board_s_own_close_is_the_fallback_base(self, payload: dict[str, Any]) -> None:
         """With no settlement to hand the board's figures are kept as-is.
 
         Imperfect - see the next test for why - but self-consistent, and it

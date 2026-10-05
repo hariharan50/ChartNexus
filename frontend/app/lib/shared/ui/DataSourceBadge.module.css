@@ -5,7 +5,7 @@
   padding: 0.125rem 0.5rem;
   border: 1px solid transparent;
   border-radius: 999px;
-  font-size: var(--mc-text-xs);
+  font-size: var(--cn-text-xs);
   font-weight: 600;
   white-space: nowrap;
 }
@@ -18,26 +18,26 @@
 }
 
 .live {
-  color: var(--mc-live);
-  border-color: color-mix(in srgb, var(--mc-live) 35%, transparent);
-  background: color-mix(in srgb, var(--mc-live) 12%, transparent);
+  color: var(--cn-live);
+  border-color: color-mix(in srgb, var(--cn-live) 35%, transparent);
+  background: color-mix(in srgb, var(--cn-live) 12%, transparent);
 }
 
 .cached {
-  color: var(--mc-stale);
-  border-color: color-mix(in srgb, var(--mc-stale) 35%, transparent);
-  background: color-mix(in srgb, var(--mc-stale) 12%, transparent);
+  color: var(--cn-stale);
+  border-color: color-mix(in srgb, var(--cn-stale) 35%, transparent);
+  background: color-mix(in srgb, var(--cn-stale) 12%, transparent);
 }
 
 /* Deliberately the loudest of the three: simulated numbers must never be
    mistaken for market data. The tint is 6% rather than the 12% the other two
-   carry: --mc-danger is much the darkest of the three foregrounds, so the same
+   carry: --cn-danger is much the darkest of the three foregrounds, so the same
    wash pushed it below AA. Less tint, same loudness — the border carries the
    colour instead. */
 .mock {
-  color: var(--mc-danger);
-  border-color: color-mix(in srgb, var(--mc-danger) 40%, transparent);
-  background: color-mix(in srgb, var(--mc-danger) 6%, transparent);
+  color: var(--cn-danger);
+  border-color: color-mix(in srgb, var(--cn-danger) 40%, transparent);
+  background: color-mix(in srgb, var(--cn-danger) 6%, transparent);
 }
 
 /* Lighter weight, not lower opacity. Dimming put this below AA on the mock

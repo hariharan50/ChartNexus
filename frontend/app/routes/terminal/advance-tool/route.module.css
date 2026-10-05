@@ -1,28 +1,28 @@
 .page {
-  padding: var(--mc-space-6);
+  padding: var(--cn-space-6);
   display: flex;
   flex-direction: column;
-  gap: var(--mc-space-5, 1.25rem);
+  gap: var(--cn-space-5, 1.25rem);
 }
 
 .head {
   display: flex;
   flex-direction: column;
-  gap: var(--mc-space-2);
+  gap: var(--cn-space-2);
   max-width: 720px;
 }
 
 .title {
   margin: 0;
-  font-size: var(--mc-text-xl, 1.375rem);
+  font-size: var(--cn-text-xl, 1.375rem);
   font-weight: 800;
-  color: var(--mc-text);
+  color: var(--cn-text);
 }
 
 .sub {
   margin: 0;
-  font-size: var(--mc-text-sm);
-  color: var(--mc-text-muted);
+  font-size: var(--cn-text-sm);
+  color: var(--cn-text-muted);
   line-height: 1.6;
 }
 
@@ -30,35 +30,35 @@
 .grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-  gap: var(--mc-space-4);
+  gap: var(--cn-space-4);
 }
 
 /* A tool box — generous padding, clickable, links to the tool's page. */
 .box {
   display: flex;
   align-items: flex-start;
-  gap: var(--mc-space-3);
-  padding: var(--mc-space-5);
-  border: 1px solid var(--mc-border);
-  border-radius: var(--mc-radius-lg);
+  gap: var(--cn-space-3);
+  padding: var(--cn-space-5);
+  border: 1px solid var(--cn-border);
+  border-radius: var(--cn-radius-lg);
   background: linear-gradient(
     180deg,
-    var(--mc-surface-raised, var(--mc-surface)),
-    var(--mc-surface)
+    var(--cn-surface-raised, var(--cn-surface)),
+    var(--cn-surface)
   );
-  box-shadow: var(--mc-shadow);
+  box-shadow: var(--cn-shadow);
   text-decoration: none;
   color: inherit;
   transition:
-    transform var(--mc-duration-fast, 120ms) ease,
-    border-color var(--mc-duration-fast, 120ms) ease,
-    box-shadow var(--mc-duration-fast, 120ms) ease;
+    transform var(--cn-duration-fast, 120ms) ease,
+    border-color var(--cn-duration-fast, 120ms) ease,
+    box-shadow var(--cn-duration-fast, 120ms) ease;
 }
 
 .box:hover {
   transform: translateY(-2px);
-  border-color: var(--mc-accent);
-  box-shadow: 0 10px 26px -14px var(--mc-accent);
+  border-color: var(--cn-accent);
+  box-shadow: 0 10px 26px -14px var(--cn-accent);
 }
 
 .boxIcon {
@@ -69,7 +69,7 @@
   flex: none;
   border-radius: 10px;
   color: #fff;
-  background: linear-gradient(140deg, var(--mc-accent), var(--mc-brand-2, var(--mc-accent)));
+  background: linear-gradient(140deg, var(--cn-accent), var(--cn-brand-2, var(--cn-accent)));
 }
 
 .boxText {
@@ -80,14 +80,14 @@
 }
 
 .boxTitle {
-  font-size: var(--mc-text-base, 1rem);
+  font-size: var(--cn-text-base, 1rem);
   font-weight: 700;
-  color: var(--mc-text);
+  color: var(--cn-text);
 }
 
 .boxDesc {
-  font-size: var(--mc-text-sm);
-  color: var(--mc-text-muted);
+  font-size: var(--cn-text-sm);
+  color: var(--cn-text-muted);
   line-height: 1.5;
 }
 
@@ -97,16 +97,16 @@
   font-size: 11px;
   font-weight: 700;
   letter-spacing: 0.02em;
-  color: var(--mc-accent);
-  background: color-mix(in srgb, var(--mc-accent) 12%, transparent);
-  border: 1px solid color-mix(in srgb, var(--mc-accent) 35%, transparent);
+  color: var(--cn-accent);
+  background: color-mix(in srgb, var(--cn-accent) 12%, transparent);
+  border: 1px solid color-mix(in srgb, var(--cn-accent) 35%, transparent);
   border-radius: 999px;
   padding: 2px 9px;
 }
 
 /* -- Tool page (sub-route) ------------------------------------------------- */
 .toolPage {
-  padding: var(--mc-space-6);
+  padding: var(--cn-space-6);
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -119,16 +119,16 @@
   max-width: 720px;
   display: flex;
   flex-direction: column;
-  gap: var(--mc-space-4);
+  gap: var(--cn-space-4);
 }
 
 .back {
   align-self: flex-start;
-  font-size: var(--mc-text-sm);
-  color: var(--mc-text-muted);
+  font-size: var(--cn-text-sm);
+  color: var(--cn-text-muted);
   text-decoration: none;
 }
 
 .back:hover {
-  color: var(--mc-accent);
+  color: var(--cn-accent);
 }

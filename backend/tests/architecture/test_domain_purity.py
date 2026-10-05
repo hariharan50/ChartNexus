@@ -33,7 +33,7 @@ def test_shared_domain_imports_no_vendor_packages() -> None:
 def test_shared_domain_imports_no_infrastructure() -> None:
     assert_no_imports(
         python_files("shared_kernel/domain"),
-        ("marketcompass.infrastructure", "marketcompass.entrypoints", "marketcompass.bootstrap"),
+        ("chartnexus.infrastructure", "chartnexus.entrypoints", "chartnexus.bootstrap"),
         reason="shared_kernel.domain must not depend on outer layers",
     )
 

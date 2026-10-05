@@ -2,11 +2,11 @@
 
 from __future__ import annotations
 
-from marketcompass.contexts.signals.domain import ensemble, guider
-from marketcompass.contexts.signals.domain.ensemble import HorizonModel, ModelArtifact
-from marketcompass.contexts.signals.domain.features import FeatureVector, Regime
-from marketcompass.contexts.signals.domain.inputs import MarketSnapshot
-from marketcompass.contexts.signals.domain.models import Decision, Horizon
+from chartnexus.contexts.signals.domain import ensemble, guider
+from chartnexus.contexts.signals.domain.ensemble import HorizonModel, ModelArtifact
+from chartnexus.contexts.signals.domain.features import FeatureVector, Regime
+from chartnexus.contexts.signals.domain.inputs import MarketSnapshot
+from chartnexus.contexts.signals.domain.models import Decision, Horizon
 
 
 def _fv(values: dict[str, float], coverage: float = 1.0) -> FeatureVector:

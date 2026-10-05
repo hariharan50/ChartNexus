@@ -97,14 +97,14 @@ export default function FiiDiiCharts({ data }: { data: FlowSummary }) {
                           }% short`}
                         >
                           <span
-                            className={cx(c.side, 'mc-up')}
+                            className={cx(c.side, 'cn-up')}
                             style={{ width: `${share * 100}%` }}
                           >
                             {/* Only label the side with room for it. */}
                             {pct >= 18 ? <span className={c.sideText}>{pct}% long</span> : null}
                           </span>
                           <span
-                            className={cx(c.side, 'mc-down')}
+                            className={cx(c.side, 'cn-down')}
                             style={{ width: `${(1 - share) * 100}%` }}
                           >
                             {100 - pct >= 18 ? (
@@ -113,10 +113,10 @@ export default function FiiDiiCharts({ data }: { data: FlowSummary }) {
                           </span>
                         </span>
 
-                        <span className={cx(c.splitCounts, 'mc-numeric')}>
-                          <span className="mc-up">{fmtContracts(read.long)}</span>
+                        <span className={cx(c.splitCounts, 'cn-numeric')}>
+                          <span className="cn-up">{fmtContracts(read.long)}</span>
                           <span className={c.splitSep}>vs</span>
-                          <span className="mc-down">{fmtContracts(read.short)}</span>
+                          <span className="cn-down">{fmtContracts(read.short)}</span>
                         </span>
                       </>
                     ) : (
@@ -131,8 +131,8 @@ export default function FiiDiiCharts({ data }: { data: FlowSummary }) {
             </ul>
 
             <p className={c.legend}>
-              <span className={cx(c.key, 'mc-up')} /> Long
-              <span className={cx(c.key, 'mc-down')} /> Short
+              <span className={cx(c.key, 'cn-up')} /> Long
+              <span className={cx(c.key, 'cn-down')} /> Short
               <span className={c.legendNote}>
                 A book that is mostly short is positioned for a fall.
               </span>
@@ -185,7 +185,7 @@ export default function FiiDiiCharts({ data }: { data: FlowSummary }) {
                               // magnitude rides on top of it, so the grid reads
                               // as a heatmap at a glance and still ranks.
                               backgroundColor: `color-mix(in srgb, var(${
-                                side === 'up' ? '--mc-bullish' : '--mc-bearish'
+                                side === 'up' ? '--cn-bullish' : '--cn-bearish'
                               }) ${(34 + intensity * 46).toFixed(1)}%, transparent)`
                             }
                           : undefined
@@ -224,7 +224,7 @@ export default function FiiDiiCharts({ data }: { data: FlowSummary }) {
                   <span className={c.mid} />
                   {side ? (
                     <span
-                      className={cx(c.bar, side === 'up' ? 'mc-up' : 'mc-down')}
+                      className={cx(c.bar, side === 'up' ? 'cn-up' : 'cn-down')}
                       style={
                         net! > 0
                           ? { left: '50%', width: `${width}%` }
@@ -236,8 +236,8 @@ export default function FiiDiiCharts({ data }: { data: FlowSummary }) {
                 <span
                   className={cx(
                     c.flowValue,
-                    'mc-numeric',
-                    side === 'up' ? 'mc-up' : side === 'down' ? 'mc-down' : undefined
+                    'cn-numeric',
+                    side === 'up' ? 'cn-up' : side === 'down' ? 'cn-down' : undefined
                   )}
                 >
                   {net === null ? '—' : `${fmtCrore(net)} Cr`}

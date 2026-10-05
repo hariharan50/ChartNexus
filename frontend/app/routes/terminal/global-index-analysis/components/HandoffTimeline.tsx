@@ -87,7 +87,7 @@ export default function HandoffTimeline({ window, bands }: Props) {
                     }`}
                   >
                     <span className={s.bandLabel}>{band.label}</span>
-                    <span className={cx(s.bandMove, 'mc-numeric')}>
+                    <span className={cx(s.bandMove, 'cn-numeric')}>
                       {fmtPercent(band.change_percent)}
                     </span>
                   </div>

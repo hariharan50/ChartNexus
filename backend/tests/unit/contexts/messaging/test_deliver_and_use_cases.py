@@ -7,19 +7,19 @@ from datetime import UTC, datetime
 
 import pytest
 
-from marketcompass.contexts.messaging.application.deliver import DeliverText
-from marketcompass.contexts.messaging.application.ports import ChannelIdentity
-from marketcompass.contexts.messaging.application.use_cases import (
+from chartnexus.contexts.messaging.application.deliver import DeliverText
+from chartnexus.contexts.messaging.application.ports import ChannelIdentity
+from chartnexus.contexts.messaging.application.use_cases import (
     ConnectTelegram,
     ConnectTelegramCommand,
     DetectTelegramChat,
     DetectTelegramChatCommand,
     SendTestMessage,
 )
-from marketcompass.contexts.messaging.domain.channel import Channel, ChannelConnection
-from marketcompass.contexts.messaging.domain.errors import ChannelVerificationError
-from marketcompass.infrastructure.time.clock import FixedClock
-from marketcompass.shared_kernel.types.identifiers import TenantId, UserId
+from chartnexus.contexts.messaging.domain.channel import Channel, ChannelConnection
+from chartnexus.contexts.messaging.domain.errors import ChannelVerificationError
+from chartnexus.infrastructure.time.clock import FixedClock
+from chartnexus.shared_kernel.types.identifiers import TenantId, UserId
 
 NOW = datetime(2026, 8, 23, tzinfo=UTC)
 USER = UserId(uuid.uuid4())

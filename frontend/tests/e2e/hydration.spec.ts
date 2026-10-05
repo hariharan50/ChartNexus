@@ -45,8 +45,8 @@ test('hydrates without warnings when a stored theme differs from the server', as
 }) => {
   // The interesting case: the bootstrap rewrites <html> before React hydrates.
   await context.addInitScript(() => {
-    localStorage.setItem('mc-theme', 'light');
-    localStorage.setItem('mc-pref-callput', 'inverted');
+    localStorage.setItem('cn-theme', 'light');
+    localStorage.setItem('cn-pref-callput', 'inverted');
   });
 
   const errors = await consoleErrors(page, '/login');
@@ -59,9 +59,9 @@ test('hydrates without warnings when a stored theme differs from the server', as
 
 test('hydrates without warnings inside the terminal shell', async ({ page, context, baseURL }) => {
   await context.addCookies([
-    { name: 'mc_session', value: 'test', url: baseURL ?? 'http://localhost:4173' }
+    { name: 'cn_session', value: 'test', url: baseURL ?? 'http://localhost:4173' }
   ]);
-  await context.addInitScript(() => localStorage.setItem('mc-theme', 'terminal'));
+  await context.addInitScript(() => localStorage.setItem('cn-theme', 'terminal'));
 
   const errors = await consoleErrors(page, '/dashboard');
   expect(errors.join('\n')).toBe('');

@@ -1,45 +1,45 @@
 .tile {
   display: flex;
   flex-direction: column;
-  padding: var(--mc-space-4);
-  background: var(--mc-surface);
-  border: 1px solid var(--mc-border);
-  border-radius: var(--mc-radius-lg);
-  box-shadow: var(--mc-shadow);
+  padding: var(--cn-space-4);
+  background: var(--cn-surface);
+  border: 1px solid var(--cn-border);
+  border-radius: var(--cn-radius-lg);
+  box-shadow: var(--cn-shadow);
   min-width: 0;
 }
 
 .label {
   margin: 0;
-  font-size: var(--mc-text-xs);
+  font-size: var(--cn-text-xs);
   font-weight: 600;
   letter-spacing: 0.06em;
   text-transform: uppercase;
-  color: var(--mc-text-subtle);
+  color: var(--cn-text-subtle);
 }
 
 .value {
-  margin: var(--mc-space-2) 0 0;
-  font-size: var(--mc-text-2xl);
+  margin: var(--cn-space-2) 0 0;
+  font-size: var(--cn-text-2xl);
   font-weight: 700;
   letter-spacing: -0.02em;
-  color: var(--mc-text);
+  color: var(--cn-text);
 }
 
 .value.bullish {
-  color: var(--mc-bullish);
+  color: var(--cn-bullish);
 }
 
 .value.bearish {
-  color: var(--mc-bearish);
+  color: var(--cn-bearish);
 }
 
 .sub {
-  margin: var(--mc-space-2) 0 0;
-  font-size: var(--mc-text-sm);
-  color: var(--mc-text-muted);
+  margin: var(--cn-space-2) 0 0;
+  font-size: var(--cn-text-sm);
+  color: var(--cn-text-muted);
 }
 
 .footer {
-  margin-top: var(--mc-space-2);
+  margin-top: var(--cn-space-2);
 }

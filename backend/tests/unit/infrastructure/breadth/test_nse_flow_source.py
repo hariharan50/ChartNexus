@@ -18,18 +18,18 @@ from typing import Any
 import httpx
 import pytest
 
-from marketcompass.contexts.market_breadth.application.ports import (
+from chartnexus.contexts.market_breadth.application.ports import (
     InstitutionalFlowSource,
 )
-from marketcompass.contexts.market_breadth.domain.flows import Participant, Segment
-from marketcompass.infrastructure.breadth.flow_source import (
+from chartnexus.contexts.market_breadth.domain.flows import Participant, Segment
+from chartnexus.infrastructure.breadth.flow_source import (
     SimulatedInstitutionalFlowSource,
 )
-from marketcompass.infrastructure.breadth.nse.flow_source import (
+from chartnexus.infrastructure.breadth.nse.flow_source import (
     NseInstitutionalFlowSource,
 )
-from marketcompass.infrastructure.time.clock import FixedClock
-from marketcompass.shared_kernel.types.identifiers import TenantId
+from chartnexus.infrastructure.time.clock import FixedClock
+from chartnexus.shared_kernel.types.identifiers import TenantId
 
 pytestmark = pytest.mark.unit
 

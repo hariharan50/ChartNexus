@@ -4,7 +4,7 @@ import s from './route.module.css';
 import type { Route } from './+types/channels';
 
 export const meta: Route.MetaFunction = () => [
-  { title: 'Messaging Channels · Advance Tools · MarketCompass' }
+  { title: 'Messaging Channels · Advance Tools · ChartNexus' }
 ];
 
 /** The Messaging Channels tool, opened from the Advance Tools grid. Renders the

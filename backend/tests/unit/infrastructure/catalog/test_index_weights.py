@@ -13,7 +13,7 @@ from decimal import Decimal
 
 import pytest
 
-from marketcompass.infrastructure.catalog.index_weights import (
+from chartnexus.infrastructure.catalog.index_weights import (
     INDEX_INSTRUMENTS,
     INDEX_WEIGHTS,
     TRACKED_INDICES,
@@ -21,7 +21,7 @@ from marketcompass.infrastructure.catalog.index_weights import (
     weight_of,
     weights_for,
 )
-from marketcompass.infrastructure.catalog.sector_map import INDEX_MEMBERS, SECTORS
+from chartnexus.infrastructure.catalog.sector_map import INDEX_MEMBERS, SECTORS
 
 pytestmark = pytest.mark.unit
 

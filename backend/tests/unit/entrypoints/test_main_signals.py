@@ -8,9 +8,9 @@ from pathlib import Path
 
 import pytest
 
-from marketcompass.contexts.signals.domain.ensemble import ModelArtifact
-from marketcompass.contexts.signals.domain.models import Horizon
-from marketcompass.entrypoints import main_signals
+from chartnexus.contexts.signals.domain.ensemble import ModelArtifact
+from chartnexus.contexts.signals.domain.models import Horizon
+from chartnexus.entrypoints import main_signals
 
 pytestmark = pytest.mark.unit
 

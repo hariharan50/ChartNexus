@@ -1,6 +1,6 @@
 # Changelog
 
-Notable changes to MarketCompass. Format follows
+Notable changes to ChartNexus. Format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); the project is
 pre-release and does not yet version its API.
 
@@ -25,7 +25,7 @@ flow and index internals, global markets and a pre-market screener.
   pinned in a seed migration: NSE revises the list and the lot sizes by
   circular several times a year. The master files are public, so this needs no
   broker account and spends no API quota. New worker:
-  `uv run marketcompass-catalog`.
+  `uv run chartnexus-catalog`.
 - Reference prices, index membership and front-expiry columns, each with its own
   migration, so a page can rank or group the universe without a quote call.
 - Stock expiries are monthly-only and strike steps are fractional for some
@@ -39,13 +39,13 @@ flow and index internals, global markets and a pre-market screener.
   rather than a date, so a board stays valid across a rollover.
 - Build-up classification (long build-up, short build-up, long unwinding, short
   covering) from price and open-interest change, with a legend.
-- Open-interest sweep worker (`uv run marketcompass-futures-oi`): the broker's
+- Open-interest sweep worker (`uv run chartnexus-futures-oi`): the broker's
   OI endpoint takes one contract per request, so the sweep is rate-limited to a
   small slice of the broker's throughput, runs every 300s, caches for 45
   minutes, and covers two series by default. Series past that depth still show
   price, volume and range, and the page says OI was not swept for them rather
   than drawing an empty board.
-- Futures board capture worker (`uv run marketcompass-futures-history`): one
+- Futures board capture worker (`uv run chartnexus-futures-history`): one
   frame a minute from batched quotes into `futures_board_snapshots`, 30 trading
   days retained, with `--once`, `--prune` and a guarded `--seed <date>` that
   fabricates a full 09:15–15:30 session stamped `mock`. Live boards only —
@@ -81,7 +81,7 @@ flow and index internals, global markets and a pre-market screener.
 - Intraday max-pain with a magnet-zone gauge on the Max Pain page, backed by a
   new max-pain series service.
 - The expiry picker is now shared across the Options Lab pages, and the ingest
-  can archive more than the front expiry (`MC_INGEST_EXPIRIES`, bounded by the
+  can archive more than the front expiry (`CN_INGEST_EXPIRIES`, bounded by the
   same 42-day horizon the picker uses) so the series charts have a real session
   for further contracts.
 
@@ -130,7 +130,7 @@ flow and index internals, global markets and a pre-market screener.
 
 - `frontend/` is now React Router v8 (framework mode) on React 19 and Vite 8,
   replacing SvelteKit 2 / Svelte 5. The backend, API contract, session cookies,
-  CSRF handling and the `--mc-*` design tokens are unchanged.
+  CSRF handling and the `--cn-*` design tokens are unchanged.
 - A framework swap, not a redesign: a pixel-diff harness (`pnpm parity`) checks
   every screen against the SvelteKit build at six viewport widths. All 96 checks
   pass. The last SvelteKit commit is `7a3144b`.
@@ -165,12 +165,12 @@ flow and index internals, global markets and a pre-market screener.
 - Six endpoints under `/api/v1/broker/fyers`: save credentials, status, connect,
   callback, disconnect, revoke.
 - Credentials and access tokens are encrypted at rest with AES-256-GCM, with the
-  key derived from `MC_SECURITY_ENCRYPTION_KEY` through HKDF and separated by
+  key derived from `CN_SECURITY_ENCRYPTION_KEY` through HKDF and separated by
   purpose. Secrets are never returned to a client and never logged.
 - Each ciphertext is bound to its tenant, broker, and column as GCM associated
   data, so a value copied into another row or column fails to decrypt rather
   than being accepted.
-- `MC_SECURITY_PREVIOUS_ENCRYPTION_KEYS` accepts retired keys, so the encryption
+- `CN_SECURITY_PREVIOUS_ENCRYPTION_KEYS` accepts retired keys, so the encryption
   key can be rotated without stranding existing connections.
 - OAuth `state` is single-use, TTL-bounded, and bound to the tenant and user
   that began the flow. Unknown, expired, replayed and mismatched states are
@@ -224,7 +224,7 @@ flow and index internals, global markets and a pre-market screener.
   `infrastructure/transport/http/dependencies.py`. Every context's router needs
   it, so leaving it in `identity` forced other contexts to import across a
   boundary. Identity re-exports the names, so existing imports still resolve.
-- UI control scale tightened to a shared `--mc-control-h` token: 40px controls
+- UI control scale tightened to a shared `--cn-control-h` token: 40px controls
   and 14px body text, down from 52px and 16px.
 - Removed the non-functional "Continue with Microsoft" button; there is no
   Microsoft identity provider behind it.

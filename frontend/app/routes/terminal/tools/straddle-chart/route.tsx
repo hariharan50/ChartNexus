@@ -211,25 +211,25 @@ export default function StraddleChart() {
       <div className={s.context}>
         <span className={s.ctxItem}>
           <span className={s.ctxLabel}>Straddle Price</span>
-          <b className="mc-numeric">
+          <b className="cn-numeric">
             {view?.straddle_price == null ? '—' : formatPremium(view.straddle_price)}
           </b>
         </span>
         <span className={s.ctxItem}>
           <span className={s.ctxLabel}>Spot</span>
-          <b className="mc-numeric">{view?.spot == null ? '—' : formatPrice(view.spot)}</b>
+          <b className="cn-numeric">{view?.spot == null ? '—' : formatPrice(view.spot)}</b>
         </span>
         <span className={s.ctxItem}>
           <span className={s.ctxLabel}>Straddle Strike</span>
-          <b className="mc-numeric">{strike ?? '—'}</b>
+          <b className="cn-numeric">{strike ?? '—'}</b>
         </span>
         <span className={s.ctxItem}>
           <span className={s.ctxLabel}>{strike ? `${strike} CE` : 'CE'}</span>
-          <b className="mc-numeric">{view?.ce_ltp == null ? '—' : formatPremium(view.ce_ltp)}</b>
+          <b className="cn-numeric">{view?.ce_ltp == null ? '—' : formatPremium(view.ce_ltp)}</b>
         </span>
         <span className={s.ctxItem}>
           <span className={s.ctxLabel}>{strike ? `${strike} PE` : 'PE'}</span>
-          <b className="mc-numeric">{view?.pe_ltp == null ? '—' : formatPremium(view.pe_ltp)}</b>
+          <b className="cn-numeric">{view?.pe_ltp == null ? '—' : formatPremium(view.pe_ltp)}</b>
         </span>
       </div>
 

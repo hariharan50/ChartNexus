@@ -4,16 +4,16 @@
    lives in ../components/ConsoleHeader.module.css. */
 
 .page {
-  /* Re-tone the whole subtree: every child style that reads var(--mc-accent)
+  /* Re-tone the whole subtree: every child style that reads var(--cn-accent)
      picks up MME100's colour without per-rule overrides. */
-  --mc-accent: #10b981;
+  --cn-accent: #10b981;
   --mme-accent-2: #0ea5e9;
   /* Overrides the shared ConsoleHeader avatar's second gradient stop. */
-  --mc-brand-2: #0ea5e9;
-  padding: var(--mc-space-6);
+  --cn-brand-2: #0ea5e9;
+  padding: var(--cn-space-6);
   display: flex;
   flex-direction: column;
-  gap: var(--mc-space-5, 1.25rem);
+  gap: var(--cn-space-5, 1.25rem);
 }
 
 .wrap {
@@ -22,7 +22,7 @@
   margin: 0 auto;
   display: flex;
   flex-direction: column;
-  gap: var(--mc-space-4, 1rem);
+  gap: var(--cn-space-4, 1rem);
 }
 
 @media (min-width: 100rem) {
@@ -39,15 +39,15 @@
 
 .panel {
   position: relative;
-  border: 1px solid var(--mc-border);
-  border-radius: var(--mc-radius-lg);
+  border: 1px solid var(--cn-border);
+  border-radius: var(--cn-radius-lg);
   background: linear-gradient(
     180deg,
-    var(--mc-surface-raised, var(--mc-surface)),
-    var(--mc-surface)
+    var(--cn-surface-raised, var(--cn-surface)),
+    var(--cn-surface)
   );
-  box-shadow: var(--mc-shadow);
-  padding: var(--mc-space-4);
+  box-shadow: var(--cn-shadow);
+  padding: var(--cn-space-4);
   overflow: hidden;
 }
 
@@ -64,43 +64,43 @@
 /* -- Offline notice (no LLM configured) ------------------------------------ */
 .notice {
   text-align: center;
-  padding: var(--mc-space-6) var(--mc-space-5);
+  padding: var(--cn-space-6) var(--cn-space-5);
 }
 
 .noticeTitle {
-  font-size: var(--mc-text-base, 1rem);
+  font-size: var(--cn-text-base, 1rem);
   font-weight: 700;
-  color: var(--mc-text);
-  margin-bottom: var(--mc-space-2);
+  color: var(--cn-text);
+  margin-bottom: var(--cn-space-2);
 }
 
 .noticeBody {
   margin: 0 auto;
   max-width: 52ch;
-  font-size: var(--mc-text-sm);
-  color: var(--mc-text-muted);
+  font-size: var(--cn-text-sm);
+  color: var(--cn-text-muted);
   line-height: 1.6;
 }
 
 /* -- Today's pre-market briefing card -------------------------------------- */
 .briefing {
-  padding: var(--mc-space-4);
+  padding: var(--cn-space-4);
 }
 
 .briefingHead {
   display: flex;
   align-items: baseline;
-  gap: var(--mc-space-3);
-  margin-bottom: var(--mc-space-3);
-  padding-bottom: var(--mc-space-3);
-  border-bottom: 1px solid var(--mc-border);
+  gap: var(--cn-space-3);
+  margin-bottom: var(--cn-space-3);
+  padding-bottom: var(--cn-space-3);
+  border-bottom: 1px solid var(--cn-border);
 }
 
 .briefingTitle {
-  font-size: var(--mc-text-sm);
+  font-size: var(--cn-text-sm);
   font-weight: 700;
   letter-spacing: 0.02em;
-  color: var(--mc-text);
+  color: var(--cn-text);
   margin: 0;
   margin-right: auto;
 }
@@ -109,17 +109,17 @@
   font-size: 11px;
   font-weight: 700;
   letter-spacing: 0.02em;
-  color: var(--mc-accent);
-  background: color-mix(in srgb, var(--mc-accent) 12%, transparent);
-  border: 1px solid color-mix(in srgb, var(--mc-accent) 35%, transparent);
+  color: var(--cn-accent);
+  background: color-mix(in srgb, var(--cn-accent) 12%, transparent);
+  border: 1px solid color-mix(in srgb, var(--cn-accent) 35%, transparent);
   border-radius: 999px;
   padding: 3px 10px;
   white-space: nowrap;
 }
 
 .briefingBody {
-  font-size: var(--mc-text-sm);
-  color: var(--mc-text-base, var(--mc-text));
+  font-size: var(--cn-text-sm);
+  color: var(--cn-text-base, var(--cn-text));
   line-height: 1.6;
   max-height: 420px;
   overflow-y: auto;
@@ -128,8 +128,8 @@
 
 .briefingEmpty {
   margin: 0;
-  font-size: var(--mc-text-sm);
-  color: var(--mc-text-muted);
+  font-size: var(--cn-text-sm);
+  color: var(--cn-text-muted);
   line-height: 1.55;
 }
 
@@ -143,10 +143,10 @@
 .chatHead {
   display: flex;
   align-items: center;
-  gap: var(--mc-space-3);
-  padding-bottom: var(--mc-space-3);
-  margin-bottom: var(--mc-space-3);
-  border-bottom: 1px solid var(--mc-border);
+  gap: var(--cn-space-3);
+  padding-bottom: var(--cn-space-3);
+  margin-bottom: var(--cn-space-3);
+  border-bottom: 1px solid var(--cn-border);
 }
 
 .chatHeadMeta {
@@ -164,40 +164,40 @@
   font-weight: 800;
   font-size: 12px;
   letter-spacing: 0.02em;
-  background: linear-gradient(140deg, var(--mc-accent), var(--mme-accent-2, #0ea5e9));
-  box-shadow: 0 4px 14px -5px var(--mc-accent);
+  background: linear-gradient(140deg, var(--cn-accent), var(--mme-accent-2, #0ea5e9));
+  box-shadow: 0 4px 14px -5px var(--cn-accent);
 }
 
 .chatName {
-  font-size: var(--mc-text-sm);
+  font-size: var(--cn-text-sm);
   font-weight: 700;
   letter-spacing: 0.02em;
-  color: var(--mc-text);
+  color: var(--cn-text);
 }
 
 .chatSub {
-  font-size: var(--mc-text-xs);
-  color: var(--mc-text-muted);
+  font-size: var(--cn-text-xs);
+  color: var(--cn-text-muted);
 }
 
 .messages {
   flex: 1;
   display: flex;
   flex-direction: column;
-  gap: var(--mc-space-3);
+  gap: var(--cn-space-3);
   overflow-y: auto;
   padding-right: 4px;
-  margin-bottom: var(--mc-space-3);
+  margin-bottom: var(--cn-space-3);
 }
 
 .empty {
-  font-size: var(--mc-text-sm);
-  color: var(--mc-text-muted);
+  font-size: var(--cn-text-sm);
+  color: var(--cn-text-muted);
   line-height: 1.55;
-  background: var(--mc-surface);
-  border: 1px solid var(--mc-border);
-  border-radius: var(--mc-radius);
-  padding: var(--mc-space-3);
+  background: var(--cn-surface);
+  border: 1px solid var(--cn-border);
+  border-radius: var(--cn-radius);
+  padding: var(--cn-space-3);
   margin: 0;
 }
 
@@ -212,20 +212,20 @@
 .bubble.user {
   align-self: flex-end;
   border-bottom-right-radius: 4px;
-  background: linear-gradient(135deg, var(--mc-accent), var(--mme-accent-2, #0ea5e9));
+  background: linear-gradient(135deg, var(--cn-accent), var(--mme-accent-2, #0ea5e9));
   color: #fff;
 }
 
 .bubble.agent {
   align-self: flex-start;
   border-bottom-left-radius: 4px;
-  background: var(--mc-surface);
-  border: 1px solid var(--mc-border);
-  color: var(--mc-text-base, var(--mc-text));
+  background: var(--cn-surface);
+  border: 1px solid var(--cn-border);
+  color: var(--cn-text-base, var(--cn-text));
 }
 
 .bubble.thinking {
-  color: var(--mc-text-muted);
+  color: var(--cn-text-muted);
   animation: pulse 1.4s ease-in-out infinite;
 }
 
@@ -236,7 +236,7 @@
   font-size: 11px;
   font-weight: 800;
   letter-spacing: 0.04em;
-  color: var(--mc-accent);
+  color: var(--cn-accent);
   margin-bottom: 4px;
 }
 
@@ -256,14 +256,14 @@
 
 .mdStrong {
   font-weight: 700;
-  color: var(--mc-text);
+  color: var(--cn-text);
 }
 
 .mdCode {
-  font-family: var(--mc-font-mono, ui-monospace, monospace);
+  font-family: var(--cn-font-mono, ui-monospace, monospace);
   font-size: 0.9em;
-  background: var(--mc-surface-raised, var(--mc-surface));
-  border: 1px solid var(--mc-border);
+  background: var(--cn-surface-raised, var(--cn-surface));
+  border: 1px solid var(--cn-border);
   border-radius: 4px;
   padding: 1px 5px;
 }
@@ -290,16 +290,16 @@
   content: '▸';
   position: absolute;
   left: 0.1em;
-  color: var(--mc-accent);
+  color: var(--cn-accent);
   font-size: 0.9em;
   line-height: 1.5;
 }
 
 .mdH {
-  font-size: var(--mc-text-sm);
+  font-size: var(--cn-text-sm);
   font-weight: 800;
   letter-spacing: 0.02em;
-  color: var(--mc-text);
+  color: var(--cn-text);
   margin: 0.7em 0 0.35em;
 }
 
@@ -309,7 +309,7 @@
 
 .mdHr {
   border: 0;
-  border-top: 1px solid var(--mc-border);
+  border-top: 1px solid var(--cn-border);
   margin: 0.9em 0;
 }
 
@@ -327,15 +327,15 @@
   font-weight: 700;
   letter-spacing: 0.04em;
   text-transform: uppercase;
-  color: var(--mc-text-subtle);
+  color: var(--cn-text-subtle);
 }
 
 .skillChip {
   font-size: 11px;
   font-weight: 600;
-  color: var(--mc-accent);
-  background: color-mix(in srgb, var(--mc-accent) 12%, transparent);
-  border: 1px solid color-mix(in srgb, var(--mc-accent) 35%, transparent);
+  color: var(--cn-accent);
+  background: color-mix(in srgb, var(--cn-accent) 12%, transparent);
+  border: 1px solid color-mix(in srgb, var(--cn-accent) 35%, transparent);
   border-radius: 999px;
   padding: 2px 9px;
 }
@@ -354,22 +354,22 @@
   gap: 6px;
   font-size: 11px;
   font-weight: 600;
-  color: var(--mc-text-muted);
-  background: var(--mc-surface-raised, var(--mc-surface));
-  border: 1px solid var(--mc-border);
+  color: var(--cn-text-muted);
+  background: var(--cn-surface-raised, var(--cn-surface));
+  border: 1px solid var(--cn-border);
   border-radius: 999px;
   padding: 3px 9px;
 }
 
 .toolChip.done {
-  color: var(--mc-text-subtle);
+  color: var(--cn-text-subtle);
 }
 
 .toolDot {
   width: 6px;
   height: 6px;
   border-radius: 50%;
-  background: var(--mc-accent);
+  background: var(--cn-accent);
 }
 
 .toolChip:not(.done) .toolDot {
@@ -377,7 +377,7 @@
 }
 
 .toolChip.done .toolDot {
-  background: var(--mc-positive, #22c55e);
+  background: var(--cn-positive, #22c55e);
   animation: none;
 }
 
@@ -387,7 +387,7 @@
   height: 1em;
   margin-left: 1px;
   vertical-align: text-bottom;
-  background: var(--mc-accent);
+  background: var(--cn-accent);
   animation: pulse 1s step-start infinite;
 }
 
@@ -396,8 +396,8 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: var(--mc-space-4);
-  padding: var(--mc-space-4);
+  gap: var(--cn-space-4);
+  padding: var(--cn-space-4);
 }
 
 .reportText {
@@ -408,31 +408,31 @@
 }
 
 .reportTitle {
-  font-size: var(--mc-text-sm);
+  font-size: var(--cn-text-sm);
   font-weight: 700;
-  color: var(--mc-text);
+  color: var(--cn-text);
 }
 
 .reportSub {
-  font-size: var(--mc-text-xs);
-  color: var(--mc-text-muted);
+  font-size: var(--cn-text-xs);
+  color: var(--cn-text-muted);
   line-height: 1.5;
 }
 
 .reportBtn {
   flex: none;
-  height: var(--mc-control-h);
-  padding: 0 var(--mc-space-4);
+  height: var(--cn-control-h);
+  padding: 0 var(--cn-space-4);
   border: 0;
-  border-radius: var(--mc-radius);
-  background: linear-gradient(135deg, var(--mc-accent), var(--mme-accent-2, #0ea5e9));
+  border-radius: var(--cn-radius);
+  background: linear-gradient(135deg, var(--cn-accent), var(--mme-accent-2, #0ea5e9));
   color: #fff;
   font-weight: 700;
-  font-size: var(--mc-text-sm);
+  font-size: var(--cn-text-sm);
   cursor: pointer;
   transition:
-    opacity var(--mc-duration-fast, 120ms) ease,
-    transform var(--mc-duration-fast, 120ms) ease;
+    opacity var(--cn-duration-fast, 120ms) ease,
+    transform var(--cn-duration-fast, 120ms) ease;
 }
 
 .reportBtn:hover:not(:disabled) {
@@ -457,82 +457,82 @@
   gap: 5px;
   font-size: 11px;
   font-weight: 600;
-  color: var(--mc-text-muted);
-  background: var(--mc-surface);
-  border: 1px solid var(--mc-border);
+  color: var(--cn-text-muted);
+  background: var(--cn-surface);
+  border: 1px solid var(--cn-border);
   border-radius: 999px;
   padding: 4px 11px;
   cursor: pointer;
   transition:
-    color var(--mc-duration-fast, 120ms) ease,
-    border-color var(--mc-duration-fast, 120ms) ease;
+    color var(--cn-duration-fast, 120ms) ease,
+    border-color var(--cn-duration-fast, 120ms) ease;
 }
 
 .pdfBtn:hover {
-  color: var(--mc-accent);
-  border-color: var(--mc-accent);
+  color: var(--cn-accent);
+  border-color: var(--cn-accent);
 }
 
 .suggestions {
   display: flex;
   flex-wrap: wrap;
   gap: 6px;
-  margin-bottom: var(--mc-space-3);
+  margin-bottom: var(--cn-space-3);
 }
 
 .suggestion {
-  border: 1px solid var(--mc-border);
+  border: 1px solid var(--cn-border);
   border-radius: 999px;
-  background: var(--mc-surface);
-  color: var(--mc-text-muted);
-  font-size: var(--mc-text-xs);
+  background: var(--cn-surface);
+  color: var(--cn-text-muted);
+  font-size: var(--cn-text-xs);
   padding: 6px 12px;
   cursor: pointer;
   transition:
-    color var(--mc-duration-fast, 120ms) ease,
-    border-color var(--mc-duration-fast, 120ms) ease;
+    color var(--cn-duration-fast, 120ms) ease,
+    border-color var(--cn-duration-fast, 120ms) ease;
 }
 
 .suggestion:hover {
-  color: var(--mc-accent);
-  border-color: var(--mc-accent);
+  color: var(--cn-accent);
+  border-color: var(--cn-accent);
 }
 
 .composer {
   display: flex;
-  gap: var(--mc-space-2);
+  gap: var(--cn-space-2);
 }
 
 .input {
   flex: 1;
-  height: var(--mc-control-h);
-  padding: 0 var(--mc-space-3);
-  border: 1px solid var(--mc-border);
-  border-radius: var(--mc-radius);
-  background: var(--mc-surface);
-  color: var(--mc-text);
-  font-size: var(--mc-text-sm);
-  transition: border-color var(--mc-duration-fast, 120ms) ease;
+  height: var(--cn-control-h);
+  padding: 0 var(--cn-space-3);
+  border: 1px solid var(--cn-border);
+  border-radius: var(--cn-radius);
+  background: var(--cn-surface);
+  color: var(--cn-text);
+  font-size: var(--cn-text-sm);
+  transition: border-color var(--cn-duration-fast, 120ms) ease;
 }
 
 .input:focus {
   outline: none;
-  border-color: var(--mc-accent);
+  border-color: var(--cn-accent);
 }
 
 .send {
-  height: var(--mc-control-h);
-  padding: 0 var(--mc-space-4);
+  height: var(--cn-control-h);
+  padding: 0 var(--cn-space-4);
   border: 0;
-  border-radius: var(--mc-radius);
-  background: linear-gradient(135deg, var(--mc-accent), var(--mme-accent-2, #0ea5e9));
+  border-radius: var(--cn-radius);
+  background: linear-gradient(135deg, var(--cn-accent), var(--mme-accent-2, #0ea5e9));
   color: #fff;
   font-weight: 700;
-  font-size: var(--mc-text-sm);
+  font-size: var(--cn-text-sm);
   cursor: pointer;
   transition:
-    opacity var(--mc-duration-fast, 120ms) ease,
-    transform var(--mc-duration-fast, 120ms) ease;
+    opacity var(--cn-duration-fast, 120ms) ease,
+    transform var(--cn-duration-fast, 120ms) ease;
 }
 
 .send:hover:not(:disabled) {
@@ -546,5 +546,5 @@
 
 .noticeBody a,
 .briefingEmpty a {
-  color: var(--mc-accent);
+  color: var(--cn-accent);
 }

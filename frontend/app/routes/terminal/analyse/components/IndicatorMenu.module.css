@@ -8,7 +8,7 @@
 .panel {
   display: flex;
   flex-direction: column;
-  gap: var(--mc-space-3);
+  gap: var(--cn-space-3);
   max-height: 24rem;
   overflow-y: auto;
   overscroll-behavior: contain;
@@ -21,9 +21,9 @@
 }
 
 .section-label {
-  padding: 0 var(--mc-space-2) var(--mc-space-1);
-  color: var(--mc-text-subtle);
-  font-size: var(--mc-text-xs);
+  padding: 0 var(--cn-space-2) var(--cn-space-1);
+  color: var(--cn-text-subtle);
+  font-size: var(--cn-text-xs);
   font-weight: 700;
   letter-spacing: 0.06em;
   text-transform: uppercase;
@@ -33,14 +33,14 @@
 .applied-row {
   display: flex;
   align-items: center;
-  gap: var(--mc-space-2);
-  height: var(--mc-control-h-sm);
-  padding: 0 var(--mc-space-2);
+  gap: var(--cn-space-2);
+  height: var(--cn-control-h-sm);
+  padding: 0 var(--cn-space-2);
   border: 0;
-  border-radius: var(--mc-radius-sm);
+  border-radius: var(--cn-radius-sm);
   background: transparent;
-  color: var(--mc-text);
-  font-size: var(--mc-text-sm);
+  color: var(--cn-text);
+  font-size: var(--cn-text-sm);
   font-weight: 600;
   text-align: left;
 }
@@ -50,22 +50,22 @@
 }
 
 .item:hover {
-  background: var(--mc-surface-raised);
+  background: var(--cn-surface-raised);
 }
 
 .item:focus-visible {
-  outline: 2px solid var(--mc-accent);
+  outline: 2px solid var(--cn-accent);
   outline-offset: -2px;
 }
 
 .item.item-on {
-  color: var(--mc-accent);
+  color: var(--cn-accent);
 }
 
 /* The applied rows carry a standing tint: they are a state readout, not a list
    of things to pick from, and they must not read as a fifth category. */
 .applied-row {
-  background: var(--mc-surface-raised);
+  background: var(--cn-surface-raised);
 }
 
 .name {
@@ -89,7 +89,7 @@
   width: 0.75rem;
   flex: none;
   text-align: center;
-  color: var(--mc-accent);
+  color: var(--cn-accent);
 }
 
 /* Present at all times, not revealed on hover: an action that only exists once
@@ -97,21 +97,21 @@
    unreachable entirely by touch. Muted until hover so it stays quiet instead. */
 .action {
   flex: none;
-  padding: 0 var(--mc-space-1);
+  padding: 0 var(--cn-space-1);
   border: 0;
-  border-radius: var(--mc-radius-sm);
+  border-radius: var(--cn-radius-sm);
   background: transparent;
-  color: var(--mc-text-subtle);
-  font-size: var(--mc-text-xs);
+  color: var(--cn-text-subtle);
+  font-size: var(--cn-text-xs);
   font-weight: 600;
   cursor: pointer;
 }
 
 .action:hover {
-  color: var(--mc-bearish);
+  color: var(--cn-bearish);
 }
 
 .action:focus-visible {
-  outline: 2px solid var(--mc-accent);
+  outline: 2px solid var(--cn-accent);
   outline-offset: -2px;
 }

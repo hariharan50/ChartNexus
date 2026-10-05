@@ -17,7 +17,7 @@ const STUB_API = `http://localhost:${process.env.STUB_API_PORT ?? 8099}`;
 
 test.beforeEach(async ({ context, baseURL, page }) => {
   await context.addCookies([
-    { name: 'mc_session', value: 'test', url: baseURL ?? 'http://localhost:4173' }
+    { name: 'cn_session', value: 'test', url: baseURL ?? 'http://localhost:4173' }
   ]);
 
   // `API_INTERNAL_URL` only redirects the *server's* fetches. This page loads

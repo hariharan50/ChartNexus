@@ -8,7 +8,7 @@ import s from './callback.module.css';
 import type { Route } from './+types/callback';
 
 /**
- * Where FYERS returns the user (MC_BROKER_FYERS_REDIRECT_URI).
+ * Where FYERS returns the user (CN_BROKER_FYERS_REDIRECT_URI).
  *
  * The auth code lands in the address bar, so it is handed to the API
  * immediately and the history entry is replaced — a code left in history can
@@ -16,7 +16,7 @@ import type { Route } from './+types/callback';
  */
 
 export const meta: Route.MetaFunction = () => [
-  { title: 'Connecting broker · MarketCompass' },
+  { title: 'Connecting broker · ChartNexus' },
   { name: 'robots', content: 'noindex' }
 ];
 

@@ -4,16 +4,16 @@
    multi-series chart, a scrub timeline — and on a large monitor the cap left a
    band of dead surface either side while the chart it was throttling had to
    crush eighty contracts into the middle. The page fills whatever it is given;
-   `--mc-page-max` still governs the reading-width pages, where a 3440px line of
+   `--cn-page-max` still governs the reading-width pages, where a 3440px line of
    prose would be the wrong answer. */
 .page {
-  padding: var(--mc-space-6);
+  padding: var(--cn-space-6);
 }
 
 .layout {
   display: grid;
   grid-template-columns: 290px 1fr;
-  gap: var(--mc-space-5, 1.25rem);
+  gap: var(--cn-space-5, 1.25rem);
   align-items: start;
 }
 
@@ -27,20 +27,20 @@
 .main {
   display: flex;
   flex-direction: column;
-  gap: var(--mc-space-5, 1.25rem);
+  gap: var(--cn-space-5, 1.25rem);
   min-width: 0;
 }
 
 .panel {
-  border: 1px solid var(--mc-border);
-  border-radius: var(--mc-radius-lg);
-  background: var(--mc-surface);
-  box-shadow: var(--mc-shadow);
-  padding: var(--mc-space-4);
+  border: 1px solid var(--cn-border);
+  border-radius: var(--cn-radius-lg);
+  background: var(--cn-surface);
+  box-shadow: var(--cn-shadow);
+  padding: var(--cn-space-4);
 }
 
 .panel.muted {
-  color: var(--mc-text-muted);
+  color: var(--cn-text-muted);
   text-align: center;
 }
 
@@ -48,19 +48,19 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: var(--mc-space-3);
-  padding: var(--mc-space-4);
-  border: 1px solid var(--mc-bearish);
-  border-radius: var(--mc-radius-lg);
-  color: var(--mc-text);
+  gap: var(--cn-space-3);
+  padding: var(--cn-space-4);
+  border: 1px solid var(--cn-bearish);
+  border-radius: var(--cn-radius-lg);
+  color: var(--cn-text);
 }
 
 .banner button {
   padding: 0.375rem 0.75rem;
-  border: 1px solid var(--mc-border-strong);
-  border-radius: var(--mc-radius);
-  background: var(--mc-surface-raised);
-  color: var(--mc-text);
+  border: 1px solid var(--cn-border-strong);
+  border-radius: var(--cn-radius);
+  background: var(--cn-surface-raised);
+  color: var(--cn-text);
   cursor: pointer;
 }
 
@@ -68,10 +68,10 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: var(--mc-space-2);
+  gap: var(--cn-space-2);
   /* The title's own bottom margin is zeroed inside the head row, so the row
      carries the gap to the first control instead. */
-  margin-bottom: var(--mc-space-3);
+  margin-bottom: var(--cn-space-3);
 }
 
 .panel-head .p-title {
@@ -85,37 +85,37 @@
   justify-content: center;
   width: 1.75rem;
   height: 1.75rem;
-  border: 1px solid var(--mc-border);
-  border-radius: var(--mc-radius-sm);
-  background: var(--mc-surface-raised);
-  color: var(--mc-text-muted);
-  font-size: var(--mc-text-sm);
+  border: 1px solid var(--cn-border);
+  border-radius: var(--cn-radius-sm);
+  background: var(--cn-surface-raised);
+  color: var(--cn-text-muted);
+  font-size: var(--cn-text-sm);
   cursor: pointer;
 }
 
 .restore {
   position: sticky;
-  top: var(--mc-space-6);
+  top: var(--cn-space-6);
 }
 
 .p-title {
   display: flex;
   align-items: center;
   gap: 0.375rem;
-  margin: 0 0 var(--mc-space-3);
-  font-size: var(--mc-text-base);
+  margin: 0 0 var(--cn-space-3);
+  font-size: var(--cn-text-base);
   font-weight: 700;
 }
 
 .p-title .dim {
-  font-size: var(--mc-text-xs);
+  font-size: var(--cn-text-xs);
   font-weight: 400;
-  color: var(--mc-text-subtle);
+  color: var(--cn-text-subtle);
 }
 
 .ico {
   display: inline-flex;
-  color: var(--mc-text-muted);
+  color: var(--cn-text-muted);
 }
 
 .ico svg {
@@ -128,9 +128,9 @@
   align-items: center;
   gap: 0.5rem;
   padding: 0.5rem 0.625rem;
-  border: 1px solid var(--mc-border);
-  border-radius: var(--mc-radius);
-  background: var(--mc-surface-raised);
+  border: 1px solid var(--cn-border);
+  border-radius: var(--cn-radius);
+  background: var(--cn-surface-raised);
 }
 
 .badge {
@@ -140,9 +140,9 @@
   width: 1.75rem;
   height: 1.75rem;
   border-radius: 999px;
-  background: var(--mc-accent-weak);
-  color: var(--mc-accent);
-  font-size: var(--mc-text-xs);
+  background: var(--cn-accent-weak);
+  color: var(--cn-accent);
+  font-size: var(--cn-text-xs);
   font-weight: 700;
 }
 
@@ -159,19 +159,19 @@
 .cyclers button {
   width: 1.75rem;
   height: 1.75rem;
-  border: 1px solid var(--mc-border);
-  border-radius: var(--mc-radius-sm);
-  background: var(--mc-surface);
-  color: var(--mc-text-muted);
+  border: 1px solid var(--cn-border);
+  border-radius: var(--cn-radius-sm);
+  background: var(--cn-surface);
+  color: var(--cn-text-muted);
   cursor: pointer;
 }
 
 .sub-label {
-  margin: var(--mc-space-3) 0 0.375rem;
-  font-size: var(--mc-text-xs);
+  margin: var(--cn-space-3) 0 0.375rem;
+  font-size: var(--cn-text-xs);
   letter-spacing: 0.06em;
   text-transform: uppercase;
-  color: var(--mc-text-subtle);
+  color: var(--cn-text-subtle);
 }
 
 .mode-grid {
@@ -182,22 +182,22 @@
 
 .seg {
   padding: 0.5rem;
-  border: 1px solid var(--mc-border);
-  border-radius: var(--mc-radius);
+  border: 1px solid var(--cn-border);
+  border-radius: var(--cn-radius);
   background: transparent;
-  color: var(--mc-text-muted);
+  color: var(--cn-text-muted);
   font-weight: 600;
   cursor: pointer;
 }
 
 .seg.active {
-  border-color: color-mix(in srgb, var(--mc-accent) 45%, transparent);
-  background: var(--mc-accent-weak);
-  color: var(--mc-accent);
+  border-color: color-mix(in srgb, var(--cn-accent) 45%, transparent);
+  background: var(--cn-accent-weak);
+  color: var(--cn-accent);
 }
 
 .seg:disabled {
-  color: var(--mc-text-subtle);
+  color: var(--cn-text-subtle);
   cursor: not-allowed;
 }
 
@@ -206,9 +206,9 @@
   align-items: center;
   justify-content: space-between;
   padding: 0.5rem 0.625rem;
-  border: 1px solid var(--mc-border);
-  border-radius: var(--mc-radius);
-  background: var(--mc-surface-raised);
+  border: 1px solid var(--cn-border);
+  border-radius: var(--cn-radius);
+  background: var(--cn-surface-raised);
   font-weight: 600;
 }
 
@@ -220,8 +220,8 @@
 
 .hint {
   margin: 0.375rem 0 0;
-  font-size: var(--mc-text-xs);
-  color: var(--mc-text-subtle);
+  font-size: var(--cn-text-xs);
+  color: var(--cn-text-subtle);
 }
 
 .filter-row {
@@ -232,75 +232,75 @@
 
 .chip {
   padding: 0.375rem 0;
-  border: 1px solid var(--mc-border);
-  border-radius: var(--mc-radius-sm);
+  border: 1px solid var(--cn-border);
+  border-radius: var(--cn-radius-sm);
   background: transparent;
-  color: var(--mc-text-muted);
-  font-size: var(--mc-text-xs);
+  color: var(--cn-text-muted);
+  font-size: var(--cn-text-xs);
   font-weight: 600;
   cursor: pointer;
 }
 
 .chip.active {
-  border-color: color-mix(in srgb, var(--mc-accent) 45%, transparent);
-  background: var(--mc-accent-weak);
-  color: var(--mc-accent);
+  border-color: color-mix(in srgb, var(--cn-accent) 45%, transparent);
+  background: var(--cn-accent-weak);
+  color: var(--cn-accent);
 }
 
 .pcr-line {
-  margin: var(--mc-space-4) 0 var(--mc-space-3);
-  padding-top: var(--mc-space-3);
-  border-top: 1px solid var(--mc-border);
+  margin: var(--cn-space-4) 0 var(--cn-space-3);
+  padding-top: var(--cn-space-3);
+  border-top: 1px solid var(--cn-border);
   text-align: center;
-  font-size: var(--mc-text-sm);
+  font-size: var(--cn-text-sm);
 }
 
 .pcr-line .up {
-  color: var(--mc-bullish);
+  color: var(--cn-bullish);
 }
 
 .pcr-line .down {
-  color: var(--mc-bearish);
+  color: var(--cn-bearish);
 }
 
 .insight-box,
 .analysis-box {
-  margin-top: var(--mc-space-2);
-  padding: var(--mc-space-3);
-  border-radius: var(--mc-radius);
-  font-size: var(--mc-text-sm);
+  margin-top: var(--cn-space-2);
+  padding: var(--cn-space-3);
+  border-radius: var(--cn-radius);
+  font-size: var(--cn-text-sm);
 }
 
 .insight-box {
-  border: 1px solid color-mix(in srgb, var(--mc-accent) 30%, transparent);
-  background: var(--mc-accent-weak);
+  border: 1px solid color-mix(in srgb, var(--cn-accent) 30%, transparent);
+  background: var(--cn-accent-weak);
 }
 
 .ib-title {
   margin: 0 0 0.25rem;
   font-weight: 700;
-  color: var(--mc-accent);
+  color: var(--cn-accent);
 }
 
 .ib-body {
   margin: 0;
-  color: var(--mc-text);
+  color: var(--cn-text);
 }
 
 .analysis-box {
-  border: 1px solid var(--mc-border);
-  background: var(--mc-surface-raised);
+  border: 1px solid var(--cn-border);
+  background: var(--cn-surface-raised);
 }
 
 .ab-title {
   margin: 0 0 0.25rem;
   font-weight: 700;
-  color: var(--mc-text-muted);
+  color: var(--cn-text-muted);
 }
 
 .ab-body {
   margin: 0;
-  color: var(--mc-text-muted);
+  color: var(--cn-text-muted);
 }
 
 /* -- chart panel -- */
@@ -308,9 +308,9 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: var(--mc-space-3);
+  gap: var(--cn-space-3);
   flex-wrap: wrap;
-  margin-bottom: var(--mc-space-3);
+  margin-bottom: var(--cn-space-3);
 }
 
 .mode-tabs,
@@ -322,24 +322,24 @@
 
 .pill {
   padding: 0.4375rem 0.75rem;
-  border: 1px solid var(--mc-border);
-  border-radius: var(--mc-radius);
+  border: 1px solid var(--cn-border);
+  border-radius: var(--cn-radius);
   background: transparent;
-  color: var(--mc-text-muted);
-  font-size: var(--mc-text-sm);
+  color: var(--cn-text-muted);
+  font-size: var(--cn-text-sm);
   font-weight: 600;
   cursor: pointer;
 }
 
 .pill.sm {
   padding: 0.3125rem 0.625rem;
-  font-size: var(--mc-text-xs);
+  font-size: var(--cn-text-xs);
 }
 
 .pill.active {
-  border-color: color-mix(in srgb, var(--mc-accent) 45%, transparent);
-  background: var(--mc-accent-weak);
-  color: var(--mc-accent);
+  border-color: color-mix(in srgb, var(--cn-accent) 45%, transparent);
+  background: var(--cn-accent-weak);
+  color: var(--cn-accent);
 }
 
 .pill:disabled {
@@ -350,15 +350,15 @@
 .chart-top-right {
   display: inline-flex;
   align-items: center;
-  gap: var(--mc-space-4);
+  gap: var(--cn-space-4);
 }
 
 .show-lot {
   display: inline-flex;
   align-items: center;
   gap: 0.5rem;
-  font-size: var(--mc-text-sm);
-  color: var(--mc-text-muted);
+  font-size: var(--cn-text-sm);
+  color: var(--cn-text-muted);
   cursor: pointer;
 }
 
@@ -374,12 +374,12 @@
   width: 2.25rem;
   height: 1.25rem;
   border-radius: 999px;
-  background: var(--mc-border-strong);
-  transition: background var(--mc-duration-fast);
+  background: var(--cn-border-strong);
+  transition: background var(--cn-duration-fast);
 }
 
 .switch.on {
-  background: var(--mc-bullish);
+  background: var(--cn-bullish);
 }
 
 .knob {
@@ -390,7 +390,7 @@
   height: 1rem;
   border-radius: 50%;
   background: #fff;
-  transition: transform var(--mc-duration-fast);
+  transition: transform var(--cn-duration-fast);
 }
 
 .switch.on .knob {
@@ -401,8 +401,8 @@
   display: inline-flex;
   align-items: center;
   gap: 0.375rem;
-  font-size: var(--mc-text-sm);
-  color: var(--mc-text-muted);
+  font-size: var(--cn-text-sm);
+  color: var(--cn-text-muted);
   white-space: nowrap;
   font-variant-numeric: tabular-nums;
 }
@@ -411,25 +411,25 @@
    reason the readout exists — a stalled pipeline and a still market look
    identical otherwise. */
 .live.stale {
-  color: var(--mc-bearish);
+  color: var(--cn-bearish);
 }
 
 .live.stale .dot {
-  background: var(--mc-bearish);
+  background: var(--cn-bearish);
 }
 
 /* The dots between the clock, the interval and the freshness. Only these are
    decorative enough to recede — and they carry no information, so they are the
    one thing safe to dim. */
 .sep {
-  color: var(--mc-border-strong);
+  color: var(--cn-border-strong);
 }
 
 .dot {
   width: 0.5rem;
   height: 0.5rem;
   border-radius: 50%;
-  background: var(--mc-bullish);
+  background: var(--cn-bullish);
 }
 
 .dot.pulse {
@@ -446,10 +446,10 @@
   display: flex;
   flex-wrap: wrap;
   justify-content: center;
-  gap: var(--mc-space-4);
-  margin-top: var(--mc-space-2);
-  font-size: var(--mc-text-xs);
-  color: var(--mc-text-muted);
+  gap: var(--cn-space-4);
+  margin-top: var(--cn-space-2);
+  font-size: var(--cn-text-xs);
+  color: var(--cn-text-muted);
 }
 
 .legend span {
@@ -490,24 +490,24 @@
     -45deg,
     var(--c),
     var(--c) 3px,
-    var(--mc-surface) 3px,
-    var(--mc-surface) 5px
+    var(--cn-surface) 3px,
+    var(--cn-surface) 5px
   );
 }
 
 .slider-row {
   display: flex;
   align-items: center;
-  gap: var(--mc-space-3);
-  margin-top: var(--mc-space-4);
+  gap: var(--cn-space-3);
+  margin-top: var(--cn-space-4);
 }
 
 .reset {
   padding: 0.3125rem 0.75rem;
-  border: 1px solid color-mix(in srgb, var(--mc-bearish) 40%, transparent);
-  border-radius: var(--mc-radius);
-  background: color-mix(in srgb, var(--mc-bearish) 12%, transparent);
-  color: var(--mc-bearish);
+  border: 1px solid color-mix(in srgb, var(--cn-bearish) 40%, transparent);
+  border-radius: var(--cn-radius);
+  background: color-mix(in srgb, var(--cn-bearish) 12%, transparent);
+  color: var(--cn-bearish);
   font-weight: 600;
   cursor: pointer;
 }
@@ -520,8 +520,8 @@
 .end {
   display: flex;
   flex-direction: column;
-  font-size: var(--mc-text-xs);
-  color: var(--mc-text-subtle);
+  font-size: var(--cn-text-xs);
+  color: var(--cn-text-subtle);
   white-space: nowrap;
 }
 
@@ -531,35 +531,35 @@
   font-size: 0.6875rem;
   text-transform: uppercase;
   letter-spacing: 0.04em;
-  color: var(--mc-text-subtle);
+  color: var(--cn-text-subtle);
   /* No `opacity` here. Dimming a token that is already tuned to sit exactly at
      the AA threshold pushes it back under — which is how "BASELINE" and "AS OF"
      ended up unreadable. If something needs to recede, give it its own token. */
 }
 
 .quick {
-  margin-top: var(--mc-space-3);
+  margin-top: var(--cn-space-3);
 }
 
 .caption {
-  margin: var(--mc-space-3) 0 0;
-  font-size: var(--mc-text-xs);
-  color: var(--mc-text-subtle);
+  margin: var(--cn-space-3) 0 0;
+  font-size: var(--cn-text-xs);
+  color: var(--cn-text-subtle);
 }
 
 /* -- summary -- */
 .summary {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: var(--mc-space-5, 1.25rem);
+  gap: var(--cn-space-5, 1.25rem);
 }
 
 .sc h3 {
   display: flex;
   align-items: center;
   gap: 0.375rem;
-  margin: 0 0 var(--mc-space-4);
-  font-size: var(--mc-text-sm);
+  margin: 0 0 var(--cn-space-4);
+  font-size: var(--cn-text-sm);
   font-weight: 700;
 }
 
@@ -584,9 +584,9 @@
 .empty-panel {
   display: flex;
   flex-direction: column;
-  gap: var(--mc-space-3);
+  gap: var(--cn-space-3);
   max-width: 24rem;
-  margin: var(--mc-space-6) auto;
+  margin: var(--cn-space-6) auto;
 }
 
 .empty-panel .muted {

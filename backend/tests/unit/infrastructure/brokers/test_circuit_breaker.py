@@ -11,11 +11,11 @@ from __future__ import annotations
 
 import pytest
 
-from marketcompass.contexts.broker_connections.domain.errors import (
+from chartnexus.contexts.broker_connections.domain.errors import (
     BrokerRejectedError,
     BrokerUnavailableError,
 )
-from marketcompass.infrastructure.brokers.fyers.circuit_breaker import (
+from chartnexus.infrastructure.brokers.fyers.circuit_breaker import (
     CircuitBreaker,
     CircuitState,
 )

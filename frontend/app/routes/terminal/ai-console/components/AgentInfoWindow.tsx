@@ -28,7 +28,7 @@ type AgentDoc = {
 /**
  * A floating, dismissible window explaining an AI Console agent — what it does,
  * how to use it, and a small architecture diagram. Shared by HELLA, STRYX and
- * HUGIN; it inherits the page's --mc-accent so it tones to each agent. Opened
+ * HUGIN; it inherits the page's --cn-accent so it tones to each agent. Opened
  * from the "!" button in the console header.
  */
 export default function AgentInfoWindow({

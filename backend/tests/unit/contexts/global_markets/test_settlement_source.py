@@ -14,7 +14,7 @@ from pathlib import Path
 
 import pytest
 
-from marketcompass.infrastructure.global_markets.nseix.settlement_source import (
+from chartnexus.infrastructure.global_markets.nseix.settlement_source import (
     bhavcopy_url,
     contract_key,
     parse_bhavcopy,
@@ -56,18 +56,14 @@ class TestBhavcopyUrl:
 
 
 class TestParseBhavcopy:
-    def test_the_front_month_settles_where_the_exchange_says_it_does(
-        self, bhavcopy: str
-    ) -> None:
+    def test_the_front_month_settles_where_the_exchange_says_it_does(self, bhavcopy: str) -> None:
         """23,188.50 - the number the reported-wrong card should have shown,
         and the one every reference board quotes the contract against."""
         table = parse_bhavcopy(bhavcopy)
 
         assert table[contract_key("NIFTY", "29-Sep-2026")] == Decimal("23188.5")
 
-    def test_the_board_s_own_expiry_spelling_looks_the_contract_up(
-        self, bhavcopy: str
-    ) -> None:
+    def test_the_board_s_own_expiry_spelling_looks_the_contract_up(self, bhavcopy: str) -> None:
         """The live board spells the month ``29-Sep-2026`` and the bhavcopy
         spells it ``29-SEP-2026``. A lookup that did not fold them would miss
         every contract and silently fall back."""
@@ -87,9 +83,7 @@ class TestParseBhavcopy:
         assert table[contract_key("NIFTYNXT50", "29-Sep-2026")] == Decimal("71809.5")
         assert table[contract_key("NIFTYFPI", "29-Sep-2026")] == Decimal("1505.7")
 
-    def test_contracts_that_did_not_trade_still_carry_a_settlement(
-        self, bhavcopy: str
-    ) -> None:
+    def test_contracts_that_did_not_trade_still_carry_a_settlement(self, bhavcopy: str) -> None:
         """Their ``CLOSE_PRIC`` is blank and only ``SETTLEMENT`` is filled, so
         preferring the close would leave the far months empty for no gain."""
         table = parse_bhavcopy(bhavcopy)
@@ -116,7 +110,5 @@ class TestParseBhavcopy:
             "FUTSTKRELIANCE29-SEP-2026,1,2,3,4,,0,0,0,0,0,0\n",  # settles at zero
         ],
     )
-    def test_unusable_input_yields_an_empty_table_rather_than_raising(
-        self, body: str
-    ) -> None:
+    def test_unusable_input_yields_an_empty_table_rather_than_raising(self, body: str) -> None:
         assert parse_bhavcopy(body) == {}

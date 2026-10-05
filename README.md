@@ -1,4 +1,4 @@
-# MarketCompass
+# ChartNexus
 
 Options and futures market intelligence terminal for NSE instruments — option
 chain analytics, futures positioning, signal synthesis, and an explainable
@@ -8,7 +8,7 @@ copilot over the resulting data.
 > covering identity and broker connections, market data and ingestion, the
 > options and futures analytics, the signals engine, four AI agents (HELLA,
 > STRYX, HUGIN, MME100), outbound messaging and the daily report. A handful
-> under `backend/src/marketcompass/contexts/` are still empty placeholders.
+> under `backend/src/chartnexus/contexts/` are still empty placeholders.
 >
 > The instrument universe is the full NSE F&O list — 210 stocks plus the index
 > contracts — held in `instrument_catalog` and refreshed daily from the
@@ -45,7 +45,7 @@ cd frontend && pnpm install
 Then run the two dev servers in separate terminals:
 
 ```bash
-cd backend  && uv run uvicorn marketcompass.entrypoints.main_api:create_app --factory --reload --port 8000
+cd backend  && uv run uvicorn chartnexus.entrypoints.main_api:create_app --factory --reload --port 8000
 cd frontend && pnpm dev
 ```
 
@@ -155,5 +155,5 @@ and the design decisions are recorded in
 
 ## Disclaimer
 
-MarketCompass is analytics software. It does not provide investment advice, and
+ChartNexus is analytics software. It does not provide investment advice, and
 nothing it produces is a recommendation to buy or sell any instrument.

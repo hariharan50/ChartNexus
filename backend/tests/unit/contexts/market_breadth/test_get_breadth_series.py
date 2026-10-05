@@ -12,27 +12,27 @@ from decimal import Decimal
 
 import pytest
 
-from marketcompass.contexts.market_breadth.application.get_breadth_series import (
+from chartnexus.contexts.market_breadth.application.get_breadth_series import (
     BreadthSeriesQuery,
     GetBreadthSeries,
     GetSectorRail,
 )
-from marketcompass.contexts.market_breadth.application.ports import (
+from chartnexus.contexts.market_breadth.application.ports import (
     BreadthScope,
     LiveReading,
     SectorBoard,
 )
-from marketcompass.contexts.market_breadth.domain.breadth import (
+from chartnexus.contexts.market_breadth.domain.breadth import (
     BreadthCount,
     SectorRow,
     sector_board,
 )
-from marketcompass.contexts.market_breadth.domain.breadth_series import (
+from chartnexus.contexts.market_breadth.domain.breadth_series import (
     PricePoint,
     SeriesQuality,
 )
-from marketcompass.contexts.market_breadth.domain.constituents import Constituent
-from marketcompass.shared_kernel.types.identifiers import TenantId, new_id
+from chartnexus.contexts.market_breadth.domain.constituents import Constituent
+from chartnexus.shared_kernel.types.identifiers import TenantId, new_id
 
 pytestmark = pytest.mark.unit
 

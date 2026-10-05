@@ -1,7 +1,7 @@
 import ComingSoon from '$shared/ui/ComingSoon';
 import type { Route } from './+types/pe-ce-difference';
 
-export const meta: Route.MetaFunction = () => [{ title: 'PE-CE Difference · MarketCompass' }];
+export const meta: Route.MetaFunction = () => [{ title: 'PE-CE Difference · ChartNexus' }];
 
 export default function PeCeDifference() {
   return (

@@ -3,8 +3,8 @@
 .grid {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
-  gap: var(--mc-space-3);
-  margin: var(--mc-space-4) 0 0;
+  gap: var(--cn-space-3);
+  margin: var(--cn-space-4) 0 0;
   padding: 0;
   list-style: none;
 }
@@ -13,10 +13,10 @@
   display: flex;
   flex-direction: column;
   gap: 0.125rem;
-  padding: var(--mc-space-3);
-  border: 1px solid var(--mc-border);
-  border-radius: var(--mc-radius);
-  background: var(--mc-surface-raised);
+  padding: var(--cn-space-3);
+  border: 1px solid var(--cn-border);
+  border-radius: var(--cn-radius);
+  background: var(--cn-surface-raised);
   min-width: 0;
 }
 
@@ -41,35 +41,35 @@
 }
 
 .label {
-  font-size: var(--mc-text-xs);
-  color: var(--mc-text-muted);
+  font-size: var(--cn-text-xs);
+  color: var(--cn-text-muted);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 
 .value {
-  font-size: var(--mc-text-lg);
+  font-size: var(--cn-text-lg);
   font-weight: 700;
   font-variant-numeric: tabular-nums;
 }
 
 .value.absent {
-  color: var(--mc-text-subtle);
+  color: var(--cn-text-subtle);
 }
 
 .gap {
-  font-size: var(--mc-text-xs);
-  color: var(--mc-text-subtle);
+  font-size: var(--cn-text-xs);
+  color: var(--cn-text-subtle);
   font-variant-numeric: tabular-nums;
 }
 
 .gap.up {
-  color: var(--mc-bullish);
+  color: var(--cn-bullish);
 }
 
 .gap.down {
-  color: var(--mc-bearish);
+  color: var(--cn-bearish);
 }
 
 @media (max-width: 60rem) {

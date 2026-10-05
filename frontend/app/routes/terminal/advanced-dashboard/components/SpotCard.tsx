@@ -20,7 +20,7 @@ export default function SpotCard({ quote, selected = false, onSelect }: Props) {
       onClick={onSelect}
     >
       <span className={s.label}>{quote.label}</span>
-      <span className={cx(s.value, 'mc-numeric')}>
+      <span className={cx(s.value, 'cn-numeric')}>
         {quote.pending ? '—' : formatPrice(quote.value)}
       </span>
       <span className={s.foot}>

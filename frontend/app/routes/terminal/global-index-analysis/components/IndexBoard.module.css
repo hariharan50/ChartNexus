@@ -1,25 +1,25 @@
 .wrap {
-  background: var(--mc-surface);
-  border: 1px solid var(--mc-border);
-  border-radius: var(--mc-radius-lg);
-  box-shadow: var(--mc-shadow);
-  padding: var(--mc-space-4);
+  background: var(--cn-surface);
+  border: 1px solid var(--cn-border);
+  border-radius: var(--cn-radius-lg);
+  box-shadow: var(--cn-shadow);
+  padding: var(--cn-space-4);
 }
 
 .head {
-  margin-bottom: var(--mc-space-3);
+  margin-bottom: var(--cn-space-3);
 }
 
 .title {
   margin: 0;
-  font-size: var(--mc-text-base);
+  font-size: var(--cn-text-base);
   font-weight: 700;
 }
 
 .sub {
   margin: 0.125rem 0 0;
-  font-size: var(--mc-text-xs);
-  color: var(--mc-text-subtle);
+  font-size: var(--cn-text-xs);
+  color: var(--cn-text-subtle);
 }
 
 /* The table scrolls inside its own box; the page never scrolls sideways. */
@@ -31,23 +31,23 @@
   width: 100%;
   min-width: 34rem;
   border-collapse: collapse;
-  font-size: var(--mc-text-sm);
+  font-size: var(--cn-text-sm);
 }
 
 .table th,
 .table td {
-  padding: 0.4375rem var(--mc-space-2);
+  padding: 0.4375rem var(--cn-space-2);
   text-align: left;
-  border-bottom: 1px solid var(--mc-border);
+  border-bottom: 1px solid var(--cn-border);
 }
 
 .table thead th {
-  font-size: var(--mc-text-xs);
+  font-size: var(--cn-text-xs);
   font-weight: 600;
   letter-spacing: 0.05em;
   text-transform: uppercase;
-  color: var(--mc-text-subtle);
-  border-bottom-color: var(--mc-border-strong);
+  color: var(--cn-text-subtle);
+  border-bottom-color: var(--cn-border-strong);
 }
 
 .num {
@@ -60,34 +60,34 @@
 
 /* The region header doubles as its own aggregate row. */
 .groupRow th {
-  font-size: var(--mc-text-xs);
+  font-size: var(--cn-text-xs);
   font-weight: 700;
   letter-spacing: 0.08em;
   text-transform: uppercase;
-  color: var(--mc-text-subtle);
-  background: var(--mc-surface-raised);
+  color: var(--cn-text-subtle);
+  background: var(--cn-surface-raised);
 }
 
 .groupRow td {
-  background: var(--mc-surface-raised);
-  font-size: var(--mc-text-xs);
+  background: var(--cn-surface-raised);
+  font-size: var(--cn-text-xs);
 }
 
 .groupNote {
-  color: var(--mc-text-subtle);
-  font-size: var(--mc-text-xs);
+  color: var(--cn-text-subtle);
+  font-size: var(--cn-text-xs);
 }
 
 .up {
-  color: var(--mc-bullish);
+  color: var(--cn-bullish);
 }
 
 .down {
-  color: var(--mc-bearish);
+  color: var(--cn-bearish);
 }
 
 .none {
-  color: var(--mc-text-subtle);
+  color: var(--cn-text-subtle);
 }
 
 .trend {
@@ -101,16 +101,16 @@
 }
 
 .spark.none {
-  color: var(--mc-text-subtle);
+  color: var(--cn-text-subtle);
 }
 
 .noSpark {
-  color: var(--mc-text-subtle);
+  color: var(--cn-text-subtle);
 }
 
 .hours {
   width: 7rem;
   text-align: right;
-  font-size: var(--mc-text-xs);
-  color: var(--mc-text-subtle);
+  font-size: var(--cn-text-xs);
+  color: var(--cn-text-subtle);
 }

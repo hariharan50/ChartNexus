@@ -4,12 +4,12 @@ from __future__ import annotations
 
 import pytest
 
-from marketcompass.contexts.ai_settings.domain.errors import (
+from chartnexus.contexts.ai_settings.domain.errors import (
     ApiKeyInvalidError,
     ModelInvalidError,
     ProviderUnsupportedError,
 )
-from marketcompass.contexts.ai_settings.domain.value_objects import (
+from chartnexus.contexts.ai_settings.domain.value_objects import (
     SUPPORTED_PROVIDERS,
     LlmCredentials,
     LlmProvider,

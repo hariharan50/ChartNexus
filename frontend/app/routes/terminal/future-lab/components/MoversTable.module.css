@@ -4,23 +4,23 @@
 
 .sector,
 .muted {
-  color: var(--mc-text-muted);
-  font-size: var(--mc-text-xs);
+  color: var(--cn-text-muted);
+  font-size: var(--cn-text-xs);
 }
 
 .num {
   display: inline-block;
   padding: 0 0.125rem;
-  border-radius: var(--mc-radius-sm);
+  border-radius: var(--cn-radius-sm);
   font-variant-numeric: tabular-nums;
 }
 
 .up {
-  color: var(--mc-bullish);
+  color: var(--cn-bullish);
 }
 
 .down {
-  color: var(--mc-bearish);
+  color: var(--cn-bearish);
 }
 
 /* Open-HL badge: opened on the low reads bullish, on the high bearish. */
@@ -28,19 +28,19 @@
   display: inline-flex;
   align-items: center;
   padding: 0.0625rem 0.375rem;
-  border-radius: var(--mc-radius-sm);
-  font-size: var(--mc-text-xs);
+  border-radius: var(--cn-radius-sm);
+  font-size: var(--cn-text-xs);
   font-weight: 600;
 }
 
 .pillUp {
-  background: var(--mc-bullish-weak);
-  color: var(--mc-bullish);
+  background: var(--cn-bullish-weak);
+  color: var(--cn-bullish);
 }
 
 .pillDown {
-  background: var(--mc-bearish-weak);
-  color: var(--mc-bearish);
+  background: var(--cn-bearish-weak);
+  color: var(--cn-bearish);
 }
 
 /* The Build column is a block of colour, so the tint lives on the cell. The
@@ -55,31 +55,31 @@
   display: inline-flex;
   align-items: center;
   gap: 0.25rem;
-  font-size: var(--mc-text-xs);
+  font-size: var(--cn-text-xs);
 }
 
 .build_strong-up {
-  background: color-mix(in srgb, var(--mc-bullish) 55%, transparent);
-  color: var(--mc-text);
+  background: color-mix(in srgb, var(--cn-bullish) 55%, transparent);
+  color: var(--cn-text);
 }
 
 .build_up {
-  background: color-mix(in srgb, var(--mc-bullish) 22%, transparent);
-  color: var(--mc-bullish);
+  background: color-mix(in srgb, var(--cn-bullish) 22%, transparent);
+  color: var(--cn-bullish);
 }
 
 .build_strong-down {
-  background: color-mix(in srgb, var(--mc-bearish) 55%, transparent);
-  color: var(--mc-text);
+  background: color-mix(in srgb, var(--cn-bearish) 55%, transparent);
+  color: var(--cn-text);
 }
 
 .build_down {
-  background: color-mix(in srgb, var(--mc-bearish) 22%, transparent);
-  color: var(--mc-bearish);
+  background: color-mix(in srgb, var(--cn-bearish) 22%, transparent);
+  color: var(--cn-bearish);
 }
 
 .build_flat {
-  color: var(--mc-text-subtle);
+  color: var(--cn-text-subtle);
 }
 
 /* A moved price is tinted for a beat. Without it a table refreshing on a timer
@@ -94,15 +94,15 @@
 
 @keyframes flashUp {
   0% {
-    background: var(--mc-bullish-weak);
-    color: var(--mc-bullish);
+    background: var(--cn-bullish-weak);
+    color: var(--cn-bullish);
   }
 }
 
 @keyframes flashDown {
   0% {
-    background: var(--mc-bearish-weak);
-    color: var(--mc-bearish);
+    background: var(--cn-bearish-weak);
+    color: var(--cn-bearish);
   }
 }
 

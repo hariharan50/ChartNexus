@@ -33,7 +33,7 @@ export default function FuturesCard({
         <span className={s.tag}>FUT</span>
       </div>
 
-      <span className={cx(s.value, 'mc-numeric')}>
+      <span className={cx(s.value, 'cn-numeric')}>
         {value != null ? formatPrice(value) : '0.00'}
       </span>
       <span className={cx(s.pill, s[dir])}>{formatSignedPercent(changePercent ?? 0)}</span>
@@ -41,7 +41,7 @@ export default function FuturesCard({
       <div className={s.grid}>
         <div className={s.cell}>
           <span className={s.k}>Volume</span>
-          <span className={cx(s.v, 'mc-numeric')}>{volume != null ? formatInt(volume) : '0'}</span>
+          <span className={cx(s.v, 'cn-numeric')}>{volume != null ? formatInt(volume) : '0'}</span>
         </div>
         <div className={s.cell}>
           <span className={s.k}>Contract</span>
@@ -49,11 +49,11 @@ export default function FuturesCard({
         </div>
         <div className={s.cell}>
           <span className={s.k}>Day High</span>
-          <span className={cx(s.v, 'mc-numeric')}>{dash(dayHigh)}</span>
+          <span className={cx(s.v, 'cn-numeric')}>{dash(dayHigh)}</span>
         </div>
         <div className={s.cell}>
           <span className={s.k}>Day Low</span>
-          <span className={cx(s.v, 'mc-numeric')}>{dash(dayLow)}</span>
+          <span className={cx(s.v, 'cn-numeric')}>{dash(dayLow)}</span>
         </div>
       </div>
 

@@ -104,7 +104,7 @@ export default function MessagingChannelsPanel() {
       <header className={s.head}>
         <h1 className={s.title}>Messaging Channels</h1>
         <p className={s.sub}>
-          Connect a chat app to receive your MarketCompass updates — starting with the daily{' '}
+          Connect a chat app to receive your ChartNexus updates — starting with the daily{' '}
           <Link to="/ai-console/mme100">MME100 pre-market briefing</Link>. Turn the briefing
           automation on under <Link to="/settings/power-agents">Power AI Agents</Link>.
         </p>

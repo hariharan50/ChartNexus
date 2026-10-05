@@ -5,7 +5,7 @@ import IconUser from '$shared/ui/icons/IconUser';
 import s from './profile.module.css';
 import type { Route } from './+types/profile';
 
-export const meta: Route.MetaFunction = () => [{ title: 'Profile · Settings · MarketCompass' }];
+export const meta: Route.MetaFunction = () => [{ title: 'Profile · Settings · ChartNexus' }];
 
 export default function SettingsProfile() {
   const user = useUser();
@@ -109,7 +109,7 @@ export default function SettingsProfile() {
         <div className={s.row}>
           <div className={s.copy}>
             <p className={s.label}>Sign-in method</p>
-            <p className={s.hint}>How you authenticate into MarketCompass.</p>
+            <p className={s.hint}>How you authenticate into ChartNexus.</p>
           </div>
           <span className={s.value}>{loginMethod}</span>
         </div>

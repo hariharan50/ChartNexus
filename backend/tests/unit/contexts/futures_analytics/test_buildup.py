@@ -6,7 +6,7 @@ from decimal import Decimal
 
 import pytest
 
-from marketcompass.contexts.futures_analytics.domain.buildup import (
+from chartnexus.contexts.futures_analytics.domain.buildup import (
     BuildupState,
     FuturesReading,
     classify,

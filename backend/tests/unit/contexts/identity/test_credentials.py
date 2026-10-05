@@ -14,14 +14,14 @@ from datetime import UTC, datetime, timedelta
 import jwt
 import pytest
 
-from marketcompass.bootstrap.settings import AuthSettings, SecuritySettings
-from marketcompass.contexts.identity.domain.errors import SessionExpiredError
-from marketcompass.contexts.identity.domain.password_policy import PasswordPolicy
-from marketcompass.contexts.identity.domain.value_objects import EmailAddress, RawPassword
-from marketcompass.infrastructure.security.password_hasher import Argon2Hasher
-from marketcompass.infrastructure.security.token_signer import JwtAccessTokenIssuer
-from marketcompass.shared_kernel.domain.errors import AuthenticationError, ValidationError
-from marketcompass.shared_kernel.types.identifiers import SessionId, TenantId, UserId, new_id
+from chartnexus.bootstrap.settings import AuthSettings, SecuritySettings
+from chartnexus.contexts.identity.domain.errors import SessionExpiredError
+from chartnexus.contexts.identity.domain.password_policy import PasswordPolicy
+from chartnexus.contexts.identity.domain.value_objects import EmailAddress, RawPassword
+from chartnexus.infrastructure.security.password_hasher import Argon2Hasher
+from chartnexus.infrastructure.security.token_signer import JwtAccessTokenIssuer
+from chartnexus.shared_kernel.domain.errors import AuthenticationError, ValidationError
+from chartnexus.shared_kernel.types.identifiers import SessionId, TenantId, UserId, new_id
 
 pytestmark = pytest.mark.unit
 
@@ -186,8 +186,8 @@ def test_alg_none_token_is_rejected(issuer: JwtAccessTokenIssuer) -> None:
     """The classic JWT bypass: strip the signature and claim no algorithm."""
     unsigned = jwt.encode(
         {
-            "iss": "marketcompass",
-            "aud": "marketcompass-api",
+            "iss": "chartnexus",
+            "aud": "chartnexus-api",
             "sub": str(new_id()),
             "tid": str(new_id()),
             "sid": str(new_id()),

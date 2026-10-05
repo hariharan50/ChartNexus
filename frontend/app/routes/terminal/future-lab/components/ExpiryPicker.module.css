@@ -14,12 +14,12 @@
 .picker {
   display: flex;
   align-items: center;
-  gap: var(--mc-space-2);
+  gap: var(--cn-space-2);
 }
 
 .caption {
-  color: var(--mc-text-muted);
-  font-size: var(--mc-text-xs);
+  color: var(--cn-text-muted);
+  font-size: var(--cn-text-xs);
   white-space: nowrap;
 }
 
@@ -34,32 +34,32 @@
   display: inline-flex;
   align-items: center;
   justify-content: space-between;
-  gap: var(--mc-space-3);
-  height: var(--mc-control-h-sm);
+  gap: var(--cn-space-3);
+  height: var(--cn-control-h-sm);
   min-width: 11rem;
-  padding: 0 var(--mc-space-2) 0 var(--mc-space-3);
-  border: 1px solid var(--mc-field-border);
-  border-radius: var(--mc-radius);
-  background: var(--mc-field-bg);
-  color: var(--mc-text);
+  padding: 0 var(--cn-space-2) 0 var(--cn-space-3);
+  border: 1px solid var(--cn-field-border);
+  border-radius: var(--cn-radius);
+  background: var(--cn-field-bg);
+  color: var(--cn-text);
   font: inherit;
-  font-size: var(--mc-text-sm);
+  font-size: var(--cn-text-sm);
   font-variant-numeric: tabular-nums;
   cursor: pointer;
   white-space: nowrap;
 }
 
 .trigger:hover {
-  border-color: var(--mc-border-strong);
+  border-color: var(--cn-border-strong);
 }
 
 .trigger:focus-visible {
-  outline: 2px solid var(--mc-focus);
+  outline: 2px solid var(--cn-focus);
   outline-offset: 1px;
 }
 
 .trigger-open {
-  border-color: var(--mc-accent);
+  border-color: var(--cn-accent);
 }
 
 .trigger-date {
@@ -69,7 +69,7 @@
 
 .caret {
   display: inline-flex;
-  color: var(--mc-text-subtle);
+  color: var(--cn-text-subtle);
   transition: transform 120ms ease;
 }
 
@@ -91,30 +91,30 @@
   z-index: 20;
   min-width: 100%;
   margin: 0;
-  padding: var(--mc-space-1);
+  padding: var(--cn-space-1);
   list-style: none;
-  border: 1px solid var(--mc-border-strong);
-  border-radius: var(--mc-radius);
-  background: var(--mc-surface-raised);
-  box-shadow: var(--mc-shadow, 0 8px 24px rgb(0 0 0 / 35%));
+  border: 1px solid var(--cn-border-strong);
+  border-radius: var(--cn-radius);
+  background: var(--cn-surface-raised);
+  box-shadow: var(--cn-shadow, 0 8px 24px rgb(0 0 0 / 35%));
 }
 
 .option {
   display: grid;
   grid-template-columns: 1.125rem max-content 2.5rem max-content;
   align-items: center;
-  gap: var(--mc-space-2);
-  padding: var(--mc-space-2) var(--mc-space-2);
-  border-radius: var(--mc-radius-sm);
-  color: var(--mc-text);
-  font-size: var(--mc-text-sm);
+  gap: var(--cn-space-2);
+  padding: var(--cn-space-2) var(--cn-space-2);
+  border-radius: var(--cn-radius-sm);
+  color: var(--cn-text);
+  font-size: var(--cn-text-sm);
   font-variant-numeric: tabular-nums;
   white-space: nowrap;
   cursor: pointer;
 }
 
 .option:hover {
-  background: var(--mc-field-bg-hover);
+  background: var(--cn-field-bg-hover);
 }
 
 /* Focus, not hover, is what the keyboard moves — and it has to be visible
@@ -122,12 +122,12 @@
 .option:focus-visible,
 .option:focus {
   outline: none;
-  background: var(--mc-field-bg-hover);
-  box-shadow: inset 0 0 0 1px var(--mc-accent);
+  background: var(--cn-field-bg-hover);
+  box-shadow: inset 0 0 0 1px var(--cn-accent);
 }
 
 .option-on {
-  color: var(--mc-accent);
+  color: var(--cn-accent);
   font-weight: 600;
 }
 
@@ -135,7 +135,7 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  color: var(--mc-accent);
+  color: var(--cn-accent);
 }
 
 .option-date {
@@ -146,13 +146,13 @@
    the whole reason this list is not a string of `29 Sep 2026 (6d)`. */
 .option-days {
   text-align: right;
-  color: var(--mc-text-muted);
-  font-size: var(--mc-text-xs);
+  color: var(--cn-text-muted);
+  font-size: var(--cn-text-xs);
 }
 
 .option-name {
-  color: var(--mc-text-subtle);
-  font-size: var(--mc-text-xs);
+  color: var(--cn-text-subtle);
+  font-size: var(--cn-text-xs);
   font-weight: 400;
 }
 
@@ -161,22 +161,22 @@
 .chip {
   display: inline-flex;
   align-items: center;
-  height: var(--mc-control-h-sm);
-  padding: 0 var(--mc-space-3);
-  border: 1px dashed var(--mc-border-strong);
-  border-radius: var(--mc-radius);
-  color: var(--mc-text);
-  font-size: var(--mc-text-sm);
+  height: var(--cn-control-h-sm);
+  padding: 0 var(--cn-space-3);
+  border: 1px dashed var(--cn-border-strong);
+  border-radius: var(--cn-radius);
+  color: var(--cn-text);
+  font-size: var(--cn-text-sm);
   white-space: nowrap;
 }
 
 /* The build-up columns are empty on this series because nothing measured them.
    Muted rather than alarming: it is a limit, not a fault. */
 .warn {
-  padding: 0 var(--mc-space-2);
-  border: 1px solid var(--mc-border-strong);
-  border-radius: var(--mc-radius-sm);
-  color: var(--mc-text-muted);
-  font-size: var(--mc-text-xs);
+  padding: 0 var(--cn-space-2);
+  border: 1px solid var(--cn-border-strong);
+  border-radius: var(--cn-radius-sm);
+  color: var(--cn-text-muted);
+  font-size: var(--cn-text-xs);
   white-space: nowrap;
 }

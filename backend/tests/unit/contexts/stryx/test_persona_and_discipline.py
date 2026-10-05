@@ -7,8 +7,8 @@ injected only when the cap is actually reached.
 
 from __future__ import annotations
 
-from marketcompass.contexts.stryx.domain import discipline, entry_styles, persona
-from marketcompass.contexts.stryx.domain.call_template import CONTRACT
+from chartnexus.contexts.stryx.domain import discipline, entry_styles, persona
+from chartnexus.contexts.stryx.domain.call_template import CONTRACT
 
 
 def test_prompt_carries_playbook_contract_and_discipline() -> None:

@@ -18,7 +18,7 @@ interface Props {
 }
 
 /**
- * Chart chrome — axes, grid, tooltip, markers — comes from `--mc-*` tokens, so
+ * Chart chrome — axes, grid, tooltip, markers — comes from `--cn-*` tokens, so
  * it follows all four themes.
  *
  * The Svelte version picked from two hard-coded palettes off an `isDark`
@@ -27,7 +27,7 @@ interface Props {
  * axis text on near-white: legible only by accident.
  *
  * Call and Put stay on the Open Interest tool's own palette (`oi-data.ts`)
- * rather than `--mc-bullish`/`--mc-bearish`. They are a domain signal, not
+ * rather than `--cn-bullish`/`--cn-bearish`. They are a domain signal, not
  * chrome — the legend swatches, the donuts and the table all use these exact
  * two colours, and they read correctly against every theme surface.
  */

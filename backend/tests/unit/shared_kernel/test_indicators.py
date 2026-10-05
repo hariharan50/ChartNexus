@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import pytest
 
-from marketcompass.shared_kernel.domain import indicators as ind
+from chartnexus.shared_kernel.domain import indicators as ind
 
 
 def test_clamp_and_sigmoid() -> None:

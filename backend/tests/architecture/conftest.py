@@ -14,7 +14,7 @@ from pathlib import Path
 
 import pytest
 
-SRC = Path(__file__).resolve().parents[2] / "src" / "marketcompass"
+SRC = Path(__file__).resolve().parents[2] / "src" / "chartnexus"
 
 
 @dataclass(frozen=True, slots=True)

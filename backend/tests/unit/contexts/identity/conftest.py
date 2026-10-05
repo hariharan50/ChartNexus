@@ -11,25 +11,25 @@ from datetime import UTC, datetime
 
 import pytest
 
-from marketcompass.bootstrap.settings import AuthSettings, SecuritySettings
-from marketcompass.contexts.identity.application.ports import (
+from chartnexus.bootstrap.settings import AuthSettings, SecuritySettings
+from chartnexus.contexts.identity.application.ports import (
     AuthorizationRequest,
     GoogleProfile,
     PendingAuthorization,
 )
-from marketcompass.contexts.identity.domain.refresh_session import (
+from chartnexus.contexts.identity.domain.refresh_session import (
     RefreshSession,
     SessionRevocationReason,
 )
-from marketcompass.contexts.identity.domain.user import User
-from marketcompass.contexts.identity.domain.value_objects import (
+from chartnexus.contexts.identity.domain.user import User
+from chartnexus.contexts.identity.domain.value_objects import (
     AuthProvider,
     EmailAddress,
     PhoneNumber,
 )
-from marketcompass.infrastructure.time.clock import FixedClock
-from marketcompass.shared_kernel.domain.errors import RateLimitError
-from marketcompass.shared_kernel.types.identifiers import SessionId, UserId
+from chartnexus.infrastructure.time.clock import FixedClock
+from chartnexus.shared_kernel.domain.errors import RateLimitError
+from chartnexus.shared_kernel.types.identifiers import SessionId, UserId
 
 START = datetime(2026, 8, 1, 9, 30, tzinfo=UTC)
 

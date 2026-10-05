@@ -5,36 +5,36 @@
 }
 
 .field > label {
-  font-size: var(--mc-text-xs);
+  font-size: var(--cn-text-xs);
   font-weight: 500;
-  color: var(--mc-text-muted);
+  color: var(--cn-text-muted);
 }
 
 .shell {
   display: flex;
   align-items: center;
-  gap: var(--mc-space-2);
-  min-height: var(--mc-control-h);
-  padding: 0 var(--mc-control-px);
-  background: var(--mc-field-bg);
-  border: 1px solid var(--mc-field-border);
-  border-radius: var(--mc-radius);
+  gap: var(--cn-space-2);
+  min-height: var(--cn-control-h);
+  padding: 0 var(--cn-control-px);
+  background: var(--cn-field-bg);
+  border: 1px solid var(--cn-field-border);
+  border-radius: var(--cn-radius);
   transition:
-    border-color var(--mc-duration-fast) ease,
-    background var(--mc-duration-fast) ease;
+    border-color var(--cn-duration-fast) ease,
+    background var(--cn-duration-fast) ease;
 }
 
 .shell:hover {
-  background: var(--mc-field-bg-hover);
+  background: var(--cn-field-bg-hover);
 }
 
 .shell:focus-within {
-  border-color: var(--mc-brand);
-  background: var(--mc-field-bg-hover);
+  border-color: var(--cn-brand);
+  background: var(--cn-field-bg-hover);
 }
 
 .shell.invalid {
-  border-color: var(--mc-danger);
+  border-color: var(--cn-danger);
 }
 
 .icon,
@@ -42,17 +42,17 @@
 .trailing {
   display: inline-flex;
   align-items: center;
-  color: var(--mc-text-subtle);
+  color: var(--cn-text-subtle);
   flex-shrink: 0;
 }
 
 /* Sits against the input, separated by a rule, so it reads as part of the
    value rather than as another piece of chrome. */
 .leading {
-  padding-right: var(--mc-space-2);
-  border-right: 1px solid var(--mc-field-border);
-  color: var(--mc-text-muted);
-  font-size: var(--mc-text-base);
+  padding-right: var(--cn-space-2);
+  border-right: 1px solid var(--cn-field-border);
+  color: var(--cn-text-muted);
+  font-size: var(--cn-text-base);
 }
 
 .shell input {
@@ -61,12 +61,12 @@
   background: none;
   border: none;
   outline: none;
-  color: var(--mc-text);
-  font-size: var(--mc-text-base);
+  color: var(--cn-text);
+  font-size: var(--cn-text-base);
 }
 
 .shell input::placeholder {
-  color: var(--mc-text-subtle);
+  color: var(--cn-text-subtle);
 }
 
 /* Chrome's autofill repaints the field white and ignores background-color;
@@ -74,13 +74,13 @@
 .shell input:-webkit-autofill,
 .shell input:-webkit-autofill:hover,
 .shell input:-webkit-autofill:focus {
-  -webkit-text-fill-color: var(--mc-text);
-  box-shadow: 0 0 0 1000px var(--mc-field-bg-hover) inset;
+  -webkit-text-fill-color: var(--cn-text);
+  box-shadow: 0 0 0 1000px var(--cn-field-bg-hover) inset;
   transition: background-color 100000s ease-in-out 0s;
 }
 
 .error {
   margin: 0;
-  font-size: var(--mc-text-xs);
-  color: var(--mc-danger);
+  font-size: var(--cn-text-xs);
+  color: var(--cn-danger);
 }

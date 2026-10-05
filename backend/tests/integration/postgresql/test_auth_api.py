@@ -15,8 +15,8 @@ from collections.abc import Iterator
 import pytest
 from fastapi.testclient import TestClient
 
-from marketcompass.bootstrap.settings import Settings
-from marketcompass.entrypoints.main_api import create_app
+from chartnexus.bootstrap.settings import Settings
+from chartnexus.entrypoints.main_api import create_app
 
 pytestmark = [pytest.mark.integration, pytest.mark.security]
 
@@ -26,13 +26,11 @@ PASSWORD = "a-perfectly-fine-password"
 
 @pytest.fixture(scope="module")
 def settings() -> Settings:
-    # The autouse isolation fixture strips MC_* and moves the working directory,
+    # The autouse isolation fixture strips CN_* and moves the working directory,
     # so the connection details are stated here rather than read from .env.
     return Settings(
         environment="local",
-        database={
-            "url": "postgresql+asyncpg://marketcompass:marketcompass@localhost:5433/marketcompass"
-        },
+        database={"url": "postgresql+asyncpg://chartnexus:chartnexus@localhost:5433/chartnexus"},
         redis={"url": "redis://localhost:6381/0", "key_prefix": f"test-{uuid.uuid4().hex[:8]}"},
         auth={
             "jwt_signing_key": "integration-test-signing-key-long-enough",
@@ -80,7 +78,7 @@ def _register(client: TestClient, email: str | None = None, phone: str | None = 
 def test_register_sets_all_three_cookies(client: TestClient) -> None:
     _register(client)
 
-    assert set(client.cookies.keys()) >= {"mc_at", "mc_rt", "mc_csrf"}
+    assert set(client.cookies.keys()) >= {"cn_at", "cn_rt", "cn_csrf"}
 
 
 def test_refresh_cookie_is_scoped_to_the_auth_path(client: TestClient) -> None:
@@ -88,10 +86,10 @@ def test_refresh_cookie_is_scoped_to_the_auth_path(client: TestClient) -> None:
     response = client.post(
         f"{AUTH}/register", json={"email": _email(), "password": PASSWORD, "phone": _phone()}
     )
-    refresh_cookie = next(value for name, value in response.cookies.items() if name == "mc_rt")
+    refresh_cookie = next(value for name, value in response.cookies.items() if name == "cn_rt")
     assert refresh_cookie
     set_cookie_headers = response.headers.get_list("set-cookie")
-    refresh_header = next(header for header in set_cookie_headers if header.startswith("mc_rt="))
+    refresh_header = next(header for header in set_cookie_headers if header.startswith("cn_rt="))
     assert "Path=/api/v1/auth" in refresh_header
     assert "HttpOnly" in refresh_header
 
@@ -106,10 +104,10 @@ def test_access_and_refresh_cookies_are_httponly_but_csrf_is_readable(
         header.split("=", 1)[0]: header for header in response.headers.get_list("set-cookie")
     }
 
-    assert "HttpOnly" in headers["mc_at"]
-    assert "HttpOnly" in headers["mc_rt"]
+    assert "HttpOnly" in headers["cn_at"]
+    assert "HttpOnly" in headers["cn_rt"]
     # The client has to copy this one into a header, so it cannot be httpOnly.
-    assert "HttpOnly" not in headers["mc_csrf"]
+    assert "HttpOnly" not in headers["cn_csrf"]
 
 
 def test_full_password_lifecycle(client: TestClient) -> None:

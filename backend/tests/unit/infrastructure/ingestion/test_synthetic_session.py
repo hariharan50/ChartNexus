@@ -12,8 +12,8 @@ from decimal import Decimal
 
 import pytest
 
-from marketcompass.infrastructure.ingestion.synthetic_session import build_synthetic_session
-from marketcompass.shared_kernel.domain.errors import ValidationError
+from chartnexus.infrastructure.ingestion.synthetic_session import build_synthetic_session
+from chartnexus.shared_kernel.domain.errors import ValidationError
 
 _IST = timezone(timedelta(hours=5, minutes=30))
 _DATE = date(2026, 8, 5)

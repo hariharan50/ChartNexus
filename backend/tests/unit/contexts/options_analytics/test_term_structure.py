@@ -13,13 +13,13 @@ from datetime import UTC, datetime
 
 import pytest
 
-from marketcompass.contexts.options_analytics.application.ports import ProviderChain
-from marketcompass.contexts.options_analytics.application.term_structure_service import (
+from chartnexus.contexts.options_analytics.application.ports import ProviderChain
+from chartnexus.contexts.options_analytics.application.term_structure_service import (
     MAX_EXPIRIES,
     GetTermStructure,
 )
-from marketcompass.contexts.options_analytics.domain.oi_math import ChainRow
-from marketcompass.shared_kernel.types.identifiers import TenantId
+from chartnexus.contexts.options_analytics.domain.oi_math import ChainRow
+from chartnexus.shared_kernel.types.identifiers import TenantId
 
 TENANT = TenantId(uuid.uuid4())
 # 08:00 UTC == 13:30 IST on 2026-09-03.

@@ -20,7 +20,7 @@ export function setReportEnrollment(enabled: boolean): Promise<ReportEnrollment>
 }
 
 const GENERATE_PATH = (symbol: string) => `/api/v1/report/${encodeURIComponent(symbol)}/generate`;
-const CSRF_COOKIE = 'mc_csrf';
+const CSRF_COOKIE = 'cn_csrf';
 const CSRF_HEADER = 'X-CSRF-Token';
 const REFRESH_PATH = '/api/v1/auth/refresh';
 
@@ -39,7 +39,7 @@ export async function downloadReport(symbol: string): Promise<void> {
     throw new Error(`Report generation failed (${response.status})`);
   }
   const blob = await response.blob();
-  const filename = filenameFrom(response) ?? `MarketCompass-${symbol}.pdf`;
+  const filename = filenameFrom(response) ?? `ChartNexus-${symbol}.pdf`;
   triggerDownload(blob, filename);
 }
 

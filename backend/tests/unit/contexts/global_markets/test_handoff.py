@@ -14,7 +14,7 @@ from decimal import Decimal
 
 import pytest
 
-from marketcompass.contexts.global_markets.domain.handoff import (
+from chartnexus.contexts.global_markets.domain.handoff import (
     Agreement,
     BandState,
     GapSignal,
@@ -28,13 +28,13 @@ from marketcompass.contexts.global_markets.domain.handoff import (
     region_rollup,
     session_bands,
 )
-from marketcompass.contexts.global_markets.domain.markets import (
+from chartnexus.contexts.global_markets.domain.markets import (
     BY_KEY,
     IST,
     MARKETS,
     session_window,
 )
-from marketcompass.contexts.global_markets.domain.quotes import (
+from chartnexus.contexts.global_markets.domain.quotes import (
     DataSource,
     GlobalQuote,
     Provenance,
@@ -278,9 +278,7 @@ class TestGapPressure:
 
     def test_the_largest_mover_leads_the_waterfall(self) -> None:
         window = overnight_window(ist(2026, 9, 24, 8))
-        pressure = gap_pressure(
-            window, quotes(SHANGHAI="-0.2", SPX="-1.5"), ist(2026, 9, 24, 8)
-        )
+        pressure = gap_pressure(window, quotes(SHANGHAI="-0.2", SPX="-1.5"), ist(2026, 9, 24, 8))
 
         assert pressure.contributions[0].key == "SPX"
 
@@ -464,9 +462,7 @@ class TestAgreement:
         """A page that averaged the composite and GIFT into one arrow would
         erase the most useful state it can show."""
         window = overnight_window(ist(2026, 9, 24, 8))
-        bearish = gap_pressure(
-            window, quotes(SPX="-1.5", NASDAQ="-1.8"), ist(2026, 9, 24, 8)
-        )
+        bearish = gap_pressure(window, quotes(SPX="-1.5", NASDAQ="-1.8"), ist(2026, 9, 24, 8))
         gift_up = implied_open(
             quote("GIFTNIFTY", "0", price="23600"),
             quote("NIFTY", "0", price="23450"),
@@ -477,9 +473,7 @@ class TestAgreement:
 
     def test_both_pointing_the_same_way_agrees(self) -> None:
         window = overnight_window(ist(2026, 9, 24, 8))
-        bearish = gap_pressure(
-            window, quotes(SPX="-1.5", NASDAQ="-1.8"), ist(2026, 9, 24, 8)
-        )
+        bearish = gap_pressure(window, quotes(SPX="-1.5", NASDAQ="-1.8"), ist(2026, 9, 24, 8))
         gift_down = implied_open(
             quote("GIFTNIFTY", "0", price="23300"),
             quote("NIFTY", "0", price="23450"),

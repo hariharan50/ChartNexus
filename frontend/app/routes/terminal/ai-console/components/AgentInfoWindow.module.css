@@ -1,6 +1,6 @@
 /* The floating "about this agent" window, shared by HELLA, STRYX and HUGIN.
-   It inherits --mc-accent from the page it is opened on, so it tones to each
-   agent automatically; --mc-brand-2 falls back to a violet that suits HELLA
+   It inherits --cn-accent from the page it is opened on, so it tones to each
+   agent automatically; --cn-brand-2 falls back to a violet that suits HELLA
    (which sets no secondary), while STRYX and HUGIN override it. */
 
 .overlay {
@@ -49,9 +49,9 @@
   max-height: 100%;
   display: flex;
   flex-direction: column;
-  border: 1px solid var(--mc-border);
-  border-radius: var(--mc-radius-lg);
-  background: var(--mc-surface-raised, var(--mc-surface));
+  border: 1px solid var(--cn-border);
+  border-radius: var(--cn-radius-lg);
+  background: var(--cn-surface-raised, var(--cn-surface));
   box-shadow: 0 24px 60px -20px rgba(0, 0, 0, 0.6);
   overflow: hidden;
   animation: aiw-pop 160ms ease;
@@ -69,20 +69,20 @@
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
-  gap: var(--mc-space-3);
-  padding: var(--mc-space-4);
-  border-bottom: 1px solid var(--mc-border);
+  gap: var(--cn-space-3);
+  padding: var(--cn-space-4);
+  border-bottom: 1px solid var(--cn-border);
   background: linear-gradient(
     120deg,
-    color-mix(in srgb, var(--mc-accent, #6366f1) 14%, transparent),
-    color-mix(in srgb, var(--mc-brand-2, #8b5cf6) 10%, transparent)
+    color-mix(in srgb, var(--cn-accent, #6366f1) 14%, transparent),
+    color-mix(in srgb, var(--cn-brand-2, #8b5cf6) 10%, transparent)
   );
 }
 
 .titleWrap {
   display: flex;
   align-items: center;
-  gap: var(--mc-space-3);
+  gap: var(--cn-space-3);
 }
 
 .mark {
@@ -94,21 +94,21 @@
   border-radius: 50%;
   color: #fff;
   font-weight: 800;
-  background: linear-gradient(140deg, var(--mc-accent, #6366f1), var(--mc-brand-2, #8b5cf6));
-  box-shadow: 0 6px 16px -6px var(--mc-accent, #6366f1);
+  background: linear-gradient(140deg, var(--cn-accent, #6366f1), var(--cn-brand-2, #8b5cf6));
+  box-shadow: 0 6px 16px -6px var(--cn-accent, #6366f1);
 }
 
 .title {
   margin: 0;
-  font-size: var(--mc-text-base, 1rem);
+  font-size: var(--cn-text-base, 1rem);
   font-weight: 700;
-  color: var(--mc-text);
+  color: var(--cn-text);
 }
 
 .kicker {
   margin: 2px 0 0;
-  font-size: var(--mc-text-xs);
-  color: var(--mc-text-muted);
+  font-size: var(--cn-text-xs);
+  color: var(--cn-text-muted);
 }
 
 .close {
@@ -118,85 +118,85 @@
   height: 32px;
   flex: none;
   border-radius: 8px;
-  border: 1px solid var(--mc-border);
-  background: var(--mc-surface);
-  color: var(--mc-text-muted);
+  border: 1px solid var(--cn-border);
+  background: var(--cn-surface);
+  color: var(--cn-text-muted);
   font-size: 1.35rem;
   line-height: 1;
   cursor: pointer;
   transition:
-    color var(--mc-duration-fast, 120ms) ease,
-    border-color var(--mc-duration-fast, 120ms) ease;
+    color var(--cn-duration-fast, 120ms) ease,
+    border-color var(--cn-duration-fast, 120ms) ease;
 }
 
 .close:hover {
-  color: var(--mc-text);
-  border-color: var(--mc-accent, #6366f1);
+  color: var(--cn-text);
+  border-color: var(--cn-accent, #6366f1);
 }
 
 .tabs {
   flex: none;
   display: flex;
   gap: 0.125rem;
-  padding: var(--mc-space-2) var(--mc-space-4) 0;
-  border-bottom: 1px solid var(--mc-border);
+  padding: var(--cn-space-2) var(--cn-space-4) 0;
+  border-bottom: 1px solid var(--cn-border);
 }
 
 .tab {
   border: 0;
   border-bottom: 2px solid transparent;
   background: transparent;
-  color: var(--mc-text-muted);
-  font-size: var(--mc-text-sm);
+  color: var(--cn-text-muted);
+  font-size: var(--cn-text-sm);
   font-weight: 700;
-  padding: var(--mc-space-2) var(--mc-space-3);
+  padding: var(--cn-space-2) var(--cn-space-3);
   cursor: pointer;
-  transition: color var(--mc-duration-fast, 120ms) ease;
+  transition: color var(--cn-duration-fast, 120ms) ease;
 }
 
 .tab:hover {
-  color: var(--mc-text);
+  color: var(--cn-text);
 }
 
 .tabActive {
-  color: var(--mc-accent, #6366f1);
-  border-bottom-color: var(--mc-accent, #6366f1);
+  color: var(--cn-accent, #6366f1);
+  border-bottom-color: var(--cn-accent, #6366f1);
 }
 
 .body {
   flex: 1;
   min-height: 0;
-  padding: var(--mc-space-4);
+  padding: var(--cn-space-4);
   overflow-y: auto;
 }
 
 .section {
   display: flex;
   flex-direction: column;
-  gap: var(--mc-space-3);
+  gap: var(--cn-space-3);
 }
 
 .lead {
   margin: 0;
-  font-size: var(--mc-text-sm);
+  font-size: var(--cn-text-sm);
   line-height: 1.6;
-  color: var(--mc-text);
+  color: var(--cn-text);
 }
 
 .h3 {
-  margin: var(--mc-space-2) 0 0;
-  font-size: var(--mc-text-xs);
+  margin: var(--cn-space-2) 0 0;
+  font-size: var(--cn-text-xs);
   font-weight: 700;
   letter-spacing: 0.04em;
   text-transform: uppercase;
-  color: var(--mc-accent, #6366f1);
+  color: var(--cn-accent, #6366f1);
 }
 
 .p {
   margin: 0;
-  font-size: var(--mc-text-sm);
+  font-size: var(--cn-text-sm);
   line-height: 1.6;
-  color: var(--mc-text-muted);
+  color: var(--cn-text-muted);
 }
 
 .list,
@@ -205,7 +205,7 @@
   padding-left: 1.15rem;
   display: flex;
   flex-direction: column;
-  gap: var(--mc-space-2);
+  gap: var(--cn-space-2);
 }
 
 .list {
@@ -218,36 +218,36 @@
 
 .list li,
 .steps li {
-  font-size: var(--mc-text-sm);
+  font-size: var(--cn-text-sm);
   line-height: 1.55;
-  color: var(--mc-text-muted);
+  color: var(--cn-text-muted);
 }
 
 .list strong,
 .steps strong,
 .lead strong,
 .p strong {
-  color: var(--mc-text);
+  color: var(--cn-text);
   font-weight: 700;
 }
 
 .note {
-  margin: var(--mc-space-2) 0 0;
-  padding: var(--mc-space-3);
-  border-left: 3px solid var(--mc-accent, #6366f1);
-  border-radius: 0 var(--mc-radius-sm) var(--mc-radius-sm) 0;
-  background: color-mix(in srgb, var(--mc-accent, #6366f1) 8%, transparent);
-  font-size: var(--mc-text-sm);
+  margin: var(--cn-space-2) 0 0;
+  padding: var(--cn-space-3);
+  border-left: 3px solid var(--cn-accent, #6366f1);
+  border-radius: 0 var(--cn-radius-sm) var(--cn-radius-sm) 0;
+  background: color-mix(in srgb, var(--cn-accent, #6366f1) 8%, transparent);
+  font-size: var(--cn-text-sm);
   line-height: 1.55;
-  color: var(--mc-text);
+  color: var(--cn-text);
 }
 
 /* -- Architecture diagram (SVG) -------------------------------------------- */
 .archWrap {
-  border: 1px solid var(--mc-border);
-  border-radius: var(--mc-radius-md, 0.5rem);
-  background: var(--mc-surface);
-  padding: var(--mc-space-3);
+  border: 1px solid var(--cn-border);
+  border-radius: var(--cn-radius-md, 0.5rem);
+  background: var(--cn-surface);
+  padding: var(--cn-space-3);
   overflow-x: auto;
 }
 
@@ -259,33 +259,33 @@
 }
 
 .archBox {
-  fill: var(--mc-surface-raised, var(--mc-surface));
-  stroke: var(--mc-border);
+  fill: var(--cn-surface-raised, var(--cn-surface));
+  stroke: var(--cn-border);
   stroke-width: 1;
 }
 
 .archBoxAccent {
-  fill: color-mix(in srgb, var(--mc-accent, #6366f1) 14%, var(--mc-surface));
-  stroke: color-mix(in srgb, var(--mc-accent, #6366f1) 55%, var(--mc-border));
+  fill: color-mix(in srgb, var(--cn-accent, #6366f1) 14%, var(--cn-surface));
+  stroke: color-mix(in srgb, var(--cn-accent, #6366f1) 55%, var(--cn-border));
   stroke-width: 1;
 }
 
 .archLabel {
-  fill: var(--mc-text);
+  fill: var(--cn-text);
   font-size: 12px;
   font-weight: 700;
 }
 
 .archSub {
-  fill: var(--mc-text-muted);
+  fill: var(--cn-text-muted);
   font-size: 10px;
 }
 
 .archLine {
-  stroke: color-mix(in srgb, var(--mc-accent, #6366f1) 60%, var(--mc-text-muted));
+  stroke: color-mix(in srgb, var(--cn-accent, #6366f1) 60%, var(--cn-text-muted));
   stroke-width: 1.6;
 }
 
 .archArrowHead {
-  fill: color-mix(in srgb, var(--mc-accent, #6366f1) 60%, var(--mc-text-muted));
+  fill: color-mix(in srgb, var(--cn-accent, #6366f1) 60%, var(--cn-text-muted));
 }

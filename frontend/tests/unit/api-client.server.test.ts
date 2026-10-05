@@ -65,11 +65,11 @@ describe('createServerFetch', () => {
     const seen = captureGlobalFetch();
 
     const request = new Request('http://localhost:5273/dashboard', {
-      headers: { cookie: 'mc_session=abc; mc_csrf=xyz' }
+      headers: { cookie: 'cn_session=abc; cn_csrf=xyz' }
     });
     await apiFetch({ url: '/auth/me', fetcher: createServerFetch(request, 'req-42') });
 
-    expect(seen[0]?.headers.get('cookie')).toBe('mc_session=abc; mc_csrf=xyz');
+    expect(seen[0]?.headers.get('cookie')).toBe('cn_session=abc; cn_csrf=xyz');
     expect(seen[0]?.headers.get('x-request-id')).toBe('req-42');
   });
 

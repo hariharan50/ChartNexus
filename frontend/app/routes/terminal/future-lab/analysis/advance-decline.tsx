@@ -30,7 +30,7 @@ import s from './analysis.module.css';
 import type { Route } from './+types/advance-decline';
 
 export const meta: Route.MetaFunction = () => [
-  { title: 'Advance Decline · Future Lab · MarketCompass' }
+  { title: 'Advance Decline · Future Lab · ChartNexus' }
 ];
 
 const NO_SECTORS: SectorRow[] = [];

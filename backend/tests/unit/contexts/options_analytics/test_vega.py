@@ -12,19 +12,19 @@ import math
 import uuid
 from datetime import UTC, datetime, timedelta
 
-from marketcompass.contexts.options_analytics.application.ports import (
+from chartnexus.contexts.options_analytics.application.ports import (
     ChainSnapshot,
     ProviderChain,
 )
-from marketcompass.contexts.options_analytics.application.vega_series_service import GetVega
-from marketcompass.contexts.options_analytics.domain.oi_math import ChainRow
-from marketcompass.contexts.options_analytics.domain.vega_math import (
+from chartnexus.contexts.options_analytics.application.vega_series_service import GetVega
+from chartnexus.contexts.options_analytics.domain.oi_math import ChainRow
+from chartnexus.contexts.options_analytics.domain.vega_math import (
     bs_vega,
     leg_vega,
     synthetic_future,
     vega_profile,
 )
-from marketcompass.shared_kernel.types.identifiers import TenantId
+from chartnexus.shared_kernel.types.identifiers import TenantId
 
 TENANT = TenantId(uuid.uuid4())
 # 08:00 UTC == 13:30 IST, inside the session on 2026-08-04.

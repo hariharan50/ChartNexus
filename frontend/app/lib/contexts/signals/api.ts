@@ -81,7 +81,7 @@ export type StryxStreamEvent =
 const STREAM_PATH = (symbol: string) => `/api/v1/copilot/${encodeURIComponent(symbol)}/ask/stream`;
 const STRYX_STREAM_PATH = (symbol: string) =>
   `/api/v1/stryx/${encodeURIComponent(symbol)}/ask/stream`;
-const CSRF_COOKIE = 'mc_csrf';
+const CSRF_COOKIE = 'cn_csrf';
 const CSRF_HEADER = 'X-CSRF-Token';
 const REFRESH_PATH = '/api/v1/auth/refresh';
 

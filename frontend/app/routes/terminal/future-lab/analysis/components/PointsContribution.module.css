@@ -6,22 +6,22 @@
  */
 
 .total-label {
-  font-size: var(--mc-text-xs);
-  color: var(--mc-text-subtle);
+  font-size: var(--cn-text-xs);
+  color: var(--cn-text-subtle);
 }
 
 /* Proportional figures, not tabular: these are standalone headline numbers and
    equal-width digits make them look loose. The column values inside the board
    are the opposite case and do use tabular. */
 .total {
-  font-size: var(--mc-text-base);
+  font-size: var(--cn-text-base);
   font-weight: 700;
 }
 
 .up {
-  color: var(--mc-bullish);
+  color: var(--cn-bullish);
 }
 
 .down {
-  color: var(--mc-bearish);
+  color: var(--cn-bearish);
 }

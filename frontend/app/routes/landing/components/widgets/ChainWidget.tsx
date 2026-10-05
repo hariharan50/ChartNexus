@@ -84,15 +84,15 @@ export default function ChainWidget({ selected, onSelect, fixture }: Props) {
                   <td>
                     <Bar value={row.ce.oi} max={fixture.maxOi} tone="call" />
                   </td>
-                  <td className={cx(s.num, 'mc-numeric')}>{row.ce.ltp.toFixed(2)}</td>
-                  <th scope="row" className={cx(s.strike, 'mc-numeric')}>
+                  <td className={cx(s.num, 'cn-numeric')}>{row.ce.ltp.toFixed(2)}</td>
+                  <th scope="row" className={cx(s.strike, 'cn-numeric')}>
                     {fmt(row.strike)}
                     {row.strike === fixture.support ? <span className={s.tagUp}>S</span> : null}
                     {row.strike === fixture.resistance ? (
                       <span className={s.tagDown}>R</span>
                     ) : null}
                   </th>
-                  <td className={cx(s.num, 'mc-numeric')}>{row.pe.ltp.toFixed(2)}</td>
+                  <td className={cx(s.num, 'cn-numeric')}>{row.pe.ltp.toFixed(2)}</td>
                   <td>
                     <Bar value={row.pe.oi} max={fixture.maxOi} tone="put" />
                   </td>
@@ -111,7 +111,7 @@ function Stat({ label, value, tone }: { label: string; value: string; tone?: 'up
     <div className={s.stat}>
       <span className={s.statLabel}>{label}</span>
       <span
-        className={cx(s.statValue, 'mc-numeric', tone === 'up' && s.up, tone === 'down' && s.down)}
+        className={cx(s.statValue, 'cn-numeric', tone === 'up' && s.up, tone === 'down' && s.down)}
       >
         {value}
       </span>
@@ -124,7 +124,7 @@ function Bar({ value, max, tone }: { value: number; max: number; tone: 'call' | 
   return (
     <span className={cx(s.bar, tone === 'call' ? s.barCall : s.barPut)}>
       <span className={s.barFill} style={{ width: `${pct}%` }} aria-hidden="true" />
-      <span className={cx(s.barText, 'mc-numeric')}>{compact(value)}</span>
+      <span className={cx(s.barText, 'cn-numeric')}>{compact(value)}</span>
     </span>
   );
 }

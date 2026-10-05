@@ -12,9 +12,9 @@
 .status {
   display: inline-flex;
   align-items: center;
-  gap: var(--mc-space-2);
-  color: var(--mc-text-muted);
-  font-size: var(--mc-text-sm);
+  gap: var(--cn-space-2);
+  color: var(--cn-text-muted);
+  font-size: var(--cn-text-sm);
   /* The clock and the age both tick; proportional digits would make the whole
      strip shuffle sideways once a second. */
   font-variant-numeric: tabular-nums;
@@ -25,7 +25,7 @@
   width: 0.5rem;
   height: 0.5rem;
   border-radius: 999px;
-  background: var(--mc-bullish);
+  background: var(--cn-bullish);
   flex: none;
 }
 
@@ -48,48 +48,48 @@
 }
 
 /*
- * A hairline, not a fill. In the light theme `--mc-surface-raised` is the same
- * white as `--mc-surface`, so a "raised" background renders the chip
+ * A hairline, not a fill. In the light theme `--cn-surface-raised` is the same
+ * white as `--cn-surface`, so a "raised" background renders the chip
  * invisible there — a border is the one treatment that reads in all four
  * themes.
  */
 .interval {
-  padding: 0 var(--mc-space-2);
-  border: 1px solid var(--mc-border);
-  border-radius: var(--mc-radius-sm);
-  color: var(--mc-text-subtle);
-  font-size: var(--mc-text-xs);
+  padding: 0 var(--cn-space-2);
+  border: 1px solid var(--cn-border);
+  border-radius: var(--cn-radius-sm);
+  color: var(--cn-text-subtle);
+  font-size: var(--cn-text-xs);
   line-height: 1.125rem;
 }
 
 .age {
-  color: var(--mc-text-subtle);
+  color: var(--cn-text-subtle);
 }
 
 /* The data on screen is older than two poll intervals — the board is frozen,
    whatever the dot is doing. */
 .stale {
-  color: var(--mc-bearish);
+  color: var(--cn-bearish);
 }
 
 .stale .age {
-  color: var(--mc-bearish);
+  color: var(--cn-bearish);
 }
 
 .dot-stale {
-  background: var(--mc-bearish);
+  background: var(--cn-bearish);
 }
 
 .replay {
   display: inline-flex;
   align-items: center;
-  gap: var(--mc-space-2);
+  gap: var(--cn-space-2);
   padding: 0;
   border: 0;
   background: none;
-  color: var(--mc-text-muted);
+  color: var(--cn-text-muted);
   font: inherit;
-  font-size: var(--mc-text-sm);
+  font-size: var(--cn-text-sm);
   cursor: pointer;
 }
 
@@ -99,21 +99,21 @@
 }
 
 .replay:not(:disabled):hover {
-  color: var(--mc-text);
+  color: var(--cn-text);
 }
 
 .replay:focus-visible {
-  outline: 2px solid var(--mc-accent);
+  outline: 2px solid var(--cn-accent);
   outline-offset: 2px;
-  border-radius: var(--mc-radius-sm);
+  border-radius: var(--cn-radius-sm);
 }
 
 .switch {
   width: 2rem;
   height: 1.125rem;
-  border: 1px solid var(--mc-border-strong);
+  border: 1px solid var(--cn-border-strong);
   border-radius: 999px;
-  background: var(--mc-surface);
+  background: var(--cn-surface);
   position: relative;
   transition: background 120ms ease;
 }
@@ -126,22 +126,22 @@
   width: 0.75rem;
   height: 0.75rem;
   border-radius: 999px;
-  background: var(--mc-text-subtle);
+  background: var(--cn-text-subtle);
   transition:
     transform 120ms ease,
     background 120ms ease;
 }
 
 .on .switch {
-  background: var(--mc-accent-weak);
-  border-color: var(--mc-accent);
+  background: var(--cn-accent-weak);
+  border-color: var(--cn-accent);
 }
 
 .on .switch::after {
   transform: translateX(0.875rem);
-  background: var(--mc-accent);
+  background: var(--cn-accent);
 }
 
 .on {
-  color: var(--mc-accent);
+  color: var(--cn-accent);
 }

@@ -11,7 +11,7 @@ export default function MetricTile({ label, value, tone = 'default' }: Props) {
   return (
     <div className={s.tile}>
       <span className={s.label}>{label}</span>
-      <span className={cx(s.value, 'mc-numeric', s[tone])}>{value}</span>
+      <span className={cx(s.value, 'cn-numeric', s[tone])}>{value}</span>
     </div>
   );
 }

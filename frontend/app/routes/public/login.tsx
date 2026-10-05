@@ -14,8 +14,8 @@ import s from './login.module.css';
 import type { Route } from './+types/login';
 
 export const meta: Route.MetaFunction = () => [
-  { title: 'Sign in · MarketCompass' },
-  { name: 'description', content: 'Sign in to your MarketCompass account.' }
+  { title: 'Sign in · ChartNexus' },
+  { name: 'description', content: 'Sign in to your ChartNexus account.' }
 ];
 
 type AuthError = ReturnType<typeof presentAuthError>;
@@ -80,7 +80,7 @@ export default function Login() {
     <>
       <header className={s.intro}>
         <h1>Welcome back</h1>
-        <p>Sign in to your MarketCompass account to continue.</p>
+        <p>Sign in to your ChartNexus account to continue.</p>
       </header>
 
       {justRegistered && !error ? (

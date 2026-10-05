@@ -4,32 +4,32 @@ from __future__ import annotations
 
 import pytest
 
-from marketcompass.contexts.identity.application.google_sso import (
+from chartnexus.contexts.identity.application.google_sso import (
     CompleteGoogleLogin,
     CompleteGoogleLoginCommand,
     GoogleLoginPolicy,
     StartGoogleLogin,
     StartGoogleLoginCommand,
 )
-from marketcompass.contexts.identity.application.session_service import (
+from chartnexus.contexts.identity.application.session_service import (
     SessionPolicy,
     SessionService,
 )
-from marketcompass.contexts.identity.domain.errors import (
+from chartnexus.contexts.identity.domain.errors import (
     AccountSuspendedError,
     HostedDomainNotAllowedError,
     IdentityConflictError,
     OAuthProviderError,
     OAuthStateError,
 )
-from marketcompass.contexts.identity.domain.user import User
-from marketcompass.contexts.identity.domain.value_objects import (
+from chartnexus.contexts.identity.domain.user import User
+from chartnexus.contexts.identity.domain.value_objects import (
     AuthProvider,
     EmailAddress,
     UserStatus,
 )
-from marketcompass.infrastructure.security.token_signer import JwtAccessTokenIssuer
-from marketcompass.shared_kernel.types.identifiers import TenantId, new_id
+from chartnexus.infrastructure.security.token_signer import JwtAccessTokenIssuer
+from chartnexus.shared_kernel.types.identifiers import TenantId, new_id
 from tests.unit.contexts.identity.conftest import (
     START,
     FakeGoogleProvider,
@@ -234,10 +234,10 @@ async def test_workspace_domain_restriction_admits_the_allowed_domain(
     provider, state_store, users, sessions_repo, clock, uow, auth_settings, security_settings
 ):  # type: ignore[no-untyped-def]
     restricted = GoogleLoginPolicy(
-        state_ttl_seconds=600, allowed_hosted_domains=("marketcompass.app",)
+        state_ttl_seconds=600, allowed_hosted_domains=("chartnexus.app",)
     )
     provider.profile = google_profile(
-        email="analyst@marketcompass.app", hosted_domain="marketcompass.app"
+        email="analyst@chartnexus.app", hosted_domain="chartnexus.app"
     )
     start = StartGoogleLogin(provider=provider, state_store=state_store, policy=restricted)
     complete = CompleteGoogleLogin(
@@ -260,7 +260,7 @@ async def test_workspace_domain_restriction_admits_the_allowed_domain(
 
     state = await _begin(start)
     result = await complete(CompleteGoogleLoginCommand(code="code", state=state))
-    assert result.user.email == "analyst@marketcompass.app"
+    assert result.user.email == "analyst@chartnexus.app"
 
 
 async def test_personal_account_is_refused_when_a_domain_is_required(
@@ -268,7 +268,7 @@ async def test_personal_account_is_refused_when_a_domain_is_required(
 ):  # type: ignore[no-untyped-def]
     """A gmail.com account has no `hd` claim and must not slip through."""
     restricted = GoogleLoginPolicy(
-        state_ttl_seconds=600, allowed_hosted_domains=("marketcompass.app",)
+        state_ttl_seconds=600, allowed_hosted_domains=("chartnexus.app",)
     )
     provider.profile = google_profile(email="someone@gmail.com", hosted_domain=None)
     start = StartGoogleLogin(provider=provider, state_store=state_store, policy=restricted)

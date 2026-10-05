@@ -1,7 +1,7 @@
 .body {
   display: flex;
   flex-direction: column;
-  gap: var(--mc-space-3);
+  gap: var(--cn-space-3);
 }
 
 /* Verdict and magnitude are one statement - "GAP UP, by 284.70 points" - so
@@ -11,7 +11,7 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: var(--mc-space-3);
+  gap: var(--cn-space-3);
   flex-wrap: wrap;
 }
 
@@ -19,109 +19,109 @@
 .verdict {
   display: inline-flex;
   align-items: center;
-  min-height: var(--mc-control-h);
+  min-height: var(--cn-control-h);
   margin: 0;
-  padding: 0 var(--mc-control-px);
+  padding: 0 var(--cn-control-px);
   border: 1px solid currentcolor;
-  border-radius: var(--mc-radius);
-  font-size: var(--mc-text-sm);
+  border-radius: var(--cn-radius);
+  font-size: var(--cn-text-sm);
   font-weight: 700;
   letter-spacing: 0.08em;
   white-space: nowrap;
 }
 
 .gap_up {
-  color: var(--mc-bullish);
+  color: var(--cn-bullish);
 }
 
 .gap_up.verdict {
-  background: var(--mc-bullish-weak);
+  background: var(--cn-bullish-weak);
 }
 
 .gap_down {
-  color: var(--mc-bearish);
+  color: var(--cn-bearish);
 }
 
 .gap_down.verdict {
-  background: var(--mc-bearish-weak);
+  background: var(--cn-bearish-weak);
 }
 
 .flat {
-  color: var(--mc-text-subtle);
+  color: var(--cn-text-subtle);
 }
 
 .flat.verdict {
-  background: var(--mc-surface-raised);
-  border-color: var(--mc-border-strong);
+  background: var(--cn-surface-raised);
+  border-color: var(--cn-border-strong);
 }
 
 .figures {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: var(--mc-space-4);
+  gap: var(--cn-space-4);
 }
 
 .cell:first-child {
-  border-right: 1px solid var(--mc-border);
-  padding-right: var(--mc-space-4);
+  border-right: 1px solid var(--cn-border);
+  padding-right: var(--cn-space-4);
 }
 
 .key {
-  margin: 0 0 var(--mc-space-2);
-  font-size: var(--mc-text-xs);
+  margin: 0 0 var(--cn-space-2);
+  font-size: var(--cn-text-xs);
   font-weight: 600;
   letter-spacing: 0.06em;
   text-transform: uppercase;
-  color: var(--mc-text-subtle);
+  color: var(--cn-text-subtle);
 }
 
 .figure {
   margin: 0;
-  font-size: var(--mc-text-lg);
+  font-size: var(--cn-text-lg);
   font-weight: 700;
 }
 
 .gap {
   margin: 0;
-  font-size: var(--mc-text-base);
+  font-size: var(--cn-text-base);
   font-weight: 700;
   white-space: nowrap;
 }
 
 .note {
   margin: 0;
-  font-size: var(--mc-text-xs);
+  font-size: var(--cn-text-xs);
   line-height: 1.45;
-  color: var(--mc-text-subtle);
+  color: var(--cn-text-subtle);
 }
 
 /* Reserved for the two states a reader must not mistake for a live opening
    print: a simulated gap, and the broker's pre-open placeholder. */
 .noteWarn {
-  color: var(--mc-warning);
+  color: var(--cn-warning);
 }
 
 .unavailable {
   margin: 0;
-  font-size: var(--mc-text-xs);
-  color: var(--mc-text-subtle);
+  font-size: var(--cn-text-xs);
+  color: var(--cn-text-subtle);
 }
 
 .skeleton {
   display: flex;
   flex-direction: column;
-  gap: var(--mc-space-3);
+  gap: var(--cn-space-3);
 }
 
 .skelPill,
 .skelRow {
-  border-radius: var(--mc-radius);
-  background: var(--mc-surface-raised);
+  border-radius: var(--cn-radius);
+  background: var(--cn-surface-raised);
 }
 
 .skelPill {
   width: 6.5rem;
-  height: var(--mc-control-h);
+  height: var(--cn-control-h);
 }
 
 .skelRow {

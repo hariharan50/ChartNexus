@@ -12,7 +12,7 @@ import base64
 
 import pytest
 
-from marketcompass.infrastructure.security.encryption import (
+from chartnexus.infrastructure.security.encryption import (
     AesGcmCipher,
     DecryptionError,
     mask,

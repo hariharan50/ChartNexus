@@ -1,23 +1,23 @@
 .summary {
   margin: 0;
-  font-size: var(--mc-text-sm);
+  font-size: var(--cn-text-sm);
   line-height: 1.65;
-  color: var(--mc-text-muted);
+  color: var(--cn-text-muted);
 }
 
 .summary strong {
-  color: var(--mc-text);
+  color: var(--cn-text);
   font-weight: 700;
 }
 
 .bull {
-  color: var(--mc-bullish);
+  color: var(--cn-bullish);
 }
 
 .bear {
-  color: var(--mc-bearish);
+  color: var(--cn-bearish);
 }
 
 .conf {
-  color: var(--mc-text-subtle);
+  color: var(--cn-text-subtle);
 }

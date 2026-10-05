@@ -66,7 +66,7 @@ export default function DrawingTextDialog({ request, onSubmit, onClose }: Props)
       role="presentation"
       // See `lw-host.ts`: keeps the text editor's clicks from reaching the chart's
       // pointer host underneath it.
-      data-mc-chart-overlay=""
+      data-cn-chart-overlay=""
     >
       <div
         className={s.card}

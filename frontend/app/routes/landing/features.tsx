@@ -5,7 +5,7 @@ import s from './route.module.css';
 import type { Route } from './+types/features';
 
 export const meta: Route.MetaFunction = () => [
-  { title: 'Features · MarketCompass' },
+  { title: 'Features · ChartNexus' },
   {
     name: 'description',
     content:
@@ -22,7 +22,7 @@ export default function Features() {
           <p className={s.eyebrow}>What you get</p>
           <h1 className={s.h2}>Everything the chain says, already worked out.</h1>
           <p className={s.lead}>
-            MarketCompass is built for reading NSE options — chain structure, positioning, and the
+            ChartNexus is built for reading NSE options — chain structure, positioning, and the
             greeks that move the premium — not for placing orders. Every module runs on mock data by
             default and labels its own provenance.
           </p>

@@ -12,9 +12,9 @@ from decimal import Decimal
 
 import pytest
 
-from marketcompass.bootstrap.settings import RedisSettings
-from marketcompass.infrastructure.cache.redis.client import RedisClient
-from marketcompass.infrastructure.cache.redis.iv_history import RedisIvHistoryRecorder
+from chartnexus.bootstrap.settings import RedisSettings
+from chartnexus.infrastructure.cache.redis.client import RedisClient
+from chartnexus.infrastructure.cache.redis.iv_history import RedisIvHistoryRecorder
 
 pytestmark = pytest.mark.integration
 

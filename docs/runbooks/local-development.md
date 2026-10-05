@@ -1,6 +1,6 @@
-# Running MarketCompass locally
+# Running ChartNexus locally
 
-Everything below assumes the repository root, `C:\Users\sriha\Documents\vscode\MarketCompass`.
+Everything below assumes the repository root, `C:\Users\sriha\Documents\vscode\ChartNexus`.
 
 ## 1. Prerequisites
 
@@ -49,7 +49,7 @@ docker compose -f deploy/compose/compose.yml up -d
 
 ```bash
 cd backend
-uv run uvicorn marketcompass.entrypoints.main_api:create_app --factory --reload --port 8000
+uv run uvicorn chartnexus.entrypoints.main_api:create_app --factory --reload --port 8000
 ```
 
 **Terminal 3 — web app** (hot reloads on save)
@@ -73,10 +73,10 @@ Host ports are deliberately shifted so other projects on this machine keep worki
 | Redis      | 6381      | container listens on 6379 internally                    |
 
 Change the database and cache ports in the root `.env` (`POSTGRES_PORT`,
-`REDIS_PORT`), and keep `backend/.env` (`MC_DB_URL`, `MC_REDIS_URL`) in step.
+`REDIS_PORT`), and keep `backend/.env` (`CN_DB_URL`, `CN_REDIS_URL`) in step.
 
 **If you run the web app on a port other than 5173**, update both OAuth
-redirect URIs — `MC_GOOGLE_REDIRECT_URI` and `MC_BROKER_FYERS_REDIRECT_URI` in
+redirect URIs — `CN_GOOGLE_REDIRECT_URI` and `CN_BROKER_FYERS_REDIRECT_URI` in
 `backend/.env` — and the matching entries in the Google console and the FYERS
 dashboard. Both providers require an exact string match.
 
@@ -109,9 +109,9 @@ configured, and email/password works normally.
 4. Put the credentials in `backend/.env`:
 
 ```bash
-MC_GOOGLE_CLIENT_ID=<client id>
-MC_GOOGLE_CLIENT_SECRET=<client secret>
-MC_GOOGLE_REDIRECT_URI=http://localhost:5173/auth/google/callback
+CN_GOOGLE_CLIENT_ID=<client id>
+CN_GOOGLE_CLIENT_SECRET=<client secret>
+CN_GOOGLE_REDIRECT_URI=http://localhost:5173/auth/google/callback
 ```
 
 5. Restart the API.
@@ -128,7 +128,7 @@ system-wide account.
 2. Set its redirect URI to **exactly**
    `http://localhost:5173/settings/broker/callback`. Scheme, host, port and path
    must match; `localhost` and `127.0.0.1` are different values to the broker.
-3. In MarketCompass, go to **Settings → Broker**, paste the App ID and Secret ID,
+3. In ChartNexus, go to **Settings → Broker**, paste the App ID and Secret ID,
    and save.
 4. Click **Connect with FYERS** and authorise.
 
@@ -152,7 +152,7 @@ Notes:
   click. **Remove credentials** drops both.
 - Changing the App ID invalidates any existing token, so the connection returns
   to *pending*.
-- If the redirect URI in `backend/.env` (`MC_BROKER_FYERS_REDIRECT_URI`) does not
+- If the redirect URI in `backend/.env` (`CN_BROKER_FYERS_REDIRECT_URI`) does not
   match what you registered with FYERS, the consent screen will reject the
   request before it reaches us.
 
@@ -165,7 +165,7 @@ The AI Console runs on a **per-user** LLM key — there is no shared server key.
 
 1. Install the model SDK once: `cd backend && uv sync --extra llm` (and run the
    API with `--extra agent --extra llm`, see [RUNNING.md](../RUNNING.md)).
-2. In MarketCompass, go to **Settings → AI**, pick **Claude**, paste your own
+2. In ChartNexus, go to **Settings → AI**, pick **Claude**, paste your own
    Anthropic API key, choose a model, and save.
 
 The key is stored encrypted at rest (AES-256-GCM, HKDF purpose `ai-settings`),
@@ -174,9 +174,9 @@ save one, your AI Console tabs show an "offline" notice and
 `GET /api/v1/copilot/availability` returns `{"available": false}`; after saving
 it flips to `true`. Remove the key any time with **Remove key** on the same page.
 
-If the encryption secret (`MC_SECURITY_ENCRYPTION_KEY`) changes, a stored key
+If the encryption secret (`CN_SECURITY_ENCRYPTION_KEY`) changes, a stored key
 becomes undecryptable and is reported as absent — just re-enter it, or set the old
-value in `MC_SECURITY_PREVIOUS_ENCRYPTION_KEYS` when rotating.
+value in `CN_SECURITY_PREVIOUS_ENCRYPTION_KEYS` when rotating.
 
 ## 8. Everything in containers
 
@@ -226,10 +226,10 @@ An API instance is already running. Find it with
 
 **`Bind for 0.0.0.0:5433 failed: port is already allocated`**
 Another project's container has the port. Change `POSTGRES_PORT` in `.env`,
-update `MC_DB_URL` in `backend/.env`, then `docker compose up -d` again.
+update `CN_DB_URL` in `backend/.env`, then `docker compose up -d` again.
 
 **`/health/ready` returns `"postgres": "error: InvalidPasswordError"`**
-`MC_DB_URL` credentials do not match `POSTGRES_USER`/`POSTGRES_PASSWORD` in the
+`CN_DB_URL` credentials do not match `POSTGRES_USER`/`POSTGRES_PASSWORD` in the
 root `.env`. If you changed them after the first start, the database was already
 initialised with the old ones — `docker compose down -v` and start again
 (this deletes local data).
@@ -242,9 +242,9 @@ Usually a missing migration. Check `uv run alembic current` against
 `migrations/versions/`.
 
 **`the JWT signing key must be at least 32 bytes for HS256`**
-`MC_AUTH_JWT_SIGNING_KEY` is set but too short. Generate one:
+`CN_AUTH_JWT_SIGNING_KEY` is set but too short. Generate one:
 `python -c "import secrets; print(secrets.token_urlsafe(48))"`, or leave it
-empty locally to inherit `MC_SECURITY_SECRET_KEY`.
+empty locally to inherit `CN_SECURITY_SECRET_KEY`.
 
 **Broker says connected but data is still `source: "mock"`**
 The token is present but the broker is rejecting it. **Settings → Broker**
@@ -253,11 +253,11 @@ token exists, so it will show *expired* — reconnect. If it shows *active*,
 check the API log for a `broker_circuit_opened` warning, which means the
 provider is failing and requests are short-circuiting to cached or mock data.
 
-**Broker connection disappears after changing `MC_SECURITY_ENCRYPTION_KEY`**
+**Broker connection disappears after changing `CN_SECURITY_ENCRYPTION_KEY`**
 Expected. That key encrypts stored credentials; changing it makes existing rows
 undecryptable. They are reported as *expired* rather than raising, so reconnect
 through **Settings → Broker**. Keep the key stable, or put the old value in
-`MC_SECURITY_PREVIOUS_ENCRYPTION_KEYS` when rotating — rows then keep decrypting
+`CN_SECURITY_PREVIOUS_ENCRYPTION_KEYS` when rotating — rows then keep decrypting
 and are re-encrypted under the new key the next time they are saved.
 
 **`This connection link expired. Start again.`**

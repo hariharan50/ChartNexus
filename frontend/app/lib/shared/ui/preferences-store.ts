@@ -2,8 +2,8 @@ import { create } from 'zustand';
 
 export type CallPutScheme = 'classic' | 'inverted';
 
-const TOOLTIP_KEY = 'mc-pref-chart-tooltip';
-const CALLPUT_KEY = 'mc-pref-callput';
+const TOOLTIP_KEY = 'cn-pref-chart-tooltip';
+const CALLPUT_KEY = 'cn-pref-callput';
 
 interface PreferencesState {
   showChartTooltip: boolean;

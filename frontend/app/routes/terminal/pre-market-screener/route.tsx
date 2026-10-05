@@ -21,9 +21,7 @@ import { fmtCountdown, fmtIst, minutesToOpen } from './pms-data';
 import s from './route.module.css';
 import type { Route } from './+types/route';
 
-export const meta: Route.MetaFunction = () => [
-  { title: 'PMS — Pre Market Screener · MarketCompass' }
-];
+export const meta: Route.MetaFunction = () => [{ title: 'PMS — Pre Market Screener · ChartNexus' }];
 
 /**
  * PMS — the pre-market read, ordered as the decision runs.
@@ -178,7 +176,7 @@ export default function PreMarketScreener() {
       )}
 
       <p className={s.disclaimer}>
-        For educational and informational purposes only. MarketCompass is not a SEBI-registered
+        For educational and informational purposes only. ChartNexus is not a SEBI-registered
         investment adviser. The regime score is a weighted composite with fixed, unfitted weights —
         an illustrative read, not a forecast, and markets routinely open against it. Option-OI
         levels show where positioning sits, not where price must turn. Nothing here is investment

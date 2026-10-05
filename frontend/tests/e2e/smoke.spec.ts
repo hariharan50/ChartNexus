@@ -33,7 +33,7 @@ test.describe('signed out', () => {
 test.describe('signed in', () => {
   test.beforeEach(async ({ context, baseURL }) => {
     await context.addCookies([
-      { name: 'mc_session', value: 'test', url: baseURL ?? 'http://localhost:4173' }
+      { name: 'cn_session', value: 'test', url: baseURL ?? 'http://localhost:4173' }
     ]);
   });
 
@@ -46,13 +46,13 @@ test.describe('signed in', () => {
     const response = await page.goto('/settings/profile');
     expect(response?.status()).toBe(200);
     await expect(page).toHaveURL('/settings/profile');
-    await expect(page).toHaveTitle('Personal Info · Settings · MarketCompass');
+    await expect(page).toHaveTitle('Personal Info · Settings · ChartNexus');
   });
 });
 
 test('an unknown path renders the error boundary', async ({ page }) => {
   await page.goto('/definitely-not-a-route');
-  await expect(page).toHaveTitle('404 · MarketCompass');
+  await expect(page).toHaveTitle('404 · ChartNexus');
   await expect(page.getByRole('heading', { name: 'Page not found' })).toBeVisible();
 });
 
@@ -66,8 +66,8 @@ test('the security headers survive into production', async ({ request }) => {
 
 test('a stored theme is applied before first paint', async ({ page, context }) => {
   await context.addInitScript(() => {
-    localStorage.setItem('mc-theme', 'light');
-    localStorage.setItem('mc-pref-callput', 'inverted');
+    localStorage.setItem('cn-theme', 'light');
+    localStorage.setItem('cn-pref-callput', 'inverted');
   });
 
   await page.goto('/login');

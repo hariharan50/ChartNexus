@@ -157,7 +157,7 @@ test('the page does not nest a second main landmark', async ({ page }) => {
 
 /** The dark-only pin has to hold under a stored light theme. */
 test('it stays dark when the visitor has chosen a light theme', async ({ page, context }) => {
-  await context.addInitScript(() => localStorage.setItem('mc-theme', 'light'));
+  await context.addInitScript(() => localStorage.setItem('cn-theme', 'light'));
   await page.goto('/');
 
   const background = await page

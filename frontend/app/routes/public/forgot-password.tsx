@@ -7,7 +7,7 @@ import type { Route } from './+types/forgot-password';
 // Rather than pretend to send a message, this states the situation plainly —
 // a form that silently does nothing is worse than no form.
 
-export const meta: Route.MetaFunction = () => [{ title: 'Reset password · MarketCompass' }];
+export const meta: Route.MetaFunction = () => [{ title: 'Reset password · ChartNexus' }];
 
 export default function ForgotPassword() {
   return (
@@ -20,8 +20,8 @@ export default function ForgotPassword() {
       <div className={s.note}>
         <p>
           If you cannot sign in, contact{' '}
-          <a href="mailto:support@marketcompass.app">support@marketcompass.app</a> and we will
-          verify your identity and reset the account manually.
+          <a href="mailto:support@chartnexus.app">support@chartnexus.app</a> and we will verify your
+          identity and reset the account manually.
         </p>
         <p>
           If your account was created with Google, use <strong>Continue with Google</strong> on the

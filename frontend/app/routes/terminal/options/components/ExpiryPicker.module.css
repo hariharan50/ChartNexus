@@ -6,11 +6,11 @@
 
 .label {
   margin: 0 0 0.375rem;
-  font-size: var(--mc-text-xs);
+  font-size: var(--cn-text-xs);
   font-weight: 600;
   letter-spacing: 0.04em;
   text-transform: uppercase;
-  color: var(--mc-text-subtle);
+  color: var(--cn-text-subtle);
 }
 
 /* The <Select> itself; the component paints it, this only sizes it. */
@@ -21,7 +21,7 @@
 
 .hint {
   margin: 0.375rem 0 0;
-  font-size: var(--mc-text-xs);
+  font-size: var(--cn-text-xs);
   line-height: 1.5;
-  color: var(--mc-text-subtle);
+  color: var(--cn-text-subtle);
 }

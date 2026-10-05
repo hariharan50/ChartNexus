@@ -19,7 +19,7 @@ import s from './analysis.module.css';
 import type { Route } from './+types/index-contributors';
 
 export const meta: Route.MetaFunction = () => [
-  { title: 'Index Contributors · Future Lab · MarketCompass' }
+  { title: 'Index Contributors · Future Lab · ChartNexus' }
 ];
 
 /** How many names each side of the chart shows. Beyond this the bars are dust. */

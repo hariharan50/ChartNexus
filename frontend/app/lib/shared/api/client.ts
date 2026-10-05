@@ -9,7 +9,7 @@ import { ApiError, parseProblem } from './errors';
  */
 
 const API_PREFIX = '/api/v1';
-const CSRF_COOKIE = 'mc_csrf';
+const CSRF_COOKIE = 'cn_csrf';
 const CSRF_HEADER = 'X-CSRF-Token';
 const UNSAFE_METHODS = new Set(['POST', 'PUT', 'PATCH', 'DELETE']);
 const REFRESH_PATH = '/api/v1/auth/refresh';

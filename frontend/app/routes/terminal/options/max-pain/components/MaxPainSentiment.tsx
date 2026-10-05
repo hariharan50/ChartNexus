@@ -23,8 +23,8 @@ interface Props {
 /**
  * The colour a zone's name is written in.
  *
- * Theme roles, not the reference's literal blue and red: `--mc-accent` and
- * `--mc-bearish` are already tuned per theme, and the verdict is 16px bold —
+ * Theme roles, not the reference's literal blue and red: `--cn-accent` and
+ * `--cn-bearish` are already tuned per theme, and the verdict is 16px bold —
  * ordinary text as far as contrast is concerned, so it owes a full 4.5:1 on all
  * four themes. A hardcoded `#2962ff` clears that on white and fails it on the
  * warm theme.

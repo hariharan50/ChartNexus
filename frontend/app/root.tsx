@@ -54,11 +54,11 @@ export function loader({ context }: Route.LoaderArgs) {
  * nothing downstream needs to know it ran.
  */
 const THEME_BOOTSTRAP = `try{
-var t=localStorage.getItem('mc-theme');
+var t=localStorage.getItem('cn-theme');
 if(t==='light'||t==='dark'||t==='midnight'||t==='warm'||t==='terminal')document.documentElement.setAttribute('data-theme',t);
-var c=localStorage.getItem('mc-pref-callput');
+var c=localStorage.getItem('cn-pref-callput');
 document.documentElement.setAttribute('data-callput',c==='inverted'?'inverted':'classic');
-var lp=localStorage.getItem('mc-landing-theme');
+var lp=localStorage.getItem('cn-landing-theme');
 if(lp==='light')document.documentElement.setAttribute('data-lp-theme','light');
 }catch(e){}`;
 
@@ -66,7 +66,7 @@ if(lp==='light')document.documentElement.setAttribute('data-lp-theme','light');
 // `+error.svelte`'s `<svelte:head><title>` did; keeping it here rather than in
 // the boundary avoids emitting two <title> elements.
 export const meta: Route.MetaFunction = ({ error }) =>
-  error ? [{ title: `${errorStatus(error)} · MarketCompass` }] : [{ title: 'MarketCompass' }];
+  error ? [{ title: `${errorStatus(error)} · ChartNexus` }] : [{ title: 'ChartNexus' }];
 
 export const links: Route.LinksFunction = () => [
   { rel: 'icon', href: '/favicon/favicon.svg', type: 'image/svg+xml' },
@@ -127,7 +127,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
         ) : null}
       </head>
       <body>
-        <a className="mc-skip-link" href="#main">
+        <a className="cn-skip-link" href="#main">
           Skip to main content
         </a>
 
@@ -159,13 +159,13 @@ export function ErrorBoundary() {
 
   return (
     <section className={errorStyles.error}>
-      <p className={`${errorStyles.status} mc-numeric`}>{status}</p>
+      <p className={`${errorStyles.status} cn-numeric`}>{status}</p>
       <h1>{status === 404 ? 'Page not found' : 'Something went wrong'}</h1>
       <p className={errorStyles.detail}>{detail}</p>
 
       {requestId ? (
         <p className={errorStyles.requestId}>
-          Reference <code className="mc-numeric">{requestId}</code>
+          Reference <code className="cn-numeric">{requestId}</code>
         </p>
       ) : null}
 

@@ -17,19 +17,19 @@ export default function OptionsMetricsCard({ metrics }: Props) {
       <dl className={s.grid}>
         <div className={s.cell}>
           <dt>PCR (OI)</dt>
-          <dd className="mc-numeric">{metrics.pcr.toFixed(2)}</dd>
+          <dd className="cn-numeric">{metrics.pcr.toFixed(2)}</dd>
         </div>
         <div className={s.cell}>
           <dt>Max Pain</dt>
-          <dd className="mc-numeric">{formatInt(metrics.maxPain)}</dd>
+          <dd className="cn-numeric">{formatInt(metrics.maxPain)}</dd>
         </div>
         <div className={s.cell}>
           <dt>Support</dt>
-          <dd className={cx('mc-numeric', s.support)}>{formatInt(metrics.support)}</dd>
+          <dd className={cx('cn-numeric', s.support)}>{formatInt(metrics.support)}</dd>
         </div>
         <div className={s.cell}>
           <dt>Resistance</dt>
-          <dd className={cx('mc-numeric', s.resistance)}>{formatInt(metrics.resistance)}</dd>
+          <dd className={cx('cn-numeric', s.resistance)}>{formatInt(metrics.resistance)}</dd>
         </div>
       </dl>
 

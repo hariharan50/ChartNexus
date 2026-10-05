@@ -13,14 +13,14 @@ from decimal import Decimal
 
 import pytest
 
-from marketcompass.contexts.market_data.domain.implied_volatility import (
+from chartnexus.contexts.market_data.domain.implied_volatility import (
     _black_scholes_price,
     _solve_implied_volatility,
     atm_implied_volatility,
     backfill_implied_volatility,
 )
-from marketcompass.contexts.market_data.domain.instruments import InstrumentSymbol
-from marketcompass.contexts.market_data.domain.market_data import (
+from chartnexus.contexts.market_data.domain.instruments import InstrumentSymbol
+from chartnexus.contexts.market_data.domain.market_data import (
     DataSource,
     OptionChain,
     OptionQuote,

@@ -1,7 +1,7 @@
 import ComingSoon from '$shared/ui/ComingSoon';
 import type { Route } from './+types/timeseries';
 
-export const meta: Route.MetaFunction = () => [{ title: 'Timeseries · MarketCompass' }];
+export const meta: Route.MetaFunction = () => [{ title: 'Timeseries · ChartNexus' }];
 
 export default function Timeseries() {
   return (

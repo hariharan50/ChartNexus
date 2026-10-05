@@ -9,7 +9,7 @@ import IconAlert from '$shared/ui/icons/IconAlert';
 import s from './security.module.css';
 import type { Route } from './+types/security';
 
-export const meta: Route.MetaFunction = () => [{ title: 'Security · Settings · MarketCompass' }];
+export const meta: Route.MetaFunction = () => [{ title: 'Security · Settings · ChartNexus' }];
 
 type AuthError = ReturnType<typeof presentAuthError>;
 

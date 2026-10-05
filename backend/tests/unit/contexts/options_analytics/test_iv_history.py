@@ -12,9 +12,9 @@ from datetime import UTC, date, datetime
 
 import pytest
 
-from marketcompass.contexts.options_analytics.application.iv_history_service import GetIvHistory
-from marketcompass.contexts.options_analytics.application.ports import DailyIv
-from marketcompass.shared_kernel.types.identifiers import TenantId
+from chartnexus.contexts.options_analytics.application.iv_history_service import GetIvHistory
+from chartnexus.contexts.options_analytics.application.ports import DailyIv
+from chartnexus.shared_kernel.types.identifiers import TenantId
 
 TENANT = TenantId(uuid.uuid4())
 # 20:00 UTC on 2 Sep is 01:30 IST on 3 Sep — the window where a UTC-derived

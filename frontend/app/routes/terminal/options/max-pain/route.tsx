@@ -34,7 +34,7 @@ import {
 import s from './route.module.css';
 import type { Route } from './+types/route';
 
-export const meta: Route.MetaFunction = () => [{ title: 'Max Pain · MarketCompass' }];
+export const meta: Route.MetaFunction = () => [{ title: 'Max Pain · ChartNexus' }];
 
 /** No ±2 setting: a five-bar pain profile has no readable shape. */
 const STRIKE_FILTERS: { label: string; value: 'all' | number }[] = [

@@ -1,5 +1,5 @@
 .vol {
-  padding: var(--mc-space-2) var(--mc-space-3);
+  padding: var(--cn-space-2) var(--cn-space-3);
   white-space: nowrap;
 }
 
@@ -17,16 +17,16 @@
 }
 
 .chip {
-  border-radius: var(--mc-radius-sm);
+  border-radius: var(--cn-radius-sm);
   padding: 0.0625rem 0.25rem;
-  color: var(--mc-text);
-  font-family: var(--mc-font-mono);
+  color: var(--cn-text);
+  font-family: var(--cn-font-mono);
   font-variant-numeric: tabular-nums;
 }
 
 .chip.top3 {
-  background: color-mix(in srgb, var(--mc-bullish) 20%, transparent);
-  color: var(--mc-bullish);
+  background: color-mix(in srgb, var(--cn-bullish) 20%, transparent);
+  color: var(--cn-bullish);
   font-weight: 600;
 }
 
@@ -34,15 +34,15 @@
   position: absolute;
   top: 100%;
   margin-top: 0.25rem;
-  z-index: var(--mc-z-dropdown);
+  z-index: var(--cn-z-dropdown);
   display: none;
   flex-direction: column;
   gap: 0.125rem;
-  padding: var(--mc-space-2) var(--mc-space-3);
-  border: 1px solid var(--mc-border);
-  border-radius: var(--mc-radius);
-  background: var(--mc-surface);
-  box-shadow: var(--mc-shadow);
+  padding: var(--cn-space-2) var(--cn-space-3);
+  border: 1px solid var(--cn-border);
+  border-radius: var(--cn-radius);
+  background: var(--cn-surface);
+  box-shadow: var(--cn-shadow);
   white-space: nowrap;
 }
 
@@ -62,12 +62,12 @@
 }
 
 .tip-line {
-  font-size: var(--mc-text-xs);
+  font-size: var(--cn-text-xs);
   font-weight: 600;
-  color: var(--mc-text);
+  color: var(--cn-text);
 }
 
 .tip-sub {
-  font-size: var(--mc-text-xs);
-  color: var(--mc-text-muted);
+  font-size: var(--cn-text-xs);
+  color: var(--cn-text-muted);
 }

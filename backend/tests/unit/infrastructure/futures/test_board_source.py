@@ -14,16 +14,16 @@ from decimal import Decimal
 
 import pytest
 
-from marketcompass.contexts.futures_analytics.domain.buildup import BuildupState, classify
-from marketcompass.contexts.market_data.domain.instruments import InstrumentSymbol
-from marketcompass.contexts.market_data.domain.market_data import (
+from chartnexus.contexts.futures_analytics.domain.buildup import BuildupState, classify
+from chartnexus.contexts.market_data.domain.instruments import InstrumentSymbol
+from chartnexus.contexts.market_data.domain.market_data import (
     DataSource,
     FuturesQuote,
     Provenance,
 )
-from marketcompass.infrastructure.futures.board_source import CatalogFuturesBoardSource
-from marketcompass.infrastructure.futures.oi_cache import CachedOpenInterest
-from marketcompass.shared_kernel.types.identifiers import TenantId, new_id
+from chartnexus.infrastructure.futures.board_source import CatalogFuturesBoardSource
+from chartnexus.infrastructure.futures.oi_cache import CachedOpenInterest
+from chartnexus.shared_kernel.types.identifiers import TenantId, new_id
 
 pytestmark = pytest.mark.unit
 

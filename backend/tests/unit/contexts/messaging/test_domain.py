@@ -7,10 +7,10 @@ from datetime import UTC, datetime
 
 import pytest
 
-from marketcompass.contexts.messaging.domain.channel import Channel, ChannelConnection
-from marketcompass.contexts.messaging.domain.credentials import TelegramCredentials
-from marketcompass.contexts.messaging.domain.errors import ChannelCredentialsInvalidError
-from marketcompass.shared_kernel.types.identifiers import TenantId, UserId
+from chartnexus.contexts.messaging.domain.channel import Channel, ChannelConnection
+from chartnexus.contexts.messaging.domain.credentials import TelegramCredentials
+from chartnexus.contexts.messaging.domain.errors import ChannelCredentialsInvalidError
+from chartnexus.shared_kernel.types.identifiers import TenantId, UserId
 
 NOW = datetime(2026, 8, 23, tzinfo=UTC)
 USER = UserId(uuid.uuid4())

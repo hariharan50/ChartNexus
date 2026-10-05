@@ -91,7 +91,7 @@ export default function OptionChainCard({ rows, loading = false }: Props) {
               return (
                 <tr key={row.strike + row.type} className={cx(row.atm && s.atm)}>
                   <td className={s.strike}>
-                    <span className="mc-numeric">{formatInt(row.strike)}</span>
+                    <span className="cn-numeric">{formatInt(row.strike)}</span>
                     {row.atm ? (
                       <Pill tone="accent" subtle>
                         ATM
@@ -101,19 +101,19 @@ export default function OptionChainCard({ rows, loading = false }: Props) {
                   <td>
                     <Pill tone={row.type === 'CE' ? 'bullish' : 'bearish'}>{row.type}</Pill>
                   </td>
-                  <td className={`${s.num} mc-numeric`}>{formatInt(row.oi)}</td>
+                  <td className={`${s.num} cn-numeric`}>{formatInt(row.oi)}</td>
                   <td
                     className={cx(
                       s.num,
-                      'mc-numeric',
+                      'cn-numeric',
                       dir === 'up' && s.up,
                       dir === 'down' && s.down
                     )}
                   >
                     {formatSignedInt(row.oiChange)}
                   </td>
-                  <td className={`${s.num} mc-numeric`}>{formatPrice(row.ltp)}</td>
-                  <td className={cx(s.num, 'mc-numeric', s.muted)}>
+                  <td className={`${s.num} cn-numeric`}>{formatPrice(row.ltp)}</td>
+                  <td className={cx(s.num, 'cn-numeric', s.muted)}>
                     {Number.isNaN(row.iv) ? '—' : formatPercent(row.iv)}
                   </td>
                   <td>

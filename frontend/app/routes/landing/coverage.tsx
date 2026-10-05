@@ -5,11 +5,11 @@ import s from './route.module.css';
 import type { Route } from './+types/coverage';
 
 export const meta: Route.MetaFunction = () => [
-  { title: 'Coverage · MarketCompass' },
+  { title: 'Coverage · ChartNexus' },
   {
     name: 'description',
     content:
-      'The MarketCompass tools that are live today: option chain, open interest, PCR, max pain, ' +
+      'The ChartNexus tools that are live today: option chain, open interest, PCR, max pain, ' +
       'gamma exposure, vega analysis and the ATM straddle.'
   }
 ];
@@ -31,7 +31,7 @@ export default function Coverage() {
         <div className={s.rows}>
           {COVERAGE.map((label, i) => (
             <div key={label} className={s.row}>
-              <span className={cx(s.rowNum, 'mc-numeric')}>{i + 1}</span>
+              <span className={cx(s.rowNum, 'cn-numeric')}>{i + 1}</span>
               <span className={s.rowLabel}>{label}</span>
             </div>
           ))}
@@ -45,7 +45,7 @@ export default function Coverage() {
             <p className={s.eyebrow}>Instruments</p>
             <h2 className={s.h2}>Three indices, canonical lots.</h2>
             <p className={s.lead}>
-              MarketCompass reads NIFTY, BANKNIFTY and SENSEX options at the nearest expiry. Data is
+              ChartNexus reads NIFTY, BANKNIFTY and SENSEX options at the nearest expiry. Data is
               mock by default; a Fyers provider can be enabled through backend configuration.
             </p>
           </div>
@@ -64,7 +64,7 @@ export default function Coverage() {
                 {COVERAGE_MATRIX.map((r) => (
                   <tr key={r.index}>
                     <th scope="row">{r.index}</th>
-                    <td className="mc-numeric">{r.lot}</td>
+                    <td className="cn-numeric">{r.lot}</td>
                     <td>{r.expiry}</td>
                     <td>{r.source}</td>
                   </tr>

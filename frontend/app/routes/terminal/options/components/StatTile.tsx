@@ -34,7 +34,7 @@ export default function StatTile({
       <p
         className={cx(
           s.value,
-          'mc-numeric',
+          'cn-numeric',
           valueTone === 'bullish' && s.bullish,
           valueTone === 'bearish' && s.bearish
         )}

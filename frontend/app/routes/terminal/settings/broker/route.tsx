@@ -11,7 +11,7 @@ import TextField from '$shared/ui/TextField';
 import s from './route.module.css';
 import type { Route } from './+types/route';
 
-export const meta: Route.MetaFunction = () => [{ title: 'Broker · MarketCompass' }];
+export const meta: Route.MetaFunction = () => [{ title: 'Broker · ChartNexus' }];
 
 type AuthError = ReturnType<typeof presentAuthError>;
 type Busy = 'save' | 'connect' | 'disconnect' | 'revoke' | null;
@@ -140,12 +140,12 @@ export default function SettingsBroker() {
           <dl>
             <div>
               <dt>App ID</dt>
-              <dd className="mc-numeric">{connection.masked_app_id}</dd>
+              <dd className="cn-numeric">{connection.masked_app_id}</dd>
             </div>
             {connection.broker_user_id ? (
               <div>
                 <dt>Broker ID</dt>
-                <dd className="mc-numeric">{connection.broker_user_id}</dd>
+                <dd className="cn-numeric">{connection.broker_user_id}</dd>
               </div>
             ) : null}
             {connection.last_validated_at ? (
@@ -189,7 +189,7 @@ export default function SettingsBroker() {
           </li>
           <li>
             Set its redirect URI to exactly{' '}
-            <code className="mc-numeric">{connection?.redirect_uri ?? '—'}</code>
+            <code className="cn-numeric">{connection?.redirect_uri ?? '—'}</code>
           </li>
           <li>Paste the App ID and Secret ID below</li>
         </ol>

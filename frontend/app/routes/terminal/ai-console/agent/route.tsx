@@ -13,7 +13,7 @@ import s from './route.module.css';
 import type { Route } from './+types/route';
 
 export const meta: Route.MetaFunction = () => [
-  { title: 'Hella · Hella Analysis Agent · MarketCompass' }
+  { title: 'Hella · Hella Analysis Agent · ChartNexus' }
 ];
 
 /** The agent's name, shown throughout the console. */

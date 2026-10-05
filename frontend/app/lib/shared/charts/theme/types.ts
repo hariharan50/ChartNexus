@@ -2,7 +2,7 @@
  * Every colour a chart is allowed to use.
  *
  * Charts must not name colours themselves — they ask for a role. The values are
- * resolved from the `--mc-*` design tokens at runtime, so all four themes work
+ * resolved from the `--cn-*` design tokens at runtime, so all four themes work
  * without a chart knowing any of them exist.
  */
 export interface ChartTheme {

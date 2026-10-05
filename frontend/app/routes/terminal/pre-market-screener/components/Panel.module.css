@@ -1,30 +1,30 @@
 .panel {
   display: flex;
   flex-direction: column;
-  background: var(--mc-surface);
-  border: 1px solid var(--mc-border);
-  border-radius: var(--mc-radius-lg);
-  box-shadow: var(--mc-shadow);
+  background: var(--cn-surface);
+  border: 1px solid var(--cn-border);
+  border-radius: var(--cn-radius-lg);
+  box-shadow: var(--cn-shadow);
   overflow: hidden;
 }
 
 .panel.accent {
-  border-left: 3px solid var(--mc-accent);
+  border-left: 3px solid var(--cn-accent);
 }
 
 .panel-head {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: var(--mc-space-3);
-  padding: var(--mc-space-4);
-  border-bottom: 1px solid var(--mc-border);
+  gap: var(--cn-space-3);
+  padding: var(--cn-space-4);
+  border-bottom: 1px solid var(--cn-border);
 }
 
 .lead {
   display: flex;
   align-items: center;
-  gap: var(--mc-space-3);
+  gap: var(--cn-space-3);
   min-width: 0;
 }
 
@@ -35,9 +35,9 @@
   width: 1.75rem;
   height: 1.75rem;
   flex: none;
-  border-radius: var(--mc-radius);
-  background: var(--mc-accent-weak);
-  color: var(--mc-accent);
+  border-radius: var(--cn-radius);
+  background: var(--cn-accent-weak);
+  color: var(--cn-accent);
 }
 
 .icon svg {
@@ -51,24 +51,24 @@
 
 .titles h2 {
   margin: 0;
-  font-size: var(--mc-text-base);
+  font-size: var(--cn-text-base);
   font-weight: 700;
   letter-spacing: -0.01em;
 }
 
 .titles p {
   margin: 0.0625rem 0 0;
-  font-size: var(--mc-text-xs);
-  color: var(--mc-text-subtle);
+  font-size: var(--cn-text-xs);
+  color: var(--cn-text-subtle);
 }
 
 .actions {
   display: flex;
   align-items: center;
-  gap: var(--mc-space-2);
+  gap: var(--cn-space-2);
   flex: none;
 }
 
 .body.padded {
-  padding: var(--mc-space-4);
+  padding: var(--cn-space-4);
 }

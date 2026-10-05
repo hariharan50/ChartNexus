@@ -3,7 +3,7 @@
 .panel {
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(0, 1.4fr);
-  gap: var(--mc-space-5);
+  gap: var(--cn-space-5);
   align-items: center;
 }
 
@@ -15,9 +15,9 @@
    box at `height: 100%`; a half-circle gauge needs a real height to measure. */
 /* The reference's own heading, above the dial. */
 .summary {
-  margin: 0 0 var(--mc-space-2);
+  margin: 0 0 var(--cn-space-2);
   text-align: center;
-  font-size: var(--mc-text-sm);
+  font-size: var(--cn-text-sm);
   font-weight: 700;
 }
 
@@ -41,14 +41,14 @@
 }
 
 .label {
-  font-size: var(--mc-text-lg);
+  font-size: var(--cn-text-lg);
   font-weight: 700;
 }
 
 .caption {
-  font-size: var(--mc-text-xs);
+  font-size: var(--cn-text-xs);
   line-height: 1.3;
-  color: var(--mc-text-muted);
+  color: var(--cn-text-muted);
 }
 
 /* Capped: on a wide monitor a full-width row throws the label and its figure to
@@ -63,9 +63,9 @@
   display: flex;
   align-items: baseline;
   justify-content: space-between;
-  gap: var(--mc-space-4);
-  padding: var(--mc-space-3) 0;
-  border-bottom: 1px solid var(--mc-border);
+  gap: var(--cn-space-4);
+  padding: var(--cn-space-3) 0;
+  border-bottom: 1px solid var(--cn-border);
 }
 
 .row:last-child {
@@ -73,13 +73,13 @@
 }
 
 .row dt {
-  font-size: var(--mc-text-sm);
-  color: var(--mc-text-muted);
+  font-size: var(--cn-text-sm);
+  color: var(--cn-text-muted);
 }
 
 .row dd {
   margin: 0;
-  font-size: var(--mc-text-base);
+  font-size: var(--cn-text-base);
   font-weight: 700;
   /* Two figures read against each other, so the digits have to line up. */
   font-variant-numeric: tabular-nums;
@@ -87,23 +87,23 @@
 
 .insight {
   grid-column: 1 / -1;
-  padding: var(--mc-space-3);
-  border: 1px solid var(--mc-border);
-  border-radius: var(--mc-radius);
-  background: var(--mc-surface-raised);
+  padding: var(--cn-space-3);
+  border: 1px solid var(--cn-border);
+  border-radius: var(--cn-radius);
+  background: var(--cn-surface-raised);
 }
 
 .insight-title {
   margin: 0 0 0.25rem;
-  font-size: var(--mc-text-sm);
+  font-size: var(--cn-text-sm);
   font-weight: 700;
-  color: var(--mc-text-muted);
+  color: var(--cn-text-muted);
 }
 
 .insight-body {
   margin: 0;
-  font-size: var(--mc-text-sm);
-  color: var(--mc-text-muted);
+  font-size: var(--cn-text-sm);
+  color: var(--cn-text-muted);
 }
 
 @media (max-width: 60rem) {

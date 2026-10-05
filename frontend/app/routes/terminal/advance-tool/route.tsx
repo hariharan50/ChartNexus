@@ -3,7 +3,7 @@ import IconMessage from '$shared/ui/icons/IconMessage';
 import s from './route.module.css';
 import type { Route } from './+types/route';
 
-export const meta: Route.MetaFunction = () => [{ title: 'Advance Tools · MarketCompass' }];
+export const meta: Route.MetaFunction = () => [{ title: 'Advance Tools · ChartNexus' }];
 
 /**
  * The Advance Tools landing — a grid of tool boxes reachable from the main nav.

@@ -16,13 +16,13 @@ from typing import cast
 
 import pytest
 
-from marketcompass.bootstrap.container import Container
-from marketcompass.contexts.instrument_catalog.domain.instrument import (
+from chartnexus.bootstrap.container import Container
+from chartnexus.contexts.instrument_catalog.domain.instrument import (
     Instrument,
     InstrumentKind,
 )
-from marketcompass.entrypoints import catalog_runtime
-from marketcompass.infrastructure.catalog import registry
+from chartnexus.entrypoints import catalog_runtime
+from chartnexus.infrastructure.catalog import registry
 
 pytestmark = pytest.mark.unit
 

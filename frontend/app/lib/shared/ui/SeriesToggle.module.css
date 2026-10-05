@@ -8,26 +8,26 @@
   align-items: center;
   gap: 0.375rem;
   padding: 0.25rem 0.5rem;
-  border: 1px solid var(--mc-border);
-  border-radius: var(--mc-radius);
-  background: var(--mc-surface-raised);
-  color: var(--mc-text);
-  font-size: var(--mc-text-xs);
+  border: 1px solid var(--cn-border);
+  border-radius: var(--cn-radius);
+  background: var(--cn-surface-raised);
+  color: var(--cn-text);
+  font-size: var(--cn-text-xs);
   font-weight: 600;
   cursor: pointer;
 }
 
 .entry:hover {
-  border-color: var(--mc-border-strong);
+  border-color: var(--cn-border-strong);
 }
 
 .entry:focus-visible {
-  outline: 2px solid var(--mc-focus);
+  outline: 2px solid var(--cn-focus);
   outline-offset: 1px;
 }
 
 .entry.off {
-  color: var(--mc-text-subtle);
+  color: var(--cn-text-subtle);
 }
 
 /* Struck through as well as dimmed: on a dense toolbar the colour difference
@@ -38,7 +38,7 @@
 
 .eye {
   display: inline-flex;
-  color: var(--mc-text-muted);
+  color: var(--cn-text-muted);
 }
 
 .eye svg {

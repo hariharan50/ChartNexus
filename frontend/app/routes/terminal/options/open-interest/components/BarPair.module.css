@@ -1,7 +1,7 @@
 .pair {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: var(--mc-space-4);
+  gap: var(--cn-space-4);
   align-items: end;
 }
 
@@ -13,16 +13,16 @@
 }
 
 .val {
-  font-size: var(--mc-text-sm);
+  font-size: var(--cn-text-sm);
   font-weight: 700;
 }
 
 .val.call {
-  color: var(--mc-bullish);
+  color: var(--cn-bullish);
 }
 
 .val.put {
-  color: var(--mc-bearish);
+  color: var(--cn-bearish);
 }
 
 .track {
@@ -34,21 +34,21 @@
 
 .bar {
   width: 100%;
-  border-radius: var(--mc-radius-sm) var(--mc-radius-sm) 0 0;
+  border-radius: var(--cn-radius-sm) var(--cn-radius-sm) 0 0;
   min-height: 2px;
 }
 
 .bar.call {
-  background: var(--mc-bullish);
+  background: var(--cn-bullish);
 }
 
 .bar.put {
-  background: var(--mc-bearish);
+  background: var(--cn-bearish);
 }
 
 .k {
-  font-size: var(--mc-text-xs);
+  font-size: var(--cn-text-xs);
   font-weight: 600;
   letter-spacing: 0.06em;
-  color: var(--mc-text-subtle);
+  color: var(--cn-text-subtle);
 }

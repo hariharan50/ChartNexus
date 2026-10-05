@@ -1,6 +1,6 @@
 {
-  "name": "MarketCompass",
-  "short_name": "MarketCompass",
+  "name": "ChartNexus",
+  "short_name": "ChartNexus",
   "description": "Options and futures market intelligence terminal",
   "start_url": "/dashboard",
   "scope": "/",

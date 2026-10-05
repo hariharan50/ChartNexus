@@ -7,8 +7,8 @@ actually voted, and an empty book is HOLD-at-zero rather than a coin flip.
 
 from __future__ import annotations
 
-from marketcompass.contexts.signals.domain.fusion import fuse
-from marketcompass.contexts.signals.domain.models import Decision, SkillRead
+from chartnexus.contexts.signals.domain.fusion import fuse
+from chartnexus.contexts.signals.domain.models import Decision, SkillRead
 
 
 def _read(skill: str, weight: float, score: float | None) -> SkillRead:

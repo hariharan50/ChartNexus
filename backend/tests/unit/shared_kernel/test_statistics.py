@@ -9,7 +9,7 @@ from __future__ import annotations
 
 import pytest
 
-from marketcompass.shared_kernel.domain.statistics import (
+from chartnexus.shared_kernel.domain.statistics import (
     MIN_SAMPLE,
     bucket,
     mean,
@@ -90,9 +90,7 @@ class TestAverages:
         assert stdev([1.0]) is None
 
     def test_stdev_is_bessel_corrected(self) -> None:
-        assert stdev([2.0, 4.0, 4.0, 4.0, 5.0, 5.0, 7.0, 9.0]) == pytest.approx(
-            2.13809, abs=1e-5
-        )
+        assert stdev([2.0, 4.0, 4.0, 4.0, 5.0, 5.0, 7.0, 9.0]) == pytest.approx(2.13809, abs=1e-5)
 
 
 class TestShare:

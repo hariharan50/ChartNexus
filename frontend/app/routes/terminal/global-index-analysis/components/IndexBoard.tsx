@@ -66,7 +66,7 @@ export default function IndexBoard({ markets, regions, labels }: Props) {
                   <td
                     className={cx(
                       s.num,
-                      'mc-numeric',
+                      'cn-numeric',
                       s[tone(roll?.change_percent ?? null) ?? 'none']
                     )}
                   >
@@ -85,11 +85,11 @@ export default function IndexBoard({ markets, regions, labels }: Props) {
                       <th scope="row" className={s.name}>
                         {row.label}
                       </th>
-                      <td className={cx(s.num, 'mc-numeric')}>{fmtLevel(row.price)}</td>
-                      <td className={cx(s.num, 'mc-numeric', s[t ?? 'none'])}>
+                      <td className={cx(s.num, 'cn-numeric')}>{fmtLevel(row.price)}</td>
+                      <td className={cx(s.num, 'cn-numeric', s[t ?? 'none'])}>
                         {fmtChange(row.change)}
                       </td>
-                      <td className={cx(s.num, 'mc-numeric', s[t ?? 'none'])}>
+                      <td className={cx(s.num, 'cn-numeric', s[t ?? 'none'])}>
                         {fmtPercent(row.change_percent)}
                       </td>
                       <td className={s.trend}>
@@ -106,7 +106,7 @@ export default function IndexBoard({ markets, regions, labels }: Props) {
                           <span className={s.noSpark}>—</span>
                         )}
                       </td>
-                      <td className={cx(s.hours, 'mc-numeric')}>
+                      <td className={cx(s.hours, 'cn-numeric')}>
                         {row.opens_ist === '24h' ? '24h' : `${row.opens_ist}–${row.closes_ist}`}
                       </td>
                     </tr>

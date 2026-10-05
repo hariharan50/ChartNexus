@@ -1,12 +1,12 @@
 [project]
-name = "marketcompass"
+name = "chartnexus"
 version = "0.1.0"
-description = "MarketCompass — options & futures market intelligence terminal"
+description = "ChartNexus — options & futures market intelligence terminal"
 # Inlined rather than a path: the project README lives at the repo root
 # (../README.md), which is outside this package directory, so a wheel/sdist
 # build (as `uv sync`/`uv run` performs) rejects it. The docs live at the repo
 # root; this keeps the package buildable.
-readme = { text = "MarketCompass backend — options & futures market intelligence terminal. See the repository root README for full documentation.", content-type = "text/markdown" }
+readme = { text = "ChartNexus backend — options & futures market intelligence terminal. See the repository root README for full documentation.", content-type = "text/markdown" }
 requires-python = ">=3.13"
 
 dependencies = [
@@ -50,7 +50,7 @@ dependencies = [
 # Generative LLM providers for the AI guider's copilot layer. Optional: with
 # neither installed the app runs on the rule-based provider (the default), and
 # the provider factory degrades gracefully when a package is absent. Install to
-# enable MC_LLM_PROVIDER=anthropic|openai:  uv sync --extra llm
+# enable CN_LLM_PROVIDER=anthropic|openai:  uv sync --extra llm
 llm = [
     "anthropic>=0.40",
     "openai>=1.60",
@@ -67,16 +67,16 @@ agent = [
 ]
 
 [project.scripts]
-marketcompass-api = "marketcompass.entrypoints.main_api:run"
-marketcompass-ingest = "marketcompass.entrypoints.main_ingest:run"
-marketcompass-catalog = "marketcompass.entrypoints.main_catalog:run"
-marketcompass-futures-oi = "marketcompass.entrypoints.main_futures_oi:run"
-marketcompass-futures-history = "marketcompass.entrypoints.main_futures_history:run"
-marketcompass-oi = "marketcompass.entrypoints.main_oi_data:run"
-marketcompass-signals = "marketcompass.entrypoints.main_signals:run"
-marketcompass-hugin = "marketcompass.entrypoints.main_hugin:run"
-marketcompass-mme100 = "marketcompass.entrypoints.main_mme100:run"
-marketcompass-report = "marketcompass.entrypoints.main_report:run"
+chartnexus-api = "chartnexus.entrypoints.main_api:run"
+chartnexus-ingest = "chartnexus.entrypoints.main_ingest:run"
+chartnexus-catalog = "chartnexus.entrypoints.main_catalog:run"
+chartnexus-futures-oi = "chartnexus.entrypoints.main_futures_oi:run"
+chartnexus-futures-history = "chartnexus.entrypoints.main_futures_history:run"
+chartnexus-oi = "chartnexus.entrypoints.main_oi_data:run"
+chartnexus-signals = "chartnexus.entrypoints.main_signals:run"
+chartnexus-hugin = "chartnexus.entrypoints.main_hugin:run"
+chartnexus-mme100 = "chartnexus.entrypoints.main_mme100:run"
+chartnexus-report = "chartnexus.entrypoints.main_report:run"
 
 [dependency-groups]
 dev = [
@@ -99,7 +99,7 @@ requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [tool.hatch.build.targets.wheel]
-packages = ["src/marketcompass"]
+packages = ["src/chartnexus"]
 
 [tool.uv]
 package = true
@@ -108,16 +108,16 @@ package = true
 # Architecture rules — enforced in CI alongside tests/architecture/.
 # ---------------------------------------------------------------------------
 [tool.importlinter]
-root_package = "marketcompass"
+root_package = "chartnexus"
 # Required because the domain-purity contract names third-party modules.
 include_external_packages = true
 
 [[tool.importlinter.contracts]]
 name = "Domain layer is pure"
 type = "forbidden"
-source_modules = ["marketcompass.shared_kernel.domain"]
+source_modules = ["chartnexus.shared_kernel.domain"]
 forbidden_modules = [
-    "marketcompass.infrastructure",
+    "chartnexus.infrastructure",
     "sqlalchemy",
     "fastapi",
     "redis",
@@ -128,8 +128,8 @@ forbidden_modules = [
 [[tool.importlinter.contracts]]
 name = "Infrastructure never imports composition roots"
 type = "forbidden"
-source_modules = ["marketcompass.infrastructure"]
-forbidden_modules = ["marketcompass.entrypoints", "marketcompass.bootstrap"]
+source_modules = ["chartnexus.infrastructure"]
+forbidden_modules = ["chartnexus.entrypoints", "chartnexus.bootstrap"]
 
 [[tool.importlinter.contracts]]
 name = "Bounded contexts are independent"
@@ -141,23 +141,23 @@ type = "independence"
 # only that bridge, never those contexts directly; this exempts the bridge edge
 # so the transitive reach isn't counted as copilot depending on them.
 ignore_imports = [
-    "marketcompass.contexts.copilot.api.dependencies -> marketcompass.infrastructure.agent.langgraph.build",
+    "chartnexus.contexts.copilot.api.dependencies -> chartnexus.infrastructure.agent.langgraph.build",
     # STRYX uses the same sanctioned bridge as copilot: its dependency imports
     # only `build_stryx`, which reads market_data/options_analytics services (and
     # the shared agent tools) and returns a stryx `AgentPort`. Exempt the bridge
     # edge so the transitive reach isn't counted as stryx depending on them.
-    "marketcompass.contexts.stryx.api.dependencies -> marketcompass.infrastructure.agent.langgraph.build_stryx",
+    "chartnexus.contexts.stryx.api.dependencies -> chartnexus.infrastructure.agent.langgraph.build_stryx",
     # HUGIN uses the same sanctioned-bridge pattern: its API dependency imports
     # only `build_hugin`, which assembles the read services (and, later, the cycle
     # ports) from the container. Exempt that single edge so the transitive reach
     # isn't counted as hugin depending on other contexts or infrastructure.
-    "marketcompass.contexts.hugin.api.dependencies -> marketcompass.infrastructure.hugin.build_hugin",
+    "chartnexus.contexts.hugin.api.dependencies -> chartnexus.infrastructure.hugin.build_hugin",
     # MME100 uses the same sanctioned-bridge pattern: its API dependency imports
     # only `build_mme100`, which assembles the chat/read services (and the worker's
     # agent + directory + briefing store) from the container. Exempt that single
     # edge so the transitive reach isn't counted as mme100 depending on other
     # contexts or infrastructure.
-    "marketcompass.contexts.mme100.api.dependencies -> marketcompass.infrastructure.mme100.build_mme100",
+    "chartnexus.contexts.mme100.api.dependencies -> chartnexus.infrastructure.mme100.build_mme100",
     # PMS composes four contexts' reads behind one endpoint and uses the same
     # sanctioned-bridge pattern: its API dependency imports only
     # `build_pre_market`, which assembles market_data, options_analytics,
@@ -165,58 +165,58 @@ ignore_imports = [
     # Exempt that single edge so the bridge's transitive reach is not counted
     # as pre_market depending on those contexts. The AST boundary test needs no
     # exemption — `contexts/pre_market` imports none of them directly.
-    "marketcompass.contexts.pre_market.api.dependencies -> marketcompass.infrastructure.pre_market.build_pre_market",
+    "chartnexus.contexts.pre_market.api.dependencies -> chartnexus.infrastructure.pre_market.build_pre_market",
     # Messaging uses the same sanctioned-bridge pattern: its API dependency imports
     # only `build_messaging`, which assembles the channel repository + adapters from
     # the container. Exempt that single edge.
-    "marketcompass.contexts.messaging.api.dependencies -> marketcompass.infrastructure.messaging.build_messaging",
+    "chartnexus.contexts.messaging.api.dependencies -> chartnexus.infrastructure.messaging.build_messaging",
     # Futures analytics uses the same sanctioned-bridge pattern: its API
     # dependency imports only `build_futures_services`, which assembles the
     # broker resolver, the mock fallback and the instrument catalog into a
     # futures_analytics `FuturesBoardSource`. The context owns the build-up
     # maths and declares the port; only the bridge knows market_data exists.
-    "marketcompass.contexts.futures_analytics.api.dependencies -> marketcompass.infrastructure.futures.build_futures",
+    "chartnexus.contexts.futures_analytics.api.dependencies -> chartnexus.infrastructure.futures.build_futures",
     # Market breadth uses the same sanctioned-bridge pattern: its API dependency
     # imports only `build_breadth_services`, which assembles the futures board,
     # the index weight table and the flow placeholder into market_breadth ports.
     # The context owns the breadth, contribution and rotation maths; only the
     # bridge knows the catalog and futures_analytics exist.
-    "marketcompass.contexts.market_breadth.api.dependencies -> marketcompass.infrastructure.breadth.build_breadth",
+    "chartnexus.contexts.market_breadth.api.dependencies -> chartnexus.infrastructure.breadth.build_breadth",
     # Report uses the same sanctioned-bridge pattern: its API dependency imports
     # only `build_report`, which assembles the data gatherer, narrator, renderer and
     # enrollment store from the container. Exempt that single edge.
-    "marketcompass.contexts.report.api.dependencies -> marketcompass.infrastructure.report.build_report",
+    "chartnexus.contexts.report.api.dependencies -> chartnexus.infrastructure.report.build_report",
     # Global markets uses the same sanctioned-bridge pattern: its API dependency
     # imports only `build_global_services`, which assembles the Yahoo quote
     # source, the simulated fallback, the GIFT adapter and the Redis journal
     # from the container. The context owns the handoff maths; only the bridge
     # knows which provider is behind the port.
-    "marketcompass.contexts.global_markets.api.dependencies -> marketcompass.infrastructure.global_markets.build_global",
+    "chartnexus.contexts.global_markets.api.dependencies -> chartnexus.infrastructure.global_markets.build_global",
 ]
 modules = [
-    "marketcompass.contexts.identity",
-    "marketcompass.contexts.tenancy",
-    "marketcompass.contexts.entitlements",
-    "marketcompass.contexts.billing",
-    "marketcompass.contexts.preferences",
-    "marketcompass.contexts.instrument_catalog",
-    "marketcompass.contexts.broker_connections",
-    "marketcompass.contexts.ai_settings",
-    "marketcompass.contexts.market_ingestion",
-    "marketcompass.contexts.market_data",
-    "marketcompass.contexts.options_analytics",
-    "marketcompass.contexts.futures_analytics",
-    "marketcompass.contexts.market_breadth",
-    "marketcompass.contexts.global_markets",
-    "marketcompass.contexts.signals",
-    "marketcompass.contexts.outcomes",
-    "marketcompass.contexts.content_intelligence",
-    "marketcompass.contexts.copilot",
-    "marketcompass.contexts.stryx",
-    "marketcompass.contexts.hugin",
-    "marketcompass.contexts.mme100",
-    "marketcompass.contexts.messaging",
-    "marketcompass.contexts.report",
-    "marketcompass.contexts.realtime_delivery",
-    "marketcompass.contexts.audit",
+    "chartnexus.contexts.identity",
+    "chartnexus.contexts.tenancy",
+    "chartnexus.contexts.entitlements",
+    "chartnexus.contexts.billing",
+    "chartnexus.contexts.preferences",
+    "chartnexus.contexts.instrument_catalog",
+    "chartnexus.contexts.broker_connections",
+    "chartnexus.contexts.ai_settings",
+    "chartnexus.contexts.market_ingestion",
+    "chartnexus.contexts.market_data",
+    "chartnexus.contexts.options_analytics",
+    "chartnexus.contexts.futures_analytics",
+    "chartnexus.contexts.market_breadth",
+    "chartnexus.contexts.global_markets",
+    "chartnexus.contexts.signals",
+    "chartnexus.contexts.outcomes",
+    "chartnexus.contexts.content_intelligence",
+    "chartnexus.contexts.copilot",
+    "chartnexus.contexts.stryx",
+    "chartnexus.contexts.hugin",
+    "chartnexus.contexts.mme100",
+    "chartnexus.contexts.messaging",
+    "chartnexus.contexts.report",
+    "chartnexus.contexts.realtime_delivery",
+    "chartnexus.contexts.audit",
 ]

@@ -1,34 +1,34 @@
 import type { ChartTheme } from './types';
 
 /**
- * The `--mc-*` token behind each chart role.
+ * The `--cn-*` token behind each chart role.
  *
  * All of these already exist in app.css for every theme, so charts follow a
  * theme switch without any new tokens being defined.
  */
 const CHART_TOKENS: Record<keyof ChartTheme, string> = {
-  axis: '--mc-text-subtle',
-  accent: '--mc-accent',
-  grid: '--mc-border',
-  surface: '--mc-surface',
-  tooltipBg: '--mc-surface',
-  tooltipText: '--mc-text',
-  call: '--mc-bullish',
-  put: '--mc-bearish',
-  marker: '--mc-warning',
-  atmBand: '--mc-warning',
-  onMarker: '--mc-on-brand',
-  spotLabelBg: '--mc-surface-raised',
-  spotLabelText: '--mc-text',
-  maxPainLabelBg: '--mc-brand-deep',
-  series1: '--mc-series-1',
-  series2: '--mc-series-2',
-  series3: '--mc-series-3',
-  series4: '--mc-series-4',
-  series5: '--mc-series-5',
-  series6: '--mc-series-6',
-  series7: '--mc-series-7',
-  series8: '--mc-series-8'
+  axis: '--cn-text-subtle',
+  accent: '--cn-accent',
+  grid: '--cn-border',
+  surface: '--cn-surface',
+  tooltipBg: '--cn-surface',
+  tooltipText: '--cn-text',
+  call: '--cn-bullish',
+  put: '--cn-bearish',
+  marker: '--cn-warning',
+  atmBand: '--cn-warning',
+  onMarker: '--cn-on-brand',
+  spotLabelBg: '--cn-surface-raised',
+  spotLabelText: '--cn-text',
+  maxPainLabelBg: '--cn-brand-deep',
+  series1: '--cn-series-1',
+  series2: '--cn-series-2',
+  series3: '--cn-series-3',
+  series4: '--cn-series-4',
+  series5: '--cn-series-5',
+  series6: '--cn-series-6',
+  series7: '--cn-series-7',
+  series8: '--cn-series-8'
 };
 
 /**

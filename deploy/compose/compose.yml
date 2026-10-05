@@ -6,16 +6,16 @@
 # Application services live in compose.dev.yml so that `docker compose up
 # postgres redis` stays a fast, dependency-only start.
 
-name: marketcompass
+name: chartnexus
 
 services:
   postgres:
     image: postgres:18-alpine
     restart: unless-stopped
     environment:
-      POSTGRES_USER: ${POSTGRES_USER:-marketcompass}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-marketcompass}
-      POSTGRES_DB: ${POSTGRES_DB:-marketcompass}
+      POSTGRES_USER: ${POSTGRES_USER:-chartnexus}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-chartnexus}
+      POSTGRES_DB: ${POSTGRES_DB:-chartnexus}
       # Deterministic collation so ORDER BY matches between dev and production.
       POSTGRES_INITDB_ARGS: "--locale-provider=icu --icu-locale=en-US --encoding=UTF8"
     command:
@@ -36,7 +36,7 @@ services:
       # mount goes one level up from the pre-18 /var/lib/postgresql/data.
       - postgres-data:/var/lib/postgresql
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-marketcompass} -d ${POSTGRES_DB:-marketcompass}"]
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-chartnexus} -d ${POSTGRES_DB:-chartnexus}"]
       interval: 5s
       timeout: 3s
       retries: 20

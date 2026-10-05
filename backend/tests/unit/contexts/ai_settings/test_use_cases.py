@@ -7,15 +7,15 @@ from datetime import UTC, datetime
 
 import pytest
 
-from marketcompass.contexts.ai_settings.application.use_cases import (
+from chartnexus.contexts.ai_settings.application.use_cases import (
     ClearApiKey,
     GetAiSettings,
     SaveAiSettings,
     SaveAiSettingsCommand,
 )
-from marketcompass.contexts.ai_settings.domain.aggregate import AiSettings
-from marketcompass.contexts.ai_settings.domain.errors import ProviderUnsupportedError
-from marketcompass.shared_kernel.types.identifiers import TenantId, UserId
+from chartnexus.contexts.ai_settings.domain.aggregate import AiSettings
+from chartnexus.contexts.ai_settings.domain.errors import ProviderUnsupportedError
+from chartnexus.shared_kernel.types.identifiers import TenantId, UserId
 
 pytestmark = pytest.mark.unit
 

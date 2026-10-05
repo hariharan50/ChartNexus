@@ -15,16 +15,16 @@ from datetime import UTC, datetime, timedelta
 
 import pytest
 
-from marketcompass.contexts.options_analytics.application.ports import (
+from chartnexus.contexts.options_analytics.application.ports import (
     ChainSnapshot,
     ProviderChain,
 )
-from marketcompass.contexts.options_analytics.application.straddle_chart_service import (
+from chartnexus.contexts.options_analytics.application.straddle_chart_service import (
     MAX_SESSIONS,
     GetStraddleChart,
 )
-from marketcompass.contexts.options_analytics.domain.oi_math import ChainRow
-from marketcompass.shared_kernel.types.identifiers import TenantId
+from chartnexus.contexts.options_analytics.domain.oi_math import ChainRow
+from chartnexus.shared_kernel.types.identifiers import TenantId
 
 pytestmark = pytest.mark.unit
 

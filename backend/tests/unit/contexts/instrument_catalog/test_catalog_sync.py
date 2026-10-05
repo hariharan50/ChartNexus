@@ -6,18 +6,18 @@ from decimal import Decimal
 
 import pytest
 
-from marketcompass.contexts.instrument_catalog.application.ports import CatalogSyncResult
-from marketcompass.contexts.instrument_catalog.application.use_cases import (
+from chartnexus.contexts.instrument_catalog.application.ports import CatalogSyncResult
+from chartnexus.contexts.instrument_catalog.application.use_cases import (
     GetInstrument,
     ListInstruments,
     ListInstrumentsQuery,
     SyncInstrumentCatalog,
 )
-from marketcompass.contexts.instrument_catalog.domain.instrument import (
+from chartnexus.contexts.instrument_catalog.domain.instrument import (
     Instrument,
     InstrumentKind,
 )
-from marketcompass.shared_kernel.domain.errors import NotFoundError, ValidationError
+from chartnexus.shared_kernel.domain.errors import NotFoundError, ValidationError
 
 pytestmark = pytest.mark.unit
 

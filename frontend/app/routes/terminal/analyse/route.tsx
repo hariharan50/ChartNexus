@@ -22,7 +22,7 @@ interface DrawState {
 
 const DEFAULT_DRAW_STATE: DrawState = { locked: false, visible: true };
 
-export const meta: Route.MetaFunction = () => [{ title: 'Chart Tools · MarketCompass' }];
+export const meta: Route.MetaFunction = () => [{ title: 'Chart Tools · ChartNexus' }];
 
 export default function Analyse() {
   const [layout, setLayout] = useState<LayoutId>('1');

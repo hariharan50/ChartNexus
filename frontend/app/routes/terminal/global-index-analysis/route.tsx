@@ -11,7 +11,7 @@ import s from './route.module.css';
 import type { Route } from './+types/route';
 
 export const meta: Route.MetaFunction = () => [
-  { title: 'GIA — Global Index Analysis · MarketCompass' }
+  { title: 'GIA — Global Index Analysis · ChartNexus' }
 ];
 
 /**
@@ -85,7 +85,7 @@ export default function GlobalIndexAnalysis() {
       )}
 
       <p className={s.disclaimer}>
-        For educational and informational purposes only. MarketCompass is not a SEBI-registered
+        For educational and informational purposes only. ChartNexus is not a SEBI-registered
         investment adviser. Gap pressure is a weighted composite of overnight index moves with
         fixed, unfitted weights — it is an illustrative read, not a forecast, and markets routinely
         open against it. Nothing here is investment advice.

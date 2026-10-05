@@ -22,7 +22,7 @@ import s from './analysis.module.css';
 import type { Route } from './+types/index-weightage';
 
 export const meta: Route.MetaFunction = () => [
-  { title: 'Index Weightage · Future Lab · MarketCompass' }
+  { title: 'Index Weightage · Future Lab · ChartNexus' }
 ];
 
 /** Which grouping the donut draws. */

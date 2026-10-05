@@ -26,7 +26,7 @@ import s from './heatmap.module.css';
 import type { Route } from './+types/heatmap';
 
 export const meta: Route.MetaFunction = () => [
-  { title: 'Future Heatmap · Future Lab · MarketCompass' }
+  { title: 'Future Heatmap · Future Lab · ChartNexus' }
 ];
 
 /** Matches the board's own poll, so the ring counts down to a real refresh. */

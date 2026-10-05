@@ -1,7 +1,7 @@
 import MoversBoard from './components/MoversBoard';
 import type { Route } from './+types/stocks';
 
-export const meta: Route.MetaFunction = () => [{ title: 'Stocks · Future Lab · MarketCompass' }];
+export const meta: Route.MetaFunction = () => [{ title: 'Stocks · Future Lab · ChartNexus' }];
 
 /**
  * Every F&O stock, ranked and classified.

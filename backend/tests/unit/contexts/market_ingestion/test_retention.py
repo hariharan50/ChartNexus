@@ -12,7 +12,7 @@ from datetime import UTC, date, datetime, timedelta, timezone
 
 import pytest
 
-from marketcompass.contexts.market_ingestion.application.retention import (
+from chartnexus.contexts.market_ingestion.application.retention import (
     PruneSnapshots,
     RetentionError,
 )

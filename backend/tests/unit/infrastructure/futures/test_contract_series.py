@@ -13,18 +13,18 @@ from decimal import Decimal
 
 import pytest
 
-from marketcompass.contexts.instrument_catalog.domain.instrument import (
+from chartnexus.contexts.instrument_catalog.domain.instrument import (
     Instrument,
     InstrumentKind,
 )
-from marketcompass.contexts.market_data.domain.instruments import InstrumentSymbol
-from marketcompass.infrastructure.brokers.futures_contract import (
+from chartnexus.contexts.market_data.domain.instruments import InstrumentSymbol
+from chartnexus.infrastructure.brokers.futures_contract import (
     MAX_SERIES,
     contract_for,
     expiries_for,
     to_futures_symbol,
 )
-from marketcompass.infrastructure.catalog import registry
+from chartnexus.infrastructure.catalog import registry
 
 pytestmark = pytest.mark.unit
 

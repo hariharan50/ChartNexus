@@ -34,7 +34,7 @@ export default function RegimeScorecard({ regime }: Props) {
     <div className={s.wrap}>
       <div className={s.head}>
         <p className={cx(s.band, s[tone ?? 'flat'])}>{REGIME_LABELS[regime.band]}</p>
-        <p className={cx(s.score, 'mc-numeric', s[tone ?? 'flat'])}>{fmtOne(regime.score)}</p>
+        <p className={cx(s.score, 'cn-numeric', s[tone ?? 'flat'])}>{fmtOne(regime.score)}</p>
       </div>
 
       <div className={s.meter} aria-hidden="true">
@@ -54,7 +54,7 @@ export default function RegimeScorecard({ regime }: Props) {
         {regime.axes.map((axis) => (
           <li key={axis.axis} className={cx(s.axis, !axis.resolved && s.muted)}>
             <span className={s.axisLabel}>{axis.label}</span>
-            <span className={cx(s.axisPoints, 'mc-numeric', s[stanceTone(axis.stance) ?? 'flat'])}>
+            <span className={cx(s.axisPoints, 'cn-numeric', s[stanceTone(axis.stance) ?? 'flat'])}>
               {axis.resolved ? fmtOne(axis.points) : '—'}
             </span>
           </li>
@@ -81,8 +81,8 @@ export default function RegimeScorecard({ regime }: Props) {
                 {factor.label}
                 {factor.note ? <span className={s.factorNote}>{factor.note}</span> : null}
               </th>
-              <td className="mc-numeric">{factor.reading}</td>
-              <td className={cx(s.right, 'mc-numeric', s[stanceTone(factor.stance) ?? 'flat'])}>
+              <td className="cn-numeric">{factor.reading}</td>
+              <td className={cx(s.right, 'cn-numeric', s[stanceTone(factor.stance) ?? 'flat'])}>
                 {fmtOne(factor.points)}
               </td>
             </tr>

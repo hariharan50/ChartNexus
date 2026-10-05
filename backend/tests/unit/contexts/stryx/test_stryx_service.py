@@ -11,7 +11,7 @@ from __future__ import annotations
 import uuid
 from collections.abc import AsyncIterator
 
-from marketcompass.contexts.stryx.application.ports import (
+from chartnexus.contexts.stryx.application.ports import (
     AgentDone,
     AgentEvent,
     JournalEntry,
@@ -19,9 +19,9 @@ from marketcompass.contexts.stryx.application.ports import (
     TextDelta,
     Turn,
 )
-from marketcompass.contexts.stryx.application.stryx_service import StryxService
-from marketcompass.contexts.stryx.domain.call_template import StryxCall
-from marketcompass.shared_kernel.types.identifiers import TenantId
+from chartnexus.contexts.stryx.application.stryx_service import StryxService
+from chartnexus.contexts.stryx.domain.call_template import StryxCall
+from chartnexus.shared_kernel.types.identifiers import TenantId
 
 TENANT = TenantId(uuid.uuid4())
 

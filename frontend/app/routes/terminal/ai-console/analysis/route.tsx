@@ -32,7 +32,7 @@ import s from './route.module.css';
 import type { Route } from './+types/route';
 
 export const meta: Route.MetaFunction = () => [
-  { title: 'Market Analysis · AI Console · MarketCompass' }
+  { title: 'Market Analysis · AI Console · ChartNexus' }
 ];
 
 /** The agent's name, shown throughout the console. */

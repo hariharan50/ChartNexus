@@ -5,28 +5,28 @@
   align-items: flex-start;
   gap: 0.5rem;
   width: 100%;
-  padding: var(--mc-space-4) var(--mc-space-4) var(--mc-space-6);
+  padding: var(--cn-space-4) var(--cn-space-4) var(--cn-space-6);
   text-align: left;
-  background: var(--mc-surface);
-  border: 1px solid var(--mc-border);
-  border-radius: var(--mc-radius-lg);
-  box-shadow: var(--mc-shadow);
+  background: var(--cn-surface);
+  border: 1px solid var(--cn-border);
+  border-radius: var(--cn-radius-lg);
+  box-shadow: var(--cn-shadow);
   overflow: hidden;
   cursor: pointer;
   transition:
-    border-color var(--mc-duration-fast) ease,
-    transform var(--mc-duration-fast) ease;
+    border-color var(--cn-duration-fast) ease,
+    transform var(--cn-duration-fast) ease;
 }
 
 .card:hover {
-  border-color: var(--mc-border-strong);
+  border-color: var(--cn-border-strong);
 }
 
 .card.selected {
-  border-color: var(--mc-brand);
+  border-color: var(--cn-brand);
   box-shadow:
-    0 0 0 1px var(--mc-brand),
-    var(--mc-shadow);
+    0 0 0 1px var(--cn-brand),
+    var(--cn-shadow);
 }
 
 .card.pending {
@@ -34,11 +34,11 @@
 }
 
 .label {
-  font-size: var(--mc-text-xs);
+  font-size: var(--cn-text-xs);
   font-weight: 600;
   letter-spacing: 0.06em;
   text-transform: uppercase;
-  color: var(--mc-text-subtle);
+  color: var(--cn-text-subtle);
 }
 
 .value {
@@ -49,7 +49,7 @@
 }
 
 .card.pending .value {
-  color: var(--mc-text-subtle);
+  color: var(--cn-text-subtle);
 }
 
 .foot {
@@ -62,28 +62,28 @@
   align-items: center;
   padding: 0.125rem 0.5rem;
   border-radius: 999px;
-  font-size: var(--mc-text-xs);
+  font-size: var(--cn-text-xs);
   font-weight: 600;
 }
 
 .pill.up {
-  color: var(--mc-bullish);
-  background: var(--mc-bullish-weak);
+  color: var(--cn-bullish);
+  background: var(--cn-bullish-weak);
 }
 
 .pill.down {
-  color: var(--mc-bearish);
-  background: var(--mc-bearish-weak);
+  color: var(--cn-bearish);
+  background: var(--cn-bearish-weak);
 }
 
 .pill.flat {
-  color: var(--mc-text-muted);
-  background: var(--mc-surface-raised);
+  color: var(--cn-text-muted);
+  background: var(--cn-surface-raised);
 }
 
 .await {
-  font-size: var(--mc-text-xs);
-  color: var(--mc-text-subtle);
+  font-size: var(--cn-text-xs);
+  color: var(--cn-text-subtle);
 }
 
 .accent {
@@ -95,11 +95,11 @@
 }
 
 .accent.up {
-  background: var(--mc-bullish);
+  background: var(--cn-bullish);
 }
 
 .accent.down {
-  background: var(--mc-bearish);
+  background: var(--cn-bearish);
 }
 
 .accent.flat {

@@ -15,20 +15,20 @@ from datetime import UTC, datetime, timedelta, timezone
 
 import pytest
 
-from marketcompass.bootstrap.settings import DatabaseSettings
-from marketcompass.contexts.mme100.domain.briefing import Briefing
-from marketcompass.infrastructure.persistence.postgresql.repositories.mme100.briefing_repository import (
+from chartnexus.bootstrap.settings import DatabaseSettings
+from chartnexus.contexts.mme100.domain.briefing import Briefing
+from chartnexus.infrastructure.persistence.postgresql.repositories.mme100.briefing_repository import (
     SqlAlchemyMme100BriefingRepository,
 )
-from marketcompass.infrastructure.persistence.postgresql.repositories.mme100.enrollment_repository import (
+from chartnexus.infrastructure.persistence.postgresql.repositories.mme100.enrollment_repository import (
     SqlAlchemyMme100EnrollmentRepository,
 )
-from marketcompass.infrastructure.persistence.postgresql.session import Database
-from marketcompass.shared_kernel.types.identifiers import TenantId
+from chartnexus.infrastructure.persistence.postgresql.session import Database
+from chartnexus.shared_kernel.types.identifiers import TenantId
 
 pytestmark = pytest.mark.integration
 
-ASYNC_DSN = "postgresql+asyncpg://marketcompass:marketcompass@localhost:5433/marketcompass"
+ASYNC_DSN = "postgresql+asyncpg://chartnexus:chartnexus@localhost:5433/chartnexus"
 _IST = timezone(timedelta(hours=5, minutes=30))
 
 

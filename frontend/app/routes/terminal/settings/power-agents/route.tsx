@@ -11,7 +11,7 @@ import { cx } from '$shared/ui/cx';
 import s from './route.module.css';
 import type { Route } from './+types/route';
 
-export const meta: Route.MetaFunction = () => [{ title: 'Power AI Agents · MarketCompass' }];
+export const meta: Route.MetaFunction = () => [{ title: 'Power AI Agents · ChartNexus' }];
 
 /**
  * One settings page for the autonomous, token-heavy agents. HUGIN and MME100 both

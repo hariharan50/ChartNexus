@@ -10,8 +10,8 @@ from __future__ import annotations
 import uuid
 from collections.abc import AsyncIterator
 
-from marketcompass.contexts.copilot.application.agent_service import AgentService
-from marketcompass.contexts.copilot.application.ports import (
+from chartnexus.contexts.copilot.application.agent_service import AgentService
+from chartnexus.contexts.copilot.application.ports import (
     AgentDone,
     AgentEvent,
     SkillsSelected,
@@ -20,7 +20,7 @@ from marketcompass.contexts.copilot.application.ports import (
     ToolStarted,
     Turn,
 )
-from marketcompass.shared_kernel.types.identifiers import TenantId
+from chartnexus.shared_kernel.types.identifiers import TenantId
 
 TENANT = TenantId(uuid.uuid4())
 

@@ -278,7 +278,7 @@ function GreekPanel({ title, value, tone, option, loading }: PanelProps) {
     <section className={s.panel}>
       <header className={s.panelHead}>
         <h2 className={cx(s.panelTitle, tone === 'call' ? s.callText : s.putText)}>{title}</h2>
-        <span className={cx(s.panelValue, 'mc-numeric')}>{value}</span>
+        <span className={cx(s.panelValue, 'cn-numeric')}>{value}</span>
       </header>
       {option ? (
         <EChart option={option} className={s.chart} />

@@ -18,8 +18,8 @@ import sqlalchemy as sa
 from fastapi.testclient import TestClient
 from sqlalchemy.ext.asyncio import create_async_engine
 
-from marketcompass.bootstrap.settings import Settings
-from marketcompass.entrypoints.main_api import create_app
+from chartnexus.bootstrap.settings import Settings
+from chartnexus.entrypoints.main_api import create_app
 
 pytestmark = [pytest.mark.integration, pytest.mark.security]
 
@@ -29,16 +29,14 @@ PASSWORD = "a-perfectly-fine-password"
 APP_ID = "ABCDE123XY-100"
 SECRET_ID = "the-plaintext-app-secret"
 
-ASYNC_DSN = "postgresql+asyncpg://marketcompass:marketcompass@localhost:5433/marketcompass"
+ASYNC_DSN = "postgresql+asyncpg://chartnexus:chartnexus@localhost:5433/chartnexus"
 
 
 @pytest.fixture(scope="module")
 def settings() -> Settings:
     return Settings(
         environment="local",
-        database={
-            "url": "postgresql+asyncpg://marketcompass:marketcompass@localhost:5433/marketcompass"
-        },
+        database={"url": "postgresql+asyncpg://chartnexus:chartnexus@localhost:5433/chartnexus"},
         redis={"url": "redis://localhost:6381/0", "key_prefix": f"it-{uuid.uuid4().hex[:8]}"},
         auth={"jwt_signing_key": "integration-test-signing-key-long-enough"},
         security={"cookie_secure": False},

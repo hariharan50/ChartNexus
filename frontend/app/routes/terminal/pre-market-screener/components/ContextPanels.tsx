@@ -27,7 +27,7 @@ function Cell({
   return (
     <div className={s.cell}>
       <dt>{label}</dt>
-      <dd className={cx('mc-numeric', toneOf ? s[toneOf] : undefined)}>
+      <dd className={cx('cn-numeric', toneOf ? s[toneOf] : undefined)}>
         {value}
         {sub ? <span className={s.sub}>{sub}</span> : null}
       </dd>

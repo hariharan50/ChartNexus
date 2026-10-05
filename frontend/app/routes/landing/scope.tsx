@@ -5,11 +5,11 @@ import s from './route.module.css';
 import type { Route } from './+types/scope';
 
 export const meta: Route.MetaFunction = () => [
-  { title: 'Scope · MarketCompass' },
+  { title: 'Scope · ChartNexus' },
   {
     name: 'description',
     content:
-      'The current MarketCompass scope: instruments, market data, a read-only design, and ' +
+      'The current ChartNexus scope: instruments, market data, a read-only design, and ' +
       'provenance built into every response.'
   }
 ];
@@ -81,9 +81,9 @@ export default function Scope() {
           </div>
 
           <p className={s.disclaimer}>
-            MarketCompass is an analytics tool for informational use only. It is not investment
-            advice and is not a SEBI-registered advisory service. Nothing here is a recommendation
-            to buy or sell any instrument.
+            ChartNexus is an analytics tool for informational use only. It is not investment advice
+            and is not a SEBI-registered advisory service. Nothing here is a recommendation to buy
+            or sell any instrument.
           </p>
         </div>
       </div>

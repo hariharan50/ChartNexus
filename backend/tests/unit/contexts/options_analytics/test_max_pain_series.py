@@ -11,15 +11,15 @@ from __future__ import annotations
 import uuid
 from datetime import UTC, datetime, timedelta
 
-from marketcompass.contexts.options_analytics.application.max_pain_series_service import (
+from chartnexus.contexts.options_analytics.application.max_pain_series_service import (
     GetMaxPainSeries,
 )
-from marketcompass.contexts.options_analytics.application.ports import (
+from chartnexus.contexts.options_analytics.application.ports import (
     ChainSnapshot,
     ProviderChain,
 )
-from marketcompass.contexts.options_analytics.domain.oi_math import ChainRow, max_pain
-from marketcompass.shared_kernel.types.identifiers import TenantId
+from chartnexus.contexts.options_analytics.domain.oi_math import ChainRow, max_pain
+from chartnexus.shared_kernel.types.identifiers import TenantId
 
 TENANT = TenantId(uuid.uuid4())
 # 08:00 UTC == 13:30 IST, inside the session on 2026-08-04.
@@ -317,9 +317,7 @@ class TestDegradedTiers:
         live book - that would date a number to a day it never belonged to."""
         service = _service([], chain_rows=_ladder(24_700.0))
 
-        payload = await service(
-            TENANT, "NIFTY", trade_date=datetime(2026, 7, 30, 8, 0, tzinfo=UTC)
-        )
+        payload = await service(TENANT, "NIFTY", trade_date=datetime(2026, 7, 30, 8, 0, tzinfo=UTC))
 
         assert payload["data_quality"] == "empty"
         assert payload["t"] == []
@@ -328,9 +326,7 @@ class TestDegradedTiers:
     async def test_an_empty_payload_is_still_well_formed(self) -> None:
         service = _service([])
 
-        payload = await service(
-            TENANT, "NIFTY", trade_date=datetime(2026, 7, 30, 8, 0, tzinfo=UTC)
-        )
+        payload = await service(TENANT, "NIFTY", trade_date=datetime(2026, 7, 30, 8, 0, tzinfo=UTC))
 
         assert payload["symbol"] == "NIFTY"
         assert payload["expiry_date"] == "2026-08-11"

@@ -29,7 +29,7 @@ import s from './dashboard.module.css';
 import type { Route } from './+types/dashboard';
 
 export const meta: Route.MetaFunction = () => [
-  { title: 'Future Dashboard · Future Lab · MarketCompass' }
+  { title: 'Future Dashboard · Future Lab · ChartNexus' }
 ];
 
 const PANEL_ROWS = 5;

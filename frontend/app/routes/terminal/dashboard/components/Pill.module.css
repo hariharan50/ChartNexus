@@ -5,40 +5,40 @@
   padding: 0.125rem 0.5rem;
   border: 1px solid transparent;
   border-radius: 999px;
-  font-size: var(--mc-text-xs);
+  font-size: var(--cn-text-xs);
   font-weight: 600;
   line-height: 1.4;
   white-space: nowrap;
 }
 
 .bullish {
-  color: var(--mc-bullish);
-  background: color-mix(in srgb, var(--mc-bullish) 12%, transparent);
-  border-color: color-mix(in srgb, var(--mc-bullish) 30%, transparent);
+  color: var(--cn-bullish);
+  background: color-mix(in srgb, var(--cn-bullish) 12%, transparent);
+  border-color: color-mix(in srgb, var(--cn-bullish) 30%, transparent);
 }
 
 .bearish {
-  color: var(--mc-bearish);
-  background: color-mix(in srgb, var(--mc-bearish) 12%, transparent);
-  border-color: color-mix(in srgb, var(--mc-bearish) 30%, transparent);
+  color: var(--cn-bearish);
+  background: color-mix(in srgb, var(--cn-bearish) 12%, transparent);
+  border-color: color-mix(in srgb, var(--cn-bearish) 30%, transparent);
 }
 
 .warning {
-  color: var(--mc-warning);
-  background: color-mix(in srgb, var(--mc-warning) 14%, transparent);
-  border-color: color-mix(in srgb, var(--mc-warning) 32%, transparent);
+  color: var(--cn-warning);
+  background: color-mix(in srgb, var(--cn-warning) 14%, transparent);
+  border-color: color-mix(in srgb, var(--cn-warning) 32%, transparent);
 }
 
 .accent {
-  color: var(--mc-accent);
-  background: color-mix(in srgb, var(--mc-accent) 14%, transparent);
-  border-color: color-mix(in srgb, var(--mc-accent) 30%, transparent);
+  color: var(--cn-accent);
+  background: color-mix(in srgb, var(--cn-accent) 14%, transparent);
+  border-color: color-mix(in srgb, var(--cn-accent) 30%, transparent);
 }
 
 .neutral {
-  color: var(--mc-text-muted);
-  background: color-mix(in srgb, var(--mc-neutral) 14%, transparent);
-  border-color: color-mix(in srgb, var(--mc-neutral) 26%, transparent);
+  color: var(--cn-text-muted);
+  background: color-mix(in srgb, var(--cn-neutral) 14%, transparent);
+  border-color: color-mix(in srgb, var(--cn-neutral) 26%, transparent);
 }
 
 .subtle {

@@ -12,29 +12,29 @@ from decimal import Decimal
 
 import pytest
 
-from marketcompass.contexts.futures_analytics.application.ports import BoardSnapshot
-from marketcompass.contexts.futures_analytics.domain.buildup import FuturesReading
-from marketcompass.contexts.market_breadth.application.ports import (
+from chartnexus.contexts.futures_analytics.application.ports import BoardSnapshot
+from chartnexus.contexts.futures_analytics.domain.buildup import FuturesReading
+from chartnexus.contexts.market_breadth.application.ports import (
     IndexConstituentSource,
     InstitutionalFlowSource,
 )
-from marketcompass.contexts.market_breadth.domain.flows import Segment
-from marketcompass.contexts.market_breadth.domain.open_interest import (
+from chartnexus.contexts.market_breadth.domain.flows import Segment
+from chartnexus.contexts.market_breadth.domain.open_interest import (
     OI_SEGMENTS,
     PARTICIPANT_ORDER,
     FutureLegs,
     OptionLegs,
     segment_imbalance,
 )
-from marketcompass.infrastructure.breadth.constituent_source import (
+from chartnexus.infrastructure.breadth.constituent_source import (
     BASIS,
     BoardIndexConstituentSource,
 )
-from marketcompass.infrastructure.breadth.flow_source import (
+from chartnexus.infrastructure.breadth.flow_source import (
     SimulatedInstitutionalFlowSource,
 )
-from marketcompass.infrastructure.time.clock import FixedClock
-from marketcompass.shared_kernel.types.identifiers import TenantId, new_id
+from chartnexus.infrastructure.time.clock import FixedClock
+from chartnexus.shared_kernel.types.identifiers import TenantId, new_id
 
 pytestmark = pytest.mark.unit
 

@@ -6,55 +6,55 @@
 }
 
 .cell {
-  padding: var(--mc-space-2) var(--mc-space-3);
+  padding: var(--cn-space-2) var(--cn-space-3);
 }
 
 .cell:nth-child(odd) {
-  border-right: 1px solid var(--mc-border);
+  border-right: 1px solid var(--cn-border);
 }
 
 .cell:nth-child(-n + 2) {
-  border-bottom: 1px solid var(--mc-border);
-  padding-bottom: var(--mc-space-3);
+  border-bottom: 1px solid var(--cn-border);
+  padding-bottom: var(--cn-space-3);
 }
 
 .cell:nth-child(n + 3) {
-  padding-top: var(--mc-space-3);
+  padding-top: var(--cn-space-3);
 }
 
 .grid dt,
 .posture dt {
-  font-size: var(--mc-text-xs);
+  font-size: var(--cn-text-xs);
   font-weight: 600;
   letter-spacing: 0.05em;
   text-transform: uppercase;
-  color: var(--mc-text-subtle);
+  color: var(--cn-text-subtle);
 }
 
 .grid dd,
 .posture dd {
   margin: 0.25rem 0 0;
-  font-size: var(--mc-text-xl);
+  font-size: var(--cn-text-xl);
   font-weight: 700;
   letter-spacing: -0.01em;
 }
 
 .support {
-  color: var(--mc-bullish);
+  color: var(--cn-bullish);
 }
 
 .resistance {
-  color: var(--mc-bearish);
+  color: var(--cn-bearish);
 }
 
 .posture {
-  margin-top: var(--mc-space-3);
-  padding-top: var(--mc-space-3);
-  border-top: 1px solid var(--mc-border);
+  margin-top: var(--cn-space-3);
+  padding-top: var(--cn-space-3);
+  border-top: 1px solid var(--cn-border);
 }
 
 .posture dd {
-  font-family: var(--mc-font-mono);
-  font-size: var(--mc-text-base);
+  font-family: var(--cn-font-mono);
+  font-size: var(--cn-text-base);
   letter-spacing: 0.01em;
 }

@@ -1,41 +1,41 @@
 .bar {
   display: flex;
   align-items: center;
-  gap: var(--mc-space-2);
-  padding: var(--mc-space-2) var(--mc-space-3);
-  border: 1px solid var(--mc-border);
-  border-radius: var(--mc-radius-lg);
-  background: var(--mc-surface);
-  box-shadow: var(--mc-shadow);
+  gap: var(--cn-space-2);
+  padding: var(--cn-space-2) var(--cn-space-3);
+  border: 1px solid var(--cn-border);
+  border-radius: var(--cn-radius-lg);
+  background: var(--cn-surface);
+  box-shadow: var(--cn-shadow);
 }
 
 .btn {
-  min-width: var(--mc-control-h-sm);
-  height: var(--mc-control-h-sm);
+  min-width: var(--cn-control-h-sm);
+  height: var(--cn-control-h-sm);
   padding: 0 0.5rem;
-  border: 1px solid var(--mc-border);
-  border-radius: var(--mc-radius);
-  background: var(--mc-surface-raised);
-  color: var(--mc-text);
-  font-size: var(--mc-text-sm);
+  border: 1px solid var(--cn-border);
+  border-radius: var(--cn-radius);
+  background: var(--cn-surface-raised);
+  color: var(--cn-text);
+  font-size: var(--cn-text-sm);
   font-weight: 600;
   cursor: pointer;
   line-height: 1;
 }
 
 .btn:hover:not(:disabled) {
-  background: var(--mc-field-bg-hover);
+  background: var(--cn-field-bg-hover);
 }
 
 .btn:disabled {
-  color: var(--mc-text-subtle);
+  color: var(--cn-text-subtle);
   cursor: not-allowed;
 }
 
 .btn.play {
-  border-color: color-mix(in srgb, var(--mc-accent) 45%, transparent);
-  background: var(--mc-accent-weak);
-  color: var(--mc-accent);
+  border-color: color-mix(in srgb, var(--cn-accent) 45%, transparent);
+  background: var(--cn-accent-weak);
+  color: var(--cn-accent);
 }
 
 .btn.exit {
@@ -45,7 +45,7 @@
 .scrub {
   flex: 1;
   min-width: 6rem;
-  accent-color: var(--mc-accent);
+  accent-color: var(--cn-accent);
   cursor: pointer;
 }
 
@@ -53,14 +53,14 @@
   display: inline-flex;
   align-items: baseline;
   gap: 0.5rem;
-  font-size: var(--mc-text-xs);
-  color: var(--mc-text);
+  font-size: var(--cn-text-xs);
+  color: var(--cn-text);
   font-variant-numeric: tabular-nums;
   white-space: nowrap;
 }
 
 .of {
-  color: var(--mc-text-subtle);
+  color: var(--cn-text-subtle);
 }
 
 /* `.speed` is a <Select>; the component paints it. */

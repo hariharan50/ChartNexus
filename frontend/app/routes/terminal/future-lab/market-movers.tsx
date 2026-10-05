@@ -2,7 +2,7 @@ import MoversBoard from './components/MoversBoard';
 import type { Route } from './+types/market-movers';
 
 export const meta: Route.MetaFunction = () => [
-  { title: 'Market Movers · Future Lab · MarketCompass' }
+  { title: 'Market Movers · Future Lab · ChartNexus' }
 ];
 
 /**

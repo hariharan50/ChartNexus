@@ -14,9 +14,7 @@ import ConsoleHeader from '../components/ConsoleHeader';
 import s from './route.module.css';
 import type { Route } from './+types/route';
 
-export const meta: Route.MetaFunction = () => [
-  { title: 'MME100 · Market Analysis · MarketCompass' }
-];
+export const meta: Route.MetaFunction = () => [{ title: 'MME100 · Market Analysis · ChartNexus' }];
 
 /** The agent's name, shown throughout the console. */
 const AGENT_NAME = 'MME100';
@@ -549,7 +547,7 @@ function downloadResponsePdf(contentHtml: string, symbol: string): void {
 
   <div class="foot">
     <span class="dot"></span>
-    <p class="foot-brand">MarketCompass</p>
+    <p class="foot-brand">ChartNexus</p>
     <p class="foot-note">Educational and informational purposes only — not investment advice.
       Consult a SEBI-registered adviser before investing. Generated ${date}.</p>
   </div>

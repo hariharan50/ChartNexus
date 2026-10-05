@@ -49,7 +49,7 @@ const problem = (status: number, body: Record<string, unknown>) =>
   });
 
 beforeEach(() => {
-  document.cookie = 'mc_csrf=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/';
+  document.cookie = 'cn_csrf=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/';
 });
 
 describe('url building', () => {
@@ -103,14 +103,14 @@ describe('headers', () => {
   });
 
   it('sends the CSRF token on an unsafe method', async () => {
-    document.cookie = 'mc_csrf=token-abc; path=/';
+    document.cookie = 'cn_csrf=token-abc; path=/';
     const { fetcher, calls } = recorder([() => json({ ok: true })]);
     await apiFetch({ url: '/auth/logout', method: 'POST', body: '{}', fetcher });
     expect(calls[0]?.headers.get('X-CSRF-Token')).toBe('token-abc');
   });
 
   it('does not send the CSRF token on a read', async () => {
-    document.cookie = 'mc_csrf=token-abc; path=/';
+    document.cookie = 'cn_csrf=token-abc; path=/';
     const { fetcher, calls } = recorder([() => json({ ok: true })]);
     await apiFetch({ url: '/auth/me', fetcher });
     expect(calls[0]?.headers.has('X-CSRF-Token')).toBe(false);
@@ -148,12 +148,12 @@ describe('401 refresh', () => {
   });
 
   it('re-reads the CSRF cookie before retrying, because refresh rotates it', async () => {
-    document.cookie = 'mc_csrf=stale; path=/';
+    document.cookie = 'cn_csrf=stale; path=/';
 
     const { fetcher, calls } = recorder([
       () => problem(401, { code: 'session_expired' }),
       () => {
-        document.cookie = 'mc_csrf=rotated; path=/';
+        document.cookie = 'cn_csrf=rotated; path=/';
         return json({ ok: true });
       },
       () => json({ ok: true })

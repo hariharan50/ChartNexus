@@ -19,17 +19,17 @@ from decimal import Decimal
 
 import pytest
 
-from marketcompass.contexts.instrument_catalog.domain.instrument import (
+from chartnexus.contexts.instrument_catalog.domain.instrument import (
     Instrument,
     InstrumentKind,
 )
-from marketcompass.infrastructure.catalog import registry
+from chartnexus.infrastructure.catalog import registry
 
 
 @pytest.fixture(autouse=True)
 def isolated_environment(monkeypatch: pytest.MonkeyPatch, tmp_path_factory) -> Iterator[None]:  # type: ignore[no-untyped-def]
     for key in list(os.environ):
-        if key.startswith("MC_"):
+        if key.startswith("CN_"):
             monkeypatch.delenv(key, raising=False)
 
     # Settings resolve `.env` relative to the working directory; pointing that

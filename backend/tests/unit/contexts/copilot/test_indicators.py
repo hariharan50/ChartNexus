@@ -9,7 +9,7 @@ from __future__ import annotations
 
 import pytest
 
-from marketcompass.contexts.copilot.domain import indicators
+from chartnexus.contexts.copilot.domain import indicators
 
 
 def test_compute_bundles_all_reads_and_swings() -> None:

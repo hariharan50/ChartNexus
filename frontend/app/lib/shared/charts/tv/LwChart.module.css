@@ -15,9 +15,9 @@
   justify-content: center;
   height: 100%;
   margin: 0;
-  padding: var(--mc-space-6);
-  font-size: var(--mc-text-sm);
+  padding: var(--cn-space-6);
+  font-size: var(--cn-text-sm);
   line-height: 1.6;
   text-align: center;
-  color: var(--mc-text-muted);
+  color: var(--cn-text-muted);
 }

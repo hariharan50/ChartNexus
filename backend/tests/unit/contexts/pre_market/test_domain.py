@@ -12,9 +12,9 @@ from decimal import Decimal
 
 import pytest
 
-from marketcompass.contexts.pre_market.domain import compose, expected_move, gap
-from marketcompass.contexts.pre_market.domain.gap import GapBasis, GapBucket
-from marketcompass.contexts.pre_market.domain.readings import (
+from chartnexus.contexts.pre_market.domain import compose, expected_move, gap
+from chartnexus.contexts.pre_market.domain.gap import GapBasis, GapBucket
+from chartnexus.contexts.pre_market.domain.readings import (
     BY_SYMBOL,
     BreadthReading,
     CandleSeries,
@@ -23,7 +23,7 @@ from marketcompass.contexts.pre_market.domain.readings import (
     Sources,
     SpotReading,
 )
-from marketcompass.contexts.pre_market.domain.regime import (
+from chartnexus.contexts.pre_market.domain.regime import (
     Axis,
     RegimeBand,
     Stance,
@@ -31,7 +31,7 @@ from marketcompass.contexts.pre_market.domain.regime import (
     compose as compose_regime,
     factor,
 )
-from marketcompass.shared_kernel.domain.levels import Bar, LevelOrigin
+from chartnexus.shared_kernel.domain.levels import Bar, LevelOrigin
 
 pytestmark = pytest.mark.unit
 
@@ -201,9 +201,7 @@ class TestRegime:
             (factor("a", "A", Axis.TREND, points=45.0, reading="x"),), expected=9
         )
         broad = compose_regime(
-            tuple(
-                factor(f"f{n}", "F", Axis.TREND, points=1.0, reading="x") for n in range(8)
-            ),
+            tuple(factor(f"f{n}", "F", Axis.TREND, points=1.0, reading="x") for n in range(8)),
             expected=9,
         )
 
@@ -263,7 +261,7 @@ class TestTechnicals:
         assert read.atr_percent is not None
 
     def test_a_mixed_stack_is_none_not_a_direction(self) -> None:
-        """"The moving averages disagree" is a real state, and collapsing it
+        """ "The moving averages disagree" is a real state, and collapsing it
         either way would report a trend the chart does not have.
 
         A long uptrend followed by a sharp selloff: the fast EMAs have rolled
@@ -273,13 +271,15 @@ class TestTechnicals:
         rising = series(count=240).bars
         last = rising[-1].close
         falling = tuple(
-            Bar(open=last - n * 60, high=last - n * 60 + 40, low=last - n * 60 - 40,
-                close=last - (n + 1) * 60)
+            Bar(
+                open=last - n * 60,
+                high=last - n * 60 + 40,
+                low=last - n * 60 - 40,
+                close=last - (n + 1) * 60,
+            )
             for n in range(20)
         )
-        read = compose.technicals_of(
-            CandleSeries(symbol="NIFTY", bars=rising + falling)
-        )
+        read = compose.technicals_of(CandleSeries(symbol="NIFTY", bars=rising + falling))
 
         assert read is not None
         assert read.ema20 is not None and read.ema200 is not None
@@ -331,9 +331,7 @@ class TestLevelMap:
     def test_no_candles_means_no_map_rather_than_an_empty_ladder(self) -> None:
         assert compose.level_map_of(Decimal("25000"), None, options(), atr=80) is None
         assert (
-            compose.level_map_of(
-                Decimal("25000"), CandleSeries(symbol="NIFTY", bars=()), None
-            )
+            compose.level_map_of(Decimal("25000"), CandleSeries(symbol="NIFTY", bars=()), None)
             is None
         )
 

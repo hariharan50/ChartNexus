@@ -12,7 +12,7 @@ import s from './analysis.module.css';
 import type { Route } from './+types/fii-dii-cash';
 
 export const meta: Route.MetaFunction = () => [
-  { title: 'FII/DII Cash Market · Future Lab · MarketCompass' }
+  { title: 'FII/DII Cash Market · Future Lab · ChartNexus' }
 ];
 
 /** Windows the picker offers, in trading sessions. */
@@ -178,11 +178,11 @@ function Legend() {
   return (
     <p className={s.meterLegend}>
       <span>
-        <span className={s.swatch} style={{ background: 'var(--mc-accent)' }} aria-hidden="true" />
+        <span className={s.swatch} style={{ background: 'var(--cn-accent)' }} aria-hidden="true" />
         FII
       </span>
       <span>
-        <span className={s.swatch} style={{ background: 'var(--mc-warning)' }} aria-hidden="true" />
+        <span className={s.swatch} style={{ background: 'var(--cn-warning)' }} aria-hidden="true" />
         DII
       </span>
     </p>

@@ -14,8 +14,8 @@ import { comparePng } from './compare';
  * Since the swap that is no longer in the working tree, so check the last
  * pre-migration commit out beside it:
  *
- *   git worktree add ../mc-svelte <pre-migration-sha>
- *   cd ../mc-svelte/frontend && pnpm install && pnpm dev   # :5173
+ *   git worktree add ../cn-svelte <pre-migration-sha>
+ *   cd ../cn-svelte/frontend && pnpm install && pnpm dev   # :5173
  *   cd frontend && pnpm parity                             # this file
  *
  * Kept rather than deleted: it is the evidence that the port reproduced the
@@ -99,8 +99,8 @@ function comparePaths(paths: string[], signedIn: boolean) {
         if (signedIn) {
           // Same cookie for both origins so the stub reports the same user.
           await context.addCookies([
-            { name: 'mc_session', value: 'test', url: baseURL ?? 'http://localhost:4173' },
-            { name: 'mc_session', value: 'test', url: SVELTE }
+            { name: 'cn_session', value: 'test', url: baseURL ?? 'http://localhost:4173' },
+            { name: 'cn_session', value: 'test', url: SVELTE }
           ]);
         }
 

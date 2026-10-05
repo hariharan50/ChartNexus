@@ -12,7 +12,7 @@ pytestmark = pytest.mark.architecture
 def test_infrastructure_does_not_import_entrypoints() -> None:
     assert_no_imports(
         python_files("infrastructure"),
-        ("marketcompass.entrypoints",),
+        ("chartnexus.entrypoints",),
         reason="infrastructure is a dependency of the entrypoints, never the reverse",
     )
 
@@ -25,7 +25,7 @@ def test_infrastructure_does_not_import_the_container() -> None:
     """
     assert_no_imports(
         python_files("infrastructure"),
-        ("marketcompass.bootstrap.container",),
+        ("chartnexus.bootstrap.container",),
         reason="adapters must receive dependencies, not fetch them from the container",
     )
 
@@ -33,6 +33,6 @@ def test_infrastructure_does_not_import_the_container() -> None:
 def test_contexts_do_not_import_entrypoints() -> None:
     assert_no_imports(
         python_files("contexts"),
-        ("marketcompass.entrypoints", "marketcompass.bootstrap"),
+        ("chartnexus.entrypoints", "chartnexus.bootstrap"),
         reason="bounded contexts must not depend on process wiring",
     )

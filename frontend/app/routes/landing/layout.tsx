@@ -81,11 +81,11 @@ function Nav() {
   return (
     <header className={s.bar}>
       <div className={cx(s.shell, s.nav)}>
-        <Link className={s.brand} to="/" aria-label="MarketCompass home">
+        <Link className={s.brand} to="/" aria-label="ChartNexus home">
           <span className={s.mark} aria-hidden="true">
             <IconBolt />
           </span>
-          MarketCompass
+          ChartNexus
         </Link>
 
         <nav className={s.navLinks} aria-label="Primary">
@@ -133,7 +133,7 @@ function Nav() {
               <span className={s.mark} aria-hidden="true">
                 <IconBolt />
               </span>
-              MarketCompass
+              ChartNexus
             </span>
             <div className={s.drawerHeadActions}>
               {themeToggle}
@@ -204,7 +204,7 @@ function Footer() {
   return (
     <footer className={s.footer}>
       <div className={s.footerInner}>
-        <p className={s.footerBrand}>MarketCompass</p>
+        <p className={s.footerBrand}>ChartNexus</p>
 
         <div className={s.footerTop}>
           {FOOTER_COLS.map((col) => (
@@ -232,10 +232,9 @@ function Footer() {
             </span>
             <div className={s.footerRule} />
             <p>
-              MarketCompass is a read-only NSE options analytics terminal for Indian retail traders
-              — option chain, PCR, max pain, OI build-up, gamma and vega exposure and the ATM
-              straddle for NIFTY, BANKNIFTY and SENSEX, each figure stamped live, cached or
-              simulated.
+              ChartNexus is a read-only NSE options analytics terminal for Indian retail traders —
+              option chain, PCR, max pain, OI build-up, gamma and vega exposure and the ATM straddle
+              for NIFTY, BANKNIFTY and SENSEX, each figure stamped live, cached or simulated.
             </p>
             <p>
               It never places an order or holds funds. The goal is to read the chain with
@@ -254,7 +253,7 @@ function Footer() {
 
       <div className={s.footerBottom}>
         <span>
-          Website made with <strong>MarketCompass</strong>
+          Website made with <strong>ChartNexus</strong>
         </span>
         <span>Made with ♥ in India</span>
         <span className={s.footerBadge}>

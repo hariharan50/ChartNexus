@@ -5,7 +5,7 @@ import s from './route.module.css';
 import type { Route } from './+types/how-it-works';
 
 export const meta: Route.MetaFunction = () => [
-  { title: 'How it works · MarketCompass' },
+  { title: 'How it works · ChartNexus' },
   {
     name: 'description',
     content:
@@ -30,7 +30,7 @@ export default function HowItWorks() {
         <ol className={s.timeline}>
           {STEPS.map((step) => (
             <li key={step.n} className={s.timelineItem}>
-              <span className={cx(s.stepBadge, 'mc-numeric')}>{step.n}</span>
+              <span className={cx(s.stepBadge, 'cn-numeric')}>{step.n}</span>
               <div className={s.timelineBody}>
                 <h3>{step.title}</h3>
                 <p>{step.body}</p>

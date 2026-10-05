@@ -20,7 +20,7 @@ export const THEME_OPTIONS: readonly ThemeOption[] = [
 ];
 
 const KNOWN = new Set<Theme>(THEME_OPTIONS.map((option) => option.id));
-const STORAGE_KEY = 'mc-theme';
+const STORAGE_KEY = 'cn-theme';
 
 interface ThemeState {
   theme: Theme;

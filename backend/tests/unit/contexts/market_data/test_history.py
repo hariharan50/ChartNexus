@@ -14,22 +14,22 @@ from decimal import Decimal
 
 import pytest
 
-from marketcompass.contexts.market_data.application.queries import GetHistory, HistoryQuery
-from marketcompass.contexts.market_data.domain.instruments import InstrumentSymbol
-from marketcompass.contexts.market_data.domain.market_data import (
+from chartnexus.contexts.market_data.application.queries import GetHistory, HistoryQuery
+from chartnexus.contexts.market_data.domain.instruments import InstrumentSymbol
+from chartnexus.contexts.market_data.domain.market_data import (
     Candle,
     CandleInterval,
     CandleSeries,
     DataSource,
     Provenance,
 )
-from marketcompass.infrastructure.brokers.fyers.history_mapper import (
+from chartnexus.infrastructure.brokers.fyers.history_mapper import (
     to_candle_series,
     to_resolution,
 )
-from marketcompass.infrastructure.brokers.mock.history_factory import build_history
-from marketcompass.shared_kernel.domain.errors import UpstreamError
-from marketcompass.shared_kernel.types.identifiers import TenantId
+from chartnexus.infrastructure.brokers.mock.history_factory import build_history
+from chartnexus.shared_kernel.domain.errors import UpstreamError
+from chartnexus.shared_kernel.types.identifiers import TenantId
 
 pytestmark = pytest.mark.unit
 

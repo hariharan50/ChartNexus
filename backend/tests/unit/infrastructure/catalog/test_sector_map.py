@@ -9,7 +9,7 @@ from __future__ import annotations
 
 import pytest
 
-from marketcompass.infrastructure.catalog.sector_map import (
+from chartnexus.infrastructure.catalog.sector_map import (
     INDEX_MEMBERS,
     SECTORS,
     indices_for,

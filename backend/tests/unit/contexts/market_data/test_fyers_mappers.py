@@ -15,18 +15,18 @@ from typing import Any
 
 import pytest
 
-from marketcompass.contexts.market_data.domain.instruments import InstrumentSymbol
-from marketcompass.contexts.market_data.domain.market_data import DataSource
-from marketcompass.infrastructure.brokers.fyers.option_chain_mapper import (
+from chartnexus.contexts.market_data.domain.instruments import InstrumentSymbol
+from chartnexus.contexts.market_data.domain.market_data import DataSource
+from chartnexus.infrastructure.brokers.fyers.option_chain_mapper import (
     _normalise_date,
     to_option_chain,
 )
-from marketcompass.infrastructure.brokers.fyers.quote_mapper import to_quote
-from marketcompass.infrastructure.brokers.fyers.symbol_mapper import (
+from chartnexus.infrastructure.brokers.fyers.quote_mapper import to_quote
+from chartnexus.infrastructure.brokers.fyers.symbol_mapper import (
     from_broker_symbol,
     to_broker_symbol,
 )
-from marketcompass.shared_kernel.domain.errors import UpstreamError
+from chartnexus.shared_kernel.domain.errors import UpstreamError
 
 pytestmark = pytest.mark.unit
 

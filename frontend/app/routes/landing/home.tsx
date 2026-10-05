@@ -9,7 +9,7 @@ import s from './route.module.css';
 import type { Route } from './+types/home';
 
 export const meta: Route.MetaFunction = () => [
-  { title: 'MarketCompass — NSE options analytics with provenance on every number' },
+  { title: 'ChartNexus — NSE options analytics with provenance on every number' },
   {
     name: 'description',
     content:
@@ -18,7 +18,7 @@ export const meta: Route.MetaFunction = () => [
       'simulated. Read-only — it never places an order.'
   },
   { property: 'og:type', content: 'website' },
-  { property: 'og:title', content: 'MarketCompass — NSE options analytics' },
+  { property: 'og:title', content: 'ChartNexus — NSE options analytics' },
   {
     property: 'og:description',
     content: 'Options analytics for NIFTY, BANKNIFTY and SENSEX, with provenance on every number.'
@@ -60,14 +60,14 @@ export default function Home() {
             </div>
 
             <p className={s.heroFine}>
-              No broker account needed. No card. MarketCompass is read-only — it reads the chain and
+              No broker account needed. No card. ChartNexus is read-only — it reads the chain and
               cannot place an order, hold funds, or give SEBI-regulated advice.
             </p>
 
             <div className={s.stats}>
               {HERO_STATS.map((stat) => (
                 <div key={stat.caption}>
-                  <div className={cx(s.statValue, 'mc-numeric')}>{stat.value}</div>
+                  <div className={cx(s.statValue, 'cn-numeric')}>{stat.value}</div>
                   <div className={s.statCaption}>{stat.caption}</div>
                 </div>
               ))}

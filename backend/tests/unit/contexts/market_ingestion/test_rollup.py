@@ -12,7 +12,7 @@ from decimal import Decimal
 
 import pytest
 
-from marketcompass.contexts.market_ingestion.application.rollup import (
+from chartnexus.contexts.market_ingestion.application.rollup import (
     RollupDailyIv,
     SessionIv,
 )

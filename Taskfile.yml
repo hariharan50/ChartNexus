@@ -86,9 +86,9 @@ tasks:
     # write and double the archive's density. Running the API on its own (outside
     # `task dev`) leaves the in-process loop on, so those charts still populate.
     env:
-      MC_MARKET_INGEST_IN_PROCESS: "false"
+      CN_MARKET_INGEST_IN_PROCESS: "false"
     cmds:
-      - uv run uvicorn marketcompass.entrypoints.main_api:create_app --factory --reload --port 8000
+      - uv run uvicorn chartnexus.entrypoints.main_api:create_app --factory --reload --port 8000
 
   dev:ingest:
     desc: Run the option-chain snapshot worker
@@ -96,10 +96,10 @@ tasks:
     # Set here rather than in .env so they cannot leak anywhere else. Storing
     # simulated open interest must stay off by default — see main_oi_data.py.
     env:
-      MC_MARKET_INGEST_ALLOW_MOCK: "true"
-      MC_MARKET_SNAPSHOT_INTERVAL_SECONDS: "60"
+      CN_MARKET_INGEST_ALLOW_MOCK: "true"
+      CN_MARKET_SNAPSHOT_INTERVAL_SECONDS: "60"
     cmds:
-      - uv run marketcompass-ingest
+      - uv run chartnexus-ingest
 
   dev:web:
     desc: Run the React Router dev server
@@ -137,13 +137,13 @@ tasks:
     desc: 'Fabricate a trading session of OI snapshots so the timeline can be scrubbed: task oi:seed -- --replace'
     dir: "{{.BACKEND}}"
     cmds:
-      - uv run marketcompass-oi seed {{.CLI_ARGS}}
+      - uv run chartnexus-oi seed {{.CLI_ARGS}}
 
   oi:prune:
     desc: Apply the OI snapshot retention window
     dir: "{{.BACKEND}}"
     cmds:
-      - uv run marketcompass-oi prune {{.CLI_ARGS}}
+      - uv run chartnexus-oi prune {{.CLI_ARGS}}
 
   # --- quality -------------------------------------------------------------
   check:
@@ -191,7 +191,7 @@ tasks:
       - pnpm test:e2e
 
   test:eval:
-    desc: 'Run the LLM-backed agent evals (needs MC_LLM_ANTHROPIC_API_KEY): task test:eval'
+    desc: 'Run the LLM-backed agent evals (needs CN_LLM_ANTHROPIC_API_KEY): task test:eval'
     dir: "{{.BACKEND}}"
     cmds:
       - uv run --extra agent pytest tests/eval -m eval {{.CLI_ARGS}}

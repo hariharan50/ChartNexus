@@ -7,9 +7,9 @@
 .page {
   /* Clears the terminal's own sticky nav (4.5rem tall) — a pinned sidebar
      offset only by the page padding slides under it and loses its first rows. */
-  --sticky-top: calc(4.5rem + var(--mc-space-4));
+  --sticky-top: calc(4.5rem + var(--cn-space-4));
 
-  padding: var(--mc-space-6);
+  padding: var(--cn-space-6);
   display: flex;
   flex-direction: column;
   min-height: calc(100dvh - 4.5rem);
@@ -20,7 +20,7 @@
   min-height: 0;
   display: grid;
   grid-template-columns: 260px 1fr;
-  gap: var(--mc-space-5, 1.25rem);
+  gap: var(--cn-space-5, 1.25rem);
   align-items: stretch;
 }
 
@@ -32,7 +32,7 @@
 .main {
   display: flex;
   flex-direction: column;
-  gap: var(--mc-space-5, 1.25rem);
+  gap: var(--cn-space-5, 1.25rem);
   min-width: 0;
   min-height: 0;
 }
@@ -50,7 +50,7 @@
   min-height: 0;
   /* Tighter than the default card padding: the settings controls are narrow and
      the extra inset only ate into the chart column's width. */
-  padding: var(--mc-space-3);
+  padding: var(--cn-space-3);
 }
 
 /* Tall enough that the plot, not its chrome, is what the panel is mostly made
@@ -66,15 +66,15 @@
 }
 
 .panel {
-  border: 1px solid var(--mc-border);
-  border-radius: var(--mc-radius-lg);
-  background: var(--mc-surface);
-  box-shadow: var(--mc-shadow);
-  padding: var(--mc-space-4);
+  border: 1px solid var(--cn-border);
+  border-radius: var(--cn-radius-lg);
+  background: var(--cn-surface);
+  box-shadow: var(--cn-shadow);
+  padding: var(--cn-space-4);
 }
 
 .panel.muted {
-  color: var(--mc-text-muted);
+  color: var(--cn-text-muted);
   text-align: center;
 }
 
@@ -82,19 +82,19 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: var(--mc-space-3);
-  padding: var(--mc-space-4);
-  border: 1px solid var(--mc-bearish);
-  border-radius: var(--mc-radius-lg);
-  color: var(--mc-text);
+  gap: var(--cn-space-3);
+  padding: var(--cn-space-4);
+  border: 1px solid var(--cn-bearish);
+  border-radius: var(--cn-radius-lg);
+  color: var(--cn-text);
 }
 
 .banner button {
   padding: 0.375rem 0.75rem;
-  border: 1px solid var(--mc-border-strong);
-  border-radius: var(--mc-radius);
-  background: var(--mc-surface-raised);
-  color: var(--mc-text);
+  border: 1px solid var(--cn-border-strong);
+  border-radius: var(--cn-radius);
+  background: var(--cn-surface-raised);
+  color: var(--cn-text);
   cursor: pointer;
 }
 
@@ -102,10 +102,10 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: var(--mc-space-2);
+  gap: var(--cn-space-2);
   /* The title's own bottom margin is zeroed inside the head row, so the row
      carries the gap to the first control instead. */
-  margin-bottom: var(--mc-space-3);
+  margin-bottom: var(--cn-space-3);
 }
 
 .panel-head .p-title {
@@ -119,11 +119,11 @@
   justify-content: center;
   width: 1.75rem;
   height: 1.75rem;
-  border: 1px solid var(--mc-border);
-  border-radius: var(--mc-radius-sm);
-  background: var(--mc-surface-raised);
-  color: var(--mc-text-muted);
-  font-size: var(--mc-text-sm);
+  border: 1px solid var(--cn-border);
+  border-radius: var(--cn-radius-sm);
+  background: var(--cn-surface-raised);
+  color: var(--cn-text-muted);
+  font-size: var(--cn-text-sm);
   cursor: pointer;
 }
 
@@ -136,14 +136,14 @@
   display: flex;
   align-items: center;
   gap: 0.375rem;
-  margin: 0 0 var(--mc-space-3);
-  font-size: var(--mc-text-base);
+  margin: 0 0 var(--cn-space-3);
+  font-size: var(--cn-text-base);
   font-weight: 700;
 }
 
 .ico {
   display: inline-flex;
-  color: var(--mc-text-muted);
+  color: var(--cn-text-muted);
 }
 
 .ico svg {
@@ -157,9 +157,9 @@
   align-items: center;
   gap: 0.5rem;
   padding: 0.5rem 0.625rem;
-  border: 1px solid var(--mc-border);
-  border-radius: var(--mc-radius);
-  background: var(--mc-surface-raised);
+  border: 1px solid var(--cn-border);
+  border-radius: var(--cn-radius);
+  background: var(--cn-surface-raised);
 }
 
 .badge {
@@ -169,9 +169,9 @@
   width: 1.75rem;
   height: 1.75rem;
   border-radius: 999px;
-  background: var(--mc-accent-weak);
-  color: var(--mc-accent);
-  font-size: var(--mc-text-xs);
+  background: var(--cn-accent-weak);
+  color: var(--cn-accent);
+  font-size: var(--cn-text-xs);
   font-weight: 700;
 }
 
@@ -188,19 +188,19 @@
 .cyclers button {
   width: 1.75rem;
   height: 1.75rem;
-  border: 1px solid var(--mc-border);
-  border-radius: var(--mc-radius-sm);
-  background: var(--mc-surface);
-  color: var(--mc-text-muted);
+  border: 1px solid var(--cn-border);
+  border-radius: var(--cn-radius-sm);
+  background: var(--cn-surface);
+  color: var(--cn-text-muted);
   cursor: pointer;
 }
 
 .sub-label {
-  margin: var(--mc-space-3) 0 0.375rem;
-  font-size: var(--mc-text-xs);
+  margin: var(--cn-space-3) 0 0.375rem;
+  font-size: var(--cn-text-xs);
   letter-spacing: 0.06em;
   text-transform: uppercase;
-  color: var(--mc-text-subtle);
+  color: var(--cn-text-subtle);
 }
 
 .two-up {
@@ -215,9 +215,9 @@
   align-items: center;
   justify-content: space-between;
   padding: 0.5rem 0.625rem;
-  border: 1px solid var(--mc-border);
-  border-radius: var(--mc-radius);
-  background: var(--mc-surface-raised);
+  border: 1px solid var(--cn-border);
+  border-radius: var(--cn-radius);
+  background: var(--cn-surface-raised);
   font-weight: 600;
 }
 
@@ -233,22 +233,22 @@
 
 .seg {
   padding: 0.4375rem 0.75rem;
-  border: 1px solid var(--mc-border);
-  border-radius: var(--mc-radius);
+  border: 1px solid var(--cn-border);
+  border-radius: var(--cn-radius);
   background: transparent;
-  color: var(--mc-text-muted);
+  color: var(--cn-text-muted);
   font-weight: 600;
   cursor: pointer;
 }
 
 .seg.active {
-  border-color: color-mix(in srgb, var(--mc-accent) 45%, transparent);
-  background: var(--mc-accent-weak);
-  color: var(--mc-accent);
+  border-color: color-mix(in srgb, var(--cn-accent) 45%, transparent);
+  background: var(--cn-accent-weak);
+  color: var(--cn-accent);
 }
 
 .seg.disabled {
-  color: var(--mc-text-subtle);
+  color: var(--cn-text-subtle);
   cursor: not-allowed;
 }
 
@@ -261,10 +261,10 @@
 .chart-top {
   display: flex;
   align-items: center;
-  gap: var(--mc-space-3);
-  margin-bottom: var(--mc-space-3);
-  padding-bottom: var(--mc-space-3);
-  border-bottom: 1px solid var(--mc-border);
+  gap: var(--cn-space-3);
+  margin-bottom: var(--cn-space-3);
+  padding-bottom: var(--cn-space-3);
+  border-bottom: 1px solid var(--cn-border);
 }
 
 /* What the chart shows, grouped; the live status opposite it stays on the first
@@ -277,8 +277,8 @@
   display: flex;
   align-items: center;
   flex-wrap: wrap;
-  gap: var(--mc-space-3);
-  row-gap: var(--mc-space-2);
+  gap: var(--cn-space-3);
+  row-gap: var(--cn-space-2);
 }
 
 .chart-top .p-title {
@@ -294,8 +294,8 @@
   display: inline-flex;
   gap: 0.25rem;
   padding: 0.125rem;
-  border-radius: var(--mc-radius);
-  background: var(--mc-surface-raised);
+  border-radius: var(--cn-radius);
+  background: var(--cn-surface-raised);
 }
 
 .view-toggle .seg {
@@ -305,8 +305,8 @@
 }
 
 .view-toggle .seg.active {
-  background: var(--mc-surface);
-  box-shadow: var(--mc-shadow);
+  background: var(--cn-surface);
+  box-shadow: var(--cn-shadow);
 }
 
 .chart-top-right {
@@ -314,32 +314,32 @@
   margin-left: auto;
   display: inline-flex;
   align-items: center;
-  gap: var(--mc-space-3);
+  gap: var(--cn-space-3);
 }
 
 .live {
   display: inline-flex;
   align-items: center;
   gap: 0.375rem;
-  font-size: var(--mc-text-sm);
-  color: var(--mc-text-muted);
+  font-size: var(--cn-text-sm);
+  color: var(--cn-text-muted);
   white-space: nowrap;
   font-variant-numeric: tabular-nums;
 }
 
 .live.stale {
-  color: var(--mc-bearish);
+  color: var(--cn-bearish);
 }
 
 .live.stale .dot {
-  background: var(--mc-bearish);
+  background: var(--cn-bearish);
 }
 
 .dot {
   width: 0.5rem;
   height: 0.5rem;
   border-radius: 50%;
-  background: var(--mc-bullish);
+  background: var(--cn-bullish);
 }
 
 .dot.pulse {
@@ -359,34 +359,34 @@
 }
 
 .sep {
-  color: var(--mc-border-strong);
+  color: var(--cn-border-strong);
 }
 
 /* Matches the Price vs OI and Straddle panels' control of the same name. */
 .zoom-reset {
   padding: 0.25rem 0.5rem;
-  border: 1px solid var(--mc-border);
-  border-radius: var(--mc-radius-sm);
-  background: var(--mc-surface-raised);
-  color: var(--mc-text-muted);
-  font-size: var(--mc-text-xs);
+  border: 1px solid var(--cn-border);
+  border-radius: var(--cn-radius-sm);
+  background: var(--cn-surface-raised);
+  color: var(--cn-text-muted);
+  font-size: var(--cn-text-xs);
   font-weight: 600;
   white-space: nowrap;
   cursor: pointer;
 }
 
 .zoom-reset:hover {
-  border-color: var(--mc-border-strong);
-  color: var(--mc-text);
+  border-color: var(--cn-border-strong);
+  color: var(--cn-text);
 }
 
 .download {
   padding: 0.3125rem 0.625rem;
-  border: 1px solid var(--mc-border);
-  border-radius: var(--mc-radius);
-  background: var(--mc-surface-raised);
-  color: var(--mc-text-muted);
-  font-size: var(--mc-text-xs);
+  border: 1px solid var(--cn-border);
+  border-radius: var(--cn-radius);
+  background: var(--cn-surface-raised);
+  color: var(--cn-text-muted);
+  font-size: var(--cn-text-xs);
   font-weight: 600;
   white-space: nowrap;
   cursor: pointer;
@@ -396,8 +396,8 @@
 .legend {
   display: flex;
   flex-wrap: wrap;
-  gap: var(--mc-space-2);
-  margin-bottom: var(--mc-space-2);
+  gap: var(--cn-space-2);
+  margin-bottom: var(--cn-space-2);
 }
 
 .entry {
@@ -405,23 +405,23 @@
   align-items: center;
   gap: 0.375rem;
   padding: 0.3125rem 0.625rem;
-  border: 1px solid var(--mc-border);
-  border-radius: var(--mc-radius);
-  background: var(--mc-surface-raised);
-  color: var(--mc-text);
-  font-size: var(--mc-text-xs);
+  border: 1px solid var(--cn-border);
+  border-radius: var(--cn-radius);
+  background: var(--cn-surface-raised);
+  color: var(--cn-text);
+  font-size: var(--cn-text-xs);
   font-weight: 600;
   cursor: pointer;
 }
 
 .entry:hover {
-  border-color: var(--mc-border-strong);
+  border-color: var(--cn-border-strong);
 }
 
 /* Off: the label struck through, but the eye stays fully lit so the control
    still reads as a live toggle rather than a disabled chip. */
 .entry.off {
-  color: var(--mc-text-subtle);
+  color: var(--cn-text-subtle);
 }
 
 .entry.off .label {
@@ -430,7 +430,7 @@
 
 .eye {
   display: inline-flex;
-  color: var(--mc-text-muted);
+  color: var(--cn-text-muted);
 }
 
 .eye svg {
@@ -462,24 +462,24 @@
 }
 
 .caption {
-  margin: var(--mc-space-2) 0 0;
-  font-size: var(--mc-text-xs);
-  color: var(--mc-text-subtle);
+  margin: var(--cn-space-2) 0 0;
+  font-size: var(--cn-text-xs);
+  color: var(--cn-text-subtle);
 }
 
 .empty {
   margin: 0;
-  padding: var(--mc-space-6) 0;
+  padding: var(--cn-space-6) 0;
   text-align: center;
-  color: var(--mc-text-muted);
+  color: var(--cn-text-muted);
 }
 
 .empty-panel {
   display: flex;
   flex-direction: column;
-  gap: var(--mc-space-3);
+  gap: var(--cn-space-3);
   max-width: 24rem;
-  margin: var(--mc-space-6) auto;
+  margin: var(--cn-space-6) auto;
 }
 
 .empty-panel .muted {
@@ -503,11 +503,11 @@
 /* The three strike-selection cards. The reference boxes the active one and
    leaves the others as a labelled row with a Select button. */
 .mode-card {
-  margin-top: var(--mc-space-3);
+  margin-top: var(--cn-space-3);
   padding: 0.625rem;
-  border: 1px solid var(--mc-border);
-  border-radius: var(--mc-radius);
-  background: var(--mc-surface-raised);
+  border: 1px solid var(--cn-border);
+  border-radius: var(--cn-radius);
+  background: var(--cn-surface-raised);
   cursor: pointer;
   transition:
     border-color 0.12s ease,
@@ -515,17 +515,17 @@
 }
 
 .mode-card:hover {
-  border-color: var(--mc-border-strong);
+  border-color: var(--cn-border-strong);
 }
 
 .mode-card:focus-visible {
-  outline: 2px solid var(--mc-accent);
+  outline: 2px solid var(--cn-accent);
   outline-offset: 2px;
 }
 
 .mode-card.active {
-  border-color: color-mix(in srgb, var(--mc-accent) 55%, transparent);
-  box-shadow: 0 0 0 1px color-mix(in srgb, var(--mc-accent) 35%, transparent);
+  border-color: color-mix(in srgb, var(--cn-accent) 55%, transparent);
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--cn-accent) 35%, transparent);
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -538,22 +538,22 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: var(--mc-space-2);
+  gap: var(--cn-space-2);
 }
 
 .mode-title {
   padding: 0;
   border: none;
   background: transparent;
-  color: var(--mc-text);
-  font-size: var(--mc-text-sm);
+  color: var(--cn-text);
+  font-size: var(--cn-text-sm);
   font-weight: 700;
   text-align: left;
   cursor: pointer;
 }
 
 .mode-card.active .mode-title {
-  color: var(--mc-accent);
+  color: var(--cn-accent);
 }
 
 /* The compact ± number stepper on the ATM / Fixed cards. */
@@ -561,10 +561,10 @@
   display: inline-flex;
   align-items: center;
   gap: 0;
-  border: 1px solid var(--mc-border);
-  border-radius: var(--mc-radius-sm);
+  border: 1px solid var(--cn-border);
+  border-radius: var(--cn-radius-sm);
   overflow: hidden;
-  background: var(--mc-surface);
+  background: var(--cn-surface);
 }
 
 .stepper button {
@@ -572,14 +572,14 @@
   height: 1.75rem;
   border: none;
   background: transparent;
-  color: var(--mc-text-muted);
-  font-size: var(--mc-text-base);
+  color: var(--cn-text-muted);
+  font-size: var(--cn-text-base);
   line-height: 1;
   cursor: pointer;
 }
 
 .stepper button:disabled {
-  color: var(--mc-text-subtle);
+  color: var(--cn-text-subtle);
   cursor: not-allowed;
 }
 
@@ -594,19 +594,19 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: var(--mc-space-2);
+  gap: var(--cn-space-2);
   margin-top: 0.5rem;
   padding-top: 0.5rem;
-  border-top: 1px solid var(--mc-border);
+  border-top: 1px solid var(--cn-border);
 }
 
 .range-label {
-  font-size: var(--mc-text-xs);
-  color: var(--mc-text-subtle);
+  font-size: var(--cn-text-xs);
+  color: var(--cn-text-subtle);
 }
 
 .range-value {
-  font-size: var(--mc-text-sm);
+  font-size: var(--cn-text-sm);
   font-weight: 700;
   font-variant-numeric: tabular-nums;
 }
@@ -617,13 +617,13 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: var(--mc-space-2);
+  gap: var(--cn-space-2);
   margin-top: 0.5rem;
 }
 
 .field-label {
-  font-size: var(--mc-text-xs);
-  color: var(--mc-text-subtle);
+  font-size: var(--cn-text-xs);
+  color: var(--cn-text-subtle);
 }
 
 .field-select {
@@ -632,19 +632,19 @@
 
 .select-btn {
   padding: 0.3125rem 0.75rem;
-  border: 1px solid var(--mc-border);
-  border-radius: var(--mc-radius-sm);
-  background: var(--mc-surface);
-  color: var(--mc-accent);
-  font-size: var(--mc-text-xs);
+  border: 1px solid var(--cn-border);
+  border-radius: var(--cn-radius-sm);
+  background: var(--cn-surface);
+  color: var(--cn-accent);
+  font-size: var(--cn-text-xs);
   font-weight: 700;
   cursor: pointer;
 }
 
 .mode-summary {
   margin: 0.5rem 0 0;
-  font-size: var(--mc-text-xs);
-  color: var(--mc-text-subtle);
+  font-size: var(--cn-text-xs);
+  color: var(--cn-text-subtle);
   font-variant-numeric: tabular-nums;
 }
 
@@ -660,8 +660,8 @@
   border: none;
   background: transparent;
   appearance: none;
-  font-size: var(--mc-text-sm);
-  color: var(--mc-text-muted);
+  font-size: var(--cn-text-sm);
+  color: var(--cn-text-muted);
   font-weight: 600;
   white-space: nowrap;
   cursor: pointer;
@@ -671,7 +671,7 @@
 
 .switch:hover,
 .switch.on {
-  color: var(--mc-text);
+  color: var(--cn-text);
 }
 
 .track {
@@ -679,17 +679,17 @@
   width: 1.875rem;
   height: 1.0625rem;
   border-radius: 999px;
-  background: var(--mc-border-strong);
+  background: var(--cn-border-strong);
   transition: background 0.15s ease;
   flex: none;
 }
 
 .switch.on .track {
-  background: var(--mc-accent);
+  background: var(--cn-accent);
 }
 
 .switch:focus-visible .track {
-  outline: 2px solid var(--mc-accent);
+  outline: 2px solid var(--cn-accent);
   outline-offset: 2px;
 }
 
@@ -723,7 +723,7 @@
   z-index: 60;
   display: grid;
   place-items: center;
-  padding: var(--mc-space-4);
+  padding: var(--cn-space-4);
   background: rgb(0 0 0 / 0.55);
 }
 
@@ -732,34 +732,34 @@
   flex-direction: column;
   width: min(26rem, 100%);
   max-height: min(34rem, 90vh);
-  border: 1px solid var(--mc-border-strong);
-  border-radius: var(--mc-radius-lg);
-  background: var(--mc-surface);
-  box-shadow: var(--mc-shadow-lg, 0 12px 40px rgb(0 0 0 / 0.4));
+  border: 1px solid var(--cn-border-strong);
+  border-radius: var(--cn-radius-lg);
+  background: var(--cn-surface);
+  box-shadow: var(--cn-shadow-lg, 0 12px 40px rgb(0 0 0 / 0.4));
 }
 
 .dialog-head {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: var(--mc-space-3);
-  padding: var(--mc-space-4);
-  border-bottom: 1px solid var(--mc-border);
+  gap: var(--cn-space-3);
+  padding: var(--cn-space-4);
+  border-bottom: 1px solid var(--cn-border);
 }
 
 .dialog-title {
   margin: 0;
-  font-size: var(--mc-text-base);
+  font-size: var(--cn-text-base);
   font-weight: 700;
 }
 
 .close {
   width: 1.75rem;
   height: 1.75rem;
-  border: 1px solid var(--mc-border);
-  border-radius: var(--mc-radius-sm);
+  border: 1px solid var(--cn-border);
+  border-radius: var(--cn-radius-sm);
   background: transparent;
-  color: var(--mc-text-muted);
+  color: var(--cn-text-muted);
   font-size: 1.125rem;
   line-height: 1;
   cursor: pointer;
@@ -767,9 +767,9 @@
 
 .dialog-hint {
   margin: 0;
-  padding: var(--mc-space-3) var(--mc-space-4) 0;
-  font-size: var(--mc-text-xs);
-  color: var(--mc-text-subtle);
+  padding: var(--cn-space-3) var(--cn-space-4) 0;
+  font-size: var(--cn-text-xs);
+  color: var(--cn-text-subtle);
 }
 
 .strike-list {
@@ -779,59 +779,59 @@
   grid-template-columns: repeat(3, 1fr);
   gap: 0.375rem;
   margin: 0;
-  padding: var(--mc-space-3) var(--mc-space-4);
+  padding: var(--cn-space-3) var(--cn-space-4);
   list-style: none;
 }
 
 .strike-opt {
   padding: 0.4375rem 0.25rem;
-  border: 1px solid var(--mc-border);
-  border-radius: var(--mc-radius-sm);
+  border: 1px solid var(--cn-border);
+  border-radius: var(--cn-radius-sm);
   background: transparent;
-  color: var(--mc-text);
-  font-size: var(--mc-text-sm);
+  color: var(--cn-text);
+  font-size: var(--cn-text-sm);
   font-weight: 600;
   font-variant-numeric: tabular-nums;
   cursor: pointer;
 }
 
 .strike-opt.on {
-  border-color: color-mix(in srgb, var(--mc-accent) 55%, transparent);
-  background: var(--mc-accent-weak);
-  color: var(--mc-accent);
+  border-color: color-mix(in srgb, var(--cn-accent) 55%, transparent);
+  background: var(--cn-accent-weak);
+  color: var(--cn-accent);
 }
 
 .strike-opt.atm {
-  outline: 1px dashed color-mix(in srgb, var(--mc-accent) 45%, transparent);
+  outline: 1px dashed color-mix(in srgb, var(--cn-accent) 45%, transparent);
   outline-offset: -3px;
 }
 
 .dialog-foot {
   display: flex;
   justify-content: flex-end;
-  gap: var(--mc-space-2);
-  padding: var(--mc-space-3) var(--mc-space-4);
-  border-top: 1px solid var(--mc-border);
+  gap: var(--cn-space-2);
+  padding: var(--cn-space-3) var(--cn-space-4);
+  border-top: 1px solid var(--cn-border);
 }
 
 .ghost,
 .primary {
-  padding: 0 var(--mc-space-4);
-  height: var(--mc-control-h-sm, 2.125rem);
-  border-radius: var(--mc-radius);
-  font-size: var(--mc-text-sm);
+  padding: 0 var(--cn-space-4);
+  height: var(--cn-control-h-sm, 2.125rem);
+  border-radius: var(--cn-radius);
+  font-size: var(--cn-text-sm);
   font-weight: 600;
   cursor: pointer;
 }
 
 .ghost {
-  border: 1px solid var(--mc-border);
+  border: 1px solid var(--cn-border);
   background: transparent;
-  color: var(--mc-text-muted);
+  color: var(--cn-text-muted);
 }
 
 .primary {
   border: 1px solid transparent;
-  background: var(--mc-accent);
-  color: var(--mc-on-accent, #fff);
+  background: var(--cn-accent);
+  color: var(--cn-on-accent, #fff);
 }

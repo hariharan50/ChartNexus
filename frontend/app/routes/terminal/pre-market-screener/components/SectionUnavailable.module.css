@@ -2,11 +2,11 @@
    loudest thing on this page should be the market, not the plumbing. */
 .note {
   margin: 0;
-  padding: var(--mc-space-3);
-  border: 1px dashed var(--mc-border);
-  border-radius: var(--mc-radius);
-  background: var(--mc-surface-raised);
-  font-size: var(--mc-text-xs);
+  padding: var(--cn-space-3);
+  border: 1px dashed var(--cn-border);
+  border-radius: var(--cn-radius);
+  background: var(--cn-surface-raised);
+  font-size: var(--cn-text-xs);
   line-height: 1.5;
-  color: var(--mc-text-subtle);
+  color: var(--cn-text-subtle);
 }

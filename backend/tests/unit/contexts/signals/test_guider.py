@@ -8,9 +8,9 @@ empty case (no data is HOLD with no scaffold, never a confident guess).
 
 from __future__ import annotations
 
-from marketcompass.contexts.signals.domain.guider import build_guidance
-from marketcompass.contexts.signals.domain.inputs import MarketSnapshot
-from marketcompass.contexts.signals.domain.models import Decision, Provenance
+from chartnexus.contexts.signals.domain.guider import build_guidance
+from chartnexus.contexts.signals.domain.inputs import MarketSnapshot
+from chartnexus.contexts.signals.domain.models import Decision, Provenance
 
 
 def _rising(n: int, start: float, step: float) -> tuple[float, ...]:

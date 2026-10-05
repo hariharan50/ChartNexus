@@ -6,15 +6,15 @@
  * table with a different row height — reads as a bug. Anything genuinely
  * specific to one page lives in that page's own module.
  *
- * Control heights come from --mc-control-h so the pickers here line up with
+ * Control heights come from --cn-control-h so the pickers here line up with
  * every other control in the terminal.
  */
 
 .page {
   display: flex;
   flex-direction: column;
-  gap: var(--mc-space-4);
-  padding: var(--mc-space-5);
+  gap: var(--cn-space-4);
+  padding: var(--cn-space-5);
   min-width: 0;
 }
 
@@ -24,7 +24,7 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: var(--mc-space-4);
+  gap: var(--cn-space-4);
   flex-wrap: wrap;
 }
 
@@ -38,28 +38,28 @@
 .title {
   display: flex;
   align-items: center;
-  gap: var(--mc-space-3);
+  gap: var(--cn-space-3);
   margin: 0;
-  font-size: var(--mc-text-lg);
+  font-size: var(--cn-text-lg);
   font-weight: 700;
-  color: var(--mc-text);
+  color: var(--cn-text);
 }
 
 .title-ico {
   display: inline-flex;
-  color: var(--mc-accent);
+  color: var(--cn-accent);
 }
 
 .subtitle {
   margin: 0;
-  font-size: var(--mc-text-xs);
-  color: var(--mc-text-muted);
+  font-size: var(--cn-text-xs);
+  color: var(--cn-text-muted);
 }
 
 .header-right {
   display: flex;
   align-items: center;
-  gap: var(--mc-space-3);
+  gap: var(--cn-space-3);
   flex-wrap: wrap;
 }
 
@@ -68,31 +68,31 @@
 .segmented {
   display: inline-flex;
   padding: 2px;
-  border: 1px solid var(--mc-border);
-  border-radius: var(--mc-radius);
-  background: var(--mc-surface);
+  border: 1px solid var(--cn-border);
+  border-radius: var(--cn-radius);
+  background: var(--cn-surface);
 }
 
 .segment {
-  height: calc(var(--mc-control-h) - 0.625rem);
-  padding: 0 var(--mc-space-3);
+  height: calc(var(--cn-control-h) - 0.625rem);
+  padding: 0 var(--cn-space-3);
   border: none;
-  border-radius: var(--mc-radius-sm);
+  border-radius: var(--cn-radius-sm);
   background: transparent;
-  color: var(--mc-text-muted);
-  font-size: var(--mc-text-xs);
+  color: var(--cn-text-muted);
+  font-size: var(--cn-text-xs);
   font-weight: 600;
   cursor: pointer;
 }
 
 .segment:hover:not(:disabled) {
-  color: var(--mc-text);
+  color: var(--cn-text);
 }
 
 .segment-on,
 .segment-on:hover {
-  background: var(--mc-accent-weak);
-  color: var(--mc-accent);
+  background: var(--cn-accent-weak);
+  color: var(--cn-accent);
 }
 
 .segment:disabled {
@@ -101,11 +101,11 @@
 }
 
 .label {
-  font-size: var(--mc-text-xs);
+  font-size: var(--cn-text-xs);
   font-weight: 600;
   letter-spacing: 0.04em;
   text-transform: uppercase;
-  color: var(--mc-text-subtle);
+  color: var(--cn-text-subtle);
 }
 
 /* -- cards ----------------------------------------------------------------- */
@@ -113,11 +113,11 @@
 .card {
   display: flex;
   flex-direction: column;
-  gap: var(--mc-space-3);
-  padding: var(--mc-space-4);
-  border: 1px solid var(--mc-border);
-  border-radius: var(--mc-radius-lg);
-  background: var(--mc-surface);
+  gap: var(--cn-space-3);
+  padding: var(--cn-space-4);
+  border: 1px solid var(--cn-border);
+  border-radius: var(--cn-radius-lg);
+  background: var(--cn-surface);
   min-width: 0;
 }
 
@@ -125,21 +125,21 @@
   display: flex;
   align-items: baseline;
   justify-content: space-between;
-  gap: var(--mc-space-3);
+  gap: var(--cn-space-3);
   flex-wrap: wrap;
 }
 
 .card-title {
   margin: 0;
-  font-size: var(--mc-text-sm);
+  font-size: var(--cn-text-sm);
   font-weight: 700;
-  color: var(--mc-text);
+  color: var(--cn-text);
 }
 
 .card-note {
   margin: 0;
-  font-size: var(--mc-text-xs);
-  color: var(--mc-text-subtle);
+  font-size: var(--cn-text-xs);
+  color: var(--cn-text-subtle);
 }
 
 /*
@@ -149,7 +149,7 @@
  * content is a *length* — the two lists read fine narrow, and a bar chart
  * squeezed into a third of the row stops being readable at the small end.
  *
- * `--mc-board-scroll` is set here rather than in each card so the three
+ * `--cn-board-scroll` is set here rather than in each card so the three
  * scrollers cannot drift apart: three cards that stop at three different
  * heights read as three unrelated widgets.
  */
@@ -157,12 +157,12 @@
   /* The one height in this row. Every card fills it and every scroller inside
      them flexes to whatever is left, so the three bottom edges line up by
      construction rather than by three numbers that have to be kept equal. */
-  --mc-board-scroll: 30rem;
+  --cn-board-scroll: 30rem;
 
   display: grid;
   grid-auto-rows: minmax(0, 37rem);
   grid-template-columns: minmax(0, 1fr) minmax(0, 1.7fr) minmax(0, 1fr);
-  gap: var(--mc-space-4);
+  gap: var(--cn-space-4);
   /* Stretch, not start: the board is the tallest card because it carries a
      note and a caption the lists do not, and three cards whose bottom edges
      disagree by fifty pixels read as three widgets that happened to land near
@@ -204,7 +204,7 @@
      (CONSUMER DURABLES) beside a five-figure index level, so the column that
      identifies the row is not the one that ellipsises. */
   grid-template-columns: minmax(0, 20.5rem) minmax(0, 1fr);
-  gap: var(--mc-space-4);
+  gap: var(--cn-space-4);
   /* Start, not stretch: the rail is sticky below, and a stretched grid item
      is given the row's full height, which is exactly what stops it sticking. */
   align-items: start;
@@ -219,14 +219,14 @@
  */
 .breadth-row > :first-child {
   position: sticky;
-  top: var(--mc-space-2);
+  top: var(--cn-space-2);
   max-height: calc(100vh - 11rem);
 }
 
 .breadth-main {
   display: flex;
   flex-direction: column;
-  gap: var(--mc-space-4);
+  gap: var(--cn-space-4);
   min-width: 0;
 }
 
@@ -249,7 +249,7 @@
 .split {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(22rem, 1fr));
-  gap: var(--mc-space-4);
+  gap: var(--cn-space-4);
   min-width: 0;
 }
 
@@ -258,42 +258,42 @@
 .tiles {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(11rem, 1fr));
-  gap: var(--mc-space-3);
+  gap: var(--cn-space-3);
 }
 
 .tile {
   display: flex;
   flex-direction: column;
   gap: 0.25rem;
-  padding: var(--mc-space-3) var(--mc-space-4);
-  border: 1px solid var(--mc-border);
-  border-radius: var(--mc-radius);
-  background: var(--mc-surface);
+  padding: var(--cn-space-3) var(--cn-space-4);
+  border: 1px solid var(--cn-border);
+  border-radius: var(--cn-radius);
+  background: var(--cn-surface);
 }
 
 .tile-label {
-  font-size: var(--mc-text-xs);
-  color: var(--mc-text-subtle);
+  font-size: var(--cn-text-xs);
+  color: var(--cn-text-subtle);
 }
 
 .tile-value {
-  font-size: var(--mc-text-lg);
+  font-size: var(--cn-text-lg);
   font-weight: 700;
   font-variant-numeric: tabular-nums;
-  color: var(--mc-text);
+  color: var(--cn-text);
 }
 
 .tile-hint {
-  font-size: var(--mc-text-xs);
-  color: var(--mc-text-muted);
+  font-size: var(--cn-text-xs);
+  color: var(--cn-text-muted);
 }
 
 .up {
-  color: var(--mc-bullish);
+  color: var(--cn-bullish);
 }
 
 .down {
-  color: var(--mc-bearish);
+  color: var(--cn-bearish);
 }
 
 /* -- charts ---------------------------------------------------------------- */
@@ -329,7 +329,7 @@
 .table {
   width: 100%;
   border-collapse: collapse;
-  font-size: var(--mc-text-sm);
+  font-size: var(--cn-text-sm);
   font-variant-numeric: tabular-nums;
 }
 
@@ -337,14 +337,14 @@
   position: sticky;
   top: 0;
   z-index: 1;
-  padding: var(--mc-space-2) var(--mc-space-3);
-  background: var(--mc-surface);
-  border-bottom: 1px solid var(--mc-border);
-  font-size: var(--mc-text-xs);
+  padding: var(--cn-space-2) var(--cn-space-3);
+  background: var(--cn-surface);
+  border-bottom: 1px solid var(--cn-border);
+  font-size: var(--cn-text-xs);
   font-weight: 600;
   letter-spacing: 0.03em;
   text-transform: uppercase;
-  color: var(--mc-text-subtle);
+  color: var(--cn-text-subtle);
   text-align: right;
   white-space: nowrap;
 }
@@ -355,15 +355,15 @@
 }
 
 .table td {
-  padding: var(--mc-space-2) var(--mc-space-3);
-  border-bottom: 1px solid var(--mc-border);
-  color: var(--mc-text);
+  padding: var(--cn-space-2) var(--cn-space-3);
+  border-bottom: 1px solid var(--cn-border);
+  color: var(--cn-text);
   text-align: right;
   white-space: nowrap;
 }
 
 .table tbody tr:hover td {
-  background: var(--mc-surface-raised);
+  background: var(--cn-surface-raised);
 }
 
 .symbol {
@@ -372,9 +372,9 @@
 
 .sub {
   display: block;
-  font-size: var(--mc-text-xs);
+  font-size: var(--cn-text-xs);
   font-weight: 400;
-  color: var(--mc-text-subtle);
+  color: var(--cn-text-subtle);
 }
 
 /* A colour swatch in a legend row — identity beside a name, never instead. */
@@ -382,7 +382,7 @@
   display: inline-block;
   width: 0.625rem;
   height: 0.625rem;
-  margin-right: var(--mc-space-2);
+  margin-right: var(--cn-space-2);
   border-radius: 2px;
   vertical-align: baseline;
 }
@@ -394,7 +394,7 @@
   height: 0.75rem;
   border-radius: 999px;
   overflow: hidden;
-  background: var(--mc-surface-raised);
+  background: var(--cn-surface-raised);
 }
 
 .meter-part {
@@ -402,23 +402,23 @@
 }
 
 .meter-adv {
-  background: var(--mc-bullish);
+  background: var(--cn-bullish);
 }
 
 .meter-unch {
-  background: var(--mc-neutral);
+  background: var(--cn-neutral);
 }
 
 .meter-dec {
-  background: var(--mc-bearish);
+  background: var(--cn-bearish);
 }
 
 .meter-legend {
   display: flex;
-  gap: var(--mc-space-4);
+  gap: var(--cn-space-4);
   flex-wrap: wrap;
-  font-size: var(--mc-text-xs);
-  color: var(--mc-text-muted);
+  font-size: var(--cn-text-xs);
+  color: var(--cn-text-muted);
 }
 
 /* -- quadrant legend ------------------------------------------------------- */
@@ -426,44 +426,44 @@
 .quadrants {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(10rem, 1fr));
-  gap: var(--mc-space-2);
+  gap: var(--cn-space-2);
 }
 
 .quadrant {
   display: flex;
   flex-direction: column;
   gap: 0.125rem;
-  padding: var(--mc-space-2) var(--mc-space-3);
-  border-left: 3px solid var(--mc-border);
-  background: var(--mc-surface-raised);
-  border-radius: var(--mc-radius-sm);
+  padding: var(--cn-space-2) var(--cn-space-3);
+  border-left: 3px solid var(--cn-border);
+  background: var(--cn-surface-raised);
+  border-radius: var(--cn-radius-sm);
 }
 
 .quadrant-leading {
-  border-left-color: var(--mc-bullish);
+  border-left-color: var(--cn-bullish);
 }
 
 .quadrant-improving {
-  border-left-color: var(--mc-accent);
+  border-left-color: var(--cn-accent);
 }
 
 .quadrant-weakening {
-  border-left-color: var(--mc-warning);
+  border-left-color: var(--cn-warning);
 }
 
 .quadrant-lagging {
-  border-left-color: var(--mc-bearish);
+  border-left-color: var(--cn-bearish);
 }
 
 .quadrant-name {
-  font-size: var(--mc-text-xs);
+  font-size: var(--cn-text-xs);
   font-weight: 700;
-  color: var(--mc-text);
+  color: var(--cn-text);
 }
 
 .quadrant-hint {
-  font-size: var(--mc-text-xs);
-  color: var(--mc-text-subtle);
+  font-size: var(--cn-text-xs);
+  color: var(--cn-text-subtle);
 }
 
 /* -- states ---------------------------------------------------------------- */
@@ -471,19 +471,19 @@
 .placeholder,
 .error {
   margin: 0;
-  padding: var(--mc-space-6);
-  border: 1px dashed var(--mc-border);
-  border-radius: var(--mc-radius-lg);
+  padding: var(--cn-space-6);
+  border: 1px dashed var(--cn-border);
+  border-radius: var(--cn-radius-lg);
   text-align: center;
-  font-size: var(--mc-text-sm);
-  color: var(--mc-text-muted);
+  font-size: var(--cn-text-sm);
+  color: var(--cn-text-muted);
 }
 
 .error {
   border-style: solid;
-  border-color: var(--mc-bearish);
-  background: var(--mc-bearish-weak);
-  color: var(--mc-text);
+  border-color: var(--cn-bearish);
+  background: var(--cn-bearish-weak);
+  color: var(--cn-text);
 }
 
 /*
@@ -493,19 +493,19 @@
  */
 .note {
   margin: 0;
-  padding: var(--mc-space-3) var(--mc-space-4);
-  border: 1px solid var(--mc-border);
-  border-left: 3px solid var(--mc-warning);
-  border-radius: var(--mc-radius);
-  background: var(--mc-surface);
-  font-size: var(--mc-text-xs);
+  padding: var(--cn-space-3) var(--cn-space-4);
+  border: 1px solid var(--cn-border);
+  border-left: 3px solid var(--cn-warning);
+  border-radius: var(--cn-radius);
+  background: var(--cn-surface);
+  font-size: var(--cn-text-xs);
   line-height: 1.5;
-  color: var(--mc-text-muted);
+  color: var(--cn-text-muted);
 }
 
 @media (max-width: 48rem) {
   .page {
-    padding: var(--mc-space-4);
+    padding: var(--cn-space-4);
   }
 
   .header {

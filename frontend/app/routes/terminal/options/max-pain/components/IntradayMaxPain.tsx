@@ -92,7 +92,7 @@ export default function IntradayMaxPain({ view, loading, historical }: Props) {
             <p
               className={cx(
                 s.value,
-                'mc-numeric',
+                'cn-numeric',
                 reading.distance > 0 && s.up,
                 reading.distance < 0 && s.down
               )}
@@ -109,7 +109,7 @@ export default function IntradayMaxPain({ view, loading, historical }: Props) {
             <p
               className={cx(
                 s.value,
-                'mc-numeric',
+                'cn-numeric',
                 reading.shift > 0 && s.up,
                 reading.shift < 0 && s.down
               )}

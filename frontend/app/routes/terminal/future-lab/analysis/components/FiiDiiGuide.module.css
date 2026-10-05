@@ -4,22 +4,22 @@
 .section {
   display: flex;
   flex-direction: column;
-  gap: var(--mc-space-3);
+  gap: var(--cn-space-3);
   max-width: 44rem;
 }
 
 .p {
   margin: 0;
-  font-size: var(--mc-text-sm);
+  font-size: var(--cn-text-sm);
   line-height: 1.65;
-  color: var(--mc-text);
+  color: var(--cn-text);
 }
 
 .h3 {
-  margin: var(--mc-space-2) 0 0;
-  font-size: var(--mc-text-sm);
+  margin: var(--cn-space-2) 0 0;
+  font-size: var(--cn-text-sm);
   font-weight: 700;
-  color: var(--mc-text);
+  color: var(--cn-text);
 }
 
 .list {
@@ -27,10 +27,10 @@
   padding-left: 1.125rem;
   display: flex;
   flex-direction: column;
-  gap: var(--mc-space-2);
-  font-size: var(--mc-text-sm);
+  gap: var(--cn-space-2);
+  font-size: var(--cn-text-sm);
   line-height: 1.6;
-  color: var(--mc-text);
+  color: var(--cn-text);
 }
 
 /* Numbered because the order is the instruction — this is a procedure, not a
@@ -40,22 +40,22 @@
   padding-left: 1.25rem;
   display: flex;
   flex-direction: column;
-  gap: var(--mc-space-3);
-  font-size: var(--mc-text-sm);
+  gap: var(--cn-space-3);
+  font-size: var(--cn-text-sm);
   line-height: 1.65;
-  color: var(--mc-text);
+  color: var(--cn-text);
 }
 
 .steps li::marker {
-  color: var(--mc-accent);
+  color: var(--cn-accent);
   font-weight: 700;
 }
 
 .note {
-  margin: var(--mc-space-2) 0 0;
-  padding-top: var(--mc-space-3);
-  border-top: 1px solid var(--mc-border);
-  font-size: var(--mc-text-xs);
+  margin: var(--cn-space-2) 0 0;
+  padding-top: var(--cn-space-3);
+  border-top: 1px solid var(--cn-border);
+  font-size: var(--cn-text-xs);
   line-height: 1.6;
-  color: var(--mc-text-subtle);
+  color: var(--cn-text-subtle);
 }

@@ -9,9 +9,7 @@ import Select from '$shared/ui/Select';
 import s from './notifications.module.css';
 import type { Route } from './+types/notifications';
 
-export const meta: Route.MetaFunction = () => [
-  { title: 'Notifications · Settings · MarketCompass' }
-];
+export const meta: Route.MetaFunction = () => [{ title: 'Notifications · Settings · ChartNexus' }];
 
 interface ToggleDef {
   key: keyof NotificationToggleKey;

@@ -8,7 +8,7 @@ from tests.architecture.conftest import SRC, imports_in, python_files
 
 pytestmark = pytest.mark.architecture
 
-CONTEXT_ROOT = "marketcompass.contexts"
+CONTEXT_ROOT = "chartnexus.contexts"
 
 
 def _context_names() -> list[str]:

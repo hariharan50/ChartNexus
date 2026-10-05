@@ -31,7 +31,7 @@ export default function LevelLadder({ levels }: Props) {
           <ul className={s.clusterList}>
             {levels.clusters.map((cluster) => (
               <li key={cluster.price} className={s.cluster}>
-                <span className={cx(s.clusterPrice, 'mc-numeric')}>{fmtLevel(cluster.price)}</span>
+                <span className={cx(s.clusterPrice, 'cn-numeric')}>{fmtLevel(cluster.price)}</span>
                 <span className={s.clusterOrigins}>
                   {cluster.origins.map((origin) => ORIGIN_LABELS[origin]).join(' · ')}
                 </span>
@@ -77,19 +77,19 @@ export default function LevelLadder({ levels }: Props) {
                     <th scope="row" colSpan={2}>
                       Spot
                     </th>
-                    <td className={cx(s.right, 'mc-numeric')}>{fmtLevel(levels.spot)}</td>
+                    <td className={cx(s.right, 'cn-numeric')}>{fmtLevel(levels.spot)}</td>
                     <td className={s.right} colSpan={2} />
                   </tr>
                 ) : null}
                 <tr>
                   <th scope="row">{level.label}</th>
                   <td className={s.origin}>{ORIGIN_LABELS[level.origin]}</td>
-                  <td className={cx(s.right, 'mc-numeric')}>{fmtLevel(level.price)}</td>
-                  <td className={cx(s.right, 'mc-numeric', s[level.side])}>
+                  <td className={cx(s.right, 'cn-numeric')}>{fmtLevel(level.price)}</td>
+                  <td className={cx(s.right, 'cn-numeric', s[level.side])}>
                     {fmtChange(level.distance_points)}
                     <span className={s.sub}>{fmtPercent(level.distance_percent)}</span>
                   </td>
-                  <td className={cx(s.right, 'mc-numeric', s.sub)}>{fmtAtr(level.distance_atr)}</td>
+                  <td className={cx(s.right, 'cn-numeric', s.sub)}>{fmtAtr(level.distance_atr)}</td>
                 </tr>
               </Fragment>
             );
@@ -101,7 +101,7 @@ export default function LevelLadder({ levels }: Props) {
               <th scope="row" colSpan={2}>
                 Spot
               </th>
-              <td className={cx(s.right, 'mc-numeric')}>{fmtLevel(levels.spot)}</td>
+              <td className={cx(s.right, 'cn-numeric')}>{fmtLevel(levels.spot)}</td>
               <td className={s.right} colSpan={2} />
             </tr>
           ) : null}

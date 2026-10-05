@@ -1,8 +1,8 @@
 .page {
   display: flex;
   flex-direction: column;
-  gap: var(--mc-space-5);
-  padding: var(--mc-space-6);
+  gap: var(--cn-space-5);
+  padding: var(--cn-space-6);
 }
 
 .header {
@@ -10,20 +10,20 @@
   flex-wrap: wrap;
   align-items: flex-start;
   justify-content: space-between;
-  gap: var(--mc-space-4);
+  gap: var(--cn-space-4);
 }
 
 .title {
   margin: 0;
-  font-size: var(--mc-text-xl);
+  font-size: var(--cn-text-xl);
   font-weight: 600;
 }
 
 .subtitle {
-  margin: var(--mc-space-1) 0 0;
+  margin: var(--cn-space-1) 0 0;
   max-width: 62ch;
-  color: var(--mc-text-muted);
-  font-size: var(--mc-text-sm);
+  color: var(--cn-text-muted);
+  font-size: var(--cn-text-sm);
 }
 
 /* -- toolbar -------------------------------------------------------------- */
@@ -32,19 +32,19 @@
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: var(--mc-space-4);
+  gap: var(--cn-space-4);
 }
 
 .compare,
 .sector {
   display: flex;
   align-items: center;
-  gap: var(--mc-space-2);
+  gap: var(--cn-space-2);
 }
 
 .toolLabel {
-  color: var(--mc-text-muted);
-  font-size: var(--mc-text-xs);
+  color: var(--cn-text-muted);
+  font-size: var(--cn-text-xs);
   text-transform: uppercase;
   letter-spacing: 0.04em;
 }
@@ -53,33 +53,33 @@
 .viewToggle {
   display: inline-flex;
   padding: 2px;
-  border: 1px solid var(--mc-border);
-  border-radius: var(--mc-radius);
-  background: var(--mc-surface);
+  border: 1px solid var(--cn-border);
+  border-radius: var(--cn-radius);
+  background: var(--cn-surface);
 }
 
 .segment,
 .toggleBtn {
-  height: var(--mc-control-h-sm);
-  padding: 0 var(--mc-space-3);
+  height: var(--cn-control-h-sm);
+  padding: 0 var(--cn-space-3);
   border: 0;
-  border-radius: var(--mc-radius-sm);
+  border-radius: var(--cn-radius-sm);
   background: transparent;
-  color: var(--mc-text-muted);
+  color: var(--cn-text-muted);
   font: inherit;
-  font-size: var(--mc-text-sm);
+  font-size: var(--cn-text-sm);
   cursor: pointer;
 }
 
 .segment:hover:not(:disabled),
 .toggleBtn:hover {
-  color: var(--mc-text);
+  color: var(--cn-text);
 }
 
 .segmentOn,
 .toggleOn {
-  background: var(--mc-accent-weak);
-  color: var(--mc-accent);
+  background: var(--cn-accent-weak);
+  color: var(--cn-accent);
   font-weight: 600;
 }
 
@@ -93,7 +93,7 @@
 .segment:focus-visible,
 .toggleBtn:focus-visible,
 .select:focus-visible {
-  outline: 2px solid var(--mc-accent);
+  outline: 2px solid var(--cn-accent);
   outline-offset: 1px;
 }
 
@@ -104,34 +104,34 @@
 
 .coverage {
   margin-left: auto;
-  color: var(--mc-text-muted);
-  font-size: var(--mc-text-xs);
+  color: var(--cn-text-muted);
+  font-size: var(--cn-text-xs);
   font-variant-numeric: tabular-nums;
 }
 
 .partial {
-  color: var(--mc-warning);
+  color: var(--cn-warning);
 }
 
 /* An explanation, not a fault: this contract prices fine, it simply has no
    open-interest sweep behind it. Quieter than .error for that reason. */
 .notice {
   margin: 0;
-  padding: var(--mc-space-3) var(--mc-space-4);
-  border: 1px solid var(--mc-border-strong);
-  border-radius: var(--mc-radius);
-  background: var(--mc-surface-2, transparent);
-  color: var(--mc-text-muted);
-  font-size: var(--mc-text-sm);
+  padding: var(--cn-space-3) var(--cn-space-4);
+  border: 1px solid var(--cn-border-strong);
+  border-radius: var(--cn-radius);
+  background: var(--cn-surface-2, transparent);
+  color: var(--cn-text-muted);
+  font-size: var(--cn-text-sm);
 }
 
 .error {
   margin: 0;
-  padding: var(--mc-space-3) var(--mc-space-4);
-  border: 1px solid var(--mc-bearish);
-  border-radius: var(--mc-radius);
-  background: var(--mc-bearish-weak);
-  font-size: var(--mc-text-sm);
+  padding: var(--cn-space-3) var(--cn-space-4);
+  border: 1px solid var(--cn-bearish);
+  border-radius: var(--cn-radius);
+  background: var(--cn-bearish-weak);
+  font-size: var(--cn-text-sm);
 }
 
 /* -- panels --------------------------------------------------------------- */
@@ -146,7 +146,7 @@
 .grid {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: var(--mc-space-5);
+  gap: var(--cn-space-5);
   align-items: start;
 }
 
@@ -165,19 +165,19 @@
 .panel {
   display: flex;
   flex-direction: column;
-  gap: var(--mc-space-3);
-  padding: var(--mc-space-5);
-  border: 1px solid var(--mc-border);
-  border-radius: var(--mc-radius-lg);
-  background: var(--mc-surface);
+  gap: var(--cn-space-3);
+  padding: var(--cn-space-5);
+  border: 1px solid var(--cn-border);
+  border-radius: var(--cn-radius-lg);
+  background: var(--cn-surface);
 }
 
 .panelTitle {
   display: flex;
   align-items: center;
-  gap: var(--mc-space-2);
+  gap: var(--cn-space-2);
   margin: 0;
-  font-size: var(--mc-text-sm);
+  font-size: var(--cn-text-sm);
   font-weight: 600;
 }
 
@@ -191,21 +191,21 @@
   width: 3px;
   height: 0.9em;
   border-radius: 999px;
-  background: var(--mc-border-strong, var(--mc-border));
+  background: var(--cn-border-strong, var(--cn-border));
 }
 
 .panelUp .panelTitle::before {
-  background: var(--mc-bullish);
+  background: var(--cn-bullish);
 }
 
 .panelDown .panelTitle::before {
-  background: var(--mc-bearish);
+  background: var(--cn-bearish);
 }
 
 .panelEmpty {
   margin: 0;
-  color: var(--mc-text-muted);
-  font-size: var(--mc-text-sm);
+  color: var(--cn-text-muted);
+  font-size: var(--cn-text-sm);
 }
 
 /*
@@ -223,7 +223,7 @@
   width: 100%;
   table-layout: fixed;
   border-collapse: collapse;
-  font-size: var(--mc-text-sm);
+  font-size: var(--cn-text-sm);
   font-variant-numeric: tabular-nums;
 }
 
@@ -236,10 +236,10 @@
 }
 
 .panelTable th[scope='col'] {
-  padding-bottom: var(--mc-space-2);
-  border-bottom: 1px solid var(--mc-border);
-  color: var(--mc-text-muted);
-  font-size: var(--mc-text-xs);
+  padding-bottom: var(--cn-space-2);
+  border-bottom: 1px solid var(--cn-border);
+  color: var(--cn-text-muted);
+  font-size: var(--cn-text-xs);
   font-weight: 600;
   letter-spacing: 0.04em;
   text-align: left;
@@ -250,21 +250,21 @@
    have made every panel visibly taller for no extra information. */
 .panelTable td,
 .panelTable th[scope='row'] {
-  padding: var(--mc-space-2) 0;
+  padding: var(--cn-space-2) 0;
   font-weight: 400;
   text-align: left;
 }
 
 .panelTable tbody tr + tr td,
 .panelTable tbody tr + tr th {
-  border-top: 1px solid var(--mc-border);
+  border-top: 1px solid var(--cn-border);
 }
 
 /* Ties the three cells together as one row while the eye crosses from the mark
    to the numbers — and it is the cue that the row carries a hover title. */
 .panelTable tbody tr:hover td,
 .panelTable tbody tr:hover th {
-  background: var(--mc-surface-raised);
+  background: var(--cn-surface-raised);
 }
 
 .num {
@@ -280,15 +280,15 @@
 }
 
 .state {
-  color: var(--mc-text-muted);
-  font-size: var(--mc-text-xs);
+  color: var(--cn-text-muted);
+  font-size: var(--cn-text-xs);
 }
 
 /* The two semantic directions, shared by panels and the board table. */
 .up {
-  color: var(--mc-bullish);
+  color: var(--cn-bullish);
 }
 
 .down {
-  color: var(--mc-bearish);
+  color: var(--cn-bearish);
 }

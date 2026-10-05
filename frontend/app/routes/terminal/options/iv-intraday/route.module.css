@@ -8,7 +8,7 @@
 /* Fill the terminal content area so the one chart uses the whole screen rather
    than sitting at a fixed height with a band of dead surface beneath it. */
 .page {
-  padding: var(--mc-space-6);
+  padding: var(--cn-space-6);
   display: flex;
   flex-direction: column;
   min-height: calc(100dvh - 4.5rem);
@@ -19,7 +19,7 @@
   min-height: 0;
   display: grid;
   grid-template-columns: 260px 1fr;
-  gap: var(--mc-space-5, 1.25rem);
+  gap: var(--cn-space-5, 1.25rem);
   align-items: stretch;
 }
 
@@ -31,7 +31,7 @@
 .main {
   display: flex;
   flex-direction: column;
-  gap: var(--mc-space-5, 1.25rem);
+  gap: var(--cn-space-5, 1.25rem);
   min-width: 0;
   min-height: 0;
 }
@@ -44,7 +44,7 @@
   flex: 0 0 auto;
   /* Tighter than the default card padding: the settings controls are narrow and
      the extra inset only ate into the chart column's width. */
-  padding: var(--mc-space-3);
+  padding: var(--cn-space-3);
 }
 
 .main > .panel {
@@ -55,15 +55,15 @@
 }
 
 .panel {
-  border: 1px solid var(--mc-border);
-  border-radius: var(--mc-radius-lg);
-  background: var(--mc-surface);
-  box-shadow: var(--mc-shadow);
-  padding: var(--mc-space-4);
+  border: 1px solid var(--cn-border);
+  border-radius: var(--cn-radius-lg);
+  background: var(--cn-surface);
+  box-shadow: var(--cn-shadow);
+  padding: var(--cn-space-4);
 }
 
 .panel.muted {
-  color: var(--mc-text-muted);
+  color: var(--cn-text-muted);
   text-align: center;
 }
 
@@ -71,19 +71,19 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: var(--mc-space-3);
-  padding: var(--mc-space-4);
-  border: 1px solid var(--mc-bearish);
-  border-radius: var(--mc-radius-lg);
-  color: var(--mc-text);
+  gap: var(--cn-space-3);
+  padding: var(--cn-space-4);
+  border: 1px solid var(--cn-bearish);
+  border-radius: var(--cn-radius-lg);
+  color: var(--cn-text);
 }
 
 .banner button {
   padding: 0.375rem 0.75rem;
-  border: 1px solid var(--mc-border-strong);
-  border-radius: var(--mc-radius);
-  background: var(--mc-surface-raised);
-  color: var(--mc-text);
+  border: 1px solid var(--cn-border-strong);
+  border-radius: var(--cn-radius);
+  background: var(--cn-surface-raised);
+  color: var(--cn-text);
   cursor: pointer;
 }
 
@@ -91,10 +91,10 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: var(--mc-space-2);
+  gap: var(--cn-space-2);
   /* The title's own bottom margin is zeroed inside the head row, so the row
      carries the gap to the first control instead. */
-  margin-bottom: var(--mc-space-3);
+  margin-bottom: var(--cn-space-3);
 }
 
 .panel-head .p-title {
@@ -108,17 +108,17 @@
   justify-content: center;
   width: 1.75rem;
   height: 1.75rem;
-  border: 1px solid var(--mc-border);
-  border-radius: var(--mc-radius-sm);
-  background: var(--mc-surface-raised);
-  color: var(--mc-text-muted);
-  font-size: var(--mc-text-sm);
+  border: 1px solid var(--cn-border);
+  border-radius: var(--cn-radius-sm);
+  background: var(--cn-surface-raised);
+  color: var(--cn-text-muted);
+  font-size: var(--cn-text-sm);
   cursor: pointer;
 }
 
 .restore {
   position: sticky;
-  top: var(--mc-space-6);
+  top: var(--cn-space-6);
   align-self: start;
 }
 
@@ -126,14 +126,14 @@
   display: flex;
   align-items: center;
   gap: 0.375rem;
-  margin: 0 0 var(--mc-space-3);
-  font-size: var(--mc-text-base);
+  margin: 0 0 var(--cn-space-3);
+  font-size: var(--cn-text-base);
   font-weight: 700;
 }
 
 .ico {
   display: inline-flex;
-  color: var(--mc-text-muted);
+  color: var(--cn-text-muted);
 }
 
 .ico svg {
@@ -147,9 +147,9 @@
   align-items: center;
   gap: 0.5rem;
   padding: 0.5rem 0.625rem;
-  border: 1px solid var(--mc-border);
-  border-radius: var(--mc-radius);
-  background: var(--mc-surface-raised);
+  border: 1px solid var(--cn-border);
+  border-radius: var(--cn-radius);
+  background: var(--cn-surface-raised);
 }
 
 .badge {
@@ -159,9 +159,9 @@
   width: 1.75rem;
   height: 1.75rem;
   border-radius: 999px;
-  background: var(--mc-accent-weak);
-  color: var(--mc-accent);
-  font-size: var(--mc-text-xs);
+  background: var(--cn-accent-weak);
+  color: var(--cn-accent);
+  font-size: var(--cn-text-xs);
   font-weight: 700;
 }
 
@@ -178,19 +178,19 @@
 .cyclers button {
   width: 1.75rem;
   height: 1.75rem;
-  border: 1px solid var(--mc-border);
-  border-radius: var(--mc-radius-sm);
-  background: var(--mc-surface);
-  color: var(--mc-text-muted);
+  border: 1px solid var(--cn-border);
+  border-radius: var(--cn-radius-sm);
+  background: var(--cn-surface);
+  color: var(--cn-text-muted);
   cursor: pointer;
 }
 
 .sub-label {
-  margin: var(--mc-space-3) 0 0.375rem;
-  font-size: var(--mc-text-xs);
+  margin: var(--cn-space-3) 0 0.375rem;
+  font-size: var(--cn-text-xs);
   letter-spacing: 0.06em;
   text-transform: uppercase;
-  color: var(--mc-text-subtle);
+  color: var(--cn-text-subtle);
 }
 
 .select {
@@ -199,10 +199,10 @@
   justify-content: space-between;
   gap: 0.25rem;
   padding: 0.5rem 0.625rem;
-  border: 1px solid var(--mc-border);
-  border-radius: var(--mc-radius);
-  background: var(--mc-surface-raised);
-  font-size: var(--mc-text-xs);
+  border: 1px solid var(--cn-border);
+  border-radius: var(--cn-radius);
+  background: var(--cn-surface-raised);
+  font-size: var(--cn-text-xs);
   font-weight: 600;
 }
 
@@ -224,25 +224,25 @@
 
 .seg {
   padding: 0.4375rem 0.75rem;
-  border: 1px solid var(--mc-border);
-  border-radius: var(--mc-radius);
+  border: 1px solid var(--cn-border);
+  border-radius: var(--cn-radius);
   background: transparent;
-  color: var(--mc-text-muted);
-  font-size: var(--mc-text-xs);
+  color: var(--cn-text-muted);
+  font-size: var(--cn-text-xs);
   font-weight: 600;
   cursor: pointer;
 }
 
 .seg.active {
-  border-color: color-mix(in srgb, var(--mc-accent) 45%, transparent);
-  background: var(--mc-accent-weak);
-  color: var(--mc-accent);
+  border-color: color-mix(in srgb, var(--cn-accent) 45%, transparent);
+  background: var(--cn-accent-weak);
+  color: var(--cn-accent);
 }
 
 .hint {
   margin: 0;
-  font-size: var(--mc-text-xs);
-  color: var(--mc-text-subtle);
+  font-size: var(--cn-text-xs);
+  color: var(--cn-text-subtle);
 }
 
 /* -- iv intraday specifics ------------------------------------------------ */
@@ -262,10 +262,10 @@
   align-items: center;
   gap: 0.375rem;
   padding: 0.3125rem 0.5rem;
-  border: 1px solid var(--mc-border);
-  border-radius: var(--mc-radius);
-  background: var(--mc-surface-raised);
-  font-size: var(--mc-text-xs);
+  border: 1px solid var(--cn-border);
+  border-radius: var(--cn-radius);
+  background: var(--cn-surface-raised);
+  font-size: var(--cn-text-xs);
   font-weight: 600;
 }
 
@@ -280,20 +280,20 @@
   border: none;
   background: none;
   padding: 0;
-  color: var(--mc-text-subtle);
-  font-size: var(--mc-text-sm);
+  color: var(--cn-text-subtle);
+  font-size: var(--cn-text-sm);
   line-height: 1;
   cursor: pointer;
 }
 
 .chip-x:hover {
-  color: var(--mc-text);
+  color: var(--cn-text);
 }
 
 /* A short scroll box rather than a modal: there are rarely more than a dozen
    listed expiries, and a dialog for a dozen rows is ceremony. */
 .expiry-list {
-  margin-top: var(--mc-space-3);
+  margin-top: var(--cn-space-3);
   display: flex;
   flex-direction: column;
   gap: 0.1875rem;
@@ -305,24 +305,24 @@
 .expiry-row {
   padding: 0.375rem 0.5rem;
   border: 1px solid transparent;
-  border-radius: var(--mc-radius-sm);
+  border-radius: var(--cn-radius-sm);
   background: transparent;
-  color: var(--mc-text-muted);
-  font-size: var(--mc-text-xs);
+  color: var(--cn-text-muted);
+  font-size: var(--cn-text-xs);
   font-weight: 600;
   text-align: left;
   cursor: pointer;
 }
 
 .expiry-row:hover:not(:disabled) {
-  border-color: var(--mc-border-strong);
-  color: var(--mc-text);
+  border-color: var(--cn-border-strong);
+  color: var(--cn-text);
 }
 
 .expiry-row.on {
-  border-color: color-mix(in srgb, var(--mc-accent) 45%, transparent);
-  background: var(--mc-accent-weak);
-  color: var(--mc-accent);
+  border-color: color-mix(in srgb, var(--cn-accent) 45%, transparent);
+  background: var(--cn-accent-weak);
+  color: var(--cn-accent);
 }
 
 /* At the cap an unpicked row dims rather than shouting; the count says why. */
@@ -333,8 +333,8 @@
 
 .count {
   margin: 0.375rem 0 0;
-  font-size: var(--mc-text-xs);
-  color: var(--mc-text-subtle);
+  font-size: var(--cn-text-xs);
+  color: var(--cn-text-subtle);
 }
 
 /* -- chart panel top -- */
@@ -342,11 +342,11 @@
   display: flex;
   align-items: center;
   flex-wrap: wrap;
-  gap: var(--mc-space-3);
+  gap: var(--cn-space-3);
   row-gap: 0.375rem;
-  margin-bottom: var(--mc-space-2);
-  padding-bottom: var(--mc-space-2);
-  border-bottom: 1px solid var(--mc-border);
+  margin-bottom: var(--cn-space-2);
+  padding-bottom: var(--cn-space-2);
+  border-bottom: 1px solid var(--cn-border);
 }
 
 .chart-top-left {
@@ -355,7 +355,7 @@
   display: flex;
   align-items: center;
   flex-wrap: wrap;
-  gap: var(--mc-space-3);
+  gap: var(--cn-space-3);
   row-gap: 0.375rem;
 }
 
@@ -372,17 +372,17 @@
   margin-left: auto;
   display: inline-flex;
   align-items: center;
-  gap: var(--mc-space-3);
+  gap: var(--cn-space-3);
 }
 
 .zoom-reset,
 .download {
   padding: 0.25rem 0.5rem;
-  border: 1px solid var(--mc-border);
-  border-radius: var(--mc-radius-sm);
-  background: var(--mc-surface-raised);
-  color: var(--mc-text-muted);
-  font-size: var(--mc-text-xs);
+  border: 1px solid var(--cn-border);
+  border-radius: var(--cn-radius-sm);
+  background: var(--cn-surface-raised);
+  color: var(--cn-text-muted);
+  font-size: var(--cn-text-xs);
   font-weight: 600;
   white-space: nowrap;
   cursor: pointer;
@@ -390,8 +390,8 @@
 
 .zoom-reset:hover,
 .download:hover {
-  border-color: var(--mc-border-strong);
-  color: var(--mc-text);
+  border-color: var(--cn-border-strong);
+  color: var(--cn-text);
 }
 
 /* -- live badge -- */
@@ -399,25 +399,25 @@
   display: inline-flex;
   align-items: center;
   gap: 0.375rem;
-  font-size: var(--mc-text-sm);
-  color: var(--mc-text-muted);
+  font-size: var(--cn-text-sm);
+  color: var(--cn-text-muted);
   white-space: nowrap;
   font-variant-numeric: tabular-nums;
 }
 
 .live.stale {
-  color: var(--mc-bearish);
+  color: var(--cn-bearish);
 }
 
 .live.stale .dot {
-  background: var(--mc-bearish);
+  background: var(--cn-bearish);
 }
 
 .dot {
   width: 0.5rem;
   height: 0.5rem;
   border-radius: 50%;
-  background: var(--mc-bullish);
+  background: var(--cn-bullish);
 }
 
 .dot.pulse {
@@ -437,15 +437,15 @@
 }
 
 .sep {
-  color: var(--mc-border-strong);
+  color: var(--cn-border-strong);
 }
 
 /* -- legend -- */
 .legend {
   display: flex;
   flex-wrap: wrap;
-  gap: var(--mc-space-2);
-  margin-bottom: var(--mc-space-2);
+  gap: var(--cn-space-2);
+  margin-bottom: var(--cn-space-2);
 }
 
 .entry {
@@ -453,21 +453,21 @@
   align-items: center;
   gap: 0.375rem;
   padding: 0.25rem 0.5rem;
-  border: 1px solid var(--mc-border);
-  border-radius: var(--mc-radius);
-  background: var(--mc-surface-raised);
-  color: var(--mc-text);
-  font-size: var(--mc-text-xs);
+  border: 1px solid var(--cn-border);
+  border-radius: var(--cn-radius);
+  background: var(--cn-surface-raised);
+  color: var(--cn-text);
+  font-size: var(--cn-text-xs);
   font-weight: 600;
   cursor: pointer;
 }
 
 .entry:hover {
-  border-color: var(--mc-border-strong);
+  border-color: var(--cn-border-strong);
 }
 
 .entry.off {
-  color: var(--mc-text-subtle);
+  color: var(--cn-text-subtle);
 }
 
 .entry.off .label {
@@ -476,7 +476,7 @@
 
 .eye {
   display: inline-flex;
-  color: var(--mc-text-muted);
+  color: var(--cn-text-muted);
 }
 
 .eye svg {
@@ -510,16 +510,16 @@
 }
 
 .caption {
-  margin: var(--mc-space-3) 0 0;
-  font-size: var(--mc-text-xs);
-  color: var(--mc-text-subtle);
+  margin: var(--cn-space-3) 0 0;
+  font-size: var(--cn-text-xs);
+  color: var(--cn-text-subtle);
 }
 
 .empty {
   margin: 0;
-  padding: var(--mc-space-6) 0;
+  padding: var(--cn-space-6) 0;
   text-align: center;
-  color: var(--mc-text-muted);
+  color: var(--cn-text-muted);
 }
 
 /* Empty state that keeps the mode toggle reachable, so a picked date that
@@ -527,9 +527,9 @@
 .empty-panel {
   display: flex;
   flex-direction: column;
-  gap: var(--mc-space-3);
+  gap: var(--cn-space-3);
   max-width: 24rem;
-  margin: var(--mc-space-6) auto;
+  margin: var(--cn-space-6) auto;
 }
 
 .empty-panel .muted {

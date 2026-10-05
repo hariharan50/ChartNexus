@@ -48,7 +48,7 @@ const SPARQL = 'https://query.wikidata.org/sparql';
 const COMMONS = 'https://commons.wikimedia.org/wiki/Special:FilePath/';
 
 /** Wikimedia asks automated clients to identify themselves. */
-const UA = 'MarketCompass-logo-upgrade/1.0 (F&O terminal; contact: repository owner)';
+const UA = 'ChartNexus-logo-upgrade/1.0 (F&O terminal; contact: repository owner)';
 
 /** Below this a mark is soft in a 22px avatar on a 2x display. */
 const SHARP_PX = 64;

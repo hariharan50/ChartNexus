@@ -15,16 +15,16 @@
   display: inline-flex;
   align-items: center;
   justify-content: space-between;
-  gap: var(--mc-space-3);
+  gap: var(--cn-space-3);
   width: 100%;
-  height: var(--mc-control-h);
-  padding: 0 var(--mc-space-2) 0 var(--mc-space-3);
-  border: 1px solid var(--mc-field-border);
-  border-radius: var(--mc-radius);
-  background: var(--mc-field-bg);
-  color: var(--mc-text);
+  height: var(--cn-control-h);
+  padding: 0 var(--cn-space-2) 0 var(--cn-space-3);
+  border: 1px solid var(--cn-field-border);
+  border-radius: var(--cn-radius);
+  background: var(--cn-field-bg);
+  color: var(--cn-text);
   font: inherit;
-  font-size: var(--mc-text-sm);
+  font-size: var(--cn-text-sm);
   font-weight: 600;
   font-variant-numeric: tabular-nums;
   cursor: pointer;
@@ -32,25 +32,25 @@
 }
 
 .triggerSm {
-  height: var(--mc-control-h-sm);
+  height: var(--cn-control-h-sm);
 }
 
 .trigger:hover:not(:disabled) {
-  border-color: var(--mc-border-strong);
+  border-color: var(--cn-border-strong);
 }
 
 .trigger:focus-visible {
-  outline: 2px solid var(--mc-focus);
+  outline: 2px solid var(--cn-focus);
   outline-offset: 1px;
 }
 
 .trigger:disabled {
-  color: var(--mc-text-subtle);
+  color: var(--cn-text-subtle);
   cursor: default;
 }
 
 .triggerOpen {
-  border-color: var(--mc-accent);
+  border-color: var(--cn-accent);
 }
 
 .triggerLabel {
@@ -60,7 +60,7 @@
 
 .caret {
   display: inline-flex;
-  color: var(--mc-text-subtle);
+  color: var(--cn-text-subtle);
   transition: transform 120ms ease;
 }
 
@@ -78,12 +78,12 @@
   max-height: 18rem;
   overflow-y: auto;
   margin: 0;
-  padding: var(--mc-space-1);
+  padding: var(--cn-space-1);
   list-style: none;
-  border: 1px solid var(--mc-border-strong);
-  border-radius: var(--mc-radius);
-  background: var(--mc-surface-raised);
-  box-shadow: var(--mc-shadow, 0 8px 24px rgb(0 0 0 / 35%));
+  border: 1px solid var(--cn-border-strong);
+  border-radius: var(--cn-radius);
+  background: var(--cn-surface-raised);
+  box-shadow: var(--cn-shadow, 0 8px 24px rgb(0 0 0 / 35%));
 }
 
 /* For a control near the viewport edge: a list that grows rightwards off
@@ -97,18 +97,18 @@
   display: grid;
   grid-template-columns: 1.125rem minmax(0, 1fr) max-content max-content;
   align-items: center;
-  gap: var(--mc-space-2);
-  padding: var(--mc-space-2);
-  border-radius: var(--mc-radius-sm);
-  color: var(--mc-text);
-  font-size: var(--mc-text-sm);
+  gap: var(--cn-space-2);
+  padding: var(--cn-space-2);
+  border-radius: var(--cn-radius-sm);
+  color: var(--cn-text);
+  font-size: var(--cn-text-sm);
   font-variant-numeric: tabular-nums;
   white-space: nowrap;
   cursor: pointer;
 }
 
 .option:hover {
-  background: var(--mc-field-bg-hover);
+  background: var(--cn-field-bg-hover);
 }
 
 /* Focus, not hover, is what the keyboard moves — and it has to be visible
@@ -116,17 +116,17 @@
 .option:focus-visible,
 .option:focus {
   outline: none;
-  background: var(--mc-field-bg-hover);
-  box-shadow: inset 0 0 0 1px var(--mc-accent);
+  background: var(--cn-field-bg-hover);
+  box-shadow: inset 0 0 0 1px var(--cn-accent);
 }
 
 .optionOn {
-  color: var(--mc-accent);
+  color: var(--cn-accent);
   font-weight: 600;
 }
 
 .optionOff {
-  color: var(--mc-text-subtle);
+  color: var(--cn-text-subtle);
   cursor: not-allowed;
 }
 
@@ -134,7 +134,7 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  color: var(--mc-accent);
+  color: var(--cn-accent);
 }
 
 .optionLabel {
@@ -146,12 +146,12 @@
    the whole reason these are columns and not one string. */
 .optionMeta {
   text-align: right;
-  color: var(--mc-text-muted);
-  font-size: var(--mc-text-xs);
+  color: var(--cn-text-muted);
+  font-size: var(--cn-text-xs);
 }
 
 .optionHint {
-  color: var(--mc-text-subtle);
-  font-size: var(--mc-text-xs);
+  color: var(--cn-text-subtle);
+  font-size: var(--cn-text-xs);
   font-weight: 400;
 }

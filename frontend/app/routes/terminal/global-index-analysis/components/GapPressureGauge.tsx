@@ -37,7 +37,7 @@ export default function GapPressureGauge({ pressure }: Props) {
         <p className={s.sub}>Weighted by each market&apos;s pull and by how recently it closed</p>
       </header>
 
-      <p className={cx(s.score, 'mc-numeric', t === 'up' && s.up, t === 'down' && s.down)}>
+      <p className={cx(s.score, 'cn-numeric', t === 'up' && s.up, t === 'down' && s.down)}>
         {score > 0 ? '+' : score < 0 ? '−' : ''}
         {Math.abs(score).toFixed(1)}
       </p>
@@ -77,9 +77,9 @@ export default function GapPressureGauge({ pressure }: Props) {
                 />
                 <span className={s.mid} />
               </span>
-              <span className={cx(s.move, 'mc-numeric')}>{fmtPercent(item.change_percent)}</span>
+              <span className={cx(s.move, 'cn-numeric')}>{fmtPercent(item.change_percent)}</span>
               <span
-                className={cx(s.points, 'mc-numeric', points > 0 && s.up, points < 0 && s.down)}
+                className={cx(s.points, 'cn-numeric', points > 0 && s.up, points < 0 && s.down)}
               >
                 {points > 0 ? '+' : points < 0 ? '−' : ''}
                 {Math.abs(points).toFixed(1)}

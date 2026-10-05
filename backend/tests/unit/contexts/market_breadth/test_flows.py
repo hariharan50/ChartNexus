@@ -7,7 +7,7 @@ from decimal import Decimal
 
 import pytest
 
-from marketcompass.contexts.market_breadth.domain.flows import (
+from chartnexus.contexts.market_breadth.domain.flows import (
     FlowDay,
     ParticipantFlow,
     Segment,

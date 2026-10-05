@@ -15,7 +15,7 @@ import { isValidIndianMobile, toE164 } from '$shared/validation/phone';
 import s from './register.module.css';
 import type { Route } from './+types/register';
 
-export const meta: Route.MetaFunction = () => [{ title: 'Create an account · MarketCompass' }];
+export const meta: Route.MetaFunction = () => [{ title: 'Create an account · ChartNexus' }];
 
 const MIN_PASSWORD_LENGTH = 12;
 
@@ -189,8 +189,8 @@ export default function Register() {
       </Button>
 
       <p className={s.terms}>
-        By creating an account you agree that MarketCompass is analytics software and does not
-        provide investment advice.
+        By creating an account you agree that ChartNexus is analytics software and does not provide
+        investment advice.
       </p>
 
       <p className={s.footer}>

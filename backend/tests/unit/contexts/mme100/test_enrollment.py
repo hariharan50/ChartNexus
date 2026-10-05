@@ -4,11 +4,11 @@ from __future__ import annotations
 
 import uuid
 
-from marketcompass.contexts.mme100.application.enrollment import (
+from chartnexus.contexts.mme100.application.enrollment import (
     GetMme100Enrollment,
     SetMme100Enrollment,
 )
-from marketcompass.shared_kernel.types.identifiers import TenantId
+from chartnexus.shared_kernel.types.identifiers import TenantId
 
 TENANT = TenantId(uuid.uuid4())
 

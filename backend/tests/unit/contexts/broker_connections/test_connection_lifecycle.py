@@ -9,20 +9,20 @@ from datetime import UTC, datetime
 
 import pytest
 
-from marketcompass.contexts.broker_connections.domain.connection import BrokerConnection
-from marketcompass.contexts.broker_connections.domain.errors import (
+from chartnexus.contexts.broker_connections.domain.connection import BrokerConnection
+from chartnexus.contexts.broker_connections.domain.errors import (
     ConnectionExpiredError,
     CredentialsMissingError,
     NotConnectedError,
 )
-from marketcompass.contexts.broker_connections.domain.value_objects import (
+from chartnexus.contexts.broker_connections.domain.value_objects import (
     BrokerCredentials,
     BrokerName,
     BrokerProfile,
     ConnectionStatus,
 )
-from marketcompass.shared_kernel.domain.errors import ValidationError
-from marketcompass.shared_kernel.types.identifiers import TenantId, new_id
+from chartnexus.shared_kernel.domain.errors import ValidationError
+from chartnexus.shared_kernel.types.identifiers import TenantId, new_id
 
 pytestmark = pytest.mark.unit
 

@@ -8,8 +8,8 @@ unparseable status defaults to NO TRADE.
 
 from __future__ import annotations
 
-from marketcompass.contexts.stryx.domain import call_template as ct
-from marketcompass.contexts.stryx.domain.call_template import Status
+from chartnexus.contexts.stryx.domain import call_template as ct
+from chartnexus.contexts.stryx.domain.call_template import Status
 
 _LIVE = """[STRYX CALL]
 Instrument: NIFTY 23100 CE

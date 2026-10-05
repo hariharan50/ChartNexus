@@ -1,19 +1,19 @@
 .panel {
   display: flex;
   flex-direction: column;
-  gap: var(--mc-space-1);
+  gap: var(--cn-space-1);
   width: 12.5rem;
   flex: none;
   align-self: flex-start;
-  padding: var(--mc-space-3);
-  border: 1px solid var(--mc-border);
-  border-radius: var(--mc-radius);
-  background: var(--mc-surface-raised);
+  padding: var(--cn-space-3);
+  border: 1px solid var(--cn-border);
+  border-radius: var(--cn-radius);
+  background: var(--cn-surface-raised);
 }
 
 .caption {
   margin: 0;
-  color: var(--mc-text-subtle);
+  color: var(--cn-text-subtle);
   font-size: 0.625rem;
   font-weight: 600;
   letter-spacing: 0.12em;
@@ -21,9 +21,9 @@
 }
 
 .strike {
-  margin: 0 0 var(--mc-space-2);
-  color: var(--mc-text);
-  font-size: var(--mc-text-lg);
+  margin: 0 0 var(--cn-space-2);
+  color: var(--cn-text);
+  font-size: var(--cn-text-lg);
   font-weight: 700;
   font-variant-numeric: tabular-nums;
 }
@@ -31,7 +31,7 @@
 .rows {
   display: flex;
   flex-direction: column;
-  gap: var(--mc-space-2);
+  gap: var(--cn-space-2);
   margin: 0;
 }
 
@@ -45,8 +45,8 @@
   display: flex;
   align-items: center;
   gap: 0.4375rem;
-  color: var(--mc-text-subtle);
-  font-size: var(--mc-text-xs);
+  color: var(--cn-text-subtle);
+  font-size: var(--cn-text-xs);
 }
 
 .swatch {
@@ -61,16 +61,16 @@
      in from the label it belongs to. */
   margin: 0;
   padding-left: 0.9375rem;
-  color: var(--mc-text);
-  font-size: var(--mc-text-sm);
+  color: var(--cn-text);
+  font-size: var(--cn-text-sm);
   font-weight: 600;
   font-variant-numeric: tabular-nums;
 }
 
 .empty {
   margin: 0;
-  color: var(--mc-text-subtle);
-  font-size: var(--mc-text-xs);
+  color: var(--cn-text-subtle);
+  font-size: var(--cn-text-xs);
 }
 
 /* Below the chart rather than beside it once the plot has no width to spare. */
@@ -83,6 +83,6 @@
   .rows {
     flex-direction: row;
     flex-wrap: wrap;
-    gap: var(--mc-space-4);
+    gap: var(--cn-space-4);
   }
 }

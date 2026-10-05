@@ -2,19 +2,19 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: var(--mc-space-2);
-  min-height: var(--mc-control-h);
-  padding: 0 var(--mc-control-px);
+  gap: var(--cn-space-2);
+  min-height: var(--cn-control-h);
+  padding: 0 var(--cn-control-px);
   border: 1px solid transparent;
-  border-radius: var(--mc-radius);
-  font-size: var(--mc-text-base);
+  border-radius: var(--cn-radius);
+  font-size: var(--cn-text-base);
   font-weight: 600;
   line-height: 1;
   cursor: pointer;
   transition:
-    background var(--mc-duration-fast) ease,
-    border-color var(--mc-duration-fast) ease,
-    transform var(--mc-duration-fast) ease;
+    background var(--cn-duration-fast) ease,
+    border-color var(--cn-duration-fast) ease,
+    transform var(--cn-duration-fast) ease;
 }
 
 .btn.full {
@@ -31,31 +31,31 @@
 }
 
 .primary {
-  background: var(--mc-brand);
-  color: var(--mc-on-brand);
+  background: var(--cn-brand);
+  color: var(--cn-on-brand);
 }
 
 .primary:not(:disabled):hover {
-  background: var(--mc-brand-hover);
+  background: var(--cn-brand-hover);
 }
 
 .secondary {
-  background: var(--mc-field-bg);
-  border-color: var(--mc-field-border);
-  color: var(--mc-text);
+  background: var(--cn-field-bg);
+  border-color: var(--cn-field-border);
+  color: var(--cn-text);
 }
 
 .secondary:not(:disabled):hover {
-  background: var(--mc-field-bg-hover);
+  background: var(--cn-field-bg-hover);
 }
 
 .ghost {
   background: transparent;
-  color: var(--mc-text-muted);
+  color: var(--cn-text-muted);
 }
 
 .ghost:not(:disabled):hover {
-  color: var(--mc-text);
+  color: var(--cn-text);
 }
 
 .spinner {

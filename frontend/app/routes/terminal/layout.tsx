@@ -265,11 +265,11 @@ function TerminalShell({ user }: { user: User }) {
           {/* Labelled explicitly because below 72rem the wordmark is
               `display: none` and the bolt is decorative, which left the link
               with no accessible name at all on a phone. */}
-          <Link className={s.brand} to="/dashboard" aria-label="MarketCompass">
+          <Link className={s.brand} to="/dashboard" aria-label="ChartNexus">
             <span className={s.mark} aria-hidden="true">
               <IconBolt />
             </span>
-            <span className={s.name}>MarketCompass</span>
+            <span className={s.name}>ChartNexus</span>
           </Link>
 
           <nav className={s.primaryNav} aria-label="Primary">

@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from marketcompass.contexts.copilot.domain import compliance, skills
+from chartnexus.contexts.copilot.domain import compliance, skills
 
 
 def test_empty_answer_needs_nothing() -> None:

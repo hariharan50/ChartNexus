@@ -3,7 +3,7 @@ import { TOOLS } from './catalog';
 import s from './tools.module.css';
 import type { Route } from './+types/route';
 
-export const meta: Route.MetaFunction = () => [{ title: 'Tools · MarketCompass' }];
+export const meta: Route.MetaFunction = () => [{ title: 'Tools · ChartNexus' }];
 
 /**
  * The Tools landing — a grid of tool boxes, each opening its own page.

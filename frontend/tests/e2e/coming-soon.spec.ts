@@ -11,65 +11,65 @@ const PAGES: Array<{ path: string; heading: string; title?: string }> = [
   {
     path: '/future-lab/dashboard',
     heading: 'Future Dashboard',
-    title: 'Future Dashboard · MarketCompass'
+    title: 'Future Dashboard · ChartNexus'
   },
   {
     path: '/future-lab/heatmap',
     heading: 'Future Heatmap',
-    title: 'Future Heatmap · MarketCompass'
+    title: 'Future Heatmap · ChartNexus'
   },
   {
     path: '/future-lab/market-movers',
     heading: 'Market Movers',
-    title: 'Market Movers · MarketCompass'
+    title: 'Market Movers · ChartNexus'
   },
-  { path: '/future-lab/price-vs-oi', heading: 'Price vs OI', title: 'Price vs OI · MarketCompass' },
+  { path: '/future-lab/price-vs-oi', heading: 'Price vs OI', title: 'Price vs OI · ChartNexus' },
 
   {
     path: '/options/atm-straddle',
     heading: 'ATM Straddle Chart',
-    title: 'ATM Straddle Chart · MarketCompass'
+    title: 'ATM Straddle Chart · ChartNexus'
   },
   {
     path: '/options/intraday-booster',
     heading: 'Intraday Booster',
-    title: 'Intraday Booster · MarketCompass'
+    title: 'Intraday Booster · ChartNexus'
   },
-  { path: '/options/iv-grid', heading: 'IV Grid', title: 'IV Grid · MarketCompass' },
+  { path: '/options/iv-grid', heading: 'IV Grid', title: 'IV Grid · ChartNexus' },
   {
     path: '/options/multi-straddle',
     heading: 'Multi-Straddle Chart',
-    title: 'Multi-Straddle Chart · MarketCompass'
+    title: 'Multi-Straddle Chart · ChartNexus'
   },
-  { path: '/options/oi-crossover', heading: 'OI Crossover', title: 'OI Crossover · MarketCompass' },
+  { path: '/options/oi-crossover', heading: 'OI Crossover', title: 'OI Crossover · ChartNexus' },
   {
     path: '/options/option-triggers',
     heading: 'Option Triggers',
-    title: 'Option Triggers · MarketCompass'
+    title: 'Option Triggers · ChartNexus'
   },
   {
     path: '/options/pe-ce-difference',
     heading: 'PE-CE Difference',
-    title: 'PE-CE Difference · MarketCompass'
+    title: 'PE-CE Difference · ChartNexus'
   },
-  { path: '/options/smart-oi', heading: 'Smart OI', title: 'Smart OI · MarketCompass' },
+  { path: '/options/smart-oi', heading: 'Smart OI', title: 'Smart OI · ChartNexus' },
   {
     path: '/options/strategy-chart',
     heading: 'Strategy Chart',
-    title: 'Strategy Chart · MarketCompass'
+    title: 'Strategy Chart · ChartNexus'
   },
-  { path: '/options/timeseries', heading: 'Timeseries', title: 'Timeseries · MarketCompass' },
+  { path: '/options/timeseries', heading: 'Timeseries', title: 'Timeseries · ChartNexus' },
   {
     path: '/options/vega-analysis',
     heading: 'Vega Analysis',
-    title: 'Vega Analysis · MarketCompass'
+    title: 'Vega Analysis · ChartNexus'
   }
 ];
 
 test.describe('placeholder pages', () => {
   test.beforeEach(async ({ context, baseURL }) => {
     await context.addCookies([
-      { name: 'mc_session', value: 'test', url: baseURL ?? 'http://localhost:4173' }
+      { name: 'cn_session', value: 'test', url: baseURL ?? 'http://localhost:4173' }
     ]);
   });
 
@@ -85,7 +85,7 @@ test.describe('placeholder pages', () => {
 
       // The four pages with no <svelte:head><title> fall through to the root
       // meta, exactly as they did under SvelteKit.
-      await expect(page).toHaveTitle(title ?? 'MarketCompass');
+      await expect(page).toHaveTitle(title ?? 'ChartNexus');
     });
   }
 });

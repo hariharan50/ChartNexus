@@ -12,7 +12,7 @@ import ConsoleHeader from '../components/ConsoleHeader';
 import s from './route.module.css';
 import type { Route } from './+types/route';
 
-export const meta: Route.MetaFunction = () => [{ title: 'STRYX · Trade Calls · MarketCompass' }];
+export const meta: Route.MetaFunction = () => [{ title: 'STRYX · Trade Calls · ChartNexus' }];
 
 /** The agent's name, shown throughout the console. */
 const AGENT_NAME = 'STRYX';

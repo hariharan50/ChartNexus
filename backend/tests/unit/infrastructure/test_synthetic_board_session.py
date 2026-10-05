@@ -11,7 +11,7 @@ from itertools import pairwise
 
 import pytest
 
-from marketcompass.infrastructure.ingestion.synthetic_board_session import (
+from chartnexus.infrastructure.ingestion.synthetic_board_session import (
     build_synthetic_board_session,
 )
 

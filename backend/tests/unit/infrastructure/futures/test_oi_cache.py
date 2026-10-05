@@ -13,7 +13,7 @@ from datetime import UTC, datetime
 
 import pytest
 
-from marketcompass.infrastructure.futures.oi_cache import (
+from chartnexus.infrastructure.futures.oi_cache import (
     CachedOpenInterest,
     RedisOpenInterestCache,
 )
@@ -52,7 +52,7 @@ class FakeRedis:
         self.client = FakeRedisClient(fails=fails)
 
     def key(self, *parts: str) -> str:
-        return ":".join(("mc", *parts))
+        return ":".join(("cn", *parts))
 
 
 def reading(oi: int = 1000, previous: int | None = 900) -> CachedOpenInterest:

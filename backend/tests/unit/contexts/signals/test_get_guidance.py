@@ -9,12 +9,12 @@ from __future__ import annotations
 import uuid
 from datetime import UTC, datetime
 
-from marketcompass.contexts.signals.application.get_guidance import GetGuidance
-from marketcompass.contexts.signals.application.ports import GuidanceRecord
-from marketcompass.contexts.signals.domain.ensemble import ModelArtifact, default_artifact
-from marketcompass.contexts.signals.domain.inputs import MarketSnapshot
-from marketcompass.contexts.signals.domain.models import Decision, Guidance, Provenance
-from marketcompass.shared_kernel.types.identifiers import TenantId
+from chartnexus.contexts.signals.application.get_guidance import GetGuidance
+from chartnexus.contexts.signals.application.ports import GuidanceRecord
+from chartnexus.contexts.signals.domain.ensemble import ModelArtifact, default_artifact
+from chartnexus.contexts.signals.domain.inputs import MarketSnapshot
+from chartnexus.contexts.signals.domain.models import Decision, Guidance, Provenance
+from chartnexus.shared_kernel.types.identifiers import TenantId
 
 TENANT = TenantId(uuid.uuid4())
 

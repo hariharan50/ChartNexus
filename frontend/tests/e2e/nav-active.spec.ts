@@ -18,7 +18,7 @@ const ACTIVE = /_active_/;
 
 test.beforeEach(async ({ context, baseURL }) => {
   await context.addCookies([
-    { name: 'mc_session', value: 'test', url: baseURL ?? 'http://localhost:4173' }
+    { name: 'cn_session', value: 'test', url: baseURL ?? 'http://localhost:4173' }
   ]);
 });
 

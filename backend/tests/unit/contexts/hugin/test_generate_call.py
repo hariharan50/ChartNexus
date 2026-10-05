@@ -5,11 +5,11 @@ from __future__ import annotations
 import uuid
 from decimal import Decimal
 
-from marketcompass.contexts.hugin.application.generate_call import GenerateHuginCall
-from marketcompass.contexts.hugin.domain.call import HuginCall
-from marketcompass.contexts.hugin.domain.lesson import Lesson
-from marketcompass.contexts.hugin.domain.observation import Bias
-from marketcompass.shared_kernel.types.identifiers import TenantId
+from chartnexus.contexts.hugin.application.generate_call import GenerateHuginCall
+from chartnexus.contexts.hugin.domain.call import HuginCall
+from chartnexus.contexts.hugin.domain.lesson import Lesson
+from chartnexus.contexts.hugin.domain.observation import Bias
+from chartnexus.shared_kernel.types.identifiers import TenantId
 
 TENANT = TenantId(uuid.uuid4())
 

@@ -33,9 +33,7 @@ import {
 import s from './price-vs-oi.module.css';
 import type { Route } from './+types/price-vs-oi';
 
-export const meta: Route.MetaFunction = () => [
-  { title: 'Price vs OI · Future Lab · MarketCompass' }
-];
+export const meta: Route.MetaFunction = () => [{ title: 'Price vs OI · Future Lab · ChartNexus' }];
 
 type Mode = 'live' | 'historical';
 

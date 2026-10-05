@@ -12,18 +12,18 @@ from datetime import UTC, datetime
 
 import pytest
 
-from marketcompass.bootstrap.settings import DatabaseSettings
-from marketcompass.contexts.messaging.domain.channel import Channel, ChannelConnection
-from marketcompass.infrastructure.persistence.postgresql.repositories.messaging.channel_repository import (
+from chartnexus.bootstrap.settings import DatabaseSettings
+from chartnexus.contexts.messaging.domain.channel import Channel, ChannelConnection
+from chartnexus.infrastructure.persistence.postgresql.repositories.messaging.channel_repository import (
     SqlAlchemyChannelConnectionRepository,
 )
-from marketcompass.infrastructure.persistence.postgresql.session import Database
-from marketcompass.infrastructure.security.encryption import AesGcmCipher
-from marketcompass.shared_kernel.types.identifiers import TenantId, UserId
+from chartnexus.infrastructure.persistence.postgresql.session import Database
+from chartnexus.infrastructure.security.encryption import AesGcmCipher
+from chartnexus.shared_kernel.types.identifiers import TenantId, UserId
 
 pytestmark = pytest.mark.integration
 
-ASYNC_DSN = "postgresql+asyncpg://marketcompass:marketcompass@localhost:5433/marketcompass"
+ASYNC_DSN = "postgresql+asyncpg://chartnexus:chartnexus@localhost:5433/chartnexus"
 _SECRET = "unit-test-encryption-secret-value-at-least-32-bytes-long!!"
 _TOKEN = "123456789:AAqwertyuiopasdfghjklzxcvbnm12345678"
 

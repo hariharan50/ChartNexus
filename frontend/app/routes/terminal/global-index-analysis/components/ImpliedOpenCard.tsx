@@ -49,7 +49,7 @@ export default function ImpliedOpenCard({ implied, verdict, source }: Props) {
               figure that reconciles against a broker screen, and on a quiet
               night it is the only one of the two with anything to say - the
               implied gap sits below with the rest of the working. */}
-          <p className={cx(s.gap, 'mc-numeric', s[tone(implied.gift_change) ?? 'flat'])}>
+          <p className={cx(s.gap, 'cn-numeric', s[tone(implied.gift_change) ?? 'flat'])}>
             {fmtChange(implied.gift_change)} ({fmtPercent(implied.gift_change_percent)})
           </p>
           <p className={s.gapLabel}>GIFT day change</p>
@@ -57,19 +57,19 @@ export default function ImpliedOpenCard({ implied, verdict, source }: Props) {
           <dl className={s.figures}>
             <div className={s.cell}>
               <dt>GIFT level</dt>
-              <dd className="mc-numeric">{fmtLevel(implied.gift_level)}</dd>
+              <dd className="cn-numeric">{fmtLevel(implied.gift_level)}</dd>
             </div>
             {/* Demoted from the headline, not dropped: it is what the card is
                 named for, and the verdict line below is read from its sign. */}
             <div className={s.cell}>
               <dt>Implied gap · {SIGNAL_LABELS[implied.signal]}</dt>
-              <dd className={cx('mc-numeric', s[signalTone(implied.signal) ?? 'flat'])}>
+              <dd className={cx('cn-numeric', s[signalTone(implied.signal) ?? 'flat'])}>
                 {fmtChange(implied.gap_points)} ({fmtPercent(implied.gap_percent)})
               </dd>
             </div>
             <div className={s.cell}>
               <dt>{implied.nifty_is_trading ? 'NIFTY prev close' : 'NIFTY close'}</dt>
-              <dd className="mc-numeric">{fmtLevel(implied.reference_close)}</dd>
+              <dd className="cn-numeric">{fmtLevel(implied.reference_close)}</dd>
             </div>
             {/* Once the cash market shuts, spot *is* the reference close and
                 the basis *is* the gap. Printing them twice would read as two
@@ -78,11 +78,11 @@ export default function ImpliedOpenCard({ implied, verdict, source }: Props) {
               <>
                 <div className={s.cell}>
                   <dt>NIFTY spot</dt>
-                  <dd className="mc-numeric">{fmtLevel(implied.nifty_spot)}</dd>
+                  <dd className="cn-numeric">{fmtLevel(implied.nifty_spot)}</dd>
                 </div>
                 <div className={s.cell}>
                   <dt>Basis to spot</dt>
-                  <dd className="mc-numeric">{fmtChange(implied.basis)}</dd>
+                  <dd className="cn-numeric">{fmtChange(implied.basis)}</dd>
                 </div>
               </>
             ) : null}

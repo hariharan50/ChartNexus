@@ -12,7 +12,7 @@ import { defineConfig } from 'orval';
  * that authoring the contract is the only step needed to switch over.
  */
 export default defineConfig({
-  marketcompass: {
+  chartnexus: {
     input: {
       target: '../contracts/openapi/v1/openapi.yaml',
       validation: true

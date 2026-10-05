@@ -14,8 +14,8 @@ from decimal import Decimal
 
 import pytest
 
-from marketcompass.contexts.instrument_catalog.domain.instrument import InstrumentKind
-from marketcompass.infrastructure.catalog.fyers_symbol_master import parse_universe
+from chartnexus.contexts.instrument_catalog.domain.instrument import InstrumentKind
+from chartnexus.infrastructure.catalog.fyers_symbol_master import parse_universe
 
 pytestmark = pytest.mark.unit
 

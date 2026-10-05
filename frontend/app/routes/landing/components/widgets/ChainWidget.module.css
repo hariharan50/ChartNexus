@@ -1,7 +1,7 @@
 .widget {
-  border: 1px solid var(--mc-border);
+  border: 1px solid var(--cn-border);
   border-radius: var(--lp-radius-card);
-  background: var(--mc-surface);
+  background: var(--cn-surface);
   overflow: hidden;
 }
 
@@ -9,45 +9,45 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: var(--mc-space-3);
+  gap: var(--cn-space-3);
   flex-wrap: wrap;
-  padding: var(--mc-space-3) var(--mc-space-4);
-  border-bottom: 1px solid var(--mc-border);
+  padding: var(--cn-space-3) var(--cn-space-4);
+  border-bottom: 1px solid var(--cn-border);
 }
 
 .tabs {
   display: flex;
-  gap: var(--mc-space-1);
+  gap: var(--cn-space-1);
 }
 
 .tab {
   min-height: 2rem;
-  padding: 0 var(--mc-space-3);
+  padding: 0 var(--cn-space-3);
   border: 1px solid transparent;
   border-radius: var(--lp-radius-pill);
   background: transparent;
-  color: var(--mc-text-muted);
-  font-size: var(--mc-text-xs);
+  color: var(--cn-text-muted);
+  font-size: var(--cn-text-xs);
   font-weight: 600;
   cursor: pointer;
 }
 
 .tab:hover {
-  color: var(--mc-text);
+  color: var(--cn-text);
 }
 
 .tab-on {
-  background: var(--mc-landing-accent-weak);
-  border-color: color-mix(in srgb, var(--mc-landing-accent) 45%, transparent);
-  color: var(--mc-landing-accent);
+  background: var(--cn-landing-accent-weak);
+  border-color: color-mix(in srgb, var(--cn-landing-accent) 45%, transparent);
+  color: var(--cn-landing-accent);
 }
 
 .stats {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
-  gap: var(--mc-space-2);
-  padding: var(--mc-space-3) var(--mc-space-4);
-  border-bottom: 1px solid var(--mc-border);
+  gap: var(--cn-space-2);
+  padding: var(--cn-space-3) var(--cn-space-4);
+  border-bottom: 1px solid var(--cn-border);
 }
 
 .stat {
@@ -58,24 +58,24 @@
 }
 
 .stat-label {
-  font-size: var(--mc-text-xs);
+  font-size: var(--cn-text-xs);
   letter-spacing: 0.06em;
   text-transform: uppercase;
-  color: var(--mc-text-subtle);
+  color: var(--cn-text-subtle);
 }
 
 .stat-value {
-  font-size: var(--mc-text-lg);
+  font-size: var(--cn-text-lg);
   font-weight: 700;
-  color: var(--mc-landing-text);
+  color: var(--cn-landing-text);
 }
 
 .up {
-  color: var(--mc-bullish);
+  color: var(--cn-bullish);
 }
 
 .down {
-  color: var(--mc-bearish);
+  color: var(--cn-bearish);
 }
 
 .scroll {
@@ -86,7 +86,7 @@
 .table {
   width: 100%;
   border-collapse: collapse;
-  font-size: var(--mc-text-sm);
+  font-size: var(--cn-text-sm);
 }
 
 .caption {
@@ -102,32 +102,32 @@
   position: sticky;
   top: 0;
   z-index: 1;
-  padding: var(--mc-space-2) var(--mc-space-3);
-  background: var(--mc-surface-raised);
-  border-bottom: 1px solid var(--mc-border);
-  font-size: var(--mc-text-xs);
+  padding: var(--cn-space-2) var(--cn-space-3);
+  background: var(--cn-surface-raised);
+  border-bottom: 1px solid var(--cn-border);
+  font-size: var(--cn-text-xs);
   font-weight: 600;
   letter-spacing: 0.06em;
   text-transform: uppercase;
-  color: var(--mc-text-subtle);
+  color: var(--cn-text-subtle);
   text-align: center;
 }
 
 .table td,
 .table tbody th {
-  padding: var(--mc-space-2) var(--mc-space-3);
-  border-bottom: 1px solid color-mix(in srgb, var(--mc-border) 60%, transparent);
+  padding: var(--cn-space-2) var(--cn-space-3);
+  border-bottom: 1px solid color-mix(in srgb, var(--cn-border) 60%, transparent);
   font-weight: 400;
   text-align: center;
 }
 
 .atm {
-  background: color-mix(in srgb, var(--mc-landing-accent) 9%, transparent);
+  background: color-mix(in srgb, var(--cn-landing-accent) 9%, transparent);
 }
 
 .strike {
   font-weight: 700;
-  color: var(--mc-text);
+  color: var(--cn-text);
   white-space: nowrap;
 }
 
@@ -136,27 +136,27 @@
 }
 
 .num {
-  color: var(--mc-text-muted);
+  color: var(--cn-text-muted);
 }
 
 .tag-up,
 .tag-down {
   display: inline-block;
-  margin-left: var(--mc-space-2);
+  margin-left: var(--cn-space-2);
   padding: 0 0.3125rem;
-  border-radius: var(--mc-radius-sm);
+  border-radius: var(--cn-radius-sm);
   font-size: 0.625rem;
   font-weight: 700;
 }
 
 .tag-up {
-  background: var(--mc-bullish-weak);
-  color: var(--mc-bullish);
+  background: var(--cn-bullish-weak);
+  color: var(--cn-bullish);
 }
 
 .tag-down {
-  background: var(--mc-bearish-weak);
-  color: var(--mc-bearish);
+  background: var(--cn-bearish-weak);
+  color: var(--cn-bearish);
 }
 
 /* The OI cell is its own bar chart: the fill is the magnitude, the text is the
@@ -165,35 +165,35 @@
   position: relative;
   display: block;
   min-width: 4.5rem;
-  padding: 0.1875rem var(--mc-space-2);
-  border-radius: var(--mc-radius-sm);
+  padding: 0.1875rem var(--cn-space-2);
+  border-radius: var(--cn-radius-sm);
   overflow: hidden;
 }
 
 .bar-fill {
   position: absolute;
   inset: 0 auto 0 0;
-  border-radius: var(--mc-radius-sm);
+  border-radius: var(--cn-radius-sm);
 }
 
 .bar-call .bar-fill {
-  background: var(--mc-bearish-weak);
+  background: var(--cn-bearish-weak);
 }
 
 .bar-put .bar-fill {
-  background: var(--mc-bullish-weak);
+  background: var(--cn-bullish-weak);
 }
 
 .bar-text {
   position: relative;
-  font-size: var(--mc-text-xs);
-  color: var(--mc-text);
+  font-size: var(--cn-text-xs);
+  color: var(--cn-text);
 }
 
 @media (max-width: 48rem) {
   .stats {
     grid-template-columns: repeat(2, 1fr);
-    row-gap: var(--mc-space-3);
+    row-gap: var(--cn-space-3);
   }
 
   /* The LTP columns are the first thing to go — the chain still reads as OI

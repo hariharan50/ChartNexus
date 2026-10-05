@@ -16,7 +16,7 @@ from collections.abc import Iterator
 
 import pytest
 
-from marketcompass.contexts.market_data.application import queries
+from chartnexus.contexts.market_data.application import queries
 
 
 @pytest.fixture(autouse=True)

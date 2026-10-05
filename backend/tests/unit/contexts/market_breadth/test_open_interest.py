@@ -4,8 +4,8 @@ from __future__ import annotations
 
 import pytest
 
-from marketcompass.contexts.market_breadth.domain.flows import Participant, Segment
-from marketcompass.contexts.market_breadth.domain.open_interest import (
+from chartnexus.contexts.market_breadth.domain.flows import Participant, Segment
+from chartnexus.contexts.market_breadth.domain.open_interest import (
     OI_SEGMENTS,
     PARTICIPANT_ORDER,
     FutureLegs,

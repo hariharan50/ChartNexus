@@ -13,18 +13,18 @@ from datetime import UTC, datetime
 
 import pytest
 
-from marketcompass.contexts.market_data.application.queries import (
+from chartnexus.contexts.market_data.application.queries import (
     MAX_EXPIRY_HORIZON_DAYS,
     GetExpiries,
     QuoteQuery,
 )
-from marketcompass.contexts.market_data.domain.instruments import InstrumentSymbol
-from marketcompass.contexts.market_data.domain.market_data import (
+from chartnexus.contexts.market_data.domain.instruments import InstrumentSymbol
+from chartnexus.contexts.market_data.domain.market_data import (
     DataSource,
     ExpiryList,
     Provenance,
 )
-from marketcompass.shared_kernel.types.identifiers import TenantId
+from chartnexus.shared_kernel.types.identifiers import TenantId
 
 pytestmark = pytest.mark.unit
 
@@ -65,9 +65,7 @@ def _service(expiries: tuple[str, ...]) -> GetExpiries:
 
 
 async def test_expiries_past_the_horizon_are_dropped() -> None:
-    service = _service(
-        ("2026-10-01", "2026-11-05", "2026-11-26", "2026-12-31", "2027-03-25")
-    )
+    service = _service(("2026-10-01", "2026-11-05", "2026-11-26", "2026-12-31", "2027-03-25"))
 
     result = await service(QuoteQuery(tenant_id=TENANT, instrument=NIFTY))
 

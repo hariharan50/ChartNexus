@@ -19,17 +19,17 @@ import pytest
 import sqlalchemy as sa
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 
-from marketcompass.contexts.market_ingestion.application.ports import (
+from chartnexus.contexts.market_ingestion.application.ports import (
     ChainRowToWrite,
     SnapshotToWrite,
 )
-from marketcompass.infrastructure.persistence.postgresql.repositories.market_data.option_chain_snapshot_repository import (
+from chartnexus.infrastructure.persistence.postgresql.repositories.market_data.option_chain_snapshot_repository import (
     SqlAlchemyOptionChainSnapshotRepository,
 )
 
 pytestmark = pytest.mark.integration
 
-ASYNC_DSN = "postgresql+asyncpg://marketcompass:marketcompass@localhost:5433/marketcompass"
+ASYNC_DSN = "postgresql+asyncpg://chartnexus:chartnexus@localhost:5433/chartnexus"
 SESSION_DATE = date(2026, 8, 4)
 
 

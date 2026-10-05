@@ -3,32 +3,32 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: var(--mc-space-3);
+  gap: var(--cn-space-3);
   min-height: 70vh;
-  padding: var(--mc-space-8);
+  padding: var(--cn-space-8);
   text-align: center;
 }
 
 .status {
   margin: 0;
-  font-size: var(--mc-text-2xl);
-  color: var(--mc-text-subtle);
+  font-size: var(--cn-text-2xl);
+  color: var(--cn-text-subtle);
 }
 
 .error h1 {
   margin: 0;
-  font-size: var(--mc-text-xl);
+  font-size: var(--cn-text-xl);
   font-weight: 600;
 }
 
 .detail {
   margin: 0;
   max-width: 48ch;
-  color: var(--mc-text-muted);
+  color: var(--cn-text-muted);
 }
 
 .request-id {
   margin: 0;
-  font-size: var(--mc-text-xs);
-  color: var(--mc-text-subtle);
+  font-size: var(--cn-text-xs);
+  color: var(--cn-text-subtle);
 }

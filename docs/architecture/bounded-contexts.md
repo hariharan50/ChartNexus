@@ -1,6 +1,6 @@
 # Bounded contexts
 
-Each package under `backend/src/marketcompass/contexts/` owns one area of the
+Each package under `backend/src/chartnexus/contexts/` owns one area of the
 domain and may not import another. This is enforced, not merely encouraged.
 
 ## The layers inside a context

@@ -9,14 +9,14 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: var(--mc-space-4);
+  gap: var(--cn-space-4);
   flex-wrap: wrap;
 }
 
 .brand {
   display: flex;
   align-items: center;
-  gap: var(--mc-space-3);
+  gap: var(--cn-space-3);
 }
 
 .brandMark {
@@ -28,21 +28,21 @@
   color: #fff;
   font-weight: 800;
   font-size: 1.1rem;
-  background: linear-gradient(140deg, var(--mc-accent, #6366f1), var(--mc-brand-2, #a855f7));
-  box-shadow: 0 6px 18px -6px var(--mc-accent, #6366f1);
+  background: linear-gradient(140deg, var(--cn-accent, #6366f1), var(--cn-brand-2, #a855f7));
+  box-shadow: 0 6px 18px -6px var(--cn-accent, #6366f1);
 }
 
 .title {
-  font-size: var(--mc-text-lg, 1.15rem);
+  font-size: var(--cn-text-lg, 1.15rem);
   font-weight: 700;
-  color: var(--mc-text);
+  color: var(--cn-text);
   margin: 0;
   letter-spacing: -0.01em;
 }
 
 .subtitle {
-  font-size: var(--mc-text-sm);
-  color: var(--mc-text-muted);
+  font-size: var(--cn-text-sm);
+  color: var(--cn-text-muted);
   margin: 2px 0 0;
 }
 
@@ -51,9 +51,9 @@
 .views {
   display: flex;
   align-items: center;
-  gap: var(--mc-space-3);
+  gap: var(--cn-space-3);
   flex-wrap: wrap;
-  margin-top: var(--mc-space-3);
+  margin-top: var(--cn-space-3);
 }
 
 /* Right side of the topbar: an optional info button sitting beside the
@@ -61,10 +61,10 @@
 .headerRight {
   display: inline-flex;
   align-items: center;
-  gap: var(--mc-space-2);
+  gap: var(--cn-space-2);
 }
 
-/* The "about this agent" button. Picks up each page's --mc-accent so it tones
+/* The "about this agent" button. Picks up each page's --cn-accent so it tones
    to HELLA (indigo), STRYX (cyan) and HUGIN (pink) automatically. */
 .infoBtn {
   display: grid;
@@ -73,21 +73,21 @@
   height: 22px;
   flex: none;
   border-radius: 50%;
-  border: 1px solid color-mix(in srgb, var(--mc-accent, #6366f1) 45%, var(--mc-border));
-  background: color-mix(in srgb, var(--mc-accent, #6366f1) 12%, transparent);
-  color: var(--mc-accent, #6366f1);
+  border: 1px solid color-mix(in srgb, var(--cn-accent, #6366f1) 45%, var(--cn-border));
+  background: color-mix(in srgb, var(--cn-accent, #6366f1) 12%, transparent);
+  color: var(--cn-accent, #6366f1);
   font-size: 0.78rem;
   font-weight: 800;
   line-height: 1;
   cursor: pointer;
   transition:
-    background var(--mc-duration-fast, 120ms) ease,
-    color var(--mc-duration-fast, 120ms) ease,
-    transform var(--mc-duration-fast, 120ms) ease;
+    background var(--cn-duration-fast, 120ms) ease,
+    color var(--cn-duration-fast, 120ms) ease,
+    transform var(--cn-duration-fast, 120ms) ease;
 }
 
 .infoBtn:hover {
-  background: var(--mc-accent, #6366f1);
+  background: var(--cn-accent, #6366f1);
   color: #fff;
   transform: translateY(-1px);
 }
@@ -98,31 +98,31 @@
   display: inline-flex;
   gap: 0.125rem;
   padding: 0.1875rem;
-  border: 1px solid var(--mc-border);
-  border-radius: var(--mc-radius);
-  background: var(--mc-surface-raised);
+  border: 1px solid var(--cn-border);
+  border-radius: var(--cn-radius);
+  background: var(--cn-surface-raised);
 }
 
 .tab {
   padding: 0.3125rem 0.75rem;
   border: 0;
-  border-radius: var(--mc-radius-sm);
+  border-radius: var(--cn-radius-sm);
   background: transparent;
-  color: var(--mc-text-muted);
-  font-size: var(--mc-text-xs);
+  color: var(--cn-text-muted);
+  font-size: var(--cn-text-xs);
   font-weight: 700;
   letter-spacing: 0.02em;
   cursor: pointer;
   transition:
-    color var(--mc-duration-fast, 120ms) ease,
-    background var(--mc-duration-fast, 120ms) ease;
+    color var(--cn-duration-fast, 120ms) ease,
+    background var(--cn-duration-fast, 120ms) ease;
 }
 
 .tab:hover {
-  color: var(--mc-text);
+  color: var(--cn-text);
 }
 
 .tab.active {
-  background: var(--mc-accent, #6366f1);
+  background: var(--cn-accent, #6366f1);
   color: #fff;
 }

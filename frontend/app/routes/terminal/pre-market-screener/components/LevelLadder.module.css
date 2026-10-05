@@ -1,31 +1,31 @@
 .wrap {
   display: flex;
   flex-direction: column;
-  gap: var(--mc-space-3);
+  gap: var(--cn-space-3);
 }
 
 /* Confluence leads, because it is the only thing on this panel that is more
    than one method's opinion. */
 .clusters {
-  padding: var(--mc-space-3);
-  border: 1px solid var(--mc-border-strong);
-  border-radius: var(--mc-radius);
-  background: var(--mc-surface-raised);
+  padding: var(--cn-space-3);
+  border: 1px solid var(--cn-border-strong);
+  border-radius: var(--cn-radius);
+  background: var(--cn-surface-raised);
 }
 
 .clustersHead {
-  margin: 0 0 var(--mc-space-2);
-  font-size: var(--mc-text-xs);
+  margin: 0 0 var(--cn-space-2);
+  font-size: var(--cn-text-xs);
   font-weight: 600;
   letter-spacing: 0.05em;
   text-transform: uppercase;
-  color: var(--mc-text-subtle);
+  color: var(--cn-text-subtle);
 }
 
 .clusterList {
   display: flex;
   flex-wrap: wrap;
-  gap: var(--mc-space-3);
+  gap: var(--cn-space-3);
   margin: 0;
   padding: 0;
   list-style: none;
@@ -37,31 +37,31 @@
 }
 
 .clusterPrice {
-  font-size: var(--mc-text-sm);
+  font-size: var(--cn-text-sm);
   font-weight: 700;
 }
 
 .clusterOrigins {
-  font-size: var(--mc-text-xs);
-  color: var(--mc-text-subtle);
+  font-size: var(--cn-text-xs);
+  color: var(--cn-text-subtle);
 }
 
 .table {
   width: 100%;
   border-collapse: collapse;
-  font-size: var(--mc-text-xs);
+  font-size: var(--cn-text-xs);
 }
 
 .caption {
-  margin-bottom: var(--mc-space-2);
+  margin-bottom: var(--cn-space-2);
   text-align: left;
-  color: var(--mc-text-subtle);
+  color: var(--cn-text-subtle);
 }
 
 .table th,
 .table td {
-  padding: var(--mc-space-2) var(--mc-space-2) var(--mc-space-2) 0;
-  border-bottom: 1px solid var(--mc-border);
+  padding: var(--cn-space-2) var(--cn-space-2) var(--cn-space-2) 0;
+  border-bottom: 1px solid var(--cn-border);
   text-align: left;
   white-space: nowrap;
 }
@@ -70,7 +70,7 @@
   font-weight: 600;
   letter-spacing: 0.05em;
   text-transform: uppercase;
-  color: var(--mc-text-subtle);
+  color: var(--cn-text-subtle);
 }
 
 .table tbody th {
@@ -83,33 +83,33 @@
 }
 
 .origin {
-  color: var(--mc-text-subtle);
+  color: var(--cn-text-subtle);
 }
 
 .sub {
   display: block;
-  font-size: var(--mc-text-xs);
+  font-size: var(--cn-text-xs);
   font-weight: 400;
-  color: var(--mc-text-subtle);
+  color: var(--cn-text-subtle);
 }
 
 /* The price's own row, emphasised so the ladder reads as an axis rather than a
    sorted list. */
 .spotRow th,
 .spotRow td {
-  border-bottom: 2px solid var(--mc-accent);
-  color: var(--mc-accent);
+  border-bottom: 2px solid var(--cn-accent);
+  color: var(--cn-accent);
   font-weight: 700;
 }
 
 .above {
-  color: var(--mc-bullish);
+  color: var(--cn-bullish);
 }
 
 .below {
-  color: var(--mc-bearish);
+  color: var(--cn-bearish);
 }
 
 .at {
-  color: var(--mc-text-subtle);
+  color: var(--cn-text-subtle);
 }

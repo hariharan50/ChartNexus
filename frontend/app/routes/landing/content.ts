@@ -5,7 +5,7 @@
  * these pages MUST NOT claim, because the app contradicts it within a click:
  * AI / "smart" / predictions, real-time or streaming (the UI polls every 15s),
  * futures analytics, IV / skew / screener tools, FII/DII flows, paid plans, and
- * any order placement — MarketCompass is read-only by construction, and that is
+ * any order placement — ChartNexus is read-only by construction, and that is
  * a selling point.
  */
 
@@ -80,7 +80,7 @@ export const SCOPE = [
   },
   {
     title: 'Read-only by design',
-    body: 'MarketCompass never places an order, holds funds, or gives advice. It reads the chain and works it out.'
+    body: 'ChartNexus never places an order, holds funds, or gives advice. It reads the chain and works it out.'
   },
   {
     title: 'Provenance built in',
@@ -300,7 +300,7 @@ export const NEEDS: { need: string[]; skip: string[] } = {
    Honest answers only. If the app polls every ~15s, the FAQ says so. */
 export const FAQ: { q: string; a: string }[] = [
   {
-    q: 'Is MarketCompass free?',
+    q: 'Is ChartNexus free?',
     a: 'Yes. There is no card, no plan and no trial timer. Create an account with an email and read the desk on mock data straight away.'
   },
   {
@@ -309,11 +309,11 @@ export const FAQ: { q: string; a: string }[] = [
   },
   {
     q: 'Is the data real-time?',
-    a: 'No — MarketCompass polls on a short cycle (about every 15 seconds), it does not stream. Every number is stamped with its age so you always know how fresh it is.'
+    a: 'No — ChartNexus polls on a short cycle (about every 15 seconds), it does not stream. Every number is stamped with its age so you always know how fresh it is.'
   },
   {
     q: 'Can it place trades for me?',
-    a: 'Never. MarketCompass is read-only by construction: it cannot place an order, modify a position or hold funds. It reads the chain and works it out.'
+    a: 'Never. ChartNexus is read-only by construction: it cannot place an order, modify a position or hold funds. It reads the chain and works it out.'
   },
   {
     q: 'Which instruments are covered?',
@@ -325,7 +325,7 @@ export const FAQ: { q: string; a: string }[] = [
   },
   {
     q: 'Is my money at risk?',
-    a: 'No. MarketCompass never holds funds and never connects to a payments rail. There is nothing to fund and nothing to withdraw.'
+    a: 'No. ChartNexus never holds funds and never connects to a payments rail. There is nothing to fund and nothing to withdraw.'
   }
 ];
 
@@ -344,7 +344,7 @@ export const GUARANTEES: { glyph: GlyphName; title: string; body: string }[] = [
   {
     glyph: 'chat',
     title: 'Never gives advice',
-    body: 'MarketCompass shows what the chain says. It does not tell you what to trade and gives no SEBI-regulated advice.'
+    body: 'ChartNexus shows what the chain says. It does not tell you what to trade and gives no SEBI-regulated advice.'
   },
   {
     glyph: 'shield',

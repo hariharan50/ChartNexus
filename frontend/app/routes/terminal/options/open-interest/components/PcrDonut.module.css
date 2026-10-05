@@ -2,7 +2,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: var(--mc-space-3);
+  gap: var(--cn-space-3);
 }
 
 .donut {
@@ -25,28 +25,28 @@
 }
 
 .k {
-  font-size: var(--mc-text-xs);
-  color: var(--mc-text-subtle);
+  font-size: var(--cn-text-xs);
+  color: var(--cn-text-subtle);
 }
 
 .v {
-  font-size: var(--mc-text-xl);
+  font-size: var(--cn-text-xl);
   font-weight: 700;
-  color: var(--mc-text);
+  color: var(--cn-text);
 }
 
 .side {
-  font-size: var(--mc-text-xs);
+  font-size: var(--cn-text-xs);
   font-weight: 700;
   max-width: 3rem;
   line-height: 1.2;
 }
 
 .side.call {
-  color: var(--mc-bullish);
+  color: var(--cn-bullish);
   text-align: right;
 }
 
 .side.put {
-  color: var(--mc-bearish);
+  color: var(--cn-bearish);
 }

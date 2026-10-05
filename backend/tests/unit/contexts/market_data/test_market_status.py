@@ -13,9 +13,9 @@ from datetime import UTC, datetime
 
 import pytest
 
-from marketcompass.contexts.market_data.application.queries import GetMarketStatus
-from marketcompass.contexts.market_data.domain.instruments import InstrumentSymbol
-from marketcompass.contexts.market_data.domain.market_data import (
+from chartnexus.contexts.market_data.application.queries import GetMarketStatus
+from chartnexus.contexts.market_data.domain.instruments import InstrumentSymbol
+from chartnexus.contexts.market_data.domain.market_data import (
     CandleInterval,
     CandleSeries,
     ExpiryList,
@@ -23,9 +23,9 @@ from marketcompass.contexts.market_data.domain.market_data import (
     OptionChain,
     Quote,
 )
-from marketcompass.infrastructure.time.clock import FixedClock
-from marketcompass.infrastructure.time.market_calendar import ExchangeCalendar
-from marketcompass.shared_kernel.types.identifiers import TenantId
+from chartnexus.infrastructure.time.clock import FixedClock
+from chartnexus.infrastructure.time.market_calendar import ExchangeCalendar
+from chartnexus.shared_kernel.types.identifiers import TenantId
 
 pytestmark = pytest.mark.unit
 

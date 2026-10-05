@@ -13,7 +13,7 @@ import StatTile from './components/StatTile';
 import s from './index.module.css';
 import type { Route } from './+types/index';
 
-export const meta: Route.MetaFunction = () => [{ title: 'Options Analytics · MarketCompass' }];
+export const meta: Route.MetaFunction = () => [{ title: 'Options Analytics · ChartNexus' }];
 
 function n(value: string | null | undefined): number {
   return value == null ? Number.NaN : Number.parseFloat(value);
@@ -87,21 +87,21 @@ export default function OptionsIndex() {
       <div className={s.summary}>
         <div className={s.cell}>
           <p className={s.sLabel}>Spot</p>
-          <p className={cx(s.sValue, 'mc-numeric')}>{dash(formatPrice(n(chain?.spot_price)))}</p>
+          <p className={cx(s.sValue, 'cn-numeric')}>{dash(formatPrice(n(chain?.spot_price)))}</p>
         </div>
         <div className={s.cell}>
           <p className={s.sLabel}>ATM</p>
-          <p className={cx(s.sValue, 'mc-numeric')}>
+          <p className={cx(s.sValue, 'cn-numeric')}>
             {chain?.atm_strike ? formatInt(n(chain.atm_strike)) : '—'}
           </p>
         </div>
         <div className={s.cell}>
           <p className={s.sLabel}>Call OI</p>
-          <p className={cx(s.sValue, 'mc-numeric')}>{dash(formatInt(chain?.total_call_oi ?? 0))}</p>
+          <p className={cx(s.sValue, 'cn-numeric')}>{dash(formatInt(chain?.total_call_oi ?? 0))}</p>
         </div>
         <div className={s.cell}>
           <p className={s.sLabel}>Put OI</p>
-          <p className={cx(s.sValue, 'mc-numeric')}>{dash(formatInt(chain?.total_put_oi ?? 0))}</p>
+          <p className={cx(s.sValue, 'cn-numeric')}>{dash(formatInt(chain?.total_put_oi ?? 0))}</p>
         </div>
       </div>
 
@@ -139,7 +139,7 @@ export default function OptionsIndex() {
       )}
 
       <p className={s.disclaimer}>
-        For educational and informational purposes only. MarketCompass is not a SEBI-registered
+        For educational and informational purposes only. ChartNexus is not a SEBI-registered
         investment adviser. Support, resistance, max pain and build-up labels are illustrative,
         derived from the live option chain, and may be delayed or inaccurate. Markets carry risk —
         consult a registered financial adviser before trading.

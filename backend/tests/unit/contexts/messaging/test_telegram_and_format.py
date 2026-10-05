@@ -4,9 +4,9 @@ from __future__ import annotations
 
 from datetime import date
 
-from marketcompass.contexts.mme100.domain.briefing import Briefing
-from marketcompass.entrypoints.mme100_runtime import format_briefing_text
-from marketcompass.infrastructure.notifications.telegram.sender import _chunk
+from chartnexus.contexts.mme100.domain.briefing import Briefing
+from chartnexus.entrypoints.mme100_runtime import format_briefing_text
+from chartnexus.infrastructure.notifications.telegram.sender import _chunk
 
 
 def test_short_text_is_one_chunk() -> None:

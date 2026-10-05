@@ -1,7 +1,7 @@
 .legend {
   position: absolute;
-  top: var(--mc-space-2);
-  left: var(--mc-space-3);
+  top: var(--cn-space-2);
+  left: var(--cn-space-3);
   z-index: 2;
   display: flex;
   flex-direction: column;
@@ -27,16 +27,16 @@
   height: 1.125rem;
   padding: 0 0.25rem;
   border-radius: 999px;
-  background: var(--mc-accent-weak);
-  color: var(--mc-accent);
+  background: var(--cn-accent-weak);
+  color: var(--cn-accent);
   font-size: 0.625rem;
   font-weight: 700;
 }
 
 .symbol {
-  font-size: var(--mc-text-sm);
+  font-size: var(--cn-text-sm);
   font-weight: 700;
-  color: var(--mc-text);
+  color: var(--cn-text);
 }
 
 .ohlc {
@@ -47,25 +47,25 @@
 }
 
 .key {
-  font-size: var(--mc-text-xs);
-  color: var(--mc-text-subtle);
+  font-size: var(--cn-text-xs);
+  color: var(--cn-text-subtle);
 }
 
 .val {
-  font-size: var(--mc-text-xs);
+  font-size: var(--cn-text-xs);
   font-weight: 600;
 }
 
 .val.up {
-  color: var(--mc-bullish);
+  color: var(--cn-bullish);
 }
 
 .val.down {
-  color: var(--mc-bearish);
+  color: var(--cn-bearish);
 }
 
 .vol {
-  font-size: var(--mc-text-xs);
+  font-size: var(--cn-text-xs);
   font-weight: 600;
-  color: var(--mc-text-muted);
+  color: var(--cn-text-muted);
 }

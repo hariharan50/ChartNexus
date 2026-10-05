@@ -9,8 +9,8 @@ from __future__ import annotations
 
 import pytest
 
-from marketcompass.contexts.identity.domain.value_objects import PhoneNumber
-from marketcompass.shared_kernel.domain.errors import ValidationError
+from chartnexus.contexts.identity.domain.value_objects import PhoneNumber
+from chartnexus.shared_kernel.domain.errors import ValidationError
 
 pytestmark = pytest.mark.unit
 

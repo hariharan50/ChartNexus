@@ -32,7 +32,7 @@ import p from './fii-dii-summary.module.css';
 import type { Route } from './+types/fii-dii-summary';
 
 export const meta: Route.MetaFunction = () => [
-  { title: 'FII/DII Summary · Future Lab · MarketCompass' }
+  { title: 'FII/DII Summary · Future Lab · ChartNexus' }
 ];
 
 /** Which axis the open-interest board bands by. */

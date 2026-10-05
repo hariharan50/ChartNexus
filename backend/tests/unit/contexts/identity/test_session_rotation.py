@@ -4,20 +4,20 @@ from __future__ import annotations
 
 import pytest
 
-from marketcompass.contexts.identity.application.dto import RequestContextInput
-from marketcompass.contexts.identity.application.session_service import (
+from chartnexus.contexts.identity.application.dto import RequestContextInput
+from chartnexus.contexts.identity.application.session_service import (
     SessionPolicy,
     SessionService,
 )
-from marketcompass.contexts.identity.domain.errors import (
+from chartnexus.contexts.identity.domain.errors import (
     SessionExpiredError,
     TokenReuseDetectedError,
 )
-from marketcompass.contexts.identity.domain.refresh_session import SessionRevocationReason
-from marketcompass.contexts.identity.domain.user import User
-from marketcompass.contexts.identity.domain.value_objects import EmailAddress
-from marketcompass.infrastructure.security.token_signer import JwtAccessTokenIssuer
-from marketcompass.shared_kernel.types.identifiers import TenantId, new_id
+from chartnexus.contexts.identity.domain.refresh_session import SessionRevocationReason
+from chartnexus.contexts.identity.domain.user import User
+from chartnexus.contexts.identity.domain.value_objects import EmailAddress
+from chartnexus.infrastructure.security.token_signer import JwtAccessTokenIssuer
+from chartnexus.shared_kernel.types.identifiers import TenantId, new_id
 from tests.unit.contexts.identity.conftest import START
 
 pytestmark = pytest.mark.unit

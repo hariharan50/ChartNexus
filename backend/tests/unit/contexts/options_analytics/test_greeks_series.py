@@ -16,17 +16,17 @@ from datetime import UTC, datetime, timedelta
 
 import pytest
 
-from marketcompass.contexts.options_analytics.application.greeks_series_service import (
+from chartnexus.contexts.options_analytics.application.greeks_series_service import (
     GetGreeksSeries,
     trading_symbol,
 )
-from marketcompass.contexts.options_analytics.application.ports import (
+from chartnexus.contexts.options_analytics.application.ports import (
     ChainSnapshot,
     ProviderChain,
 )
-from marketcompass.contexts.options_analytics.domain.greeks_math import greeks, unit_vol
-from marketcompass.contexts.options_analytics.domain.oi_math import ChainRow
-from marketcompass.shared_kernel.types.identifiers import TenantId
+from chartnexus.contexts.options_analytics.domain.greeks_math import greeks, unit_vol
+from chartnexus.contexts.options_analytics.domain.oi_math import ChainRow
+from chartnexus.shared_kernel.types.identifiers import TenantId
 
 pytestmark = pytest.mark.unit
 

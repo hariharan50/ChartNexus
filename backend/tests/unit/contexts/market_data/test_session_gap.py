@@ -17,22 +17,22 @@ from uuid import UUID
 
 import pytest
 
-from marketcompass.contexts.market_data.application.queries import GetSessionGap
-from marketcompass.contexts.market_data.domain.gap import (
+from chartnexus.contexts.market_data.application.queries import GetSessionGap
+from chartnexus.contexts.market_data.domain.gap import (
     GapSignal,
     SessionGap,
     classify,
     measure,
     supersedes,
 )
-from marketcompass.contexts.market_data.domain.instruments import InstrumentSymbol
-from marketcompass.contexts.market_data.domain.market_data import (
+from chartnexus.contexts.market_data.domain.instruments import InstrumentSymbol
+from chartnexus.contexts.market_data.domain.market_data import (
     DataSource,
     Provenance,
     Quote,
 )
-from marketcompass.infrastructure.time.market_calendar import ExchangeCalendar
-from marketcompass.shared_kernel.types.identifiers import TenantId
+from chartnexus.infrastructure.time.market_calendar import ExchangeCalendar
+from chartnexus.shared_kernel.types.identifiers import TenantId
 
 NIFTY = InstrumentSymbol.parse("NIFTY")
 TENANT = TenantId(UUID("019fbe6d-18a2-72f8-b106-12d2c0bb4b3b"))

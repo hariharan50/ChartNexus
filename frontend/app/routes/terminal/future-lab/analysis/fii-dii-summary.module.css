@@ -16,7 +16,7 @@
      the two segmented controls sat tight against their labels. The board keeps
      the rest, and `minmax(0, 1fr)` still lets it shrink rather than overflow. */
   grid-template-columns: 20rem minmax(0, 1fr);
-  gap: var(--mc-space-4);
+  gap: var(--cn-space-4);
   align-items: start;
   min-width: 0;
 }
@@ -24,7 +24,7 @@
 .rail {
   display: flex;
   flex-direction: column;
-  gap: var(--mc-space-4);
+  gap: var(--cn-space-4);
   min-width: 0;
 }
 
@@ -33,34 +33,34 @@
 .rail-title {
   display: flex;
   align-items: center;
-  gap: var(--mc-space-3);
-  margin: 0 0 var(--mc-space-4);
-  font-size: var(--mc-text-base);
+  gap: var(--cn-space-3);
+  margin: 0 0 var(--cn-space-4);
+  font-size: var(--cn-text-base);
   font-weight: 700;
-  color: var(--mc-text);
+  color: var(--cn-text);
 }
 
 .rail-ico {
   display: inline-flex;
-  color: var(--mc-accent);
+  color: var(--cn-accent);
 }
 
 .field {
   display: flex;
   align-items: center;
-  gap: var(--mc-space-3);
+  gap: var(--cn-space-3);
   min-width: 0;
 }
 
 .field + .field {
-  margin-top: var(--mc-space-3);
+  margin-top: var(--cn-space-3);
 }
 
 .field-label {
   flex: none;
   width: 4.5rem;
-  font-size: var(--mc-text-xs);
-  color: var(--mc-text-muted);
+  font-size: var(--cn-text-xs);
+  color: var(--cn-text-muted);
 }
 
 .field-control {
@@ -72,7 +72,7 @@
 }
 
 /*
- * The session stepper. Sized against --mc-control-h like every other control
+ * The session stepper. Sized against --cn-control-h like every other control
  * in the terminal so it lines up with the date field beside it.
  */
 .step {
@@ -80,18 +80,18 @@
   align-items: center;
   justify-content: center;
   flex: none;
-  width: var(--mc-control-h-sm);
-  height: var(--mc-control-h-sm);
-  border: 1px solid var(--mc-border);
-  border-radius: var(--mc-radius);
-  background: var(--mc-surface);
-  color: var(--mc-text-muted);
+  width: var(--cn-control-h-sm);
+  height: var(--cn-control-h-sm);
+  border: 1px solid var(--cn-border);
+  border-radius: var(--cn-radius);
+  background: var(--cn-surface);
+  color: var(--cn-text-muted);
   cursor: pointer;
 }
 
 .step:hover:not(:disabled) {
-  border-color: var(--mc-border-strong);
-  color: var(--mc-text);
+  border-color: var(--cn-border-strong);
+  color: var(--cn-text);
 }
 
 .step:disabled {
@@ -103,35 +103,35 @@
 
 .session {
   margin: 0;
-  font-size: var(--mc-text-xs);
-  color: var(--mc-text-muted);
+  font-size: var(--cn-text-xs);
+  color: var(--cn-text-muted);
 }
 
 .benchmark {
   margin: 0.125rem 0 0;
-  font-size: var(--mc-text-lg);
+  font-size: var(--cn-text-lg);
   font-weight: 700;
-  color: var(--mc-text);
+  color: var(--cn-text);
 }
 
 .benchmark-move {
   margin-left: 0.375rem;
-  font-size: var(--mc-text-sm);
+  font-size: var(--cn-text-sm);
   font-weight: 600;
 }
 
 .unit {
   margin: 0.25rem 0 0;
   text-align: right;
-  font-size: var(--mc-text-xs);
-  color: var(--mc-text-subtle);
+  font-size: var(--cn-text-xs);
+  color: var(--cn-text-subtle);
 }
 
 .values {
   list-style: none;
-  margin: var(--mc-space-3) 0 0;
-  padding: var(--mc-space-3) 0 0;
-  border-top: 1px solid var(--mc-border);
+  margin: var(--cn-space-3) 0 0;
+  padding: var(--cn-space-3) 0 0;
+  border-top: 1px solid var(--cn-border);
   display: flex;
   flex-direction: column;
   gap: 0.125rem;
@@ -139,28 +139,28 @@
 
 /* The cash pair reads as its own block above the derivative segments. */
 .values-break {
-  margin-top: var(--mc-space-3);
-  padding-top: var(--mc-space-3);
-  border-top: 1px solid var(--mc-border);
+  margin-top: var(--cn-space-3);
+  padding-top: var(--cn-space-3);
+  border-top: 1px solid var(--cn-border);
 }
 
 .value-row {
   display: flex;
   align-items: center;
-  gap: var(--mc-space-2);
+  gap: var(--cn-space-2);
   width: 100%;
   padding: 0.375rem 0.25rem;
   border: none;
-  border-radius: var(--mc-radius-sm);
+  border-radius: var(--cn-radius-sm);
   background: transparent;
-  color: var(--mc-text);
-  font-size: var(--mc-text-sm);
+  color: var(--cn-text);
+  font-size: var(--cn-text-sm);
   text-align: left;
   cursor: pointer;
 }
 
 .value-row:hover {
-  background: var(--mc-surface-raised);
+  background: var(--cn-surface-raised);
 }
 
 .value-name {
@@ -185,7 +185,7 @@
   display: inline-flex;
   flex: none;
   width: 0.75rem;
-  color: var(--mc-text-subtle);
+  color: var(--cn-text-subtle);
   transform: rotate(-90deg);
   transition: transform 120ms ease;
 }
@@ -214,10 +214,10 @@
 .value-detail {
   display: flex;
   justify-content: space-between;
-  gap: var(--mc-space-3);
+  gap: var(--cn-space-3);
   padding: 0.125rem 0.25rem 0.375rem 1.25rem;
-  font-size: var(--mc-text-xs);
-  color: var(--mc-text-muted);
+  font-size: var(--cn-text-xs);
+  color: var(--cn-text-muted);
   font-variant-numeric: tabular-nums;
 }
 
@@ -230,26 +230,26 @@
 .board table {
   width: 100%;
   border-collapse: collapse;
-  font-size: var(--mc-text-sm);
+  font-size: var(--cn-text-sm);
   font-variant-numeric: tabular-nums;
 }
 
 .board th {
-  padding: var(--mc-space-3);
-  border-bottom: 1px solid var(--mc-border);
-  background: var(--mc-surface);
-  font-size: var(--mc-text-xs);
+  padding: var(--cn-space-3);
+  border-bottom: 1px solid var(--cn-border);
+  background: var(--cn-surface);
+  font-size: var(--cn-text-xs);
   font-weight: 600;
   letter-spacing: 0.03em;
   text-transform: uppercase;
-  color: var(--mc-text-subtle);
+  color: var(--cn-text-subtle);
   white-space: nowrap;
 }
 
 /*
  * No `color` here on purpose.
  *
- * It used to set `var(--mc-text)`, which is `.board td` — a class *and* an
+ * It used to set `var(--cn-text)`, which is `.board td` — a class *and* an
  * element, so it outranked the bare `.up`/`.down` the cells also carry and
  * quietly repainted every signed figure plain white. The board looked
  * uncoloured while the markup said otherwise, which is the worst kind of
@@ -257,8 +257,8 @@
  * instead, leaving the tone classes free to win.
  */
 .board td {
-  padding: var(--mc-space-3);
-  border-bottom: 1px solid var(--mc-border);
+  padding: var(--cn-space-3);
+  border-bottom: 1px solid var(--cn-border);
   white-space: nowrap;
 }
 
@@ -279,22 +279,22 @@
   width: 9rem;
   text-align: center;
   vertical-align: middle;
-  background: var(--mc-surface-raised);
-  border-right: 1px solid var(--mc-border);
+  background: var(--cn-surface-raised);
+  border-right: 1px solid var(--cn-border);
   font-weight: 700;
 }
 
 .band-net {
   display: block;
   margin-top: 0.25rem;
-  font-size: var(--mc-text-xs);
+  font-size: var(--cn-text-xs);
   font-weight: 500;
-  color: var(--mc-text-subtle);
+  color: var(--cn-text-subtle);
 }
 
 /* The last row of a band keeps the divider that separates it from the next. */
 .band-end td {
-  border-bottom: 1px solid var(--mc-border-strong);
+  border-bottom: 1px solid var(--cn-border-strong);
 }
 
 .row-label {
@@ -316,7 +316,7 @@
 .expand {
   display: inline-flex;
   align-items: center;
-  gap: var(--mc-space-2);
+  gap: var(--cn-space-2);
   padding: 0;
   border: none;
   background: transparent;
@@ -326,24 +326,24 @@
 }
 
 .expand:hover {
-  color: var(--mc-accent);
+  color: var(--cn-accent);
 }
 
 /* -- the expanded leg breakdown ------------------------------------------- */
 
 .legs td {
-  padding: 0 var(--mc-space-3) var(--mc-space-3);
-  background: var(--mc-surface-raised);
+  padding: 0 var(--cn-space-3) var(--cn-space-3);
+  background: var(--cn-surface-raised);
 }
 
 .legs-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(7rem, 1fr));
-  gap: var(--mc-space-3);
-  padding: var(--mc-space-3);
-  border: 1px solid var(--mc-border);
-  border-radius: var(--mc-radius);
-  background: var(--mc-surface);
+  gap: var(--cn-space-3);
+  padding: var(--cn-space-3);
+  border: 1px solid var(--cn-border);
+  border-radius: var(--cn-radius);
+  background: var(--cn-surface);
 }
 
 .leg {
@@ -353,12 +353,12 @@
 }
 
 .leg-label {
-  font-size: var(--mc-text-xs);
-  color: var(--mc-text-subtle);
+  font-size: var(--cn-text-xs);
+  color: var(--cn-text-subtle);
 }
 
 .leg-value {
-  font-size: var(--mc-text-sm);
+  font-size: var(--cn-text-sm);
   font-weight: 600;
   font-variant-numeric: tabular-nums;
 }
@@ -379,7 +379,7 @@
   align-items: center;
   justify-content: flex-end;
   flex-wrap: wrap;
-  gap: var(--mc-space-3);
+  gap: var(--cn-space-3);
   min-width: 0;
   /* The card head aligns its children on the baseline, which is right for a
      title beside a line of text and wrong for a group this tall. Centring just
@@ -395,19 +395,19 @@
   width: 1.5rem;
   height: 1.5rem;
   flex: none;
-  border: 1px solid var(--mc-border-strong);
+  border: 1px solid var(--cn-border-strong);
   border-radius: 50%;
-  background: var(--mc-surface-raised);
-  color: var(--mc-text-subtle);
-  font-size: var(--mc-text-xs);
+  background: var(--cn-surface-raised);
+  color: var(--cn-text-subtle);
+  font-size: var(--cn-text-xs);
   font-weight: 700;
   cursor: pointer;
   transition:
-    color var(--mc-duration-fast) ease,
-    border-color var(--mc-duration-fast) ease;
+    color var(--cn-duration-fast) ease,
+    border-color var(--cn-duration-fast) ease;
 }
 
 .help:hover {
-  color: var(--mc-accent);
-  border-color: var(--mc-accent);
+  color: var(--cn-accent);
+  border-color: var(--cn-accent);
 }

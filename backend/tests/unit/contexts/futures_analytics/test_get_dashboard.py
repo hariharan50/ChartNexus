@@ -6,17 +6,17 @@ from decimal import Decimal
 
 import pytest
 
-from marketcompass.contexts.futures_analytics.application.get_dashboard import (
+from chartnexus.contexts.futures_analytics.application.get_dashboard import (
     MAX_PANEL_LIMIT,
     FuturesDashboardQuery,
     GetFuturesDashboard,
 )
-from marketcompass.contexts.futures_analytics.application.ports import BoardSnapshot
-from marketcompass.contexts.futures_analytics.domain.buildup import (
+from chartnexus.contexts.futures_analytics.application.ports import BoardSnapshot
+from chartnexus.contexts.futures_analytics.domain.buildup import (
     BuildupState,
     FuturesReading,
 )
-from marketcompass.shared_kernel.types.identifiers import TenantId, new_id
+from chartnexus.shared_kernel.types.identifiers import TenantId, new_id
 
 pytestmark = pytest.mark.unit
 

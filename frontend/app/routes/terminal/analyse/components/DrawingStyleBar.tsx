@@ -70,7 +70,7 @@ export default function DrawingStyleBar({ selection, onStyle, onEditText, onDele
       // Marks this as a chart overlay so the drawing host ignores pointer events
       // that bubble from these buttons — otherwise the click that fires a button
       // also deselects the drawing the button acts on. See `lw-host.ts`.
-      data-mc-chart-overlay=""
+      data-cn-chart-overlay=""
     >
       <div className={s.slot}>
         <button

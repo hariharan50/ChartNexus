@@ -22,7 +22,7 @@ export default function IndexCard({ quote, selected = false, onSelect }: Props) 
       onClick={onSelect}
     >
       <span className={s.label}>{quote.label}</span>
-      <span className={`${s.value} mc-numeric`}>
+      <span className={`${s.value} cn-numeric`}>
         {quote.pending ? '—' : formatPrice(quote.value)}
       </span>
       <span className={s.foot}>

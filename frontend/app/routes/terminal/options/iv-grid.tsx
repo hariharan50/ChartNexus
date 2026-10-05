@@ -1,7 +1,7 @@
 import ComingSoon from '$shared/ui/ComingSoon';
 import type { Route } from './+types/iv-grid';
 
-export const meta: Route.MetaFunction = () => [{ title: 'IV Grid · MarketCompass' }];
+export const meta: Route.MetaFunction = () => [{ title: 'IV Grid · ChartNexus' }];
 
 export default function IvGrid() {
   return (

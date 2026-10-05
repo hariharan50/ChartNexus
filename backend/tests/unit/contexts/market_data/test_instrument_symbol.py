@@ -12,14 +12,14 @@ from urllib.parse import parse_qs, quote, unquote
 
 import pytest
 
-from marketcompass.contexts.instrument_catalog.domain.instrument import (
+from chartnexus.contexts.instrument_catalog.domain.instrument import (
     Instrument,
     InstrumentKind,
 )
-from marketcompass.contexts.market_data.domain.instruments import InstrumentSymbol
-from marketcompass.infrastructure.brokers.fyers.symbol_mapper import to_broker_symbol
-from marketcompass.infrastructure.catalog import registry
-from marketcompass.shared_kernel.domain.errors import ValidationError
+from chartnexus.contexts.market_data.domain.instruments import InstrumentSymbol
+from chartnexus.infrastructure.brokers.fyers.symbol_mapper import to_broker_symbol
+from chartnexus.infrastructure.catalog import registry
+from chartnexus.shared_kernel.domain.errors import ValidationError
 
 pytestmark = pytest.mark.unit
 

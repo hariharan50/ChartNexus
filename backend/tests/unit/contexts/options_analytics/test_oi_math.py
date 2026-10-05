@@ -8,7 +8,7 @@ from __future__ import annotations
 
 import math
 
-from marketcompass.contexts.options_analytics.domain.oi_math import (
+from chartnexus.contexts.options_analytics.domain.oi_math import (
     ChainRow,
     atm_strike,
     max_pain,

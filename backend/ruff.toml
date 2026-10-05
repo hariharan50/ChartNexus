@@ -39,10 +39,10 @@ ignore = [
 # ARG002/PLR0917: doubles must mirror a port's signature even when they
 # ignore an argument, and pytest fixtures are positional by nature.
 "tests/**" = ["S101", "S105", "S106", "ARG001", "ARG002", "PLR2004", "PLR0917"]
-"src/marketcompass/entrypoints/*" = ["T20"]
+"src/chartnexus/entrypoints/*" = ["T20"]
 
 [lint.isort]
-known-first-party = ["marketcompass", "tests"]
+known-first-party = ["chartnexus", "tests"]
 combine-as-imports = true
 
 [lint.flake8-tidy-imports]

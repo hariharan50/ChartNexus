@@ -9,7 +9,7 @@
  * damage never shows up on the component you are currently porting.
  *
  * The rule: every selector must be anchored on a local class (`.panel h1`) or
- * be explicitly global (`:global(.mc-numeric)`).
+ * be explicitly global (`:global(.cn-numeric)`).
  *
  * Anchoring is necessary but NOT sufficient, and this script cannot check the
  * rest. `.terminal nav { display: none }` passes here, yet it still hid the

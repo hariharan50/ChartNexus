@@ -14,11 +14,11 @@ from decimal import Decimal
 
 import pytest
 
-from marketcompass.contexts.pre_market.application.get_pre_market_view import (
+from chartnexus.contexts.pre_market.application.get_pre_market_view import (
     GetPreMarketView,
     PreMarketQuery,
 )
-from marketcompass.contexts.pre_market.domain.readings import (
+from chartnexus.contexts.pre_market.domain.readings import (
     BreadthReading,
     CandleSeries,
     FlowReading,
@@ -29,8 +29,8 @@ from marketcompass.contexts.pre_market.domain.readings import (
     OptionsReading,
     SpotReading,
 )
-from marketcompass.contexts.pre_market.domain.view import Availability
-from marketcompass.shared_kernel.domain.levels import Bar
+from chartnexus.contexts.pre_market.domain.view import Availability
+from chartnexus.shared_kernel.domain.levels import Bar
 
 pytestmark = pytest.mark.unit
 
@@ -43,8 +43,12 @@ class UpstreamError(Exception):
 
 def bars(count: int = 260) -> tuple[Bar, ...]:
     return tuple(
-        Bar(open=25_000 + n * 10 - 5, high=25_000 + n * 10 + 40,
-            low=25_000 + n * 10 - 40, close=25_000 + n * 10)
+        Bar(
+            open=25_000 + n * 10 - 5,
+            high=25_000 + n * 10 + 40,
+            low=25_000 + n * 10 - 40,
+            close=25_000 + n * 10,
+        )
         for n in range(count)
     )
 
@@ -97,12 +101,22 @@ class StubOptions:
         if self._fail:
             raise UpstreamError
         return self._reading or OptionsReading(
-            expiry=None, days_to_expiry=3, spot=Decimal("25482"),
-            atm_strike=Decimal("25500"), pcr_oi=Decimal("1.18"), pcr_change=None,
-            total_call_oi=1, total_put_oi=2, max_pain=Decimal("25500"),
-            call_wall=Decimal("25700"), put_wall=Decimal("25300"),
-            gamma_flip=None, atm_iv=Decimal("13.8"), iv_percentile=Decimal("38"),
-            atm_straddle=Decimal("185"), india_vix=Decimal("13.82"),
+            expiry=None,
+            days_to_expiry=3,
+            spot=Decimal("25482"),
+            atm_strike=Decimal("25500"),
+            pcr_oi=Decimal("1.18"),
+            pcr_change=None,
+            total_call_oi=1,
+            total_put_oi=2,
+            max_pain=Decimal("25500"),
+            call_wall=Decimal("25700"),
+            put_wall=Decimal("25300"),
+            gamma_flip=None,
+            atm_iv=Decimal("13.8"),
+            iv_percentile=Decimal("38"),
+            atm_straddle=Decimal("185"),
+            india_vix=Decimal("13.82"),
             india_vix_change_percent=Decimal("-4.21"),
         )
 
@@ -118,10 +132,14 @@ class StubGlobal:
             pressure_score=Decimal("32.5"),
             pressure_band="up",
             gift=GiftReading(
-                level=Decimal("25575"), change=Decimal("-85"),
-                change_percent=Decimal("-0.37"), overnight_high=Decimal("25640"),
-                overnight_low=Decimal("25420"), gap_points=Decimal("189"),
-                gap_percent=Decimal("0.74"), signal="gap_up",
+                level=Decimal("25575"),
+                change=Decimal("-85"),
+                change_percent=Decimal("-0.37"),
+                overnight_high=Decimal("25640"),
+                overnight_low=Decimal("25420"),
+                gap_points=Decimal("189"),
+                gap_percent=Decimal("0.74"),
+                signal="gap_up",
             ),
         )
 
@@ -154,8 +172,11 @@ class StubVix:
 class StubPhase:
     async def get_phase(self) -> MarketPhase | None:
         return MarketPhase(
-            is_open=False, session_date="2026-09-28", time_ist="08:45",
-            opens_ist="09:15", closes_ist="15:30",
+            is_open=False,
+            session_date="2026-09-28",
+            time_ist="08:45",
+            opens_ist="09:15",
+            closes_ist="15:30",
         )
 
 
@@ -301,11 +322,24 @@ class TestProvenance:
     async def test_the_badge_reports_the_weakest_leg(self) -> None:
         """A page is only as live as its least live input."""
         mocked = OptionsReading(
-            expiry=None, days_to_expiry=1, spot=None, atm_strike=None, pcr_oi=None,
-            pcr_change=None, total_call_oi=None, total_put_oi=None, max_pain=None,
-            call_wall=None, put_wall=None, gamma_flip=None, atm_iv=None,
-            iv_percentile=None, atm_straddle=None, india_vix=None,
-            india_vix_change_percent=None, source="mock",
+            expiry=None,
+            days_to_expiry=1,
+            spot=None,
+            atm_strike=None,
+            pcr_oi=None,
+            pcr_change=None,
+            total_call_oi=None,
+            total_put_oi=None,
+            max_pain=None,
+            call_wall=None,
+            put_wall=None,
+            gamma_flip=None,
+            atm_iv=None,
+            iv_percentile=None,
+            atm_straddle=None,
+            india_vix=None,
+            india_vix_change_percent=None,
+            source="mock",
         )
 
         view = await build(options=StubOptions(reading=mocked))(PreMarketQuery())

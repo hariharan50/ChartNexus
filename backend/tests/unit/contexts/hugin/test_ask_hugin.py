@@ -5,10 +5,10 @@ from __future__ import annotations
 import uuid
 from collections.abc import AsyncIterator
 
-from marketcompass.contexts.hugin.application.ask_hugin import AskHugin
-from marketcompass.contexts.hugin.domain.conversation import ChatDone, ChatEvent, TextDelta, Turn
-from marketcompass.contexts.hugin.domain.lesson import Lesson
-from marketcompass.shared_kernel.types.identifiers import TenantId
+from chartnexus.contexts.hugin.application.ask_hugin import AskHugin
+from chartnexus.contexts.hugin.domain.conversation import ChatDone, ChatEvent, TextDelta, Turn
+from chartnexus.contexts.hugin.domain.lesson import Lesson
+from chartnexus.shared_kernel.types.identifiers import TenantId
 
 TENANT = TenantId(uuid.uuid4())
 
