@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react';
 import { useMemo } from 'react';
-import SymbolAvatar from '$shared/ui/SymbolAvatar';
+import SymbolCell from '$shared/ui/SymbolCell';
 import { cx } from '$shared/ui/cx';
 import s from './DivergingBoard.module.css';
 
@@ -111,12 +111,10 @@ function Side({
     );
   }
 
-  const name = (
-    <>
-      <SymbolAvatar symbol={row.symbol} size={24} />
-      <span className={s.symbol}>{row.symbol}</span>
-    </>
-  );
+  // One flex child of `.label` rather than two, so the mirrored
+  // justification still puts the mark and its ticker together against the
+  // centre axis instead of spreading them across the label.
+  const name = <SymbolCell symbol={row.symbol} size={24} tickerClassName={s.symbol} />;
 
   const label = (
     <span className={cx(s.label, s[side])}>

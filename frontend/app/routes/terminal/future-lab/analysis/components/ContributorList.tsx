@@ -1,5 +1,5 @@
 import type { Contribution } from '$contexts/market-breadth/types';
-import SymbolAvatar from '$shared/ui/SymbolAvatar';
+import SymbolCell from '$shared/ui/SymbolCell';
 import { cx } from '$shared/ui/cx';
 import { fmtPercent, fmtPrice, toNumber } from '../analysis-data';
 import s from './ContributorList.module.css';
@@ -49,10 +49,7 @@ export default function ContributorList({ title, rows, side }: Props) {
             {rows.map((row) => (
               <tr key={row.symbol}>
                 <td>
-                  <span className={s.symbol}>
-                    <SymbolAvatar symbol={row.symbol} />
-                    <span className={s.ticker}>{row.symbol}</span>
-                  </span>
+                  <SymbolCell symbol={row.symbol} />
                 </td>
                 <td className={s.numeric}>{fmtPrice(row.last)}</td>
                 <td className={cx(s.numeric, tone(toNumber(row.change_percent)))}>

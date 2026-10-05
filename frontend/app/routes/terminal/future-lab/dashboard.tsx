@@ -7,6 +7,7 @@ import {
 import type { FuturesRow } from '$contexts/futures-analytics/types';
 import DataTable, { type Column } from '$shared/ui/DataTable';
 import Select from '$shared/ui/Select';
+import SymbolCell from '$shared/ui/SymbolCell';
 import { SessionStatus } from './components/SessionHeader';
 import { cx } from '$shared/ui/cx';
 import ExpiryPicker from './components/ExpiryPicker';
@@ -225,8 +226,10 @@ function Panel({
           <tbody>
             {rows.map((row) => (
               <tr key={row.symbol}>
-                <th scope="row" className={s.symbol} title={row.name ?? undefined}>
-                  {row.symbol}
+                {/* Still a row header: the ticker is this row's accessible
+                    name, and the mark beside it is aria-hidden decoration. */}
+                <th scope="row">
+                  <SymbolCell symbol={row.symbol} name={row.name} size={22} />
                 </th>
                 <td className={cx(s.num, toneClass(row.price_change_percent))}>
                   {fmtPercent(row.price_change_percent)}
@@ -249,11 +252,13 @@ function BoardTable({ rows, loading }: { rows: FuturesRow[]; loading: boolean })
       {
         key: 'symbol',
         header: 'Symbol',
-        render: (row) => (
-          <span className={s.symbol} title={row.name ?? undefined}>
-            {row.symbol}
-          </span>
-        ),
+        // Pinned, at the width the Stocks board uses: once this table is
+        // scrolled sideways every remaining column is a number, and a number
+        // without its ticker says nothing.
+        sticky: true,
+        width: '12rem',
+        cellClassName: s.symbolCell,
+        render: (row) => <SymbolCell symbol={row.symbol} name={row.name} />,
         sortValue: (row) => row.symbol
       },
       {

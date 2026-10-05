@@ -1,0 +1,23 @@
+/*
+ * One flex line: mark, gap, ticker. `min-width: 0` on both the row and the
+ * ticker is what lets the ticker ellipsise instead of forcing the column
+ * wider — a flex item defaults to its content's minimum size, so without it a
+ * long name pushes the numbers beside it off their alignment.
+ */
+.cell {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--mc-space-2);
+  min-width: 0;
+}
+
+/* A ticker is the one thing in a row allowed to lose characters: `ULTRACEM…`
+   still identifies the company, whereas a truncated price is a different
+   number. */
+.ticker {
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  font-weight: 600;
+}

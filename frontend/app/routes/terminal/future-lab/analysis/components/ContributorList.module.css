@@ -138,22 +138,6 @@
   text-align: right;
 }
 
-.symbol {
-  display: flex;
-  align-items: center;
-  gap: var(--mc-space-2);
-  min-width: 0;
-}
-
-/* The ticker is the one thing in the row allowed to lose characters — a price
-   or a percentage with its tail cut off would be a different number. */
-.ticker {
-  min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  font-weight: 600;
-}
-
 .empty {
   margin: 0;
   padding: var(--mc-space-4) var(--mc-space-2);

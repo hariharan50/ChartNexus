@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
 import type { FuturesRow } from '$contexts/futures-analytics/types';
 import DataTable, { type Column } from '$shared/ui/DataTable';
-import SymbolAvatar from '$shared/ui/SymbolAvatar';
+import SymbolCell from '$shared/ui/SymbolCell';
 import { cx } from '$shared/ui/cx';
 import { useTickFlash } from '$shared/ui/use-tick-flash';
 import { direction, fmtCompact, fmtPercent, fmtPrice, stateMeta, toNumber } from '../stocks-data';
@@ -35,12 +35,7 @@ export default function MoversTable({ rows, emptyMessage }: Props) {
         sticky: true,
         width: '11rem',
         cellClassName: s.symbolCell,
-        render: (row) => (
-          <span className={s.symbolWrap} title={row.name ?? undefined}>
-            <SymbolAvatar symbol={row.symbol} />
-            <span className={s.symbol}>{row.symbol}</span>
-          </span>
-        ),
+        render: (row) => <SymbolCell symbol={row.symbol} name={row.name} />,
         sortValue: (row) => row.symbol
       },
       {

@@ -2,16 +2,6 @@
   font-weight: 600;
 }
 
-.symbolWrap {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--mc-space-2);
-}
-
-.symbol {
-  font-weight: 600;
-}
-
 .sector,
 .muted {
   color: var(--mc-text-muted);

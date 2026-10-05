@@ -208,11 +208,31 @@
   font-size: var(--mc-text-sm);
 }
 
+/*
+ * Fixed layout, with the two numeric columns sized and the symbol column
+ * taking what is left.
+ *
+ * Auto layout was fine while the first cell was a bare ticker. A company mark
+ * beside it adds ~30px to the widest cell, and in a panel that is one of three
+ * grid columns that is enough for `BAJFINANCE` to wrap onto a second line and
+ * drag the two percentages out of alignment with the panel beside it. The
+ * percentages have a known maximum width; the ticker is the one thing here
+ * that can afford to ellipsise.
+ */
 .panelTable {
   width: 100%;
+  table-layout: fixed;
   border-collapse: collapse;
   font-size: var(--mc-text-sm);
   font-variant-numeric: tabular-nums;
+}
+
+.panelTable th:nth-child(2) {
+  width: 4.5rem;
+}
+
+.panelTable th:nth-child(3) {
+  width: 4rem;
 }
 
 .panelTable th[scope='col'] {
@@ -226,9 +246,11 @@
   text-transform: uppercase;
 }
 
+/* The mark sets the row height now, so the old 12px of vertical padding would
+   have made every panel visibly taller for no extra information. */
 .panelTable td,
 .panelTable th[scope='row'] {
-  padding: var(--mc-space-3) 0;
+  padding: var(--mc-space-2) 0;
   font-weight: 400;
   text-align: left;
 }
@@ -238,12 +260,22 @@
   border-top: 1px solid var(--mc-border);
 }
 
+/* Ties the three cells together as one row while the eye crosses from the mark
+   to the numbers — and it is the cue that the row carries a hover title. */
+.panelTable tbody tr:hover td,
+.panelTable tbody tr:hover th {
+  background: var(--mc-surface-raised);
+}
+
 .num {
   text-align: right;
   font-variant-numeric: tabular-nums;
 }
 
-.symbol {
+/* The cell, not a span inside it: the ticker's own weight comes from
+   SymbolCell, and this is here so a sticky symbol column reads as heading-ish
+   against the numbers that scroll under it. */
+.symbolCell {
   font-weight: 600;
 }
 
