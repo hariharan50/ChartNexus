@@ -18,10 +18,10 @@ Two departures from the OI-family services, both shared with ``gex_service``:
   day-change field, but it carries no spot — and vega, like gamma, is a function
   of where spot is. A synthetic opening bar would be an invented number, so the
   series starts where the recording does.
-* **Values are emitted in crore.** Fifty strikes, two sides, a hundred-odd
-  captures — raw rupee vega runs to many digits a number. Four decimals of crore
-  is the same information in a fraction of the bytes, and matches the scale the
-  page reads the change since open on.
+* **Values are per contract, not open-interest weighted.** See ``leg_vega``:
+  weighting by OI measures position-building, not volatility, and made this page
+  disagree with every other terminal on a day when OI tripled. Four decimals of
+  a vega point is enough precision for the change-since-open the page reads.
 """
 
 from __future__ import annotations
@@ -58,7 +58,6 @@ _MIN_INTRADAY_SNAPSHOTS = 2
 # the UI offers, so a day with a drifting ladder cannot grow the payload without
 # bound. Matches `GetGex`'s default.
 _SERIES_STRIKE_SPAN = 25
-_CRORE = 1e7
 # Enough precision that a small position is still visible; anything finer is
 # below the width of a rendered point.
 _PLACES = 4
@@ -210,8 +209,8 @@ def _frame(
             "spot": round(spot, 2),
             "atm": snap.atm_strike,
             "synth_future": round(synth, 2) if synth is not None else None,
-            "call_vega": [_crore(entry.call_vega) for entry in entries],
-            "put_vega": [_crore(entry.put_vega) for entry in entries],
+            "call_vega": [_round(entry.call_vega) for entry in entries],
+            "put_vega": [_round(entry.put_vega) for entry in entries],
         },
         profile,
     )
@@ -244,8 +243,8 @@ def _empty(symbol: str, chain: ProviderChain, now: datetime) -> dict[str, Any]:
 # -- helpers ----------------------------------------------------------------
 
 
-def _crore(value: float) -> float:
-    return round(value / _CRORE, _PLACES)
+def _round(value: float) -> float:
+    return round(value, _PLACES)
 
 
 def _parse_expiry(value: str | None) -> date | None:

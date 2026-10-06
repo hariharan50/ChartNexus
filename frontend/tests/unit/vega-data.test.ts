@@ -33,26 +33,50 @@ function frame(overrides: Partial<VegaFrame> = {}): VegaFrame {
 }
 
 describe('frameTotals', () => {
-  it('sums each side only over the strikes in the window', () => {
-    const totals = frameTotals(STRIKES, frame(), new Set([24_550, 24_650]));
+  // Pinned at 24_600, the middle strike: calls take 24_600 and up, puts take
+  // 24_600 and down.
+  const MONEY = 24_600;
 
-    // call at 24_550 (2) + 24_650 (4); put at 24_550 (4) + 24_650 (2).
-    expect(totals.call).toBe(6);
-    expect(totals.put).toBe(6);
+  it('sums each side only over the strikes in the window', () => {
+    const totals = frameTotals(STRIKES, frame(), new Set([24_550, 24_650]), MONEY);
+
+    // Of the two visible strikes only 24_650 is call-side, only 24_550 put-side.
+    expect(totals.call).toBe(4);
+    expect(totals.put).toBe(4);
   });
 
   it('ignores strikes outside the window', () => {
-    const totals = frameTotals(STRIKES, frame(), new Set([24_500]));
+    const totals = frameTotals(STRIKES, frame(), new Set([24_500]), MONEY);
 
-    expect(totals.call).toBe(1);
+    // 24_500 is below the money, so it is put-side only.
+    expect(totals.call).toBe(0);
     expect(totals.put).toBe(5);
   });
 
+  it('splits each side at the money, counting the strike itself on both', () => {
+    const totals = frameTotals(STRIKES, frame(), new Set(STRIKES), MONEY);
+
+    // calls 24_600..24_700 = 3+4+5; puts 24_500..24_600 = 5+4+3.
+    expect(totals.call).toBe(12);
+    expect(totals.put).toBe(12);
+  });
+
+  it('splits on the pin it is given, not the frame it is reading', () => {
+    // The guard on the bug this replaced: re-splitting on each frame's own ATM
+    // moves strikes between buckets as spot drifts, and the change since open
+    // then reports that migration as if it were vega.
+    const drifted = frame({ atm: 24_500 });
+
+    expect(frameTotals(STRIKES, drifted, new Set(STRIKES), MONEY)).toEqual(
+      frameTotals(STRIKES, frame(), new Set(STRIKES), MONEY)
+    );
+  });
+
   it('treats a missing per-strike value as zero, not NaN', () => {
-    const totals = frameTotals(STRIKES, frame({ call_vega: [1, 2] }), new Set(STRIKES));
+    const totals = frameTotals(STRIKES, frame({ call_vega: [1, 2] }), new Set(STRIKES), MONEY);
 
     expect(Number.isNaN(totals.call)).toBe(false);
-    expect(totals.call).toBe(3);
+    expect(totals.call).toBe(0);
   });
 });
 

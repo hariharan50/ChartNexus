@@ -109,8 +109,15 @@ export default function VegaAnalysis() {
     const anchor = anchorFrame.atm ?? anchorFrame.spot;
     const window = new Set(withinWindow(vw.strikes, anchor, step, STRIKE_SPAN));
 
-    const callTot = frames.map((frame) => frameTotals(vw.strikes, frame, window).call);
-    const putTot = frames.map((frame) => frameTotals(vw.strikes, frame, window).put);
+    // The money as it stood at the open, pinned for the whole session — see
+    // `frameTotals`. Separate from `anchor`, which only decides which strikes
+    // are on screen: that may re-centre, but what counts as the call side and
+    // what counts as the put side must not, or the change since open measures
+    // strikes changing buckets rather than vega changing.
+    const money = opening.atm ?? opening.spot;
+
+    const callTot = frames.map((frame) => frameTotals(vw.strikes, frame, window, money).call);
+    const putTot = frames.map((frame) => frameTotals(vw.strikes, frame, window, money).put);
     const baseCall = callTot[0] ?? 0;
     const basePut = putTot[0] ?? 0;
 
@@ -165,7 +172,7 @@ export default function VegaAnalysis() {
         lines,
         formatValue: fmtVega,
         formatPrice: fmtPrice,
-        valueAxisName: 'Vega Δ (Cr)'
+        valueAxisName: 'Vega Δ'
       },
       theme
     );
@@ -439,9 +446,9 @@ export default function VegaAnalysis() {
 
               <p className={s.caption}>
                 Call and Put Vega are each side’s aggregate option vega across the{' '}
-                {series.windowSize}-strike window around the money, in crore per one volatility
-                point, shown as the change since the session open. Put-Call Difference is Put minus
-                Call. Synth Future is the put-call-parity forward at the money.
+                {series.windowSize}-strike window on its own side of the money, per contract per one
+                volatility point, shown as the change since the session open. Put-Call Difference is
+                Put minus Call. Synth Future is the put-call-parity forward at the money.
                 {vw.iv_coverage < 1
                   ? ` The broker quoted no volatility on ${Math.round((1 - vw.iv_coverage) * 100)}% of legs, which contribute nothing to these figures.`
                   : ''}

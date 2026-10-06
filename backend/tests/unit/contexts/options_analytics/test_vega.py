@@ -125,13 +125,25 @@ def test_vega_is_zero_rather_than_undefined_at_the_edges() -> None:
     assert bs_vega(spot=0.0, strike=SPOT, years=0.02, rate=0.07, vol=0.14) == 0.0
 
 
-def test_exposure_is_money_per_one_vol_point() -> None:
-    # vega * oi — the definition, stated once so a refactor cannot quietly
-    # reintroduce a spot^2 term and turn vega into gamma exposure, or a lot
-    # multiplier over an OI already in units.
-    value = leg_vega(vega=1.5, oi=1_000)
+def test_a_leg_is_vega_per_contract() -> None:
+    # The definition, stated once so a refactor cannot quietly reintroduce a
+    # spot^2 term and turn vega into gamma exposure, or a lot multiplier.
+    assert leg_vega(vega=1.5, oi=1_000) == 1.5
 
-    assert value == 1.5 * 1_000
+
+def test_open_interest_does_not_scale_a_leg() -> None:
+    """The regression this page was wrong on for its whole life.
+
+    Weighting by open interest answers "how much money is exposed", not "how
+    much volatility value is here" — and the two diverge violently. On 6 Oct
+    2026 NIFTY put OI tripled between 09:15 and 11:38 while per-contract vega
+    decayed to 0.79x, so the OI-weighted line climbed all morning on a day every
+    option was *losing* vega. Every other terminal showed it falling.
+    """
+    quiet = leg_vega(vega=1.5, oi=1_000)
+    crowded = leg_vega(vega=1.5, oi=50_000_000)
+
+    assert quiet == crowded
 
 
 # -- the profile ------------------------------------------------------------

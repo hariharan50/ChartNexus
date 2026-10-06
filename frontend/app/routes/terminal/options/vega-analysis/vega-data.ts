@@ -37,7 +37,8 @@ export interface VegaFrame {
   /** Put-call-parity forward, falling back to the tradable future; `null` rare. */
   synth_future: number | null;
   /**
-   * Aligned to {@link VegaView.strikes}, in **crore per one volatility point**.
+   * Aligned to {@link VegaView.strikes}, in **vega per contract per one
+   * volatility point** — deliberately not weighted by open interest.
    * Both sides positive — the page plots each side's change since the open, and
    * that delta is what carries the sign.
    */
@@ -148,21 +149,39 @@ export const STRIKE_SPAN = 10;
 export function frameTotals(
   strikes: number[],
   frame: VegaFrame,
-  visible: Set<number>
+  visible: Set<number>,
+  money: number
 ): { call: number; put: number } {
+  // Each side is summed over the strikes it is out of the money at: calls from
+  // `money` up, puts from `money` down. The strike itself belongs to both,
+  // which is where the two curves meet at the open.
+  //
+  // Not cosmetic. Summing both sides over the *same* strikes makes the two
+  // lines near-identical — vega is a property of the strike, so a call and a
+  // put struck together have the same one — and the page then draws one curve
+  // twice. Split, they answer the question being asked: which side of the money
+  // is bleeding volatility value as spot moves away from it.
+  //
+  // **`money` is pinned by the caller, not read off `frame`.** This series is a
+  // change since the session open, and a change is only meaningful if the two
+  // buckets hold the same strikes at both ends. Re-splitting on each frame's
+  // own ATM lets strikes migrate from the put bucket to the call bucket as spot
+  // moves, so the delta would report that reclassification as if it were vega
+  // moving — the larger effect, on a trending day, by far.
   let call = 0;
   let put = 0;
   for (let i = 0; i < strikes.length; i++) {
-    if (!visible.has(strikes[i]!)) continue;
-    call += frame.call_vega[i] ?? 0;
-    put += frame.put_vega[i] ?? 0;
+    const strike = strikes[i]!;
+    if (!visible.has(strike)) continue;
+    if (strike >= money) call += frame.call_vega[i] ?? 0;
+    if (strike <= money) put += frame.put_vega[i] ?? 0;
   }
   return { call, put };
 }
 
 // -- formatting -------------------------------------------------------------
 
-/** `+1.24`, `-9.69` — a signed vega delta in crore, two decimals. */
+/** `+1.24`, `-9.69` — a signed vega delta in points, two decimals. */
 export function fmtVega(value: number): string {
   const sign = value > 0 ? '+' : '';
   return `${sign}${value.toFixed(2)}`;
@@ -199,7 +218,7 @@ export interface VegaRow {
 
 /** The visible series as a spreadsheet — what is on screen, not the whole payload. */
 export function vegaCsv(rows: VegaRow[]): string {
-  const header = 'time,synth_future,call_vega_delta_cr,put_vega_delta_cr,put_minus_call';
+  const header = 'time,synth_future,call_vega_delta,put_vega_delta,put_minus_call';
   const body = rows.map((row) => [row.t, row.synth ?? '', row.call, row.put, row.diff].join(','));
   return [header, ...body].join('\n');
 }

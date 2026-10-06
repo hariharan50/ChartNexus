@@ -12,14 +12,14 @@ module remains the reference for the formula (``_vega``) and for the 0.07
 risk-free convention used across the codebase. This mirrors ``gex_math``, which
 re-derives gamma for exactly the same reason.
 
-**Units.** ``leg_vega`` returns *rupee vega per one volatility point* — the
-change in the position's value for a 1-percentage-point move in implied
+**Units.** ``leg_vega`` returns *vega per contract, per one volatility point* —
+what one option's price moves for a 1-percentage-point change in implied
 volatility. Raw Black-Scholes vega is per unit of vol (1.0 == 100 points), so
-the ``* 0.01`` scales it to the one-point step a reader thinks in. Open interest
-enters in *underlying units*, the way the feed and the rest of this context
-carry it — not in lots — so there is no separate lot multiplier: a 100k-unit OI
-is already 100k shares of exposure, and multiplying by the lot size on top would
-inflate every figure by one contract's worth of shares.
+the ``* 0.01`` scales it to the one-point step a reader thinks in.
+
+**Open interest is not a factor.** See ``leg_vega``: weighting by it turns a
+volatility reading into a measure of position-building, and that is what made
+this page disagree with every other terminal.
 
 **Sign.** Both sides are returned *positive* here — a long option always has
 positive vega. The Vega Analysis page plots each side's *change since the
@@ -65,14 +65,24 @@ def bs_vega(*, spot: float, strike: float, years: float, rate: float, vol: float
 
 
 def leg_vega(*, vega: float, oi: int) -> float:
-    """One leg's vega exposure in rupees per one-point move in implied vol.
+    """One leg's vega, per contract, in points per one-point move in implied vol.
 
-    ``vega * oi``: per-share vega scaled by the open interest, which is already
-    in underlying units, not lots. Unlike gamma exposure there is no ``spot^2``
-    term — vega is already a rupee change in the option's price, not a per-unit
-    sensitivity that needs squaring back into money.
+    **Open interest is deliberately not a factor**, and ``oi`` is accepted only
+    so the signature still documents what was rejected.
+
+    It used to be ``vega * oi``, which measures the book's rupee exposure. That
+    is a real quantity, but it is dominated by position-building rather than by
+    volatility: on 6 Oct 2026 NIFTY put open interest tripled between 09:15 and
+    11:38 while per-contract vega decayed to 0.79x, so the "vega" line rose all
+    morning on a day every option was losing vega. The page is read as a
+    volatility reading, and an OI-weighted one answers a different question in
+    the same shape — which is how it came to disagree with every other terminal.
+
+    Per contract, the line falls as expiry approaches and as strikes drift out
+    of the money, which is what vega does.
     """
-    return vega * oi
+    del oi  # Discarded on purpose — see above; the exclusion is the point.
+    return vega
 
 
 @dataclass(frozen=True, slots=True)
