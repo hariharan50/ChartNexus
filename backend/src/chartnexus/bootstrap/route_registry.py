@@ -21,7 +21,6 @@ from chartnexus.contexts.market_data.api.router import router as market_router
 from chartnexus.contexts.messaging.api.router import router as messaging_router
 from chartnexus.contexts.mme100.api.router import router as mme100_router
 from chartnexus.contexts.options_analytics.api.router import router as options_lab_router
-from chartnexus.contexts.pre_market.api.router import router as pre_market_router
 from chartnexus.contexts.report.api.router import router as report_router
 from chartnexus.contexts.signals.api.router import router as signals_router
 from chartnexus.contexts.stryx.api.router import router as stryx_router
@@ -38,7 +37,6 @@ _ROUTERS: tuple[APIRouter, ...] = (
     futures_router,
     breadth_router,
     global_router,
-    pre_market_router,
     signals_router,
     copilot_router,
     stryx_router,

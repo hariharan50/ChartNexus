@@ -46,7 +46,6 @@ export default [
     route('dashboard', 'routes/terminal/dashboard/route.tsx'),
     route('advanced-dashboard', 'routes/terminal/advanced-dashboard/route.tsx'),
     route('global-index-analysis', 'routes/terminal/global-index-analysis/route.tsx'),
-    route('pre-market-screener', 'routes/terminal/pre-market-screener/route.tsx'),
     route('option-chain', 'routes/terminal/option-chain/route.tsx'),
     route('analyse', 'routes/terminal/analyse/route.tsx'),
 

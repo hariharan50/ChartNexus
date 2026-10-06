@@ -209,7 +209,7 @@ def prior_session(bars: Sequence[Bar]) -> Bar | None:
 
     ``bars[-2]``, not ``bars[-1]``: the last bar is today, still forming. Every
     level measured "from yesterday" is measured from this one, and taking the
-    last bar instead is the single easiest way to make a pre-market page quote
+    last bar instead is the single easiest way to make a morning view quote
     levels derived from a session that has not happened yet.
     """
     if len(bars) < _MIN_BARS_FOR_PRIOR:

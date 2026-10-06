@@ -38,9 +38,10 @@ class GapSignal(StrEnum):
 
 #: Below this the open is treated as level with the previous close. Roughly 35
 #: points on a 23,500 NIFTY - wide enough to swallow ordinary overnight noise,
-#: narrow enough that a gap a trader would act on still reads as one. The same
-#: figure the Pre-Market Screener's percent fallback uses, so GAP UP / GAP DOWN
-#: / FLAT means one thing product-wide.
+#: narrow enough that a gap a trader would act on still reads as one. Defined
+#: here once so GAP UP / GAP DOWN / FLAT means one thing wherever it is shown —
+#: a second threshold elsewhere would have two pages disagree about the same
+#: morning.
 FLAT_PERCENT: Decimal = Decimal("0.15")
 
 #: The widest gap that can be a gap. NSE halts the market at a 20% index move,
