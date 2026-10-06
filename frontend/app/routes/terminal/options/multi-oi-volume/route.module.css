@@ -191,7 +191,12 @@
    stops the dropdown stretching to match. */
 .two-up {
   display: grid;
-  grid-template-columns: 1fr 4.5rem;
+  /* 5.75rem, not 4.5: the trigger spends ~20px on padding and ~28px on the
+     caret and its gap, so 4.5rem left ~24px for the label and "15m" rendered
+     as "1...". `minmax(0, 1fr)` on the expiry side so its long text ("6 Oct
+     2026 (0d)") truncates within its own column instead of stealing width from
+     this one — a bare `1fr` is `minmax(auto, 1fr)` and grows past its share. */
+  grid-template-columns: minmax(0, 1fr) 5.75rem;
   gap: var(--cn-space-2);
   align-items: end;
 }
@@ -255,9 +260,11 @@
 }
 
 /* The count dropdown holds one or two digits, so it should not take a share of
-   the row the chips could use. */
+   the row the chips could use — but it must still fit them. At 3.5rem the
+   padding and caret consumed all but ~8px and the trigger rendered as a bare
+   ellipsis, with a menu of blank rows behind it. */
 .source-head .select-native {
-  width: 3.5rem;
+  width: 4.75rem;
   flex: none;
 }
 

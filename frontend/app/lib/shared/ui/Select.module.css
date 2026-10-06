@@ -74,7 +74,23 @@
   top: calc(100% + 4px);
   left: 0;
   z-index: 20;
+  /* Sized to its own widest option, never to the trigger.
+
+     `min-width: 100%` alone is not enough and was the bug: an absolutely
+     positioned box with no `width` is shrink-to-fit, measured against its
+     containing block — which is the trigger. That would still be harmless if
+     the options reported their true width, but `.option` puts the label in a
+     `minmax(0, 1fr)` track, whose min-content contribution is *zero*. So the
+     list collapsed to whatever narrow trigger it hung from and clipped every
+     label: a 4.5rem "Time" control showed "1", "5", "1"… for 1m/5m/15m, and a
+     3.5rem count control rendered a menu of blank rows with only the tick
+     visible. `max-content` makes the labels size the popup, which is the one
+     thing a dropdown must always do. */
+  width: max-content;
   min-width: 100%;
+  /* A runaway option cannot push the menu off screen; `.listRight` handles the
+     side it opens towards. */
+  max-width: min(20rem, 90vw);
   max-height: 18rem;
   overflow-y: auto;
   margin: 0;
