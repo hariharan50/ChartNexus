@@ -41,8 +41,23 @@ describe('tool lookup', () => {
   it('resolves a known slug and refuses an unknown one', () => {
     expect(toolBySlug('option-greeks')?.name).toBe('Option Greeks');
     expect(toolBySlug('straddle-chart')?.name).toBe('Straddle Chart');
-    expect(toolBySlug('b3')?.name).toBe('B3');
+    expect(toolBySlug('straddle-pnl')?.name).toBe('Straddle PnL Simulator');
+    expect(toolBySlug('b4')?.name).toBe('B4');
     expect(toolBySlug('nope')).toBeUndefined();
+  });
+
+  it('never lists one slug twice', () => {
+    // The reserved slots used to start at a hardcoded `b3`, which only held
+    // while exactly two tools were built. A third turned `b3` into both a real
+    // tool and a placeholder, and the placeholder shadowed it in the grid.
+    const slugs = TOOLS.map((tool) => tool.slug);
+    expect(new Set(slugs).size).toBe(slugs.length);
+  });
+
+  it('numbers the reserved slots on from the built ones', () => {
+    const reserved = TOOLS.filter((tool) => /^b\d+$/.test(tool.slug));
+    const built = TOOLS.length - reserved.length;
+    expect(reserved[0]?.slug).toBe(`b${built + 1}`);
   });
 });
 
@@ -52,12 +67,22 @@ describe('retired slugs', () => {
     // not on a 404.
     expect(retiredSlugTarget('b1')).toBe('option-greeks');
     expect(retiredSlugTarget('b2')).toBe('straddle-chart');
-    expect(retiredSlugTarget('b3')).toBeUndefined();
+    expect(retiredSlugTarget('b3')).toBe('straddle-pnl');
+    expect(retiredSlugTarget('b4')).toBeUndefined();
     expect(retiredSlugTarget(undefined)).toBeUndefined();
   });
 
   it('keeps every retired slug pointing at a tool that exists', () => {
     expect(toolBySlug('option-greeks')).toBeDefined();
     expect(toolBySlug('straddle-chart')).toBeDefined();
+    expect(toolBySlug('straddle-pnl')).toBeDefined();
+  });
+
+  it('never retires a slug that is still a live box', () => {
+    // A retired slug redirects. One that is also in the grid would send a
+    // reader who clicked the box straight back out of it.
+    for (const slug of ['b1', 'b2', 'b3']) {
+      expect(toolBySlug(slug)).toBeUndefined();
+    }
   });
 });

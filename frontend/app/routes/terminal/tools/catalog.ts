@@ -40,20 +40,42 @@ const BUILT: readonly ToolEntry[] = [
     description:
       'Rolling at-the-money straddle with spot and the synthetic futures forward overlaid',
     tone: 'emerald'
+  },
+  {
+    slug: 'straddle-pnl',
+    code: 'SP',
+    name: 'Straddle PnL Simulator',
+    description:
+      'Replays a short at-the-money straddle that re-strikes as the market moves, with its running P&L and trade log',
+    tone: 'sky'
   }
 ];
 
-/** The slots still to be filled, numbered from where the built ones stop. */
-const RESERVED: readonly ToolEntry[] = Array.from({ length: 10 }, (_, index) => {
-  const n = index + 3;
-  return {
-    slug: `b${n}`,
-    code: `B${n}`,
-    name: `B${n}`,
-    description: 'Advanced graphical tool — not built yet. This slot is reserved for it.',
-    tone: TONES[(BUILT.length + index) % TONES.length] as ToolTone
-  };
-});
+/** How many boxes the grid holds in total, built and reserved together. */
+const SLOTS = 12;
+
+/**
+ * The slots still to be filled, numbered from where the built ones stop.
+ *
+ * Both the count and the first number are derived from `BUILT` rather than
+ * written down: they were hardcoded to "ten slots starting at 3", which was
+ * only correct while exactly two tools existed. Building a third regenerated a
+ * `b3` that now belongs to a real page, so the grid carried two boxes claiming
+ * the same slug and the reserved one shadowed the tool.
+ */
+const RESERVED: readonly ToolEntry[] = Array.from(
+  { length: Math.max(0, SLOTS - BUILT.length) },
+  (_, index) => {
+    const n = BUILT.length + index + 1;
+    return {
+      slug: `b${n}`,
+      code: `B${n}`,
+      name: `B${n}`,
+      description: 'Advanced graphical tool — not built yet. This slot is reserved for it.',
+      tone: TONES[(BUILT.length + index) % TONES.length] as ToolTone
+    };
+  }
+);
 
 /** Order is the grid order. */
 export const TOOLS: readonly ToolEntry[] = [...BUILT, ...RESERVED];
@@ -73,7 +95,8 @@ export function toolBySlug(slug: string | undefined): ToolEntry | undefined {
  */
 const RETIRED: Readonly<Record<string, string>> = {
   b1: 'option-greeks',
-  b2: 'straddle-chart'
+  b2: 'straddle-chart',
+  b3: 'straddle-pnl'
 };
 
 /** Where a retired slug should land, or `undefined` if it was never a tool. */

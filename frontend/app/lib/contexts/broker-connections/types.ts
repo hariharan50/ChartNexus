@@ -27,8 +27,15 @@ export interface BrokerAuthorization {
   expires_in_seconds: number;
 }
 
-/** Where a payload actually came from. Never assume `live`. */
-export type DataSourceName = 'live' | 'cached' | 'mock';
+/**
+ * Where a payload actually came from. Never assume `live`.
+ *
+ * `unavailable` is not a fourth kind of data — it is the absence of any. A
+ * caller that refused simulated values (`live_only`) and found nothing real
+ * gets an empty payload stamped this way, so "we have no bars" is a state the
+ * UI can render rather than something it has to infer from a zero-length array.
+ */
+export type DataSourceName = 'live' | 'cached' | 'mock' | 'unavailable';
 
 export interface Provenance {
   source: DataSourceName;

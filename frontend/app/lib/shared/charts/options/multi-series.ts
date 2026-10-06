@@ -53,6 +53,18 @@ export interface SeriesLine {
    */
   fillOrigin?: number | undefined;
   /**
+   * Colour the line and its fill by sign, switching at zero.
+   *
+   * For a series whose sign is the headline — a running P&L, where "is it up or
+   * down right now" is read off the colour before any number is. One colour for
+   * the whole line forces that reading back onto the axis labels, and a curve
+   * that crosses zero four times becomes four separate things to check.
+   *
+   * Pair it with `fillOrigin: 0` so the band closes to the same line the colour
+   * turns on.
+   */
+  signed?: { positive: string; negative: string } | undefined;
+  /**
    * Draw as a step rather than a sloped line, holding each value until the
    * next point.
    *
@@ -104,6 +116,15 @@ export interface MultiSeriesInput {
    * every chart that does not say otherwise.
    */
   priceAxisName?: string | undefined;
+  /**
+   * Hide the left axis entirely.
+   *
+   * For a chart whose price-axis series are all switched off: left showing, the
+   * axis auto-scales to nothing and prints a ladder of meaningless numbers
+   * (0.50 down to -0.10) beside a plot with nothing on it. An axis that
+   * measures no drawn series is furniture at best and misread at worst.
+   */
+  hidePriceAxis?: boolean | undefined;
   /**
    * Plot the value lines on the *price* axis instead of their own.
    *
@@ -377,6 +398,7 @@ export function buildMultiSeriesOption(
         type: 'value',
         scale: true,
         position: 'left',
+        show: !input.hidePriceAxis,
         // Named at the top rather than rotated up the side: a rotated title
         // costs horizontal room the plot needs more, and this chart is wide.
         name: input.priceAxisName ?? 'Future',
@@ -417,6 +439,67 @@ export function buildMultiSeriesOption(
       ...lines.map((line) => contractSeries(xs, line, formatValue, valueAxisIndex)),
       ...(referenceLine ? [markerSeries(referenceLine, theme, valueAxisIndex)] : [])
     ]
+  };
+}
+
+/**
+ * A vertical two-colour gradient that switches exactly where the series crosses
+ * zero, for a line that colours by sign.
+ *
+ * Deliberately *not* ECharts' `visualMap`, which is the obvious tool and does
+ * not work here: on a two-axis cartesian its line renderer takes a gradient
+ * path that cannot resolve the mapped dimension and throws
+ * "Cannot read properties of undefined (reading 'coord')" — piecewise or
+ * continuous alike. A gradient needs no extra component registered, cannot be
+ * silently tree-shaken away, and places the switch at the same pixel either way.
+ *
+ * Offsets are fractions of the shape's own bounding box, top to bottom, so the
+ * caller passes the extent that box actually spans: the line's own min/max, and
+ * for a band closing to zero, that range widened to include zero. An all-
+ * positive or all-negative series clamps to a single colour, which is correct.
+ */
+function signedGradient(signed: { positive: string; negative: string }, lo: number, hi: number) {
+  const span = hi - lo;
+  const zero = span === 0 ? 0.5 : clamp01((hi - 0) / span);
+  return {
+    type: 'linear' as const,
+    x: 0,
+    y: 0,
+    x2: 0,
+    y2: 1,
+    colorStops: [
+      { offset: 0, color: signed.positive },
+      { offset: zero, color: signed.positive },
+      // A hair below the same offset: two stops at an identical offset is a
+      // hard switch in every renderer that honours it, and a nudge guarantees
+      // strictly increasing offsets for the ones that do not.
+      { offset: Math.min(1, zero + 1e-6), color: signed.negative },
+      { offset: 1, color: signed.negative }
+    ]
+  };
+}
+
+function clamp01(value: number): number {
+  return Math.min(1, Math.max(0, value));
+}
+
+/** The colour a signed series ends on — the sign of its last real value. */
+function endColor(line: SeriesLine): string {
+  const signed = line.signed;
+  if (!signed) return line.color;
+  const last = [...line.values].reverse().find((value) => value != null) ?? 0;
+  return last >= 0 ? signed.positive : signed.negative;
+}
+
+/** The drawn extent of a signed series, and of the band it closes to zero. */
+function signedExtent(values: (number | null)[]) {
+  const real = values.filter((value): value is number => value != null);
+  const min = real.length > 0 ? Math.min(...real) : 0;
+  const max = real.length > 0 ? Math.max(...real) : 0;
+  return {
+    line: { lo: min, hi: max },
+    // The band reaches the zero line even when no point does.
+    area: { lo: Math.min(0, min), hi: Math.max(0, max) }
   };
 }
 
@@ -530,6 +613,16 @@ function contractSeries(
   formatValue: (value: number) => string,
   yAxisIndex: number
 ) {
+  const extent = line.signed ? signedExtent(line.values) : null;
+  const lineColor =
+    line.signed && extent
+      ? signedGradient(line.signed, extent.line.lo, extent.line.hi)
+      : line.color;
+  const areaColor =
+    line.signed && extent
+      ? signedGradient(line.signed, extent.area.lo, extent.area.hi)
+      : withAlpha(line.color, 0.18);
+
   return {
     id: line.id,
     name: line.label,
@@ -555,10 +648,15 @@ function contractSeries(
     ...(line.step ? { step: 'end' as const } : {}),
     lineStyle: {
       width: line.dashed ? 1.25 : 2,
-      color: line.color,
+      color: lineColor,
       ...(line.dashed ? { type: 'dotted' as const } : {})
     },
-    itemStyle: { color: line.color },
+    // A flat colour, because a dot or a pill filled with a gradient is the
+    // wrong colour wherever it lands. For a signed series that flat colour
+    // follows the *last* value's sign — the pill holds the closing number, and
+    // a green pill on a loss of eleven thousand says the opposite of the figure
+    // printed inside it.
+    itemStyle: { color: line.signed ? endColor(line) : line.color },
     // A faint fill under the line when the caller asks for one. Left off the
     // object entirely otherwise, so a stack of lines is never quietly banded.
     // `origin` closes the band to a fixed y (e.g. 0) rather than the axis floor,
@@ -566,7 +664,10 @@ function contractSeries(
     ...(line.fill
       ? {
           areaStyle: {
-            color: withAlpha(line.color, 0.18),
+            color: areaColor,
+            // The signed band carries its colour in a gradient, which cannot
+            // also carry alpha per stop here — so the faintness is set once.
+            ...(line.signed ? { opacity: 0.18 } : {}),
             ...(line.fillOrigin !== undefined ? { origin: line.fillOrigin } : {})
           }
         }
@@ -581,7 +682,9 @@ function contractSeries(
     endLabel: {
       show: true,
       color: '#fff',
-      backgroundColor: line.color,
+      // Follows the closing value's sign on a signed series, for the same
+      // reason the dot does: the tag holds that number.
+      backgroundColor: line.signed ? endColor(line) : line.color,
       padding: [3, 6],
       borderRadius: 3,
       fontSize: 11,

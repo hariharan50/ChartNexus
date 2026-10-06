@@ -483,6 +483,37 @@ def _session(instrument: InstrumentSymbol, session_date: date) -> tuple[SessionF
     return tuple(frames)
 
 
+#: What one at-the-money leg is worth at the open, as a share of spot.
+#:
+#: A share, not a fixed number of points. The old model charged a flat 140
+#: points for every instrument in the catalog — defensible on an index near
+#: 24,000, absurd on ASHOKLEY at ₹167.50, where it priced an at-the-money call
+#: at 84% of the stock. The universe spans ₹167 to 78,839; only a percentage
+#: survives that range.
+#:
+#: 0.4% a leg puts the NIFTY straddle at ~197, which is what the real
+#: near-expiry contract costs — the reference terminal quoted 193.70 on the
+#: session this was calibrated against.
+_ATM_EXTRINSIC_PCT = 0.004
+
+#: How much of that has bled away by the close.
+#:
+#: **Calibrated, not chosen: theta collected must equal gamma paid.** A short
+#: at-the-money straddle is the cleanest test of whether a synthetic book is
+#: internally fair, because it harvests exactly this decay and pays for it in
+#: curvature. Re-striking at every strike the market crosses, it should roughly
+#: break even over a session and land either side of zero on different days.
+#:
+#: Swept over six synthetic NIFTY sessions, this lands at a mean of -₹8 a lot
+#: inside a ±₹3,300 spread, winning four sessions of six — premium selling's
+#: real shape, where the wins are frequent and the losses are bigger. At the old
+#: 0.6, against a flat 140-point extrinsic, it was +₹8,421: a book that paid five
+#: figures a day for selling premium nothing could ever take back, which is what
+#: made the Straddle PnL Simulator draw a one-way ramp into a five-figure loss.
+#: Raise this and the seller prints money; drop it and the buyer does.
+_DECAY_BY_CLOSE = 0.35
+
+
 def _leg(
     *,
     strike: float,
@@ -494,9 +525,33 @@ def _leg(
     rng: random.Random,
 ) -> Leg:
     intrinsic = max(spot - strike, 0.0) if side == CALL else max(strike - spot, 0.0)
-    # Extrinsic bleeds away toward the close and with distance from spot.
     moneyness = abs(strike - spot) / max(spot, 1.0)
-    extrinsic = 140.0 * math.exp(-40.0 * moneyness) * (1.0 - 0.6 * progress)
+
+    # Extrinsic bleeds away toward the close and with distance from spot.
+    #
+    # **The width is twice the at-the-money extrinsic, and that is not a tuning
+    # choice — it is what makes the at-the-money straddle delta-neutral.**
+    #
+    # A straddle held at K is worth ``|S-K| + 2·extrinsic(|S-K|)``. With an
+    # extrinsic of ``A·exp(-d/W)`` its slope in d is ``1 - (2A/W)·exp(-d/W)``,
+    # which is zero at the money exactly when ``W = 2A``. Any other width leaves
+    # a first-order term: the previous model decayed over ~575 points against an
+    # A of 140, so the at-the-money straddle *rose 0.51 points for every point
+    # spot drifted* instead of sitting at a minimum.
+    #
+    # That is not a cosmetic difference. A short straddle is delta-neutral by
+    # construction — it loses to realised volatility through gamma, not to
+    # direction — and under the old curve it bled ~₹33 a point deterministically
+    # at one NIFTY lot. The Straddle PnL Simulator, which re-strikes all day,
+    # compounded that into a five-figure loss on a flat session and drew a
+    # relentless downward ramp where the real tool oscillates around zero.
+    #
+    # Tying W to A also keeps the property as the extrinsic decays: the flat
+    # zone narrows into the close, which is gamma rising into expiry — the right
+    # behaviour, arrived at for free rather than fitted.
+    atm_extrinsic = spot * _ATM_EXTRINSIC_PCT * (1.0 - _DECAY_BY_CLOSE * progress)
+    width = max(2.0 * atm_extrinsic, 1e-6)
+    extrinsic = atm_extrinsic * math.exp(-abs(strike - spot) / width)
 
     change = oi_now - oi_at_open
     return Leg(

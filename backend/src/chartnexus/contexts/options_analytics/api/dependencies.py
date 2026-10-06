@@ -29,6 +29,9 @@ from chartnexus.contexts.options_analytics.application.smart_oi_service import G
 from chartnexus.contexts.options_analytics.application.straddle_chart_service import (
     GetStraddleChart,
 )
+from chartnexus.contexts.options_analytics.application.straddle_pnl_service import (
+    GetStraddlePnl,
+)
 from chartnexus.contexts.options_analytics.application.straddle_series_service import (
     GetStraddleSeries,
 )
@@ -66,6 +69,7 @@ class OptionsAnalyticsServices:
     vega: GetVega
     straddle_series: GetStraddleSeries
     straddle_chart: GetStraddleChart
+    straddle_pnl: GetStraddlePnl
     strike_series: GetStrikeSeries
     smart_oi: GetSmartOi
 
@@ -116,6 +120,7 @@ def build_options_analytics_services_from(
             strike_span=container.settings.market.snapshot_max_series_strikes,
         ),
         straddle_chart=GetStraddleChart(provider=provider, snapshots=snapshots),
+        straddle_pnl=GetStraddlePnl(provider=provider, snapshots=snapshots),
         straddle_series=GetStraddleSeries(
             provider=provider,
             snapshots=snapshots,

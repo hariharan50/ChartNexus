@@ -70,6 +70,18 @@ class HistoryQuery:
     instrument: InstrumentSymbol
     interval: CandleInterval
     days: int
+    #: Refuse the synthetic fallback and answer empty instead.
+    #:
+    #: For a price chart, where simulated bars are indistinguishable from real
+    #: ones once drawn — same axes, same candles, same crosshair — so a reader
+    #: has no way to tell a mock session from a traded one except by checking a
+    #: badge they have no reason to look at. Everything downstream of that chart
+    #: (a drawn trendline, a measured range, a level someone writes down) is
+    #: then built on prices that never traded.
+    #:
+    #: Cached *real* bars still answer this: they were a broker's response once,
+    #: and stale-but-real is a different thing from fabricated.
+    live_only: bool = False
 
 
 #: Entries kept per last-good store. The universe is 219 instruments across a
@@ -128,6 +140,22 @@ class _FallbackMixin:
     async def _providers(self, tenant_id: TenantId) -> tuple[MarketDataProvider, bool]:
         provider = await self._resolver.resolve(tenant_id)
         return provider, provider.name != MOCK_PROVIDER_NAME
+
+
+def _unavailable(query: HistoryQuery, now: datetime) -> CandleSeries:
+    """An empty series for a live-only caller with nothing real to serve.
+
+    Empty rather than an error: "the broker has no bars for you right now" is a
+    state a chart should render, not a failure it should raise. The caller draws
+    its own empty frame and says why; a 502 would send it to an error boundary
+    and lose the instrument and range the reader had chosen.
+    """
+    return CandleSeries(
+        instrument=query.instrument,
+        interval=query.interval,
+        candles=(),
+        provenance=Provenance(source=DataSource.UNAVAILABLE, fetched_at=now),
+    )
 
 
 def _degrade(provenance: Provenance, now: datetime) -> Provenance:
@@ -476,6 +504,12 @@ class GetHistory(_FallbackMixin):
         days = max(1, min(query.days, query.interval.max_days))
         key = f"{query.tenant_id}:{query.instrument.value}:{query.interval.value}:{days}"
 
+        # Not merely "do not return the mock's answer" — do not ask it. The
+        # tenant has no broker, so there is nothing real to degrade from, and
+        # calling the generator only to discard its bars wastes the work.
+        if query.live_only and not live:
+            return _unavailable(query, self._clock.now())
+
         try:
             series = await provider.get_history(query.instrument, query.interval, days)
         except UpstreamError:
@@ -502,6 +536,10 @@ class GetHistory(_FallbackMixin):
             )
             if cached is not None:
                 return cached
+        # Both cache tiers held real bars, so they answer a live-only caller.
+        # The synthetic fallback below does not.
+        if query.live_only:
+            return _unavailable(query, self._clock.now())
         return await self._fallback.get_history(query.instrument, query.interval, days)
 
     async def _write_through(self, series: CandleSeries) -> None:

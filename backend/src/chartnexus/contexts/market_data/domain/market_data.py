@@ -30,9 +30,18 @@ class DataSource(StrEnum):
     MOCK = "mock"
     """Synthetic. No broker was involved. Never safe for a trading decision."""
 
+    UNAVAILABLE = "unavailable"
+    """No real data could be obtained, and the caller refused a synthetic one.
+
+    Distinct from ``MOCK`` because nothing was fabricated: the payload is empty.
+    A caller that asked for live-only data gets this rather than bars it would
+    have had to check the provenance of before trusting — a chart drawn from
+    simulated prices looks exactly like one drawn from real ones.
+    """
+
     @property
     def is_real(self) -> bool:
-        return self is not DataSource.MOCK
+        return self not in (DataSource.MOCK, DataSource.UNAVAILABLE)
 
 
 class OptionType(StrEnum):

@@ -10,7 +10,14 @@ import {
 import { preservesBars, transformCandles } from '$shared/charts/tv/series-transforms';
 import { cx } from '$shared/ui/cx';
 import { OI_INSTRUMENTS, REFETCH_MS } from '../../options/open-interest/oi-data';
-import { getHistory, INTERVALS, toCandles, toVolume, type HistoryView } from '../analyse-data';
+import {
+  getHistory,
+  hasNoRealData,
+  INTERVALS,
+  toCandles,
+  toVolume,
+  type HistoryView
+} from '../analyse-data';
 import { buildOverlays } from '../indicators';
 import { REPLAY_SPEEDS, type CellConfig, type ReplaySpeed } from '../workspace';
 import ChartLegend from './ChartLegend';
@@ -235,7 +242,23 @@ export default function ChartCell({
             </button>
           </div>
         ) : allCandles.length === 0 ? (
-          <p className={s.empty}>{query.isPending ? 'Loading candles…' : 'No candles yet.'}</p>
+          <div className={s.empty}>
+            {query.isPending ? (
+              <p>Loading candles…</p>
+            ) : hasNoRealData(view) ? (
+              <>
+                <p>No live data for {instrument.short} over this range.</p>
+                {/* Named rather than implied: an empty chart reads as a bug,
+                    and the reason this one is empty is a deliberate refusal. */}
+                <p className={s.emptyHint}>
+                  This chart draws only real broker data — never simulated bars. Connect a broker in
+                  Settings, or pick a range the broker has.
+                </p>
+              </>
+            ) : (
+              <p>No candles yet.</p>
+            )}
+          </div>
         ) : (
           <>
             <ChartLegend

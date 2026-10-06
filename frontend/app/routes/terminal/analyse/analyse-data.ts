@@ -8,6 +8,7 @@
  * vocabularies are allowed to meet.
  */
 
+import type { DataSourceName } from '$contexts/broker-connections/types';
 import { apiFetch } from '$shared/api/client';
 import type { Candle, VolumeBar } from '$shared/charts/tv/LwChart';
 
@@ -22,7 +23,7 @@ export interface WireCandle {
 }
 
 export interface WireProvenance {
-  source: 'live' | 'cached' | 'mock';
+  source: DataSourceName;
   fetched_at: string;
   age_seconds: number;
   is_stale: boolean;
@@ -37,18 +38,40 @@ export interface HistoryView {
 
 export type Interval = '1m' | '5m' | '15m' | '1h' | '1d';
 
-/** Bar sizes, with how much history each one is worth showing at. */
+/**
+ * Bar sizes, with how much history each one opens on.
+ *
+ * Every intraday size reaches back **30 sessions**, so a reader scrolling left
+ * finds the same month of context whichever one they are on — switching 5m to
+ * 15m re-scales the bars rather than changing the period under them.
+ *
+ * Two deliberate exceptions. **1m stays at one session**: its ceiling is 15
+ * days (`CandleInterval.max_days` on the backend, which is where the broker's
+ * per-resolution limit is enforced), and even that is ~5,600 candles — a wall
+ * of ticks nobody reads. **1D stays at 180**, because it already far exceeds a
+ * month and cutting it to 30 bars would be a pure loss.
+ */
 export const INTERVALS: { label: string; value: Interval; days: number }[] = [
-  // Deliberately not the interval's own maximum: a chart that opens on 15 days
-  // of one-minute bars is 6,000 candles wide and unreadable. These are what
-  // each bar size is comfortable at, and the backend still clamps the rest.
   { label: '1m', value: '1m', days: 1 },
-  { label: '5m', value: '5m', days: 3 },
-  { label: '15m', value: '15m', days: 10 },
+  { label: '5m', value: '5m', days: 30 },
+  { label: '15m', value: '15m', days: 30 },
   { label: '1H', value: '1h', days: 30 },
   { label: '1D', value: '1d', days: 180 }
 ];
 
+/**
+ * Price bars for the chart — real ones or none.
+ *
+ * `live_only` is not optional here and is the point of this function. Every
+ * other surface in the app labels simulated data and draws it anyway, which is
+ * right for a dashboard tile read at a glance. A price chart is different: a
+ * synthetic candle is indistinguishable from a traded one once drawn, and the
+ * things people do with this page — measure a range, mark a level, draw a
+ * trendline and keep it — all outlive the badge that would have warned them.
+ *
+ * With no real data the backend answers an empty series stamped
+ * `unavailable`, which {@link hasNoRealData} detects.
+ */
 export function getHistory(
   instrument: string,
   interval: Interval,
@@ -57,9 +80,14 @@ export function getHistory(
 ): Promise<HistoryView> {
   return apiFetch<HistoryView>({
     url: '/market/history',
-    params: { instrument, interval, days },
+    params: { instrument, interval, days, live_only: true },
     fetcher
   });
+}
+
+/** The backend had nothing real for this instrument and range. */
+export function hasNoRealData(view: HistoryView | undefined): boolean {
+  return view !== undefined && view.provenance.source === 'unavailable';
 }
 
 /**

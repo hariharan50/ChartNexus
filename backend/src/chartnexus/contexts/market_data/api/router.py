@@ -134,9 +134,22 @@ async def option_chain(
 async def history(
     principal: CurrentPrincipal,
     services: Services,
+    *,
     instrument: InstrumentParam = "NIFTY",
     interval: Annotated[CandleInterval, Query(description="Bar size")] = CandleInterval.M5,
     days: Annotated[int, Query(ge=1, le=365, description="Trading days to cover")] = 5,
+    live_only: Annotated[
+        bool,
+        Query(
+            description=(
+                "Refuse simulated bars. Returns an empty series with "
+                "`provenance.source = unavailable` when no real data exists, "
+                "rather than falling back to the mock. Cached real bars still "
+                "answer. For price charts, where a synthetic candle is "
+                "indistinguishable from a traded one once drawn."
+            )
+        ),
+    ] = False,
 ) -> HistoryResponse:
     series = await services.history(
         HistoryQuery(
@@ -144,6 +157,7 @@ async def history(
             instrument=InstrumentSymbol.parse(instrument),
             interval=interval,
             days=days,
+            live_only=live_only,
         )
     )
     return HistoryResponse.of(series)

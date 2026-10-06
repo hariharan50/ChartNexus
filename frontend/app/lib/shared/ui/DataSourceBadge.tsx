@@ -25,7 +25,12 @@ interface Props {
   plain?: boolean | undefined;
 }
 
-const LABELS: Record<string, string> = { live: 'Live', cached: 'Cached', mock: 'Simulated' };
+const LABELS: Record<string, string> = {
+  live: 'Live',
+  cached: 'Cached',
+  mock: 'Simulated',
+  unavailable: 'No data'
+};
 
 export default function DataSourceBadge({
   source,
@@ -35,7 +40,13 @@ export default function DataSourceBadge({
 }: Props) {
   const label = LABELS[source] ?? source;
   const detail =
-    source === 'live' ? '' : source === 'cached' ? formatAge(ageSeconds) : 'not real data';
+    source === 'live'
+      ? ''
+      : source === 'cached'
+        ? formatAge(ageSeconds)
+        : source === 'unavailable'
+          ? 'nothing real to show'
+          : 'not real data';
 
   return (
     <span

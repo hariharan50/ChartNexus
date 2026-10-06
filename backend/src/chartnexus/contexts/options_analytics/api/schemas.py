@@ -392,6 +392,92 @@ class StraddleChartResponse(_Schema):
         return cls.model_validate(payload)
 
 
+class StraddlePnlPointResponse(_Schema):
+    """One plotted capture of the replayed position."""
+
+    t: str
+    spot: float
+    #: Where the money is at this capture, off spot.
+    atm_strike: float
+    #: The strike actually held — it only moves when an adjustment fires.
+    entry_strike: float
+    ce_price: float
+    pe_price: float
+    straddle: float
+    #: Put-call parity forward on the held strike.
+    synthetic_future: float
+    #: Realised plus mark-to-market, gross.
+    pnl: float
+    #: Running count across the whole window; it does not reset each day.
+    adjustments: int
+
+
+class StraddlePnlTradeResponse(_Schema):
+    """One line of the trade log."""
+
+    #: `ENTRY`, `ADJUSTMENT` or `EXIT`.
+    type: str
+    t: str
+    strike: float
+    #: The strike left behind — `ADJUSTMENT` only.
+    old_strike: float | None
+    #: The held strike's prices *after* this trade.
+    ce_price: float
+    pe_price: float
+    straddle: float
+    #: What the closed strike was worth — `ADJUSTMENT` only.
+    exit_ce: float | None
+    exit_pe: float | None
+    exit_straddle: float | None
+    spot: float
+    #: `None` on an `ENTRY`: an opening leg has made nothing yet, and the log
+    #: renders that as a dash rather than a real-looking 0.00.
+    leg_pnl: float | None
+    cumulative_pnl: float
+
+
+class StraddlePnlSummaryResponse(_Schema):
+    """The headline figures for the whole run."""
+
+    total_pnl: float
+    max_pnl: float
+    min_pnl: float
+    total_adjustments: int
+
+
+class StraddlePnlResponse(_Schema):
+    """The adjusted short straddle replayed, behind the Straddle PnL Simulator."""
+
+    instrument_id: str
+    symbol: str
+    expiry_date: str | None
+    lot_size: int
+    lots: int
+    quantity: int
+    #: How far the at-the-money must travel from the held strike to re-strike.
+    adjustment_points: float
+    strike_step: float
+    requested_sessions: int
+    #: Sessions actually covered. The archive accrues forward and is pruned, so
+    #: a request for three days may honestly answer with one.
+    covered_sessions: int
+    open_ts: str
+    now_ts: str
+    spot: float | None
+    entry_strike: float | None
+    #: `intraday` or `empty`. There is no live tier: a simulation of a single
+    #: capture is a position opened and closed at the same price, which draws a
+    #: flat zero that reads as breaking even rather than as having no data.
+    data_quality: str
+    summary: StraddlePnlSummaryResponse
+    series: list[StraddlePnlPointResponse]
+    trades: list[StraddlePnlTradeResponse]
+
+    @classmethod
+    def of(cls, payload: dict[str, Any]) -> StraddlePnlResponse:
+        return cls.model_validate(payload)
+
+
 class GreekLegResponse(_Schema):
     """One leg's five series, aligned index-for-index with the payload's `t`.
 

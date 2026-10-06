@@ -208,8 +208,19 @@ class _Clock:
         return self._now
 
 
-def _query(interval: CandleInterval = CandleInterval.M5, days: int = 5) -> HistoryQuery:
-    return HistoryQuery(tenant_id=TENANT, instrument=NIFTY, interval=interval, days=days)
+def _query(
+    interval: CandleInterval = CandleInterval.M5,
+    days: int = 5,
+    *,
+    live_only: bool = False,
+) -> HistoryQuery:
+    return HistoryQuery(
+        tenant_id=TENANT,
+        instrument=NIFTY,
+        interval=interval,
+        days=days,
+        live_only=live_only,
+    )
 
 
 class TestGetHistory:
@@ -258,6 +269,87 @@ class TestGetHistory:
 
         assert series.provenance.source is DataSource.MOCK
         assert fallback.calls == 1
+
+    @pytest.mark.asyncio
+    async def test_live_only_answers_empty_rather_than_simulated(self) -> None:
+        """A price chart cannot show a fabricated candle.
+
+        Drawn, a mock bar is indistinguishable from a traded one — same axes,
+        same wick — and a level someone marks off it outlives the badge that
+        would have warned them.
+        """
+        fallback = _Provider("mock")
+        get = GetHistory(
+            resolver=_Resolver(_Provider("mock")), fallback=fallback, clock=_Clock(MIDDAY)
+        )
+
+        series = await get(_query(live_only=True))
+
+        assert series.candles == ()
+        assert series.provenance.source is DataSource.UNAVAILABLE
+
+    @pytest.mark.asyncio
+    async def test_live_only_does_not_even_ask_the_generator(self) -> None:
+        """Nothing real to degrade from, so the work is skipped, not discarded."""
+        mock = _Provider("mock")
+        get = GetHistory(resolver=_Resolver(mock), fallback=mock, clock=_Clock(MIDDAY))
+
+        await get(_query(live_only=True))
+
+        assert mock.calls == 0
+
+    @pytest.mark.asyncio
+    async def test_live_only_refuses_the_mock_after_an_outage_too(self) -> None:
+        """The degrade path has its own fallback, and it must be refused as well."""
+        fallback = _Provider("mock")
+        get = GetHistory(
+            resolver=_Resolver(_Provider("fyers", fails=True)),
+            fallback=fallback,
+            clock=_Clock(MIDDAY),
+        )
+
+        series = await get(_query(live_only=True))
+
+        assert series.provenance.source is DataSource.UNAVAILABLE
+        assert fallback.calls == 0
+
+    @pytest.mark.asyncio
+    async def test_live_only_still_accepts_real_but_stale_bars(self) -> None:
+        """Cached is real. "Live only" rules out fabricated, not old."""
+        live = _Provider("fyers", close="24600")
+        clock = _Clock(MIDDAY)
+        get = GetHistory(resolver=_Resolver(live), fallback=_Provider("mock"), clock=clock)
+
+        await get(_query(live_only=True))
+        live._fails = True
+        clock._now = MIDDAY + timedelta(seconds=90)
+        series = await get(_query(live_only=True))
+
+        assert series.provenance.source is DataSource.CACHED
+        assert series.candles[0].close == Decimal("24600")
+
+    @pytest.mark.asyncio
+    async def test_live_only_leaves_a_real_answer_untouched(self) -> None:
+        live = _Provider("fyers", close="24600")
+        get = GetHistory(resolver=_Resolver(live), fallback=_Provider("mock"), clock=_Clock(MIDDAY))
+
+        series = await get(_query(live_only=True))
+
+        assert series.provenance.source is DataSource.LIVE
+        assert series.candles[0].close == Decimal("24600")
+
+    @pytest.mark.asyncio
+    async def test_the_default_is_unchanged_for_every_other_caller(self) -> None:
+        """Opt-in: the dashboards that label simulated data still receive it."""
+        fallback = _Provider("mock")
+        get = GetHistory(
+            resolver=_Resolver(_Provider("mock")), fallback=fallback, clock=_Clock(MIDDAY)
+        )
+
+        series = await get(_query())
+
+        assert series.provenance.source is DataSource.MOCK
+        assert series.candles
 
     @pytest.mark.asyncio
     async def test_the_range_is_clamped_to_what_the_interval_supports(self) -> None:

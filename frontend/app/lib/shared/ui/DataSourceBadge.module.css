@@ -40,6 +40,15 @@
   background: color-mix(in srgb, var(--cn-danger) 6%, transparent);
 }
 
+/* Muted, not alarming. An absence of data is not a wrong number — the red of
+   `.mock` warns that what you are looking at is fabricated, and there is
+   nothing here to look at. */
+.unavailable {
+  color: var(--cn-text-muted);
+  border-color: var(--cn-border-strong);
+  background: var(--cn-surface-raised);
+}
+
 /* Lighter weight, not lower opacity. Dimming put this below AA on the mock
    badge, and this is the text that says how stale a cached number is. */
 .detail {

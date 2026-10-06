@@ -25,6 +25,7 @@ from chartnexus.contexts.options_analytics.api.schemas import (
     SkewResponse,
     SmartOiResponse,
     StraddleChartResponse,
+    StraddlePnlResponse,
     StraddleSeriesResponse,
     StrikeSeriesResponse,
     TermStructureResponse,
@@ -44,6 +45,10 @@ from chartnexus.contexts.options_analytics.application.smart_oi_service import (
 from chartnexus.contexts.options_analytics.application.straddle_chart_service import (
     DEFAULT_SESSIONS,
     MAX_SESSIONS,
+)
+from chartnexus.contexts.options_analytics.application.straddle_pnl_service import (
+    DEFAULT_SESSIONS as PNL_DEFAULT_SESSIONS,
+    MAX_SESSIONS as PNL_MAX_SESSIONS,
 )
 from chartnexus.infrastructure.transport.http.dependencies import (
     CurrentPrincipal,
@@ -457,6 +462,80 @@ async def straddle_chart(
         trade_date=_trade_date(date_),
     )
     response = StraddleChartResponse.of(payload)
+    await redis.client.set(cache_key, response.model_dump_json(), ex=_CACHE_TTL_SECONDS)
+    return response
+
+
+@router.get(
+    "/straddle-pnl/{instrument_id}",
+    response_model=StraddlePnlResponse,
+    summary="An adjusted short straddle replayed across sessions",
+    description=(
+        "Replays selling the at-the-money call and put at each session's first "
+        "capture, re-striking whenever the at-the-money strike has travelled "
+        "`adjustment_points` away from the one held, and squaring off at the "
+        "close. Returns the running P&L curve, the trade log and the summary. "
+        "The trigger compares **strike to strike**, not spot to strike: with a "
+        "50-point ladder, 50 points re-strikes on every change of at-the-money "
+        "and 100 demands two. `adjustment_points` defaults to the chain's own "
+        "strike step, and `lot_size` to the contract's. P&L is gross — no "
+        "brokerage, slippage, taxes or margin. Powers Straddle PnL Simulator."
+    ),
+    responses={422: {"description": "Unknown instrument, or a strike the archive never priced"}},
+)
+async def straddle_pnl(
+    request: Request,
+    principal: CurrentPrincipal,
+    services: Services,
+    instrument_id: InstrumentParam,
+    *,
+    expiry: ExpiryParam = None,
+    sessions: Annotated[
+        int,
+        Query(ge=1, le=PNL_MAX_SESSIONS, description="Trading sessions to cover, latest last"),
+    ] = PNL_DEFAULT_SESSIONS,
+    adjustment_points: Annotated[
+        float | None,
+        Query(gt=0, description="Strike travel that re-strikes. Defaults to the chain's step"),
+    ] = None,
+    lot_size: Annotated[
+        int | None,
+        Query(gt=0, description="Contract size. Defaults to the instrument's own"),
+    ] = None,
+    lots: Annotated[int, Query(ge=1, le=1000, description="Lots sold")] = 1,
+    date_: DateParam = None,
+) -> StraddlePnlResponse:
+    symbol = instrument_id.strip().upper()
+    redis = get_container(request).redis
+    # Every parameter is in the key: each one changes the replay, so sharing an
+    # entry across them would serve whichever run arrived first.
+    cache_key = redis.key(
+        "lab:straddle-pnl",
+        str(principal.tenant_id),
+        symbol,
+        expiry or "near",
+        str(sessions),
+        str(adjustment_points or "step"),
+        str(lot_size or "default"),
+        str(lots),
+        _day_key(date_),
+    )
+
+    cached = await redis.client.get(cache_key)
+    if cached is not None:
+        return StraddlePnlResponse.model_validate_json(cached)
+
+    payload = await services.straddle_pnl(
+        principal.tenant_id,
+        symbol,
+        expiry=expiry,
+        sessions=sessions,
+        adjustment_points=adjustment_points,
+        lot_size=lot_size,
+        lots=lots,
+        trade_date=_trade_date(date_),
+    )
+    response = StraddlePnlResponse.of(payload)
     await redis.client.set(cache_key, response.model_dump_json(), ex=_CACHE_TTL_SECONDS)
     return response
 

@@ -76,6 +76,21 @@
   color: var(--cn-text-muted);
 }
 
+.empty p {
+  margin: 0;
+}
+
+/* The why, under the what. Smaller and dimmer so the first line still reads as
+   the headline rather than the pair competing. */
+.emptyHint {
+  margin-top: var(--cn-space-2) !important;
+  max-width: 46ch;
+  margin-inline: auto;
+  font-size: var(--cn-text-xs);
+  color: var(--cn-text-subtle, var(--cn-text-muted));
+  line-height: 1.6;
+}
+
 .banner {
   display: flex;
   align-items: center;
