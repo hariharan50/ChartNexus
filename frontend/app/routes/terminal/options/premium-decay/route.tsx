@@ -3,7 +3,7 @@ import { type ReactNode, useEffect, useMemo, useState } from 'react';
 import EChart from '$shared/charts/EChart';
 import { buildMultiSeriesOption, type SeriesLine } from '$shared/charts/options/multi-series';
 import { useChartTheme } from '$shared/charts/theme/use-chart-theme';
-import { isoDateIST, lastTradingDayIST } from '$shared/formatting/ist-clock';
+import { lastTradingDayIST } from '$shared/formatting/ist-clock';
 import { cx } from '$shared/ui/cx';
 import Select from '$shared/ui/Select';
 import IconChart from '$shared/ui/icons/IconChart';
@@ -34,8 +34,7 @@ import {
   pick,
   premiumDecayCsv,
   premiumTotals,
-  prevCloseTotals,
-  prevTradingDay,
+  firstBarClose,
   PUT_COLOR,
   rangeLabel,
   REFETCH_MS,
@@ -128,18 +127,6 @@ export default function PremiumDecay() {
 
   const vw = query.data;
 
-  // The "1m Close" baseline reads against the previous session's close, which
-  // this session's payload does not carry — so fetch the prior trading day too,
-  // only while that mode is on. Its last capture is the prev-close reference.
-  const sessionDate = dataMode === 'historical' ? date : isoDateIST(0);
-  const prevDate = useMemo(() => prevTradingDay(sessionDate), [sessionDate]);
-  const prevQuery = useQuery<StraddleView>({
-    queryKey: ['options-lab', 'straddle-series', instrument.symbol, 'prev-close', prevDate],
-    queryFn: () => getStraddle(instrument.symbol, { date: prevDate }),
-    enabled: baseline === 'min_close'
-  });
-  const prevView = prevQuery.data;
-
   // Rebuilt only when a part actually changes, so it can be a memo dependency
   // rather than forcing every derivation to re-run on each render.
   const selection: Selection = useMemo(
@@ -159,16 +146,17 @@ export default function PremiumDecay() {
     let ceTotal = pick(totals.ce, keep);
     let peTotal = pick(totals.pe, keep);
 
-    // The reference each change is read against: today's open, or the prior
-    // session's close for "1m Close" — falling back to the open per leg when the
-    // prior day carried none of the window's strikes yet.
-    const prevClose = baseline === 'min_close' ? prevCloseTotals(prevView, window.strikes) : null;
+    // The reference each change is read against. Both anchor inside today: the
+    // session's opening capture, or the close of its first bar — see `Baseline`.
+    // Measured on the raw totals, not the bucketed ones, because bucketing keeps
+    // the session's first point regardless of which bucket it lands in.
+    // One minute, fixed — the control is called "1m Close", so it must not
+    // follow the timeframe selector. On a 15m view this anchor is still the
+    // close of the first *minute*, which is what the label promises.
     const ceRef =
-      baseline === 'min_close' && prevClose?.ce != null ? prevClose.ce : firstTotal(ceTotal);
+      baseline === 'min_close' ? firstBarClose(totals.ce, vw.t, 1) : firstTotal(ceTotal);
     const peRef =
-      baseline === 'min_close' && prevClose?.pe != null ? prevClose.pe : firstTotal(peTotal);
-    const prevMissing =
-      baseline === 'min_close' && (prevClose?.ce == null || prevClose?.pe == null);
+      baseline === 'min_close' ? firstBarClose(totals.pe, vw.t, 1) : firstTotal(peTotal);
 
     let ceChange = changeFromRef(ceTotal, ceRef);
     let peChange = changeFromRef(peTotal, peRef);
@@ -186,10 +174,9 @@ export default function PremiumDecay() {
       ceTotal,
       peTotal,
       ceChange,
-      peChange,
-      prevMissing
+      peChange
     };
-  }, [vw, prevView, selection, timeframe, baseline, runningAvg]);
+  }, [vw, selection, timeframe, baseline, runningAvg]);
 
   // The strike span each card advertises, computed for its own mode so the
   // labels stay populated even while another mode is the live one.
@@ -600,9 +587,7 @@ export default function PremiumDecay() {
               <p className={s.caption}>
                 {baseline === 'day_open'
                   ? 'Change in total call and put premium over the window since today’s opening premium — built up above zero, bled off below.'
-                  : derived.prevMissing
-                    ? 'No prior session archived for the previous-close reference — showing change since today’s open instead.'
-                    : 'Change in total call and put premium over the window since the previous session’s close — the overnight gap plus today’s move.'}{' '}
+                  : 'Change in total call and put premium over the window since the close of the session’s first bar — the same shape as Day Open, offset by what the premium did in that opening minute.'}{' '}
                 Future is the current-month future on the left axis. Scroll over either plot to zoom
                 the clock, drag inside it to pan, or drag the time axis itself to stretch and
                 squeeze the window — both charts move together.

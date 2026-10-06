@@ -7,7 +7,7 @@ import {
   fmtSignedPremium,
   premiumDecayCsv,
   premiumTotals,
-  prevCloseTotals,
+  firstBarClose,
   prevTradingDay,
   rangeLabel,
   resolveWindow,
@@ -154,24 +154,35 @@ describe('firstTotal / changeFromRef', () => {
   });
 });
 
-describe('prevCloseTotals', () => {
-  it('sums the prior session’s last capture over the window strikes', () => {
-    // Last frame CE at strikes [24_550,24_600,24_650] = 150+118+88 = 356; PE = 247.
-    const prev = view([
-      frame(),
-      frame({ ce_ltp: [190, 150, 118, 88, 58], pe_ltp: [42, 57, 78, 112, 152] })
-    ]);
-    expect(prevCloseTotals(prev, [24_550, 24_600, 24_650])).toEqual({ ce: 356, pe: 247 });
+describe('firstBarClose', () => {
+  const times = ['04:00:00', '04:00:30', '04:01:10', '04:02:00'].map(
+    (clock) => `2026-08-14T${clock}Z`
+  );
+
+  it('takes the last total printed inside the opening bar', () => {
+    // Two captures land in the first minute; the second is the bar's close.
+    expect(firstBarClose([370, 365, 350, 340], times, 1)).toBe(365);
   });
 
-  it('is null with no prior session, and null per leg it never carried', () => {
-    expect(prevCloseTotals(undefined, [24_600])).toBeNull();
-    expect(prevCloseTotals(view([]), [24_600])).toBeNull();
-    // A strike off the prior axis totals to null on that leg.
-    expect(prevCloseTotals(view([frame({ ce_ltp: [200, 160, null, 90, 60] })]), [24_600])).toEqual({
-      ce: null,
-      pe: 75
-    });
+  it('ignores a null inside the bar and keeps the last real print', () => {
+    expect(firstBarClose([370, null, 350, 340], times, 1)).toBe(370);
+  });
+
+  it('widens with the timeframe', () => {
+    // At 3m every capture is still inside the opening bar.
+    expect(firstBarClose([370, 365, 350, 340], times, 3)).toBe(340);
+  });
+
+  it('falls back to the opening total when the bar holds one capture', () => {
+    // With nothing to close against, a bar's open and close are one reading.
+    expect(firstBarClose([370, 365], [times[0]!, '2026-08-14T04:05:00Z'], 1)).toBe(370);
+  });
+
+  it('never reaches outside today', () => {
+    // The regression: this anchor used to be the *previous session's* close,
+    // which compares two different contracts the moment the expiry rolls — and
+    // on 6 Oct 2026 resolved to a seeded mock day 400 index points away.
+    expect(firstBarClose([], [], 1)).toBeNull();
   });
 });
 

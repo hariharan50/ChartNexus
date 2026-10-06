@@ -171,13 +171,20 @@ export function premiumTotals(view: StraddleView, indices: number[]): Totals {
  * Both draw a cumulative "change since a reference" shape; they differ only in
  * the reference the change is read against, which is a constant per leg:
  *
- * - `day_open` reads each point against **today's opening** premium (the first
- *   capture of the session).
- * - `min_close` reads it against the **previous session's close** premium — the
- *   last capture of the prior trading day. This is the "1m Close" reading: the
- *   curve is the `day_open` one shifted down by the overnight gap (how far each
- *   leg opened from its prior close). The prior close is a second fetch, since
- *   the intraday payload only carries today.
+ * - `day_open` reads each point against **today's opening** premium — the very
+ *   first capture of the session.
+ * - `min_close` reads it against the **close of the session's first bar** — the
+ *   last capture inside the opening minute. The two differ only by whatever the
+ *   premium did in that first minute, which is why the curves sit a few points
+ *   apart and otherwise trace the same shape.
+ *
+ * **Both anchor inside today.** `min_close` used to read the *previous
+ * session's* close, which is wrong twice over. It compares two different
+ * instruments whenever the expiry rolls — on expiry day the prior session's
+ * nearest contract is not this one at all — and it made the page depend on a
+ * second fetch of a day the archive may hold only synthetic captures for. On
+ * 6 Oct 2026 that baseline resolved to a seeded mock session 400 index points
+ * away and reported a 1,785-point call "decay" that never happened.
  */
 export type Baseline = 'day_open' | 'min_close';
 
@@ -204,36 +211,34 @@ export function changeFromRef(totals: (number | null)[], ref: number | null): (n
 }
 
 /**
- * Total call and put premium over the window from a prior session's **last**
- * capture — the previous close, the `min_close` reference.
+ * The premium at the close of the session's first bar — the `min_close` anchor.
  *
- * Matched by strike value, not position, so a prior day whose ATM sat elsewhere
- * still lines up on the strikes the window shares. `null` per leg when that day
- * carried none of them (or has no capture), so the caller can fall back.
+ * Walks forward only while a capture still falls inside the opening bucket, and
+ * keeps the last total each leg printed there. Measured on the *raw* series
+ * rather than the bucketed one because bucketing deliberately keeps the
+ * session's very first point as well, so the bucketed opener is the day's open
+ * — which is the other baseline, not this one.
+ *
+ * Falls back to the first total when the opening minute carried a single
+ * capture: with nothing to close against, the bar's open and close are the
+ * same reading.
  */
-export function prevCloseTotals(
-  prev: StraddleView | undefined,
-  windowStrikes: Iterable<number>
-): PremiumRef | null {
-  if (!prev || prev.frames.length === 0) return null;
-  const last = prev.frames[prev.frames.length - 1]!;
-  let ce = 0;
-  let pe = 0;
-  let ceSeen = false;
-  let peSeen = false;
-  for (const i of windowIndices(prev.strikes, windowStrikes)) {
-    const c = last.ce_ltp[i];
-    const p = last.pe_ltp[i];
-    if (c != null) {
-      ce += c;
-      ceSeen = true;
-    }
-    if (p != null) {
-      pe += p;
-      peSeen = true;
-    }
+export function firstBarClose(
+  totals: (number | null)[],
+  times: string[],
+  minutes: number
+): number | null {
+  if (times.length === 0) return null;
+  const origin = Date.parse(times[0]!);
+  const span = Math.max(1, minutes) * 60_000;
+
+  let last: number | null = null;
+  for (let i = 0; i < times.length; i++) {
+    if (Date.parse(times[i]!) - origin >= span) break;
+    const value = totals[i];
+    if (value != null) last = value;
   }
-  return { ce: ceSeen ? ce : null, pe: peSeen ? pe : null };
+  return last ?? firstTotal(totals);
 }
 
 /**
