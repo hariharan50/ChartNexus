@@ -62,7 +62,14 @@ EXPOSE 8000
 HEALTHCHECK --interval=30s --timeout=3s --start-period=20s --retries=3 \
     CMD curl -fsS http://localhost:8000/health/live || exit 1
 
-# Overridden per service (ingest / score / realtime) in Helm and compose.
+# Overridden per service (the workers) in compose.prod.yml, which also sets
+# the worker count from the environment.
+#
+# `--proxy-headers` with `--forwarded-allow-ips=*` because this port is only
+# ever reachable on the container network, behind the edge proxy: without
+# them the request scheme reads as http and `request.client.host` is the
+# proxy's address for every caller.
 CMD ["uvicorn", "chartnexus.entrypoints.main_api:create_app", \
      "--factory", "--host", "0.0.0.0", "--port", "8000", \
-     "--workers", "2", "--no-access-log"]
+     "--workers", "2", "--no-access-log", \
+     "--proxy-headers", "--forwarded-allow-ips", "*"]

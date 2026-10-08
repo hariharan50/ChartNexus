@@ -67,19 +67,30 @@ Full runbook, including Google sign-in setup and troubleshooting:
 backend/     FastAPI + SQLAlchemy, one package per bounded context
 frontend/    React Router terminal UI, mirroring the same context boundaries
 contracts/   OpenAPI, websocket, event, and analytics contracts — the source of truth
-deploy/      Dockerfiles, compose stack, Helm chart
+deploy/      Dockerfiles, compose stacks (dev and production), nginx config
 docs/        architecture, ADRs, runbooks
 ```
 
-Four backend processes are deployed separately so a slow broker call can never
-occupy an API worker:
+The backend runs as several processes, deployed separately so a slow broker
+call can never occupy an API worker. In local development the API runs all the
+workers in-process (gated on `CN_ENVIRONMENT=local`), so `uv run uvicorn ...`
+alone gives you a populated application.
 
-| Process    | Entrypoint          | Responsibility                          |
-| ---------- | ------------------- | --------------------------------------- |
-| `api`      | `main_api.py`       | REST surface                            |
-| `ingest`   | `main_ingest.py`    | broker polling and snapshot commits     |
-| `score`    | `main_score.py`     | analytics and signal synthesis          |
-| `realtime` | `main_realtime.py`  | websocket fan-out from Redis pub/sub    |
+| Process           | Entrypoint                 | Responsibility                                   |
+| ----------------- | -------------------------- | ------------------------------------------------ |
+| `api`             | `main_api.py`              | REST surface                                     |
+| `catalog`         | `main_catalog.py`          | the F&O universe and lot sizes, refreshed daily  |
+| `ingest`          | `main_ingest.py`           | option-chain snapshots — the intraday OI archive |
+| `futures-oi`      | `main_futures_oi.py`       | the open-interest sweep behind Future Lab        |
+| `futures-history` | `main_futures_history.py`  | board capture for Future Lab's charts and Replay |
+| `hugin`           | `main_hugin.py`            | HUGIN's hourly graded market memory              |
+| `mme100`          | `main_mme100.py`           | the MME100 pre-market briefing                   |
+| `report`          | `main_report.py`           | the daily PDF, per enrolled tenant               |
+
+`main_score.py` and `main_realtime.py` are **empty placeholders** — there is no
+scoring worker and no websocket process yet, and nothing in the browser opens a
+socket. `chartnexus-signals` and `chartnexus-oi` are offline operator CLIs
+(fit/backtest, and seed/prune of the archive), not workers.
 
 ## Architecture rules
 
@@ -109,13 +120,32 @@ stricter check. See
 | ------------------- | --------------------------------------------------------- |
 | Lint and format     | `cd backend && uv run ruff check --fix . && uv run ruff format .` |
 | Type-check backend  | `cd backend && uv run mypy`                               |
-| Type-check frontend | `cd frontend && pnpm check`                               |
+| Type-check frontend | `cd frontend && pnpm typecheck`                           |
 | Fast tests          | `cd backend && uv run pytest tests/unit tests/architecture` |
 | Integration tests   | `cd backend && uv run pytest tests/integration -m integration` |
 | Frontend tests      | `cd frontend && pnpm test`                                |
 | End-to-end tests    | `cd frontend && pnpm test:e2e`                            |
 | New migration       | `cd backend && uv run alembic revision --autogenerate -m "msg" --version-path migrations/versions/<area>` |
 | Regenerate API client | `cd frontend && pnpm api:generate`                      |
+
+## Deploying
+
+The production target is a single VPS running `docker compose`. nginx terminates
+TLS and maps one hostname onto the API and the web app — the browser bundle calls
+`/api/v1/...` as a same-origin path, so a reverse proxy is required rather than
+optional.
+
+```bash
+cp .env.production.example .env.production   # fill in, then
+./scripts/operations/deploy.sh
+./scripts/operations/issue-certificate.sh
+```
+
+Full runbook, including sizing, backups, rollback and troubleshooting:
+[docs/runbooks/vps-deployment.md](docs/runbooks/vps-deployment.md).
+
+The Helm chart under `deploy/helm/` and the Terraform modules under
+`infrastructure/` are empty skeletons — there is no Kubernetes path yet.
 
 ## Market data
 

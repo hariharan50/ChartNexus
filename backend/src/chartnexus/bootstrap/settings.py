@@ -430,6 +430,12 @@ class CatalogSettings(_Section):
     #: tomorrow's refresh. A populated catalog is left alone: the masters are
     #: ~19 MB and the API runs this loop under ``--reload``.
     sync_on_start: bool = True
+    #: How often every *other* process re-reads the catalog into its own
+    #: in-memory registry. One cheap ``SELECT``, so this can be frequent; it is
+    #: what carries a refresh from the catalog worker across to the API and the
+    #: other workers without a redeploy. See
+    #: ``catalog_runtime.run_registry_refresh_loop``.
+    registry_refresh_seconds: int = Field(default=900, ge=30)
 
 
 class FuturesOpenInterestSettings(_Section):

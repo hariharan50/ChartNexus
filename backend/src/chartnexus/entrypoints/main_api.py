@@ -23,7 +23,11 @@ from chartnexus.bootstrap.container import Container
 from chartnexus.bootstrap.logging import configure_logging
 from chartnexus.bootstrap.route_registry import API_PREFIX, register_routes
 from chartnexus.bootstrap.settings import Environment, Settings, get_settings
-from chartnexus.entrypoints.catalog_runtime import load_registry, run_catalog_loop
+from chartnexus.entrypoints.catalog_runtime import (
+    load_registry,
+    run_catalog_loop,
+    run_registry_refresh_loop,
+)
 from chartnexus.entrypoints.futures_board_runtime import run_futures_board_loop
 from chartnexus.entrypoints.futures_oi_runtime import run_futures_oi_loop
 from chartnexus.entrypoints.hugin_runtime import run_hugin_loop
@@ -37,6 +41,7 @@ from chartnexus.infrastructure.transport.http.exception_handlers import (
     register_exception_handlers,
 )
 from chartnexus.infrastructure.transport.http.health import DependencyCheck, build_health_router
+from chartnexus.infrastructure.transport.http.middleware import SecurityHeadersMiddleware
 from chartnexus.infrastructure.transport.http.request_id import RequestIdMiddleware
 
 API_VERSION = "0.1.0"
@@ -60,9 +65,10 @@ def _maybe_start(
 ) -> _LocalWorker | None:
     """Start ``make_loop`` as a named background task, or return ``None`` if disabled.
 
-    Each in-process worker (ingest, HUGIN, MME100, report) is local-only: deployed
-    environments run the equivalent standalone process, and ``task dev`` disables
-    the in-process copy so the two do not double up.
+    Most of these are local-only: deployed environments run the equivalent
+    standalone process (ingest, HUGIN, MME100, report), and ``task dev``
+    disables the in-process copy so the two do not double up. The registry
+    refresh loop is the exception — every process needs its own.
     """
     if not enabled:
         return None
@@ -102,9 +108,10 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         # so it is loaded before anything can serve a request.
         await load_registry(container)
 
-        # Local-only background workers. Each has a standalone process for deployed
+        # Background workers. The registry refresh below runs everywhere; the
+        # rest are local-only, each having a standalone process for deployed
         # environments (``chartnexus-ingest`` / ``-hugin`` / ``-mme100`` / the
-        # report worker); running them in-process lets a developer on just the API
+        # report worker). Running them in-process lets a developer on just the API
         # get a populated snapshot archive, accruing HUGIN memory, the morning
         # briefing, and the daily PDF. ``task dev`` disables the in-process copies
         # so they never double up with their separate workers. Ingest forces
@@ -112,6 +119,18 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         # answers. Shut down in reverse start order in the ``finally``.
         local = resolved.environment == Environment.LOCAL
         workers = (
+            # Not local-only, unlike everything below it. The load above is a
+            # single read: if it came back empty — a first deploy, or a start
+            # that beat Postgres to accepting connections — nothing else in a
+            # deployed API would ever try again, and the process would answer
+            # "NIFTY is not a tradeable instrument" to every request until a
+            # human restarted it. This also carries the catalog worker's daily
+            # refresh across into this process.
+            _maybe_start(
+                enabled=True,
+                name="registry-refresh-loop",
+                make_loop=lambda stop: run_registry_refresh_loop(container, resolved, stop=stop),
+            ),
             # First: everything else resolves instruments through the catalog,
             # so it has to be populated before the other loops do useful work.
             _maybe_start(
@@ -178,6 +197,10 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     )
 
     app.add_middleware(RequestIdMiddleware)
+    # Inside GZip, so the content-type it branches on is the handler's own and
+    # not yet rewritten for compression. CORS pre-flight responses short-circuit
+    # above this and carry no body, so they do not need the headers.
+    app.add_middleware(SecurityHeadersMiddleware, hsts=resolved.environment.is_deployed)
     app.add_middleware(GZipMiddleware, minimum_size=1024)
     app.add_middleware(
         CORSMiddleware,
@@ -225,6 +248,13 @@ def run() -> None:
         reload=settings.environment.value == "local",
         log_config=None,
         access_log=False,
+        # Behind nginx every request arrives from the proxy, so without these
+        # the scheme reads as http (breaking any absolute URL the app builds)
+        # and request.client.host is the proxy for every caller. Trusted only
+        # because nothing but the edge proxy can reach this port: the container
+        # publishes it to the compose network, never to the host.
+        proxy_headers=True,
+        forwarded_allow_ips="*",
     )
 
 

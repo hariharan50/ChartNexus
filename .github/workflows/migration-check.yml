@@ -1,0 +1,99 @@
+# The schema, checked the way a deploy applies it.
+#
+# `deploy.sh` runs `alembic upgrade head` against the live database and nothing
+# else. Two failures therefore reach production silently, and this catches both:
+#
+#   * A migration chain that does not apply to an empty database — a bad merge
+#     leaving two heads, or a revision that depends on something only present
+#     on a developer's machine.
+#   * A model changed without a migration. Everything keeps passing locally
+#     against a database that was migrated by hand, and the deployed schema is
+#     simply wrong.
+name: migration-check
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'backend/migrations/**'
+      - 'backend/src/chartnexus/infrastructure/persistence/**'
+      - 'backend/alembic.ini'
+      - '.github/workflows/migration-check.yml'
+  pull_request:
+    paths:
+      - 'backend/migrations/**'
+      - 'backend/src/chartnexus/infrastructure/persistence/**'
+      - 'backend/alembic.ini'
+      - '.github/workflows/migration-check.yml'
+
+concurrency:
+  group: migration-check-${{ github.ref }}
+  cancel-in-progress: true
+
+defaults:
+  run:
+    working-directory: backend
+
+permissions:
+  contents: read
+
+env:
+  CN_ENVIRONMENT: test
+  CN_DB_URL: postgresql+asyncpg://chartnexus:chartnexus@localhost:5433/chartnexus
+
+jobs:
+  schema:
+    name: migrations apply and match the models
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    services:
+      postgres:
+        image: postgres:18-alpine
+        env:
+          POSTGRES_USER: chartnexus
+          POSTGRES_PASSWORD: chartnexus
+          POSTGRES_DB: chartnexus
+        ports:
+          - 5433:5432
+        options: >-
+          --health-cmd "pg_isready -U chartnexus -d chartnexus"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 20
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+          cache-dependency-glob: backend/uv.lock
+
+      - name: Install
+        run: uv sync --frozen
+
+      # A merge that leaves two heads makes `upgrade head` ambiguous, and the
+      # error it produces at deploy time is not an obvious one.
+      - name: Exactly one head
+        run: |
+          heads="$(uv run alembic heads | grep -c '(head)' || true)"
+          if [ "$heads" -ne 1 ]; then
+            echo "::error::expected a single migration head, found $heads"
+            uv run alembic heads
+            exit 1
+          fi
+
+      - name: Upgrade from empty
+        run: uv run alembic upgrade head
+
+      # The check this workflow exists for: autogenerate against the migrated
+      # database must find nothing to do.
+      - name: Models match the migrations
+        run: uv run alembic check
+
+      # A migration nobody can reverse is a migration you cannot roll back
+      # behind. One step is enough to catch the common omission — an empty
+      # `downgrade()` body left as the autogenerate stub.
+      - name: Downgrade and re-upgrade one revision
+        run: |
+          uv run alembic downgrade -1
+          uv run alembic upgrade head

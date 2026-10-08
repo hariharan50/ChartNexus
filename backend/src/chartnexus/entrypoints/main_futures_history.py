@@ -29,7 +29,7 @@ from datetime import UTC, date, datetime
 from chartnexus.bootstrap.container import Container
 from chartnexus.bootstrap.logging import configure_logging
 from chartnexus.bootstrap.settings import Settings, get_settings
-from chartnexus.entrypoints.catalog_runtime import load_registry
+from chartnexus.entrypoints.catalog_runtime import load_registry, registry_kept_current
 from chartnexus.entrypoints.futures_board_runtime import (
     capture_once,
     prune_once,
@@ -142,7 +142,8 @@ async def _run(settings: Settings, *, once: bool, prune: bool, args: argparse.Na
         elif once:
             await capture_once(container, settings)
         else:
-            await run_futures_board_loop(container, settings, stop=stop)
+            async with registry_kept_current(container, settings, stop=stop):
+                await run_futures_board_loop(container, settings, stop=stop)
     finally:
         log.info("futures_history_stopping")
         await container.aclose()

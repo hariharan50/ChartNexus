@@ -1,0 +1,85 @@
+# Build context for all three images is the repository root, so this file is
+# what keeps the host's working tree out of them.
+#
+# It is not an optimisation. Without the node_modules rule the frontend image
+# does not build at all: `COPY frontend/ ./` lands the host's pnpm symlink farm
+# on top of the real directories the `dependencies` stage installed, and
+# buildkit stops with "cannot copy to non-directory". Without the .env rules a
+# developer's real credentials are baked into an image layer, where they stay
+# readable after any later `rm`.
+
+# --- dependency trees ------------------------------------------------------
+# Installed inside the image from the lockfiles. The host copies are built for
+# the host's platform, so even when they copy cleanly they are wrong.
+**/node_modules
+**/.venv
+**/.pnpm-store
+
+# --- secrets ---------------------------------------------------------------
+# An image layer is not a secret store. Configuration reaches the containers
+# through compose, at run time.
+# `**/` and not a bare `.env`: there are three of these — at the root, in
+# backend/, and in frontend/ — and a root-anchored pattern would only catch the
+# first.
+**/.env
+**/.env.*
+!**/.env.example
+!**/.env.*.example
+**/*.pem
+**/*.key
+**/*.p12
+secrets/
+
+# --- build output ----------------------------------------------------------
+# Produced inside the image. A stale host copy shadowing a fresh build is the
+# kind of bug that only shows up in production.
+frontend/build
+frontend/.react-router
+backend/dist
+backend/build
+**/*.egg-info
+
+# --- caches ----------------------------------------------------------------
+**/__pycache__
+**/*.py[cod]
+**/.mypy_cache
+**/.ruff_cache
+**/.pytest_cache
+**/.import_linter_cache
+**/.cache
+**/.turbo
+**/.vite
+
+# --- test and tooling artefacts --------------------------------------------
+frontend/playwright-report
+frontend/test-results
+frontend/test-results-parity
+frontend/parity-output
+**/coverage
+**/htmlcov
+**/.coverage
+**/.nyc_output
+backups/
+
+# --- repository metadata ---------------------------------------------------
+# .git is the big one: it is often larger than the source and nothing in any
+# image reads it.
+.git
+.gitignore
+.gitattributes
+.github
+.idea
+.vscode
+.claude
+.pre-commit-config.yaml
+
+# --- things no image needs -------------------------------------------------
+docs/
+observability/
+infrastructure/
+deploy/helm/
+scripts/
+tests/
+**/*.md
+!README.md
+Taskfile.yml

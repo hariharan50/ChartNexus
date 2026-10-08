@@ -28,6 +28,14 @@ CMD ["pnpm", "dev", "--host", "0.0.0.0", "--port", "5173"]
 # --------------------------------------------------------------------------
 FROM dependencies AS build
 # --------------------------------------------------------------------------
+# Vite inlines PUBLIC_-prefixed variables into the browser bundle at build
+# time, so they are build arguments and not runtime environment. The other
+# two are deliberately left to their defaults in
+# `app/lib/shared/config/env.ts`: `/api/v1` and `/ws` are same-origin paths,
+# which is exactly what the single hostname behind nginx serves.
+ARG PUBLIC_ENVIRONMENT=production
+ENV PUBLIC_ENVIRONMENT=$PUBLIC_ENVIRONMENT
+
 COPY frontend/ ./
 RUN pnpm build \
     && pnpm prune --prod
@@ -57,7 +65,15 @@ EXPOSE 3000
 HEALTHCHECK --interval=30s --timeout=3s --start-period=15s --retries=3 \
     CMD node -e "fetch('http://localhost:3000/healthz').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"
 
-# Was `node build/index.js`, which was adapter-node's entrypoint and no longer
-# exists. `/healthz` above is a real route now, so this healthcheck passes for
-# the first time.
-CMD ["pnpm", "start"]
+# The package's own `start` script is `react-router-serve ./build/server/index.js`,
+# and this runs that binary directly rather than through `pnpm start`.
+#
+# `pnpm start` cannot work here: this stage is a fresh node:22-alpine that never
+# ran `corepack enable`, so there is no pnpm on PATH and node reads the argument
+# as a module path ("Cannot find module '/app/pnpm'"). Adding corepack back
+# would fix the PATH but make the container fetch its own package manager on
+# first start, which is a network dependency a production boot does not need.
+#
+# `@react-router/serve` is a runtime dependency, not a dev one, so the
+# `pnpm prune --prod` above keeps the binary in node_modules/.bin.
+CMD ["node_modules/.bin/react-router-serve", "./build/server/index.js"]

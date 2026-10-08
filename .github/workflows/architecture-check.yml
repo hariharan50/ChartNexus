@@ -1,0 +1,59 @@
+# The layering rules, as its own required check.
+#
+# Separate from backend-ci because these are the rules the README calls
+# "enforced by CI, not by convention" — a reviewer should be able to see at a
+# glance which check failed, and a cross-context import is a different kind of
+# problem from a failing test.
+#
+# Both commands run, and both must pass. A green `lint-imports` has been
+# observed alongside a failing `tests/architecture`: the test suite reaches
+# imports the contracts do not describe, and is the stricter of the two.
+name: architecture-check
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'backend/**'
+      - '.github/workflows/architecture-check.yml'
+  pull_request:
+    paths:
+      - 'backend/**'
+      - '.github/workflows/architecture-check.yml'
+
+concurrency:
+  group: architecture-check-${{ github.ref }}
+  cancel-in-progress: true
+
+defaults:
+  run:
+    working-directory: backend
+
+permissions:
+  contents: read
+
+jobs:
+  layering:
+    name: bounded contexts and layering
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+          cache-dependency-glob: backend/uv.lock
+
+      - name: Install
+        run: uv sync --frozen
+
+      # The import contracts in backend/pyproject.toml: the domain layer
+      # imports no framework or vendor SDK, contexts never import each other,
+      # vendor SDKs stay inside their own adapter directory, and infrastructure
+      # never imports the container or the entrypoints.
+      - name: Import contracts
+        run: uv run lint-imports
+
+      - name: Architecture tests
+        run: uv run pytest tests/architecture -q

@@ -1,0 +1,91 @@
+# Lint, type-check, test and build the web app.
+name: frontend-ci
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'frontend/**'
+      - '.github/workflows/frontend-ci.yml'
+  pull_request:
+    paths:
+      - 'frontend/**'
+      - '.github/workflows/frontend-ci.yml'
+
+concurrency:
+  group: frontend-ci-${{ github.ref }}
+  cancel-in-progress: true
+
+defaults:
+  run:
+    working-directory: frontend
+
+permissions:
+  contents: read
+
+jobs:
+  checks:
+    name: lint, types, unit
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+          cache-dependency-path: frontend/pnpm-lock.yaml
+
+      # --frozen-lockfile so a package.json change that was never locked fails
+      # here rather than resolving to versions nobody has run.
+      - name: Install
+        run: pnpm install --frozen-lockfile
+
+      # eslint, prettier --check, and the CSS-modules convention check.
+      - name: Lint
+        run: pnpm lint
+
+      - name: Typecheck
+        run: pnpm typecheck
+
+      - name: Unit tests
+        run: pnpm test
+
+      # The build is a check in its own right: a type error can hide behind
+      # `tsc --noEmit` passing while the bundler still fails on it.
+      - name: Build
+        run: pnpm build
+
+  e2e:
+    name: end-to-end
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+          cache-dependency-path: frontend/pnpm-lock.yaml
+
+      - name: Install
+        run: pnpm install --frozen-lockfile
+
+      # --with-deps pulls the system libraries the browsers need; the runner
+      # image does not carry them.
+      - name: Install browsers
+        run: pnpm exec playwright install --with-deps chromium
+
+      - name: End-to-end and accessibility tests
+        run: pnpm test:e2e
+
+      - if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: frontend/playwright-report/
+          retention-days: 7

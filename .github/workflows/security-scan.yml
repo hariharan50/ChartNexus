@@ -1,0 +1,130 @@
+# Secrets, dependency advisories, and container CVEs.
+#
+# Also runs on a schedule: a dependency that was clean when it merged becomes
+# vulnerable later without anyone touching the repository, and that is the case
+# this catches.
+name: security-scan
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  schedule:
+    # 03:00 UTC on Mondays — 08:30 IST, before the market opens.
+    - cron: '0 3 * * 1'
+  workflow_dispatch:
+
+concurrency:
+  group: security-scan-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  secrets:
+    name: committed secrets
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          # gitleaks scans history, not just the working tree: a secret that was
+          # committed and then deleted is still in the pack and still leaked.
+          fetch-depth: 0
+
+      - uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  python-dependencies:
+    name: python advisories
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    defaults:
+      run:
+        working-directory: backend
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+          cache-dependency-glob: backend/uv.lock
+
+      # Audited from the lockfile rather than an installed environment, so the
+      # versions checked are exactly the ones a deploy would get. --all-extras
+      # because the LLM SDKs are installed in production and so are in scope.
+      - name: Export the locked dependency set
+        run: uv export --frozen --all-extras --no-hashes --no-emit-project -o /tmp/requirements.txt
+
+      - name: pip-audit
+        run: uvx pip-audit --strict --progress-spinner=off --requirement /tmp/requirements.txt
+
+  node-dependencies:
+    name: node advisories
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+          cache-dependency-path: frontend/pnpm-lock.yaml
+
+      - name: Install
+        run: pnpm install --frozen-lockfile
+
+      # Only high and critical fail the build. A moderate advisory in a dev-only
+      # transitive dependency is worth seeing, not worth blocking a release on.
+      - name: pnpm audit
+        run: pnpm audit --audit-level high --prod
+
+  images:
+    name: container CVEs
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: backend
+            dockerfile: deploy/docker/backend.Dockerfile
+            target: runtime
+          - name: web
+            dockerfile: deploy/docker/frontend.Dockerfile
+            target: runtime
+          - name: nginx
+            dockerfile: deploy/docker/nginx.Dockerfile
+            target: ''
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: docker/setup-buildx-action@v3
+
+      - name: Build
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: ${{ matrix.dockerfile }}
+          target: ${{ matrix.target }}
+          load: true
+          tags: chartnexus/${{ matrix.name }}:scan
+          cache-from: type=gha,scope=${{ matrix.name }}
+          cache-to: type=gha,scope=${{ matrix.name }},mode=max
+
+      - name: Trivy
+        uses: aquasecurity/trivy-action@0.28.0
+        with:
+          image-ref: chartnexus/${{ matrix.name }}:scan
+          severity: HIGH,CRITICAL
+          # Only what a base-image bump or a dependency upgrade can actually
+          # fix; an unfixed CVE is noise in a required check.
+          ignore-unfixed: true
+          exit-code: '1'

@@ -1,0 +1,394 @@
+# Production stack for a single VPS.
+#
+#   docker compose --env-file .env.production -f deploy/compose/compose.prod.yml up -d
+#
+# Deliberately self-contained rather than layered over compose.yml. Compose
+# merges list-valued keys by appending, so a `ports:` entry in a base file
+# cannot be removed by an override — layering would quietly publish Postgres
+# and Redis to the internet. A file that can be read top to bottom is also the
+# file you want to be reading during an incident.
+#
+# What is NOT here:
+#   * `realtime` — backend/.../main_realtime.py is an empty placeholder and
+#     nothing in the browser opens a socket yet. nginx answers /ws with 501.
+#   * `score` — main_score.py is likewise empty. The signals CLI
+#     (`chartnexus-signals`) is an offline fit/backtest tool, not a worker.
+#   * Host ports for Postgres and Redis. Reach them through
+#     `docker compose exec postgres psql -U "$POSTGRES_USER" "$POSTGRES_DB"`.
+#     Nothing but nginx is reachable from outside the VPS.
+
+name: chartnexus
+
+# --------------------------------------------------------------------------
+# Shared fragments
+# --------------------------------------------------------------------------
+
+# On every container, so a bad day cannot fill the VPS disk with logs and take
+# Postgres down with it. 10 files x 10 MB is a hard ceiling of 100 MB each.
+x-logging: &logging
+  driver: json-file
+  options:
+    max-size: "10m"
+    max-file: "10"
+
+x-backend-image: &backend-image
+  build:
+    context: ../..
+    dockerfile: deploy/docker/backend.Dockerfile
+    target: runtime
+  image: chartnexus/backend:${CN_IMAGE_TAG:-latest}
+
+# Backend configuration. Secrets come from the --env-file; what is written out
+# here are the values that must not be left to a default in production.
+#
+# The password is interpolated into a DSN, so it has to be URL-safe — see the
+# note in .env.production.example.
+x-backend-env: &backend-env
+  CN_ENVIRONMENT: production
+  CN_DEBUG: "false"
+  CN_DB_URL: postgresql+asyncpg://${POSTGRES_USER:?set POSTGRES_USER}:${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:?set POSTGRES_DB}
+  CN_REDIS_URL: redis://:${REDIS_PASSWORD:?set REDIS_PASSWORD}@redis:6379/0
+  CN_CORS_ALLOW_ORIGINS: '["https://${CN_DOMAIN:?set CN_DOMAIN}"]'
+
+  # Structured logs; `docker compose logs` is the collector until something
+  # better is wired up.
+  CN_OTEL_LOG_FORMAT: json
+  CN_OTEL_LOG_LEVEL: ${CN_OTEL_LOG_LEVEL:-INFO}
+  CN_OTEL_SERVICE_NAME: chartnexus
+
+  # Checked by Settings.assert_deployment_safe(), which refuses to start the
+  # process while any of these is still a development default.
+  CN_SECURITY_SECRET_KEY: ${CN_SECURITY_SECRET_KEY:?set CN_SECURITY_SECRET_KEY}
+  CN_SECURITY_ENCRYPTION_KEY: ${CN_SECURITY_ENCRYPTION_KEY:?set CN_SECURITY_ENCRYPTION_KEY}
+  CN_SECURITY_PREVIOUS_ENCRYPTION_KEYS: ${CN_SECURITY_PREVIOUS_ENCRYPTION_KEYS:-}
+  CN_SECURITY_COOKIE_SECURE: "true"
+  CN_SECURITY_COOKIE_SAMESITE: lax
+  CN_SECURITY_COOKIE_DOMAIN: ${CN_DOMAIN}
+  CN_AUTH_JWT_SIGNING_KEY: ${CN_AUTH_JWT_SIGNING_KEY:?set CN_AUTH_JWT_SIGNING_KEY}
+
+  CN_AUTH_REGISTRATION_ENABLED: ${CN_AUTH_REGISTRATION_ENABLED:-false}
+  CN_AUTH_REQUIRE_EMAIL_VERIFICATION: ${CN_AUTH_REQUIRE_EMAIL_VERIFICATION:-false}
+
+  # Google sign-in. Blank disables it; the rest of the API is unaffected.
+  CN_GOOGLE_CLIENT_ID: ${CN_GOOGLE_CLIENT_ID:-}
+  CN_GOOGLE_CLIENT_SECRET: ${CN_GOOGLE_CLIENT_SECRET:-}
+  CN_GOOGLE_REDIRECT_URI: https://${CN_DOMAIN}/auth/google/callback
+
+  # 'fyers' is required: assert_deployment_safe() rejects 'mock' outside local,
+  # because a chart drawn from generated numbers is indistinguishable from one
+  # drawn from the exchange. Broker credentials are per-tenant, entered in the
+  # app under Settings -> Broker, so there is nothing to put here.
+  CN_BROKER_PROVIDER: ${CN_BROKER_PROVIDER:-fyers}
+  CN_BROKER_FYERS_REDIRECT_URI: https://${CN_DOMAIN}/settings/broker/callback
+
+  # Every chart that reads the archive believes it, so mock frames must never
+  # be written here. This is already the default; it is stated to make the
+  # difference from compose.dev.yml explicit.
+  CN_MARKET_INGEST_ALLOW_MOCK: "false"
+  CN_MARKET_SNAPSHOT_INTERVAL_SECONDS: ${CN_MARKET_SNAPSHOT_INTERVAL_SECONDS:-180}
+  CN_MARKET_SNAPSHOT_RETENTION_DAYS: ${CN_MARKET_SNAPSHOT_RETENTION_DAYS:-30}
+
+  # LLM keys are per-user, saved encrypted in the app at Settings -> AI. There
+  # is no server key to set.
+  CN_LLM_AGENT_DISCLAIMER: "true"
+
+# Every worker shares this: no published ports, restarts on failure, and waits
+# for the schema and the catalog before it opens a session.
+x-worker: &worker
+  <<: *backend-image
+  restart: unless-stopped
+  logging: *logging
+  environment: *backend-env
+  # The image's healthcheck curls the API's /health/live, which a worker does
+  # not serve — inheriting it marks all seven permanently `unhealthy` and makes
+  # `docker compose ps` read as a broken stack. There is nothing to poll here:
+  # these are loops with no socket, and a process that dies exits the container,
+  # which `restart: unless-stopped` already handles.
+  healthcheck:
+    disable: true
+  depends_on:
+    postgres: { condition: service_healthy }
+    redis: { condition: service_healthy }
+    migrate: { condition: service_completed_successfully }
+    catalog-sync: { condition: service_completed_successfully }
+
+# --------------------------------------------------------------------------
+services:
+  # --------------------------------------------------------------------------
+
+  postgres:
+    image: postgres:18-alpine
+    restart: unless-stopped
+    logging: *logging
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:?set POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB:?set POSTGRES_DB}
+      # Same collation as development, so ORDER BY cannot differ between them.
+      POSTGRES_INITDB_ARGS: "--locale-provider=icu --icu-locale=en-US --encoding=UTF8"
+    command:
+      - postgres
+      - -c
+      - max_connections=${POSTGRES_MAX_CONNECTIONS:-200}
+      - -c
+      - shared_buffers=${POSTGRES_SHARED_BUFFERS:-256MB}
+      - -c
+      - effective_cache_size=${POSTGRES_EFFECTIVE_CACHE_SIZE:-768MB}
+      - -c
+      - track_io_timing=on
+      - -c
+      - log_min_duration_statement=500
+      # Enough WAL retained that a base backup plus WAL can roll forward.
+      - -c
+      - wal_keep_size=512MB
+    volumes:
+      # Postgres 18 keeps data in a major-version subdirectory, so the mount
+      # goes one level above the pre-18 /var/lib/postgresql/data.
+      - postgres-data:/var/lib/postgresql
+      # Where backup-postgres.sh writes. Bind-mounted so a dump survives
+      # `docker compose down -v`, which is the whole point of having one.
+      - ../../backups:/backups
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 30s
+    deploy:
+      resources:
+        limits:
+          memory: ${POSTGRES_MEMORY_LIMIT:-1g}
+
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    logging: *logging
+    environment:
+      # Only so the healthcheck below can authenticate. The server reads the
+      # password from the command line.
+      REDIS_PASSWORD: ${REDIS_PASSWORD:?set REDIS_PASSWORD}
+    command:
+      - redis-server
+      - --appendonly
+      - "yes"
+      - --maxmemory
+      - ${REDIS_MAXMEMORY:-512mb}
+      # Market snapshots are the bulk of the keyspace and all carry a TTL, so
+      # evict by TTL rather than refusing writes when memory fills. Sessions
+      # carry one too, which is why this is not `noeviction`.
+      - --maxmemory-policy
+      - volatile-ttl
+      - --requirepass
+      - ${REDIS_PASSWORD}
+    volumes:
+      - redis-data:/data
+    healthcheck:
+      # $$ escapes the compose interpolation, so the variable is expanded by
+      # the shell inside the container and the password stays out of
+      # `docker inspect` output for the healthcheck command.
+      test: ["CMD-SHELL", "redis-cli -a \"$$REDIS_PASSWORD\" --no-auth-warning ping | grep -q PONG"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+    deploy:
+      resources:
+        limits:
+          memory: ${REDIS_MEMORY_LIMIT:-768m}
+
+  # --- release tasks -------------------------------------------------------
+
+  # Runs to completion before anything opens a session. Alembic takes its URL
+  # from application settings (backend/migrations/env.py), so this needs the
+  # same environment as the API — secrets included, because get_settings()
+  # runs assert_deployment_safe() on the way in.
+  migrate:
+    <<: *backend-image
+    restart: "no"
+    logging: *logging
+    # Runs to completion; awaited on exit status, not on health.
+    healthcheck:
+      disable: true
+    environment: *backend-env
+    command: ["alembic", "upgrade", "head"]
+    depends_on:
+      postgres: { condition: service_healthy }
+
+  # One catalog sync before the app serves anything. The catalog worker would
+  # do this itself, but it downloads ~19 MB of symbol masters first, and until
+  # that lands *no instrument resolves at all* — a first deploy would answer
+  # "NIFTY is not a tradeable instrument" to every request in the meantime.
+  # Running it as a release task means the API comes up usable.
+  # `python -m` rather than the `chartnexus-catalog` console script: the
+  # runtime image installs third-party packages only
+  # (`uv sync --no-install-project` in backend.Dockerfile), so the entry
+  # points declared in [project.scripts] are never generated. The package
+  # itself is importable from PYTHONPATH=/app/src, which is what this uses.
+  catalog-sync:
+    <<: *backend-image
+    restart: "no"
+    logging: *logging
+    # Runs to completion; awaited on exit status, not on health.
+    healthcheck:
+      disable: true
+    environment: *backend-env
+    command: ["python", "-m", "chartnexus.entrypoints.main_catalog", "--once"]
+    depends_on:
+      postgres: { condition: service_healthy }
+      migrate: { condition: service_completed_successfully }
+
+  # --- application ---------------------------------------------------------
+
+  api:
+    <<: *backend-image
+    restart: unless-stopped
+    logging: *logging
+    environment: *backend-env
+    command:
+      - uvicorn
+      - chartnexus.entrypoints.main_api:create_app
+      - --factory
+      - --host
+      - "0.0.0.0"
+      - --port
+      - "8000"
+      - --workers
+      - ${CN_API_WORKERS:-2}
+      # Behind nginx every request arrives from the proxy. Without these the
+      # scheme reads as http and request.client.host is the proxy for every
+      # caller. Trusted because this port is only on the compose network.
+      - --proxy-headers
+      - --forwarded-allow-ips
+      - "*"
+      # nginx writes the access log; a second copy costs disk and says less.
+      - --no-access-log
+    expose:
+      - "8000"
+    depends_on:
+      postgres: { condition: service_healthy }
+      redis: { condition: service_healthy }
+      migrate: { condition: service_completed_successfully }
+      catalog-sync: { condition: service_completed_successfully }
+    deploy:
+      resources:
+        limits:
+          memory: ${CN_API_MEMORY_LIMIT:-1g}
+
+  web:
+    build:
+      context: ../..
+      dockerfile: deploy/docker/frontend.Dockerfile
+      target: runtime
+      args:
+        PUBLIC_ENVIRONMENT: production
+    image: chartnexus/web:${CN_IMAGE_TAG:-latest}
+    restart: unless-stopped
+    logging: *logging
+    environment:
+      NODE_ENV: production
+      # Server-side loaders call the API directly on the compose network. The
+      # browser uses the same-origin /api/v1 path, which nginx routes; a loader
+      # has no origin to resolve that against and must not loop back through
+      # this Node process.
+      API_INTERNAL_URL: http://api:8000
+    expose:
+      - "3000"
+    depends_on:
+      api: { condition: service_started }
+    deploy:
+      resources:
+        limits:
+          memory: ${CN_WEB_MEMORY_LIMIT:-512m}
+
+  nginx:
+    build:
+      context: ../..
+      dockerfile: deploy/docker/nginx.Dockerfile
+    image: chartnexus/nginx:${CN_IMAGE_TAG:-latest}
+    restart: unless-stopped
+    logging: *logging
+    environment:
+      CN_DOMAIN: ${CN_DOMAIN:?set CN_DOMAIN}
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - certbot-certs:/etc/nginx/certs
+      - certbot-webroot:/var/www/certbot
+    depends_on:
+      api: { condition: service_started }
+      web: { condition: service_started }
+
+  # Renewal only. The first certificate comes from
+  # scripts/operations/issue-certificate.sh, which needs nginx already
+  # answering on port 80 to serve the challenge.
+  certbot:
+    image: certbot/certbot:latest
+    restart: unless-stopped
+    logging: *logging
+    volumes:
+      - certbot-certs:/etc/letsencrypt
+      - certbot-webroot:/var/www/certbot
+    # Twice a day is what Let's Encrypt asks for. Renewal starts 30 days before
+    # expiry, so there is a wide window in which to survive failed attempts.
+    # `$${!}` escapes to `${!}` for the container's shell: wait on the sleep's
+    # PID so a `docker compose stop` is not held for up to 12 hours.
+    entrypoint:
+      - /bin/sh
+      - -c
+      - |
+        trap exit TERM
+        while :; do
+          certbot renew --webroot --webroot-path /var/www/certbot --quiet
+          sleep 12h & wait $${!}
+        done
+
+  # --- workers -------------------------------------------------------------
+  # Each is its own process so a slow broker call can never occupy an API
+  # worker. In local development the API runs all of these in-process; that is
+  # gated on CN_ENVIRONMENT=local, so here they cannot double up.
+
+  # The F&O universe, refreshed each morning before the open so a lot-size
+  # revision is in place for the session it applies to.
+  catalog:
+    <<: *worker
+    command: ["python", "-m", "chartnexus.entrypoints.main_catalog"]
+
+  # The only writer of the option-chain archive. Without it the Options Lab
+  # charts have no intraday history and fall back to a two-point estimate.
+  ingest:
+    <<: *worker
+    command: ["python", "-m", "chartnexus.entrypoints.main_ingest"]
+
+  # Open interest for the Future Lab build-up columns: one request per
+  # contract, hence its own slow cadence.
+  futures-oi:
+    <<: *worker
+    command: ["python", "-m", "chartnexus.entrypoints.main_futures_oi"]
+
+  # The board capture behind Future Lab's intraday charts and Replay. Price
+  # comes from batched quotes, so this runs far faster than the OI sweep.
+  futures-history:
+    <<: *worker
+    command: ["python", "-m", "chartnexus.entrypoints.main_futures_history"]
+
+  # HUGIN's hourly market-memory loop.
+  hugin:
+    <<: *worker
+    command: ["python", "-m", "chartnexus.entrypoints.main_hugin"]
+
+  # The MME100 pre-market briefing, once each trading morning.
+  mme100:
+    <<: *worker
+    command: ["python", "-m", "chartnexus.entrypoints.main_mme100"]
+
+  # The daily PDF, rendered per enrolled tenant and delivered to their
+  # channels just after the briefing.
+  report:
+    <<: *worker
+    command: ["python", "-m", "chartnexus.entrypoints.main_report"]
+
+volumes:
+  postgres-data:
+  redis-data:
+  certbot-certs:
+  certbot-webroot:

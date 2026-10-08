@@ -1,0 +1,116 @@
+# Lint, type-check and test the backend.
+#
+# Split into two jobs on purpose. `checks` needs nothing but Python and fails
+# in under a minute, so it is what a pull request usually waits on; `integration`
+# brings up Postgres and Redis and is slower.
+name: backend-ci
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'backend/**'
+      - '.github/workflows/backend-ci.yml'
+  pull_request:
+    paths:
+      - 'backend/**'
+      - '.github/workflows/backend-ci.yml'
+
+concurrency:
+  # One run per ref. A push that supersedes an in-flight run cancels it.
+  group: backend-ci-${{ github.ref }}
+  cancel-in-progress: true
+
+defaults:
+  run:
+    working-directory: backend
+
+permissions:
+  contents: read
+
+jobs:
+  checks:
+    name: lint, types, unit
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+          cache-dependency-glob: backend/uv.lock
+
+      # --frozen so a uv.lock that has drifted from pyproject.toml fails here
+      # rather than resolving to something nobody has run locally.
+      - name: Install
+        run: uv sync --frozen
+
+      - name: Ruff (lint)
+        run: uv run ruff check --output-format=github .
+
+      - name: Ruff (format)
+        run: uv run ruff format --check .
+
+      - name: Mypy
+        run: uv run mypy
+
+      - name: Unit and architecture tests
+        run: uv run pytest tests/unit tests/architecture -q
+
+  integration:
+    name: integration
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    services:
+      # The ports match the ones the tests hard-code, which are the compose
+      # stack's shifted host ports (5433/6381) rather than the defaults.
+      postgres:
+        image: postgres:18-alpine
+        env:
+          POSTGRES_USER: chartnexus
+          POSTGRES_PASSWORD: chartnexus
+          POSTGRES_DB: chartnexus
+        ports:
+          - 5433:5432
+        options: >-
+          --health-cmd "pg_isready -U chartnexus -d chartnexus"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 20
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6381:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 20
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+          cache-dependency-glob: backend/uv.lock
+
+      - name: Install
+        run: uv sync --frozen
+
+      - name: Migrate
+        run: uv run alembic upgrade head
+        env:
+          CN_ENVIRONMENT: test
+          CN_DB_URL: postgresql+asyncpg://chartnexus:chartnexus@localhost:5433/chartnexus
+
+      - name: Integration tests
+        run: uv run pytest tests/integration -m integration -q
+        env:
+          CN_ENVIRONMENT: test
+
+      # Separately marked, and the suite the security review reads first.
+      - name: Security tests
+        run: uv run pytest tests -m security -q
+        env:
+          CN_ENVIRONMENT: test

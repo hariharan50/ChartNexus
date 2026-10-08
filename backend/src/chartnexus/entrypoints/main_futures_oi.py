@@ -20,7 +20,7 @@ import signal
 from chartnexus.bootstrap.container import Container
 from chartnexus.bootstrap.logging import configure_logging
 from chartnexus.bootstrap.settings import Settings, get_settings
-from chartnexus.entrypoints.catalog_runtime import load_registry
+from chartnexus.entrypoints.catalog_runtime import load_registry, registry_kept_current
 from chartnexus.entrypoints.futures_oi_runtime import run_futures_oi_loop, sweep_once
 from chartnexus.infrastructure.observability.structured_logging import get_logger
 
@@ -43,7 +43,8 @@ async def _run(settings: Settings, *, once: bool) -> None:
         if once:
             await sweep_once(container, settings)
         else:
-            await run_futures_oi_loop(container, settings, stop=stop)
+            async with registry_kept_current(container, settings, stop=stop):
+                await run_futures_oi_loop(container, settings, stop=stop)
     finally:
         log.info("futures_oi_stopping")
         await container.aclose()
