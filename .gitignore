@@ -14,6 +14,7 @@ secrets/
 .secrets/
 credentials.json
 service-account*.json
+devdocs
 
 # ---------------------------------------------------------------------------
 # Python / backend

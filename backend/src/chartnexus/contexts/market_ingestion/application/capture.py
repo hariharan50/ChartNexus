@@ -15,7 +15,8 @@ for the caller to log; the use case itself stays free of I/O and framework.
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from datetime import timedelta, timezone
+from datetime import date, datetime, timedelta, timezone
+from decimal import Decimal
 
 from chartnexus.contexts.market_ingestion.application.ports import (
     ChainObservation,
@@ -42,6 +43,28 @@ _LIVE = "live"
 
 
 @dataclass(frozen=True, slots=True)
+class CommittedSnapshot:
+    """One snapshot that reached the archive, described for a subscriber.
+
+    Separate from ``CaptureResult.written``, which holds display *labels* —
+    ``"NIFTY@2026-10-14"`` when more than one expiry is captured. Labels are for
+    a human reading a log line; anything that has to route on the symbol needs
+    it unmixed, which is what this carries.
+
+    Deliberately the header only. A subscriber is being told *that* a session
+    moved, not handed the book: the chain itself is a read, and one that already
+    has an endpoint.
+    """
+
+    symbol: str
+    session_date: date
+    captured_at: datetime
+    spot: Decimal
+    source: str
+    expiry: str | None = None
+
+
+@dataclass(frozen=True, slots=True)
 class CaptureResult:
     """What one tick did, for the caller to log."""
 
@@ -51,6 +74,9 @@ class CaptureResult:
     skipped_empty: tuple[str, ...] = ()
     skipped_unchanged: tuple[str, ...] = ()
     failed: tuple[tuple[str, str], ...] = ()
+    #: The same writes as ``written``, structured. Empty on a tick that wrote
+    #: nothing, so a caller can publish without checking anything else.
+    committed: tuple[CommittedSnapshot, ...] = ()
 
 
 @dataclass
@@ -60,6 +86,7 @@ class _Acc:
     skipped_empty: list[str] = field(default_factory=list)
     skipped_unchanged: list[str] = field(default_factory=list)
     failed: list[tuple[str, str]] = field(default_factory=list)
+    committed: list[CommittedSnapshot] = field(default_factory=list)
 
 
 class CaptureChainSnapshots:
@@ -99,6 +126,7 @@ class CaptureChainSnapshots:
             skipped_empty=tuple(acc.skipped_empty),
             skipped_unchanged=tuple(acc.skipped_unchanged),
             failed=tuple(acc.failed),
+            committed=tuple(acc.committed),
         )
 
     async def _capture_one(self, symbol: str, acc: _Acc) -> None:
@@ -188,6 +216,18 @@ class CaptureChainSnapshots:
             return False
 
         await self._writer.save(snapshot)
+        # Recorded from the snapshot rather than from the label: the label may
+        # carry an expiry suffix, and a subscriber routes on the symbol alone.
+        acc.committed.append(
+            CommittedSnapshot(
+                symbol=snapshot.symbol,
+                session_date=snapshot.session_date,
+                captured_at=snapshot.captured_at,
+                spot=snapshot.spot,
+                source=snapshot.source,
+                expiry=snapshot.expiry,
+            )
+        )
         return True
 
     async def _is_unchanged(self, snapshot: SnapshotToWrite) -> bool:

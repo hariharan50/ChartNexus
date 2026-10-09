@@ -502,6 +502,47 @@ class FuturesBoardHistorySettings(_Section):
     retention_days: int = Field(default=30, ge=1)
 
 
+class RealtimeSettings(_Section):
+    """The websocket fan-out process (``chartnexus.entrypoints.main_realtime``).
+
+    One Redis channel carries every snapshot-committed event; the process
+    subscribes to it once and routes by symbol to the connections that asked.
+    Per-connection rather than per-symbol subscriptions, because Redis pattern
+    subscriptions bill per matching channel and the fan-out is cheap in process.
+    """
+
+    model_config = _section_config("REALTIME_")
+
+    enabled: bool = True
+    host: str = "0.0.0.0"  # noqa: S104 — bound inside a container network
+    port: int = Field(default=8001, gt=0, le=65535)
+    path: str = "/ws"
+
+    # The channel the ingest loop publishes to and this process subscribes to.
+    # Namespaced through RedisClient.key(), so the wire name is `cn:rt:snapshots`.
+    snapshot_channel: str = "rt:snapshots"
+
+    # Per-connection send queue. Market data is worthless once stale, so a
+    # consumer that cannot keep up has its oldest pending frame dropped rather
+    # than stalling the fan-out or being disconnected: every frame is an
+    # invalidation signal, and the next one carries the client back to current.
+    send_queue_size: int = Field(default=64, ge=1)
+
+    # Topics one connection may hold. A dashboard watches a handful; anything
+    # near this is a client bug, and refusing it keeps one socket from pinning
+    # the router's per-message work.
+    max_topics_per_connection: int = Field(default=64, ge=1)
+
+    # Connections this process accepts. Each costs a queue and a task; the
+    # ceiling is what stops a runaway client from exhausting the process.
+    max_connections: int = Field(default=512, ge=1)
+
+    # Tickets are single-use: the handshake burns the jti in Redis, so a
+    # captured ticket cannot be replayed inside its (short) lifetime. Turn off
+    # only to debug a reconnect loop, never in a deployed environment.
+    single_use_tickets: bool = True
+
+
 class Settings(BaseSettings):
     """Root settings object. Build it once per process via :func:`get_settings`."""
 
@@ -537,6 +578,7 @@ class Settings(BaseSettings):
     futures_history: FuturesBoardHistorySettings = Field(
         default_factory=FuturesBoardHistorySettings
     )
+    realtime: RealtimeSettings = Field(default_factory=RealtimeSettings)
 
     def assert_deployment_safe(self) -> None:
         """Fail fast when a deployed environment still holds development defaults."""

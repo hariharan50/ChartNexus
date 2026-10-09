@@ -23,13 +23,16 @@ from __future__ import annotations
 
 import asyncio
 import contextlib
+from collections.abc import Sequence
 from datetime import UTC, date, datetime, timedelta, timezone
 
 from chartnexus.bootstrap.container import Container
 from chartnexus.bootstrap.settings import Settings
 from chartnexus.contexts.instrument_catalog.domain.instrument import InstrumentKind
+from chartnexus.contexts.market_ingestion.application.capture import CommittedSnapshot
 from chartnexus.contexts.market_ingestion.application.retention import PruneSnapshots
 from chartnexus.contexts.market_ingestion.application.rollup import RollupDailyIv
+from chartnexus.infrastructure.cache.redis.pubsub import RedisPubSub
 from chartnexus.infrastructure.catalog import registry
 from chartnexus.infrastructure.ingestion.chain_source import build_ingest_service
 from chartnexus.infrastructure.ingestion.daily_iv_rollup import (
@@ -96,6 +99,53 @@ async def capture_tick(container: Container, settings: Settings, *, allow_mock: 
         skipped_unchanged=list(result.skipped_unchanged),
         failed=[symbol for symbol, _ in result.failed],
     )
+
+    await publish_committed(container, settings, result.committed)
+
+
+async def publish_committed(
+    container: Container,
+    settings: Settings,
+    committed: Sequence[CommittedSnapshot],
+) -> None:
+    """Announce each committed snapshot on Redis, for the websocket workers.
+
+    Deliberately after the writes, never instead of them: the archive is the
+    product and the notification is a courtesy. A publish that fails is logged
+    and swallowed — a browser that misses one prompt is behind by one tick and
+    corrects itself on the next, whereas a capture loop that died because Redis
+    hiccuped has lost a session of history nothing can recover.
+
+    Silently a no-op when no realtime worker is listening; Redis reports zero
+    subscribers, which is the normal state with no browser open.
+    """
+    if not committed or not settings.realtime.enabled:
+        return
+
+    pubsub = RedisPubSub(container.redis)
+    published_at = datetime.now(UTC).isoformat().replace("+00:00", "Z")
+    for snapshot in committed:
+        try:
+            await pubsub.publish(
+                settings.realtime.snapshot_channel,
+                {
+                    "symbol": snapshot.symbol,
+                    "session_date": snapshot.session_date.isoformat(),
+                    "captured_at": snapshot.captured_at.isoformat().replace("+00:00", "Z"),
+                    "source": snapshot.source,
+                    # Prices cross the wire as strings. JSON numbers are
+                    # doubles, and a Decimal is not one.
+                    "spot": None if snapshot.spot is None else str(snapshot.spot),
+                    "expiry": snapshot.expiry,
+                    "published_at": published_at,
+                },
+            )
+        except Exception as exc:
+            log.warning(
+                "ingest_publish_failed",
+                symbol=snapshot.symbol,
+                error=repr(exc),
+            )
 
 
 async def prune_once(container: Container, settings: Settings) -> None:

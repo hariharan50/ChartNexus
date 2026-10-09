@@ -20,6 +20,7 @@ from chartnexus.infrastructure.security.encryption import AesGcmCipher
 from chartnexus.infrastructure.security.google_oauth import GoogleOAuthClient
 from chartnexus.infrastructure.security.password_hasher import Argon2Hasher
 from chartnexus.infrastructure.security.token_signer import JwtAccessTokenIssuer
+from chartnexus.infrastructure.security.websocket_tickets import JwtWebsocketTicketIssuer
 
 
 @dataclass(slots=True)
@@ -34,6 +35,10 @@ class Container:
     # startup, JWT parses its key), so both are built once per process.
     password_hasher: Argon2Hasher
     access_tokens: JwtAccessTokenIssuer
+    # Mints and verifies the short-lived tickets that open a websocket. Built in
+    # every process because both halves need it: the API signs them, the
+    # realtime worker verifies them.
+    websocket_tickets: JwtWebsocketTicketIssuer
     # Encrypts broker credentials at rest with AES-256-GCM. Key derivation runs
     # once here rather than on every repository construction.
     token_cipher: AesGcmCipher
@@ -63,6 +68,7 @@ class Container:
             http=http,
             password_hasher=Argon2Hasher(resolved.security),
             access_tokens=JwtAccessTokenIssuer(resolved.auth, resolved.security),
+            websocket_tickets=JwtWebsocketTicketIssuer(resolved.auth, resolved.security),
             token_cipher=AesGcmCipher.derive(
                 resolved.security.encryption_key.get_secret_value(),
                 previous_secrets=resolved.security.retired_encryption_keys,

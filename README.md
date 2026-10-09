@@ -86,11 +86,42 @@ alone gives you a populated application.
 | `hugin`           | `main_hugin.py`            | HUGIN's hourly graded market memory              |
 | `mme100`          | `main_mme100.py`           | the MME100 pre-market briefing                   |
 | `report`          | `main_report.py`           | the daily PDF, per enrolled tenant               |
+| `realtime`        | `main_realtime.py`         | the websocket fan-out, on its own port (8001)    |
 
-`main_score.py` and `main_realtime.py` are **empty placeholders** — there is no
-scoring worker and no websocket process yet, and nothing in the browser opens a
-socket. `chartnexus-signals` and `chartnexus-oi` are offline operator CLIs
+`main_score.py` is still an **empty placeholder** — there is no scoring worker
+yet. `chartnexus-signals` and `chartnexus-oi` are offline operator CLIs
 (fit/backtest, and seed/prune of the archive), not workers.
+
+### The realtime process
+
+`realtime` serves `/ws` on port 8001 and is the one process that holds long-lived
+connections, which is why it is not an API worker: a socket held for a trading
+session would occupy one for the same length of time.
+
+It reads no Postgres and calls no broker. The ingest loop publishes a
+`snapshot_committed` event on Redis after each write; this process subscribes
+once, routes by symbol, and pushes a frame carrying headline numbers — not the
+chain. The browser then refetches detail over REST into the same query cache the
+polled reads fill, so one transport owns the shapes and the socket never has to
+version a 54-strike payload.
+
+Authentication is by **single-use ticket**, not the session cookie: a browser
+cannot set headers on a websocket handshake, and the cross-origin cookie does
+not travel. `POST /api/v1/realtime/ticket` mints one, valid 60 seconds and for
+one connection; present it as `?ticket=`. Fetch a fresh one per attempt,
+including every reconnect — a replayed ticket is refused with
+`ticket_already_used`.
+
+The protocol lives in `contracts/websocket/v1/`, and
+`tests/contract/websocket/` keeps the codec and those schemas in step.
+
+**Not yet wired into production.** `compose.prod.yml` does not run it and nginx
+still answers `/ws` with 501, pending a browser client. Locally it runs under
+the `full` profile (`docker compose --profile full up -d`) or directly:
+
+```bash
+cd backend && uv run chartnexus-realtime
+```
 
 ## Architecture rules
 

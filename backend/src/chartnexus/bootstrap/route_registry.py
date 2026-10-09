@@ -21,6 +21,7 @@ from chartnexus.contexts.market_data.api.router import router as market_router
 from chartnexus.contexts.messaging.api.router import router as messaging_router
 from chartnexus.contexts.mme100.api.router import router as mme100_router
 from chartnexus.contexts.options_analytics.api.router import router as options_lab_router
+from chartnexus.contexts.realtime_delivery.api.router import router as realtime_router
 from chartnexus.contexts.report.api.router import router as report_router
 from chartnexus.contexts.signals.api.router import router as signals_router
 from chartnexus.contexts.stryx.api.router import router as stryx_router
@@ -44,6 +45,7 @@ _ROUTERS: tuple[APIRouter, ...] = (
     mme100_router,
     messaging_router,
     report_router,
+    realtime_router,
 )
 
 

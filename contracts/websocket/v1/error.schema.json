@@ -1,0 +1,34 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://contracts.chartnexus.app/websocket/v1/error.schema.json",
+  "title": "Websocket error",
+  "description": "Carried inside a server message of type \"error\". Mirrors the REST surface's RFC 7807 bodies in spirit — a stable machine-readable `code` plus prose a client may surface — but stays flat, because a websocket frame has no status line to carry it.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["code", "message"],
+  "properties": {
+    "code": {
+      "description": "Stable identifier. Clients branch on this, never on `message`.",
+      "type": "string",
+      "enum": [
+        "malformed_frame",
+        "unknown_message_type",
+        "unknown_topic",
+        "topic_limit_exceeded",
+        "not_authenticated",
+        "ticket_expired",
+        "ticket_already_used",
+        "internal_error"
+      ]
+    },
+    "message": {
+      "description": "Human-readable prose. Safe to display; never contains credentials or internal detail.",
+      "type": "string",
+      "minLength": 1
+    },
+    "id": {
+      "description": "Echo of the client message's `id`, when the failure is attributable to one. Absent for connection-level failures.",
+      "type": "string"
+    }
+  }
+}

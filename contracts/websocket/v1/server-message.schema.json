@@ -1,0 +1,118 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://contracts.chartnexus.app/websocket/v1/server-message.schema.json",
+  "title": "Server to client websocket message",
+  "description": "Every frame /ws sends. `snapshot_committed` is the only data-bearing type today; it is an invalidation signal with headline numbers, not the chain itself. The browser refetches the detail over REST into the same query cache the polled reads fill, so one transport owns the shapes and the socket never has to version a 54-strike payload.",
+  "oneOf": [
+    { "$ref": "#/$defs/welcome" },
+    { "$ref": "#/$defs/ack" },
+    { "$ref": "#/$defs/snapshotCommitted" },
+    { "$ref": "#/$defs/pong" },
+    { "$ref": "#/$defs/error" }
+  ],
+  "$defs": {
+    "welcome": {
+      "description": "Sent once, immediately after the handshake succeeds. A client may treat its arrival as proof the ticket was accepted.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["type", "connection_id", "protocol_version", "server_time"],
+      "properties": {
+        "type": { "const": "welcome" },
+        "connection_id": {
+          "description": "Server-assigned id for this connection. Appears in server logs; worth including in a bug report.",
+          "type": "string"
+        },
+        "protocol_version": { "const": 1 },
+        "server_time": {
+          "description": "RFC 3339, UTC. Lets a client measure its own clock skew before trusting any timestamp below.",
+          "type": "string",
+          "format": "date-time"
+        }
+      }
+    },
+    "ack": {
+      "description": "Confirms a subscribe or unsubscribe. `topics` is the connection's complete resulting set, not a delta — a client can overwrite its local state with it rather than reconciling.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["type", "topics"],
+      "properties": {
+        "type": { "const": "ack" },
+        "topics": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": { "type": "string" }
+        },
+        "id": { "type": "string" }
+      }
+    },
+    "snapshotCommitted": {
+      "description": "One option-chain snapshot reached Postgres. Published by the ingest loop, fanned out to every connection holding `snapshots:<SYMBOL>` or `snapshots:*`.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["type", "topic", "published_at", "payload"],
+      "properties": {
+        "type": { "const": "snapshot_committed" },
+        "topic": {
+          "description": "The subscribed topic this frame satisfies. Always the concrete `snapshots:<SYMBOL>` form, even for a client that subscribed with the wildcard.",
+          "type": "string"
+        },
+        "published_at": {
+          "description": "RFC 3339, UTC. When the publisher emitted this, not when the socket sent it.",
+          "type": "string",
+          "format": "date-time"
+        },
+        "payload": { "$ref": "#/$defs/snapshotPayload" }
+      }
+    },
+    "snapshotPayload": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["symbol", "session_date", "captured_at", "source"],
+      "properties": {
+        "symbol": { "type": "string" },
+        "session_date": {
+          "description": "The IST trading date the snapshot belongs to.",
+          "type": "string",
+          "format": "date"
+        },
+        "captured_at": {
+          "description": "RFC 3339, UTC. When the chain was fetched from the provider.",
+          "type": "string",
+          "format": "date-time"
+        },
+        "source": {
+          "description": "Provenance, straight from the provider: `live` from a broker, `mock` from the simulator. A client should badge mock data rather than present it as the market.",
+          "type": "string",
+          "enum": ["live", "mock"]
+        },
+        "spot": {
+          "description": "Underlying price at capture, as a decimal string so no precision is lost in JSON's doubles. Null when the provider did not quote it.",
+          "type": ["string", "null"]
+        },
+        "expiry": {
+          "description": "The expiry this chain is for, or null when the provider did not say.",
+          "type": ["string", "null"]
+        }
+      }
+    },
+    "pong": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["type", "server_time"],
+      "properties": {
+        "type": { "const": "pong" },
+        "server_time": { "type": "string", "format": "date-time" },
+        "id": { "type": "string" }
+      }
+    },
+    "error": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["type", "error"],
+      "properties": {
+        "type": { "const": "error" },
+        "error": { "$ref": "https://contracts.chartnexus.app/websocket/v1/error.schema.json" }
+      }
+    }
+  }
+}

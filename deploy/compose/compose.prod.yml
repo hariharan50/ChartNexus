@@ -9,8 +9,12 @@
 # file you want to be reading during an incident.
 #
 # What is NOT here:
-#   * `realtime` — backend/.../main_realtime.py is an empty placeholder and
-#     nothing in the browser opens a socket yet. nginx answers /ws with 501.
+#   * `realtime` — main_realtime.py is implemented (websocket fan-out on 8001,
+#     fed by the ingest loop over Redis), but nothing in the browser opens a
+#     socket yet, so running it here would hold connections no one makes. nginx
+#     still answers /ws with 501. To enable: add the service, point /ws at
+#     realtime:8001 in deploy/nginx/, and deploy the browser client in the same
+#     release — a client that reconnects against a 501 will loop.
 #   * `score` — main_score.py is likewise empty. The signals CLI
 #     (`chartnexus-signals`) is an offline fit/backtest tool, not a worker.
 #   * Host ports for Postgres and Redis. Reach them through

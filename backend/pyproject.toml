@@ -77,6 +77,7 @@ chartnexus-signals = "chartnexus.entrypoints.main_signals:run"
 chartnexus-hugin = "chartnexus.entrypoints.main_hugin:run"
 chartnexus-mme100 = "chartnexus.entrypoints.main_mme100:run"
 chartnexus-report = "chartnexus.entrypoints.main_report:run"
+chartnexus-realtime = "chartnexus.entrypoints.main_realtime:run"
 
 [dependency-groups]
 dev = [
