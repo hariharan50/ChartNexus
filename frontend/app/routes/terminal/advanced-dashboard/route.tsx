@@ -17,6 +17,7 @@ import type { IndexKey } from '$contexts/market-data/view-models';
 import { formatInt } from '$shared/formatting/numbers';
 import IndexTabs from '../dashboard/components/IndexTabs';
 import LiveBadge from '../dashboard/components/LiveBadge';
+import { useRealtimeSymbols } from '$shared/realtime/RealtimeProvider';
 import FuturesCard from './components/FuturesCard';
 import MetricTile from './components/MetricTile';
 import SpotCard from './components/SpotCard';
@@ -41,6 +42,14 @@ function toFut(label: string, q: FuturesQuote | undefined) {
 
 export default function AdvancedDashboard() {
   const [focused, setFocused] = useState<IndexKey>('NIFTY50');
+
+  // Declare what this page needs live. The three spot cards are fixed; the chain
+  // follows the focused tab, so switching tabs swaps one subscription rather
+  // than reconnecting. Deduplicated inside the hook, so the focused index being
+  // one of the three costs nothing.
+  useRealtimeSymbols(
+    useMemo(() => ['NIFTY', 'SENSEX', 'BANKNIFTY', toBackendSymbol(focused)], [focused])
+  );
 
   // Live queries. Spots are fixed; the option chain follows the focused tab and
   // feeds the metrics strip. All share the cache the websocket stream will fill.

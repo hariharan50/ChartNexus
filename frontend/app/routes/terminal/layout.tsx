@@ -7,6 +7,8 @@ import { useSignOut } from '$contexts/identity/use-session';
 import { isApiError } from '$shared/api/errors';
 import { createQueryClient } from '$shared/api/query-client';
 import { createServerFetch } from '$shared/api/server-fetch';
+import { RealtimeProvider, useRealtimeStatus } from '$shared/realtime/RealtimeProvider';
+import RealtimeIndicator from '$shared/realtime/RealtimeIndicator';
 import { cx } from '$shared/ui/cx';
 import IconBolt from '$shared/ui/icons/IconBolt';
 import IconChart from '$shared/ui/icons/IconChart';
@@ -72,8 +74,13 @@ export default function TerminalLayout({ loaderData }: Route.ComponentProps) {
 
   return (
     <QueryClientProvider client={queryClient}>
-      {/* The shell is a child so its hooks sit inside the provider. */}
-      <TerminalShell user={loaderData.user} />
+      {/* Inside the query provider: the socket's only job is invalidating that
+          cache. Outside the shell: one connection for the whole terminal, so a
+          navigation does not drop and re-handshake it. */}
+      <RealtimeProvider>
+        {/* The shell is a child so its hooks sit inside the provider. */}
+        <TerminalShell user={loaderData.user} />
+      </RealtimeProvider>
     </QueryClientProvider>
   );
 }
@@ -169,6 +176,18 @@ const nav: NavItem[] = [
   { label: 'Option Chain', href: '/option-chain' },
   { label: 'Tools', href: '/tools' }
 ];
+
+/**
+ * The live-stream dot in the header.
+ *
+ * Its own component so a state change on the socket re-renders this and not the
+ * whole terminal shell — a flapping connection would otherwise re-render every
+ * menu in the header on each retry.
+ */
+function RealtimeStatusBadge() {
+  const { state, lastEventAt } = useRealtimeStatus();
+  return <RealtimeIndicator state={state} lastEventAt={lastEventAt} />;
+}
 
 function TerminalShell({ user }: { user: User }) {
   const location = useLocation();
@@ -362,6 +381,8 @@ function TerminalShell({ user }: { user: User }) {
             </span>
             <input type="search" placeholder="Search symbol…" aria-label="Search symbol" />
           </form>
+
+          <RealtimeStatusBadge />
 
           <button
             type="button"

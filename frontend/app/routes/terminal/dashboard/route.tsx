@@ -14,6 +14,7 @@ import {
   useOptionChainQuery,
   useSpotQuery
 } from '$contexts/market-data/queries';
+import { useRealtimeSymbols } from '$shared/realtime/RealtimeProvider';
 import DataSourceBadge from '$shared/ui/DataSourceBadge';
 import AiSummaryCard from './components/AiSummaryCard';
 import FiiDiiCard from './components/FiiDiiCard';
@@ -32,6 +33,14 @@ export const meta: Route.MetaFunction = () => [{ title: 'Intelligence Dashboard 
 
 export default function Dashboard() {
   const [focused, setFocused] = useState<IndexKey>('NIFTY50');
+
+  // Declare what this page needs live. The three spot cards are fixed; the chain
+  // follows the focused tab, so switching tabs swaps one subscription rather
+  // than reconnecting. Deduplicated inside the hook, so the focused index being
+  // one of the three costs nothing.
+  useRealtimeSymbols(
+    useMemo(() => ['NIFTY', 'SENSEX', 'BANKNIFTY', toBackendSymbol(focused)], [focused])
+  );
 
   // Live queries. The three index spots are fixed; the option chain follows the
   // focused tab. All share the query cache the websocket stream will later feed.
