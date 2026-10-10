@@ -225,15 +225,10 @@ one and a part of the product goes quietly blank rather than erroring.
 to completion on each deploy and exit. A `docker compose ps` showing them as
 `exited (0)` is correct.
 
-### Not deployed, because they do not exist yet
+### Not deployed, because it does not exist yet
 
-- **`realtime`** — `backend/src/chartnexus/entrypoints/main_realtime.py` is an
-  empty file, and nothing in the browser bundle opens a websocket. nginx
-  answers `/ws` with a 501 so a client that tries gets a clear answer instead of
-  a hang. When the process is written, add it to the compose file and point the
-  `/ws` location at it.
-- **`score`** — `main_score.py` is likewise empty. `chartnexus-signals` is an
-  offline fit/backtest CLI, not a worker.
+- **`score`** — `main_score.py` is empty. `chartnexus-signals` is an offline
+  fit/backtest CLI, not a worker.
 
 ---
 

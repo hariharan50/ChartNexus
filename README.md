@@ -115,9 +115,9 @@ including every reconnect — a replayed ticket is refused with
 The protocol lives in `contracts/websocket/v1/`, and
 `tests/contract/websocket/` keeps the codec and those schemas in step.
 
-**Not yet wired into production.** `compose.prod.yml` does not run it and nginx
-still answers `/ws` with 501, pending a browser client. Locally it runs under
-the `full` profile (`docker compose --profile full up -d`) or directly:
+In production it runs as the `realtime` service and nginx proxies `/ws` to it.
+Locally it runs under the `full` profile (`docker compose --profile full up -d`)
+or directly:
 
 ```bash
 cd backend && uv run chartnexus-realtime

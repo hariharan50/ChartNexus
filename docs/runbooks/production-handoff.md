@@ -126,7 +126,7 @@ release tasks. A worker that dies exits its container, which
 
 | Path | What it is |
 | --- | --- |
-| `deploy/compose/compose.prod.yml` | The stack: 15 services. Self-contained, **not** layered over `compose.yml` — compose merges list keys by appending, so a `ports:` entry in a base file cannot be removed by an override, and layering would have published Postgres and Redis to the internet. |
+| `deploy/compose/compose.prod.yml` | The stack: 16 services. Self-contained, **not** layered over `compose.yml` — compose merges list keys by appending, so a `ports:` entry in a base file cannot be removed by an override, and layering would have published Postgres and Redis to the internet. |
 | `.env.production.example` | The only file to edit on the server. Maps ~15 inputs onto the application's ~90 `CN_*` settings. |
 | `.dockerignore` | See #1. Load-bearing, not an optimisation. |
 | `deploy/nginx/nginx.conf` | Main config: the resolver (#4), rate-limit zones, real-IP recovery, log format, gzip. |
@@ -230,9 +230,10 @@ Merging them to "remove duplication" republishes Postgres and Redis to the host.
 - **Postgres and Redis publish no host ports.** Use `docker compose exec`.
   Redis requires a password, which is carried in `CN_REDIS_URL`; keep both
   passwords URL-safe, since they are interpolated into DSNs.
-- **`/ws` returns 501 on purpose.** `main_realtime.py` is an empty file and
-  nothing in the browser opens a socket. An explicit 501 beats a hang. When that
-  process is written, add it to the compose file and point the location at it.
+- **`/ws` is the realtime fan-out**, served by the `realtime` container on
+  8001 and proxied by nginx. It and the browser client must ship in the same
+  release: a client that cannot reach it sits in `Reconnecting` and falls back
+  to polling, which is degraded but not broken.
 - **First boot serves a self-signed certificate** and the browser will warn,
   until `issue-certificate.sh` runs. That is the designed sequence, not a fault.
 

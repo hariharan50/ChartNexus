@@ -129,11 +129,11 @@ Browser
   -> https://127.0.0.1:8094   (ChartNexus's own nginx container, self-signed cert)
        /api/*  -> api   (FastAPI)
        /*      -> web   (React Router server)
-       /ws     -> 501, deliberately (see the handoff doc)
+       /ws     -> realtime (websocket fan-out)
   -> postgres, redis  (container network only, never published)
 ```
 
-### Services (15)
+### Services (16)
 
 | Service | Expected status | Role |
 |---|---|---|
@@ -143,6 +143,7 @@ Browser
 | `catalog-sync` | **Exited (0)** | One-time release task: syncs the catalog, then exits. That's correct. |
 | `api` | Up (healthy) | FastAPI backend |
 | `web` | Up (healthy) | Frontend server |
+| `realtime` | Up (healthy) | Websocket fan-out behind `/ws`. Redis only — no database pool. |
 | `nginx` | Up (healthy) | Reverse proxy, on `127.0.0.1:8093/8094` only |
 | `certbot` | Up | Renewal loop. Idle here: we don't use Let's Encrypt for this app. |
 | `catalog`, `ingest`, `futures-oi`, `futures-history`, `hugin`, `mme100`, `report` | Up (no health) | The 7 market-data workers. Healthchecks are **disabled on purpose**. |
@@ -438,7 +439,7 @@ These look wrong, but the tidy-looking alternative is the **broken** one. Each h
 | Workers start with `python -m ...` | The `chartnexus-*` console scripts don't exist in the runtime image |
 | Web starts with `node_modules/.bin/react-router-serve` | `pnpm` isn't in the runtime image |
 | Worker healthchecks are disabled | They inherited the API's HTTP healthcheck and showed "unhealthy" forever |
-| `/ws` returns 501 | Deliberate |
+| `realtime` waits only on `redis`, not on `migrate` | It opens no database pool, so waiting on the schema would delay it for nothing |
 | `migrate` / `catalog-sync` show `Exited (0)` | One-time release tasks. Exiting with 0 means success. |
 
 If you ask an AI tool to "clean up" this code, **point it at this section first**.
@@ -516,7 +517,7 @@ Used ports: 8080, 8081, 8091, 8092, 8093, 8094, plus 8778 (IC bot dashboard). Fo
 4. Created `deploy/compose/compose.server.yml` (nginx on 127.0.0.1:8093/8094), and added it and `.env.production` to `.git/info/exclude`.
 5. `cp .env.production.example .env.production`, generated 5 secrets with `secrets.token_urlsafe`, set `CN_DOMAIN`, and ran `chmod 600`.
 6. Checked with `$C config` that only 127.0.0.1:8093/8094 are published.
-7. `$C up -d --build`: all 15 services in the expected state, local curl 200.
+7. `$C up -d --build`: all 16 services in the expected state, local curl 200.
 8. Added the tunnel route to `/etc/cloudflared/config.yml` (validated, restarted, reference copy updated).
 9. `cloudflared tunnel route dns --overwrite-dns ...` replaced the old A record with the tunnel CNAME.
 10. All five sites returned 200 through the tunnel.

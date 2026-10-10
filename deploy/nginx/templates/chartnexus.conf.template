@@ -74,13 +74,46 @@ server {
     }
 
     # --- websockets --------------------------------------------------------
-    # Reserved, not wired. `backend/.../main_realtime.py` is an empty
-    # placeholder and nothing in the browser bundle opens a socket yet, so
-    # there is no upstream to name here. When that process exists, add it to
-    # compose.prod.yml and proxy to it. Until then an explicit 501 beats a
-    # connection that hangs until it times out.
+    # The realtime fan-out (`backend/.../main_realtime.py`), its own process on
+    # 8001 because a socket is held for the length of a trading session and an
+    # API worker occupied by one is an API worker serving nobody.
+    #
+    # No `limit_req` here. A handshake is one request, but a browser that drops
+    # retries on a backoff, and throttling those turns a blip into a client
+    # stuck behind 429s. The server-level `limit_conn` already caps how many
+    # sockets one address can hold at once, which is the limit that matters for
+    # a transport that keeps its connection.
     location /ws {
-        return 501;
+        # Via a variable for the same reason as the API — see the note at the
+        # top of this file and in snippets/proxy-api.conf.
+        set $realtime_upstream "realtime:8001";
+        proxy_pass http://$realtime_upstream;
+
+        # 1.1 is what makes an Upgrade possible at all; `$connection_upgrade`
+        # (mapped in nginx.conf) is "upgrade" for a handshake and empty
+        # otherwise, so a stray plain GET here degrades to an ordinary proxied
+        # request rather than a malformed one.
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade    $http_upgrade;
+        proxy_set_header Connection $connection_upgrade;
+
+        proxy_set_header Host              $host;
+        proxy_set_header X-Real-IP         $remote_addr;
+        proxy_set_header X-Forwarded-For   $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_set_header X-Request-ID      $request_id;
+
+        proxy_connect_timeout 5s;
+        # A quiet socket is normal — a client may say nothing for an hour — so
+        # the 60s read timeout used elsewhere would kill every idle connection.
+        # The process sends a protocol ping every 20s (ws_ping_interval), which
+        # resets this; an hour is the outer bound for a peer that vanished
+        # without closing, not an expected interval.
+        proxy_read_timeout 3600s;
+        proxy_send_timeout 3600s;
+
+        # Frames are small and immediacy is the whole point of this transport.
+        proxy_buffering off;
     }
 
     # --- health ------------------------------------------------------------
