@@ -1,13 +1,14 @@
 /**
  * The Tools catalogue — one entry per tool box on `/tools`.
  *
- * Every tool here is a placeholder for now (B1…B12). The names are deliberately
- * temporary: the grid, the routing and the open-a-tool path are what this
- * module pins down, so each tool can be built out one at a time by replacing
- * its entry's copy and giving it a real page, without touching the layout.
+ * Only built tools appear. The grid used to pad itself out to twelve with
+ * generated `B4`…`B12` placeholders, which advertised nine tools that did not
+ * exist and gave a reader nine dead ends to find. A tool earns its box by
+ * being built: add it to `BUILT`, give it a route, and retire its old slug
+ * below if it ever had one.
  */
 
-/** The badge tints, cycled across the grid so neighbouring boxes differ. */
+/** The badge tints. Neighbouring boxes should not share one. */
 export type ToolTone = 'violet' | 'indigo' | 'emerald' | 'sky' | 'amber' | 'rose';
 
 export interface ToolEntry {
@@ -15,17 +16,15 @@ export interface ToolEntry {
   slug: string;
   /** Two-letter monogram shown in the badge. */
   code: string;
-  /** Display name. Temporary until the tool is built. */
+  /** Display name. */
   name: string;
-  /** One or two lines on what the tool will do. */
+  /** One or two lines on what the tool does. */
   description: string;
   tone: ToolTone;
 }
 
-const TONES: readonly ToolTone[] = ['violet', 'indigo', 'emerald', 'sky', 'amber', 'rose'];
-
-/** The tools that exist. Built ones first; the rest are reserved slots. */
-const BUILT: readonly ToolEntry[] = [
+/** Order is the grid order. */
+export const TOOLS: readonly ToolEntry[] = [
   {
     slug: 'option-greeks',
     code: 'OG',
@@ -50,35 +49,6 @@ const BUILT: readonly ToolEntry[] = [
     tone: 'sky'
   }
 ];
-
-/** How many boxes the grid holds in total, built and reserved together. */
-const SLOTS = 12;
-
-/**
- * The slots still to be filled, numbered from where the built ones stop.
- *
- * Both the count and the first number are derived from `BUILT` rather than
- * written down: they were hardcoded to "ten slots starting at 3", which was
- * only correct while exactly two tools existed. Building a third regenerated a
- * `b3` that now belongs to a real page, so the grid carried two boxes claiming
- * the same slug and the reserved one shadowed the tool.
- */
-const RESERVED: readonly ToolEntry[] = Array.from(
-  { length: Math.max(0, SLOTS - BUILT.length) },
-  (_, index) => {
-    const n = BUILT.length + index + 1;
-    return {
-      slug: `b${n}`,
-      code: `B${n}`,
-      name: `B${n}`,
-      description: 'Advanced graphical tool — not built yet. This slot is reserved for it.',
-      tone: TONES[(BUILT.length + index) % TONES.length] as ToolTone
-    };
-  }
-);
-
-/** Order is the grid order. */
-export const TOOLS: readonly ToolEntry[] = [...BUILT, ...RESERVED];
 
 export function toolBySlug(slug: string | undefined): ToolEntry | undefined {
   return TOOLS.find((tool) => tool.slug === slug);

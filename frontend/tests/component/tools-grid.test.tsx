@@ -6,9 +6,9 @@ import Tools from '../../app/routes/terminal/tools/route';
 
 /**
  * The Tools landing is a grid of links, and the part worth pinning is that
- * every catalogue entry becomes one box that actually goes somewhere. The
- * tools themselves are placeholders (B1…B12) and will be replaced one at a
- * time; the grid, the slugs and the open path must survive that.
+ * every catalogue entry becomes one box that actually goes somewhere — and
+ * that nothing else does. The grid once padded itself to twelve with generated
+ * placeholders; only built tools belong in it now.
  */
 describe('Tools landing', () => {
   function renderGrid() {
@@ -42,7 +42,6 @@ describe('tool lookup', () => {
     expect(toolBySlug('option-greeks')?.name).toBe('Option Greeks');
     expect(toolBySlug('straddle-chart')?.name).toBe('Straddle Chart');
     expect(toolBySlug('straddle-pnl')?.name).toBe('Straddle PnL Simulator');
-    expect(toolBySlug('b4')?.name).toBe('B4');
     expect(toolBySlug('nope')).toBeUndefined();
   });
 
@@ -54,10 +53,11 @@ describe('tool lookup', () => {
     expect(new Set(slugs).size).toBe(slugs.length);
   });
 
-  it('numbers the reserved slots on from the built ones', () => {
-    const reserved = TOOLS.filter((tool) => /^b\d+$/.test(tool.slug));
-    const built = TOOLS.length - reserved.length;
-    expect(reserved[0]?.slug).toBe(`b${built + 1}`);
+  it('lists no placeholder slots', () => {
+    // The grid used to generate B4…B12 to fill twelve boxes, advertising nine
+    // tools that did not exist. Every entry must now be a built tool.
+    expect(TOOLS.filter((tool) => /^b\d+$/i.test(tool.slug))).toEqual([]);
+    expect(TOOLS).toHaveLength(3);
   });
 });
 
