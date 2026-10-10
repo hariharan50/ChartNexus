@@ -101,6 +101,12 @@ services:
     environment:
       PUBLIC_API_BASE_URL: http://localhost:8000/api/v1
       PUBLIC_WS_URL: ws://localhost:8001/ws
+      # The two above are browser-visible and resolve from the host. A loader
+      # runs inside this container, where `localhost:8000` is its own loopback
+      # and nothing is listening — which failed every SSR render with
+      # ECONNREFUSED rather than anything that named the cause. Same reason
+      # compose.prod.yml sets it; dev simply never did.
+      API_INTERNAL_URL: http://api:8000
     volumes:
       - ../../frontend:/app
       # Keep the container's own node_modules — the host tree is built for
