@@ -51,12 +51,7 @@ const sections: Section[] = [
       { label: 'Index Contributors', glyph: 'columns', href: '/future-lab/index-contributors' },
       { label: 'Advance Decline', glyph: 'activity', href: '/future-lab/advance-decline' },
       { label: 'Index Weightage', glyph: 'pie', href: '/future-lab/index-weightage' },
-      {
-        label: 'Sector Rotation',
-        glyph: 'scatter',
-        href: '/future-lab/sector-rotation',
-        isNew: true
-      }
+      { label: 'Sector Rotation', glyph: 'scatter', href: '/future-lab/sector-rotation' }
     ]
   }
 ];
