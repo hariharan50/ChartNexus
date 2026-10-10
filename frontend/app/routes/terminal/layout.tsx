@@ -14,6 +14,8 @@ import IconBolt from '$shared/ui/icons/IconBolt';
 import IconChart from '$shared/ui/icons/IconChart';
 import IconChevronDown from '$shared/ui/icons/IconChevronDown';
 import IconGlobe from '$shared/ui/icons/IconGlobe';
+import IconGrid from '$shared/ui/icons/IconGrid';
+import IconLayout from '$shared/ui/icons/IconLayout';
 import IconMessage from '$shared/ui/icons/IconMessage';
 import IconMoon from '$shared/ui/icons/IconMoon';
 import IconSearch from '$shared/ui/icons/IconSearch';
@@ -85,8 +87,14 @@ export default function TerminalLayout({ loaderData }: Route.ComponentProps) {
   );
 }
 
-// The menu structure the terminal will grow into. Only Dashboards and Option
-// Chain resolve today; the rest are stubs the routing work will fill in.
+// The top-level menu.
+//
+// **Five entries, and it should stay five.** The header is one flex row, so
+// every top-level item competes for width with the search box and the account
+// cluster on the right. At eight items it needed 1574px and silently painted
+// the last tab underneath the search field on any screen narrower than that —
+// a 1536px laptop, which is to say most of them. A new destination belongs
+// inside one of these menus, not beside them.
 type NavChild = {
   label: string;
   href: string;
@@ -171,10 +179,32 @@ const nav: NavItem[] = [
       }
     ]
   },
-  { label: 'Chart Tools', href: '/analyse' },
-  { label: 'Advance Tools', href: '/advance-tool' },
-  { label: 'Option Chain', href: '/option-chain' },
-  { label: 'Tools', href: '/tools' }
+  {
+    label: 'Tools',
+    href: '/tools',
+    menuTitle: 'Tools',
+    menuSub: 'Charting workspace, desk utilities and the tool library',
+    children: [
+      {
+        label: 'Chart Tools',
+        href: '/analyse',
+        icon: IconLayout,
+        desc: 'Multi-chart workspace, one to four up'
+      },
+      {
+        label: 'Advance Tools',
+        href: '/advance-tool',
+        icon: IconBolt,
+        desc: 'Messaging channels and desk utilities'
+      },
+      {
+        label: 'All Tools',
+        href: '/tools',
+        icon: IconGrid,
+        desc: 'The full analytical tool library'
+      }
+    ]
+  }
 ];
 
 /**
@@ -225,6 +255,18 @@ function TerminalShell({ user }: { user: User }) {
    * into line.
    */
   const isCurrent = (href: string): boolean => location.pathname === href;
+
+  /**
+   * For a top-level tab that owns a submenu.
+   *
+   * Its own `href` is not enough: Tools points at `/tools`, but Chart Tools and
+   * Advance Tools live at `/analyse` and `/advance-tool`, so matching the
+   * parent alone would leave the header with nothing lit on two of its three
+   * destinations. Each of those used to be its own tab, which is exactly the
+   * highlight this restores.
+   */
+  const isSectionActive = (item: NavItem): boolean =>
+    isActive(item.href) || (item.children?.some((child) => isActive(child.href)) ?? false);
 
   // Native <details> menus do not close one another or dismiss on an outside
   // click. We keep the whole header in `headerEl` and close every open menu on
@@ -321,7 +363,7 @@ function TerminalShell({ user }: { user: User }) {
                     </details>
                   ) : item.children ? (
                     <details className={s.navMenu}>
-                      <summary className={cx(s.navLink, isActive(item.href) && s.active)}>
+                      <summary className={cx(s.navLink, isSectionActive(item) && s.active)}>
                         {item.label}
                         <span className={s.caret} aria-hidden="true">
                           <IconChevronDown />

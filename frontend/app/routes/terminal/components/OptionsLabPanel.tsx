@@ -17,6 +17,10 @@ const sections: Section[] = [
   {
     title: 'OI Tools',
     items: [
+      // The raw chain every other module here derives from, so it leads the
+      // list. It was a top-level tab until the header ran out of room; this is
+      // where a reader looking for it would have guessed first anyway.
+      { label: 'Option Chain', glyph: 'table', href: '/option-chain' },
       { label: 'Open Interest', glyph: 'layers', href: '/options/open-interest' },
       { label: 'Multi OI & Volume', glyph: 'bars', href: '/options/multi-oi-volume' },
       { label: 'Put-Call Ratio', glyph: 'scale', href: '/options/pcr' },
