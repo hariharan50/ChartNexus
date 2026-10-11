@@ -71,7 +71,12 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      # package_json_file because `defaults.run.working-directory` applies to
+      # `run:` steps only: an action step still resolves paths from the repo
+      # root, where there is no package.json to read `packageManager` from.
       - uses: pnpm/action-setup@v4
+        with:
+          package_json_file: frontend/package.json
       - uses: actions/setup-node@v4
         with:
           node-version: 22
