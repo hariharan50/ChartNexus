@@ -122,5 +122,8 @@ class RedisPubSub:
             with contextlib.suppress(Exception):
                 await pubsub.unsubscribe(namespaced)
             with contextlib.suppress(Exception):
-                await pubsub.aclose()
+                # redis-py ships types but leaves PubSub.aclose unannotated, so
+                # strict mode reads it as an untyped call. Narrow ignore rather
+                # than the deprecated close(), which is annotated but on its way out.
+                await pubsub.aclose()  # type: ignore[no-untyped-call]
             log.info("pubsub_unsubscribed", channel=namespaced)
