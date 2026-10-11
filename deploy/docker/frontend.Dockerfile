@@ -48,7 +48,17 @@ ENV NODE_ENV=production \
     HOST=0.0.0.0
 WORKDIR /app
 
-RUN addgroup --system --gid 1001 app \
+# npm, corepack and yarn ship with the base image and are never used here: the
+# server starts from the `react-router-serve` binary in node_modules, and the
+# healthcheck shells out to `node`. They were also the entirety of this image's
+# container-scan findings — ten HIGH, every one of them inside npm's own bundled
+# dependencies, none in the application's.
+RUN rm -rf /usr/local/lib/node_modules/npm \
+        /usr/local/lib/node_modules/corepack \
+        /opt/yarn-v* \
+        /usr/local/bin/npm /usr/local/bin/npx /usr/local/bin/corepack \
+        /usr/local/bin/yarn /usr/local/bin/yarnpkg \
+    && addgroup --system --gid 1001 app \
     && adduser --system --uid 1001 --ingroup app app
 
 # React Router build output — `build/client` (static assets) and `build/server`

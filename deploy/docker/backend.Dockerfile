@@ -40,9 +40,15 @@ CMD ["uv", "run", "uvicorn", "chartnexus.entrypoints.main_api:create_app", \
 # --------------------------------------------------------------------------
 FROM base AS runtime
 # --------------------------------------------------------------------------
+# pip goes in the same command. Nothing installs packages in this image: the
+# virtualenv arrives already built from the dependencies stage and uvicorn runs
+# out of it, so the base image's pip is dead weight — and its vendored urllib3,
+# msgpack and pkg_resources were the whole of this image's container-scan
+# findings. The project's own venv is clean; only the tool nobody runs was not.
 RUN apt-get update \
     && apt-get install -y --no-install-recommends curl \
     && rm -rf /var/lib/apt/lists/* \
+    && /usr/local/bin/python -m pip uninstall -y pip \
     && groupadd --system --gid 1001 app \
     && useradd --system --uid 1001 --gid app --no-create-home app
 

@@ -2,11 +2,19 @@
 # Build context is the repository root.
 #   docker build -f deploy/docker/nginx.Dockerfile .
 
-FROM nginx:1.27-alpine
+FROM nginx:1.29-alpine
 
+# Alpine's package index moves faster than any base image is rebuilt, so a tag
+# ships packages that already have fixes published against them: 1.27-alpine sat
+# on Alpine 3.21.3 and carried 25 HIGH, and even nginx:alpine, two Alpine
+# releases newer, carried three. Upgrading the index is what actually clears
+# them, and what keeps security-scan's HIGH/CRITICAL gate reachable at all —
+# moving the pin alone never reaches zero.
+#
 # openssl for the placeholder certificate the entrypoint generates; curl for
 # the healthcheck below.
-RUN apk add --no-cache openssl curl
+RUN apk upgrade --no-cache \
+    && apk add --no-cache openssl curl
 
 # The base image ships a `default.conf` serving the "Welcome to nginx" page on
 # port 80. nginx.conf includes conf.d/*.conf, so leaving it there adds a second
