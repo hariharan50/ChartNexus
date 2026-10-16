@@ -23,8 +23,15 @@ const USER = {
   phone: '+919876543210',
   display_name: 'Test User',
   status: 'active',
+  // The terminal shell reads `roles` to gate the admin entry, so the stub has
+  // to carry every required field of the `User` contract, not just the ones a
+  // given page happens to render.
+  roles: [],
   email_verified: true,
-  created_at: '2026-01-01T00:00:00Z'
+  has_password: true,
+  linked_providers: [],
+  created_at: '2026-01-01T00:00:00Z',
+  last_login_at: '2026-01-15T09:00:00Z'
 };
 
 const PROVENANCE = { source: 'mock', age_seconds: 0, fetched_at: '2026-01-01T10:00:00Z' };

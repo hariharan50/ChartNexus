@@ -312,8 +312,11 @@ describe('reconnecting', () => {
     h.client.connect();
     await settle();
 
+    // No ticket, so no socket was ever created — but an attempt is scheduled.
+    // The label is still `connecting` rather than `reconnecting`: this stream
+    // has not been open, so there is nothing to reconnect to yet.
     expect(h.sockets).toHaveLength(0);
-    expect(h.states).toContain('reconnecting');
+    expect(h.states.at(-1)).toBe('connecting');
 
     h.failTicket(false);
     h.runPendingTimer();
@@ -351,6 +354,85 @@ describe('reconnecting', () => {
     h.sockets[0]?.drop();
 
     expect(h.pendingDelays).toHaveLength(1);
+  });
+});
+
+/**
+ * A stream that has never opened is not "reconnecting".
+ *
+ * With the realtime process simply not running, every attempt fails before the
+ * socket ever opens. Announcing `reconnecting` there made a stream that had
+ * never once been live indistinguishable from one that had briefly flapped:
+ * the header badge read "Reconnecting" from first paint and never changed,
+ * whatever the user connected.
+ */
+describe('a stream that has never opened', () => {
+  let h: Harness;
+
+  beforeEach(() => {
+    h = harness();
+  });
+
+  it('stays "connecting" over the first failures, never "reconnecting"', async () => {
+    h.failTicket();
+    h.client.connect();
+    await settle();
+
+    expect(h.states).not.toContain('reconnecting');
+    expect(h.states.at(-1)).toBe('connecting');
+  });
+
+  it('settles on offline once the stream has refused enough attempts', async () => {
+    h.failTicket();
+    h.client.connect();
+    await settle();
+
+    for (let i = 0; i < 3; i += 1) {
+      h.runPendingTimer();
+      await settle();
+    }
+
+    expect(h.states.at(-1)).toBe('offline');
+    expect(h.states).not.toContain('reconnecting');
+  });
+
+  it('keeps retrying while offline, and goes live when the stream comes up', async () => {
+    h.failTicket();
+    h.client.connect();
+    await settle();
+    for (let i = 0; i < 3; i += 1) {
+      h.runPendingTimer();
+      await settle();
+    }
+    expect(h.states.at(-1)).toBe('offline');
+
+    // Offline is a label, not a surrender: the next scheduled attempt still runs.
+    h.failTicket(false);
+    h.runPendingTimer();
+    await settle();
+    h.sockets[0]?.open();
+
+    expect(h.states.at(-1)).toBe('open');
+  });
+
+  it('a socket that closes before it opens is not a reconnect either', async () => {
+    h.client.connect();
+    await settle();
+
+    // Connection refused: the socket is created, then closes without opening.
+    h.sockets[0]?.drop();
+
+    expect(h.states).not.toContain('reconnecting');
+    expect(h.states.at(-1)).toBe('connecting');
+  });
+
+  it('says "reconnecting" once it HAS been open', async () => {
+    h.client.connect();
+    await settle();
+    h.sockets[0]?.open();
+    h.sockets[0]?.drop();
+
+    expect(h.states.at(-1)).toBe('reconnecting');
   });
 });
 

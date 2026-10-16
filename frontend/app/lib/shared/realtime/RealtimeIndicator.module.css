@@ -35,9 +35,10 @@
   background: color-mix(in srgb, var(--cn-stale) 12%, transparent);
 }
 
-/* Gave up. Muted rather than red: nothing on screen is wrong, it is only
-   updating on the slower polled loop. Red is reserved for simulated numbers,
-   which is a claim about the data itself. */
+/* Not live — stopped, or retrying a stream that has never answered. Muted
+   rather than red: nothing on screen is wrong, it is only updating on the
+   slower polled loop. Red is reserved for simulated numbers, which is a claim
+   about the data itself. */
 .offline,
 .idle {
   color: var(--cn-text-muted);

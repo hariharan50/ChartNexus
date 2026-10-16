@@ -257,6 +257,14 @@ function TerminalShell({ user }: { user: User }) {
   const isCurrent = (href: string): boolean => location.pathname === href;
 
   /**
+   * The two mega-menu tabs own their whole subtree outright. Keeping that in
+   * one place lets the tab itself and the tabs it outranks read the same rule.
+   */
+  const inOptionsLab = location.pathname.startsWith('/options/');
+  const inFutureLab = location.pathname.startsWith('/future-lab');
+  const inMegaSection = inOptionsLab || inFutureLab;
+
+  /**
    * For a top-level tab that owns a submenu.
    *
    * Its own `href` is not enough: Tools points at `/tools`, but Chart Tools and
@@ -264,9 +272,15 @@ function TerminalShell({ user }: { user: User }) {
    * parent alone would leave the header with nothing lit on two of its three
    * destinations. Each of those used to be its own tab, which is exactly the
    * highlight this restores.
+   *
+   * The children still match by prefix — `/advance-tool/channels` has to light
+   * Tools — so a mega section has to be excluded explicitly: Dashboards →
+   * Options sits at `/options`, which prefix-matches every Options Lab page and
+   * lit Dashboards alongside Options Lab on all of them.
    */
   const isSectionActive = (item: NavItem): boolean =>
-    isActive(item.href) || (item.children?.some((child) => isActive(child.href)) ?? false);
+    !inMegaSection &&
+    (isActive(item.href) || (item.children?.some((child) => isActive(child.href)) ?? false));
 
   // Native <details> menus do not close one another or dismiss on an outside
   // click. We keep the whole header in `headerEl` and close every open menu on
@@ -333,12 +347,7 @@ function TerminalShell({ user }: { user: User }) {
                 <li key={item.label}>
                   {item.mega ? (
                     <details className={s.navMenu}>
-                      <summary
-                        className={cx(
-                          s.navLink,
-                          location.pathname.startsWith('/options/') && s.active
-                        )}
-                      >
+                      <summary className={cx(s.navLink, inOptionsLab && s.active)}>
                         {item.label}
                         <span className={s.caret} aria-hidden="true">
                           <IconChevronDown />
@@ -348,12 +357,7 @@ function TerminalShell({ user }: { user: User }) {
                     </details>
                   ) : item.futureMega ? (
                     <details className={s.navMenu}>
-                      <summary
-                        className={cx(
-                          s.navLink,
-                          location.pathname.startsWith('/future-lab') && s.active
-                        )}
-                      >
+                      <summary className={cx(s.navLink, inFutureLab && s.active)}>
                         {item.label}
                         <span className={s.caret} aria-hidden="true">
                           <IconChevronDown />

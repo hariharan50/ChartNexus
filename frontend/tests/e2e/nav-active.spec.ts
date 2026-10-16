@@ -53,6 +53,29 @@ test('a sub-page of Options Lab does not highlight Dashboards → Options', asyn
   await expect(page.locator('summary', { hasText: 'Options Lab' })).toHaveClass(ACTIVE);
 });
 
+/**
+ * The tab, not just the entry inside it.
+ *
+ * The submenu link stopped matching `/options/*`, but the Dashboards tab itself
+ * tests its children by prefix — so `/options` kept claiming every Options Lab
+ * page and both tabs read as current at once in the header.
+ */
+test('an Options Lab page lights only the Options Lab tab', async ({ page }) => {
+  await page.goto('/options/multistrike');
+
+  await expect(page.locator('summary', { hasText: 'Options Lab' })).toHaveClass(ACTIVE);
+  await expect(page.locator('summary', { hasText: 'Dashboards' })).not.toHaveClass(ACTIVE);
+});
+
+// The children of a tab still match by prefix, which is the whole reason Tools
+// lights up on pages that live nowhere near `/tools`.
+test('a sub-page of Advance Tools still lights the Tools tab', async ({ page }) => {
+  await page.goto('/advance-tool/channels');
+
+  await expect(page.locator('summary', { hasText: 'Tools' })).toHaveClass(ACTIVE);
+  await expect(page.locator('summary', { hasText: 'Dashboards' })).not.toHaveClass(ACTIVE);
+});
+
 test('the Options page itself still highlights Dashboards → Options', async ({ page }) => {
   await page.goto('/options');
 

@@ -32,9 +32,14 @@ export type ConnectionState =
   | 'connecting'
   /** Connected, and the server has welcomed us. */
   | 'open'
-  /** Dropped; another attempt is scheduled. */
+  /** Was open, dropped, and another attempt is scheduled. */
   | 'reconnecting'
-  /** Given up — the session is not valid, so retrying cannot help. */
+  /**
+   * Not live, and not about to be: either the session is invalid (retrying
+   * cannot help, so it has stopped) or the stream has refused every attempt
+   * without ever opening. The second case keeps retrying in the background;
+   * what it must not do is keep claiming to be *re*connecting.
+   */
   | 'offline';
 
 /** The parts of `WebSocket` this client uses, so a test can supply its own. */
@@ -65,6 +70,15 @@ export interface RealtimeClientOptions {
 const BASE_DELAY_MS = 500;
 /** Ceiling, so a long outage settles into a slow retry rather than a hammer. */
 const MAX_DELAY_MS = 30_000;
+/**
+ * Failed attempts on a stream that has never opened before the badge stops
+ * saying "connecting" and admits the stream is simply not there.
+ *
+ * Three is roughly two seconds of backoff — long enough to ride out a server
+ * still binding its port on a cold start, short enough that a stream nobody
+ * started says so while the user is still looking at the header.
+ */
+const COLD_ATTEMPTS_BEFORE_OFFLINE = 3;
 
 export class RealtimeClient {
   private readonly options: RealtimeClientOptions;
@@ -82,6 +96,15 @@ export class RealtimeClient {
   private stopped = false;
   /** Guards against two attempts overlapping while a ticket fetch is pending. */
   private connecting = false;
+  /**
+   * Whether a socket has ever reached `open`.
+   *
+   * Without this the client cannot tell "the stream dropped" from "the stream
+   * was never there", and reported `reconnecting` for both — so a realtime
+   * process that was not running at all showed a header badge that read
+   * "Reconnecting" from first paint and never changed, whatever the user did.
+   */
+  private everOpen = false;
 
   constructor(options: RealtimeClientOptions) {
     this.options = options;
@@ -173,6 +196,7 @@ export class RealtimeClient {
 
     socket.onopen = () => {
       this.attempt = 0;
+      this.everOpen = true;
       this.setState('open');
       // Resend the whole desired set: after a drop the server remembers nothing.
       if (this.desired.length) this.send(subscribeMessage(this.desired));
@@ -219,12 +243,26 @@ export class RealtimeClient {
 
     const delay = this.backoff();
     this.attempt += 1;
-    this.setState('reconnecting');
+    this.setState(this.retryState());
     this.retryHandle = this.schedule(() => {
       this.retryHandle = null;
       if (this.stopped) return;
-      void this.attemptConnection('reconnecting');
+      void this.attemptConnection(this.retryState());
     }, delay);
+  }
+
+  /**
+   * What to call a retry.
+   *
+   * Only a stream that has actually been open can be *re*connecting. One that
+   * has never opened is still `connecting` for a few attempts — a server
+   * finishing its boot — and after that it is plainly offline. The retries
+   * carry on regardless; this is the label, not the policy, which is what lets
+   * the badge go green by itself the moment the stream comes up.
+   */
+  private retryState(): ConnectionState {
+    if (this.everOpen) return 'reconnecting';
+    return this.attempt >= COLD_ATTEMPTS_BEFORE_OFFLINE ? 'offline' : 'connecting';
   }
 
   /**
