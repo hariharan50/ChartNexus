@@ -1,0 +1,149 @@
+/* Anchors the dropdown. The old markup leaned on `.search` in layout.module.css
+   being relative; the search owns its own positioning context now that the
+   panel hangs off it. */
+.wrap {
+  position: relative;
+}
+
+.search {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.search-ico {
+  position: absolute;
+  left: 0.625rem;
+  display: inline-flex;
+  color: var(--cn-text-subtle);
+  pointer-events: none;
+}
+
+.search-ico svg {
+  width: 1rem;
+  height: 1rem;
+}
+
+.input {
+  width: 11rem;
+  height: var(--cn-control-h-sm);
+  padding: 0 0.75rem 0 2rem;
+  border: 1px solid var(--cn-border);
+  border-radius: var(--cn-radius);
+  background: var(--cn-surface-raised);
+  color: var(--cn-text);
+  font-size: var(--cn-text-sm);
+}
+
+.input::placeholder {
+  color: var(--cn-text-subtle);
+}
+
+.input:focus-visible {
+  outline: none;
+  border-color: var(--cn-accent);
+}
+
+/* Right-aligned like the account menu, because this sits in `.nav-right` and a
+   left anchor would push the panel off the viewport edge. Its own width rather
+   than the input's: the input shrinks to 7rem on a phone, which is too narrow
+   to read a company name in. */
+.panel {
+  position: absolute;
+  right: 0;
+  top: calc(100% + 0.375rem);
+  z-index: var(--cn-z-dropdown);
+  width: 22rem;
+  max-width: calc(100vw - 2rem);
+  border: 1px solid var(--cn-border);
+  border-radius: var(--cn-radius-lg);
+  background: var(--cn-surface);
+  box-shadow: var(--cn-shadow-lg, var(--cn-shadow));
+}
+
+.list {
+  margin: 0;
+  padding: var(--cn-space-2);
+  list-style: none;
+}
+
+/* Mirrors SymbolPicker's row so the two instrument affordances read as one
+   thing in two places. */
+.row {
+  display: flex;
+  align-items: center;
+  gap: 0.625rem;
+  width: 100%;
+  height: var(--cn-control-h);
+  padding: 0 var(--cn-space-2);
+  border: 0;
+  border-radius: var(--cn-radius-sm);
+  background: transparent;
+  color: var(--cn-text);
+  font-size: var(--cn-text-sm);
+  font-weight: 600;
+  cursor: pointer;
+  text-align: left;
+}
+
+/* The keyboard's active row and the mouse's hover are the same highlight —
+   they are the same idea, and two different ones would fight as the pointer
+   crosses a list being driven by the arrow keys. */
+.row.current {
+  background: var(--cn-accent-weak);
+  color: var(--cn-accent);
+}
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 2.25rem;
+  height: 1.75rem;
+  padding: 0 0.375rem;
+  border-radius: 999px;
+  background: var(--cn-accent-weak);
+  color: var(--cn-accent);
+  font-size: var(--cn-text-xs);
+  font-weight: 700;
+  flex: none;
+}
+
+.name {
+  min-width: 0;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.company {
+  min-width: 0;
+  margin-left: auto;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--cn-text-muted);
+  font-size: var(--cn-text-xs);
+}
+
+.row.current .company {
+  color: inherit;
+  opacity: 0.75;
+}
+
+.none {
+  padding: var(--cn-space-3) var(--cn-space-2);
+  color: var(--cn-text-muted);
+  font-size: var(--cn-text-sm);
+}
+
+@media (max-width: 72rem) {
+  .input {
+    width: 8.5rem;
+  }
+}
+
+@media (max-width: 40rem) {
+  .input {
+    width: 7rem;
+  }
+}

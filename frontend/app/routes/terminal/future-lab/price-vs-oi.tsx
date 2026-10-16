@@ -1,6 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { useEffect, useMemo, useState } from 'react';
 import { useInstruments } from '$contexts/instrument-catalog/queries';
+import { useSymbolParam } from '$contexts/instrument-catalog/use-symbol-param';
 import EChart from '$shared/charts/EChart';
 import { buildPriceVsOiOption } from '$shared/charts/options/price-vs-oi';
 import { useChartTheme } from '$shared/charts/theme/use-chart-theme';
@@ -51,7 +52,9 @@ const INTERVALS: readonly { value: Interval; label: string }[] = [
 ];
 
 export default function FuturePriceVsOi() {
-  const [symbol, setSymbol] = useState('NIFTY');
+  // In the URL, not in state: this is where the header search lands, and a
+  // chart worth sending to someone should survive being pasted into chat.
+  const [symbol, setSymbol] = useSymbolParam();
   const [search, setSearch] = useState('');
   const [mode, setMode] = useState<Mode>('live');
   const [date, setDate] = useState(lastTradingDayIST);

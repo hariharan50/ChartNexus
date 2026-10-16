@@ -240,45 +240,6 @@
   height: 1.05rem;
 }
 
-.search {
-  position: relative;
-  display: flex;
-  align-items: center;
-}
-
-.search-ico {
-  position: absolute;
-  left: 0.625rem;
-  display: inline-flex;
-  color: var(--cn-text-subtle);
-  pointer-events: none;
-}
-
-.search-ico svg {
-  width: 1rem;
-  height: 1rem;
-}
-
-.search input {
-  width: 11rem;
-  height: var(--cn-control-h-sm);
-  padding: 0 0.75rem 0 2rem;
-  border: 1px solid var(--cn-border);
-  border-radius: var(--cn-radius);
-  background: var(--cn-surface-raised);
-  color: var(--cn-text);
-  font-size: var(--cn-text-sm);
-}
-
-.search input::placeholder {
-  color: var(--cn-text-subtle);
-}
-
-.search input:focus-visible {
-  outline: none;
-  border-color: var(--cn-accent);
-}
-
 .icon-btn {
   display: inline-flex;
   align-items: center;
@@ -516,14 +477,11 @@
   }
 }
 
-/* Reclaim the brand wordmark and search width so the primary nav survives. */
+/* Reclaim the brand wordmark so the primary nav survives. The search box
+   narrows at the same breakpoint, from its own module. */
 @media (max-width: 72rem) {
   .name {
     display: none;
-  }
-
-  .search input {
-    width: 8.5rem;
   }
 }
 
@@ -538,10 +496,6 @@
 @media (max-width: 40rem) {
   .nav {
     padding: 0.5rem var(--cn-space-4);
-  }
-
-  .search input {
-    width: 7rem;
   }
 
   .who {

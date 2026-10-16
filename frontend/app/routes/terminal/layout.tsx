@@ -18,7 +18,6 @@ import IconGrid from '$shared/ui/icons/IconGrid';
 import IconLayout from '$shared/ui/icons/IconLayout';
 import IconMessage from '$shared/ui/icons/IconMessage';
 import IconMoon from '$shared/ui/icons/IconMoon';
-import IconSearch from '$shared/ui/icons/IconSearch';
 import IconSettings from '$shared/ui/icons/IconSettings';
 import IconShield from '$shared/ui/icons/IconShield';
 import IconSignOut from '$shared/ui/icons/IconSignOut';
@@ -29,6 +28,7 @@ import { selectIsDark, useThemeStore } from '$shared/ui/theme-store';
 import { useHydratePreferences } from '$shared/ui/use-hydrate-preferences';
 import { requestIdContext } from '../../middleware/context';
 import FutureLabPanel from './components/FutureLabPanel';
+import SymbolSearch from './components/SymbolSearch';
 import OptionsLabPanel from './components/OptionsLabPanel';
 import s from './layout.module.css';
 import type { Route } from './+types/layout';
@@ -421,12 +421,7 @@ function TerminalShell({ user }: { user: User }) {
         </div>
 
         <div className={s.navRight}>
-          <form className={s.search} role="search" onSubmit={(e) => e.preventDefault()}>
-            <span className={s.searchIco} aria-hidden="true">
-              <IconSearch />
-            </span>
-            <input type="search" placeholder="Search symbol…" aria-label="Search symbol" />
-          </form>
+          <SymbolSearch />
 
           <RealtimeStatusBadge />
 

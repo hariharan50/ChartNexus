@@ -34,6 +34,109 @@ const USER = {
   last_login_at: '2026-01-15T09:00:00Z'
 };
 
+/**
+ * A slice of the instrument catalog, enough to drive the header search.
+ *
+ * ITC and ITCHOTELS are both here on purpose: the search has to rank the exact
+ * ticker above the longer symbol that starts with it, and one row alone would
+ * never show that it does.
+ */
+const INSTRUMENTS = [
+  { symbol: 'NIFTY', kind: 'index', name: 'NIFTY50', exchange: 'NSE', lot_size: 50 },
+  { symbol: 'BANKNIFTY', kind: 'index', name: 'NIFTYBANK', exchange: 'NSE', lot_size: 15 },
+  { symbol: 'SENSEX', kind: 'index', name: 'SENSEX', exchange: 'BSE', lot_size: 10 },
+  { symbol: 'ITC', kind: 'stock', name: 'ITC LTD', exchange: 'NSE', lot_size: 1600 },
+  { symbol: 'ITCHOTELS', kind: 'stock', name: 'ITC HOTELS LTD', exchange: 'NSE', lot_size: 800 },
+  {
+    symbol: 'RELIANCE',
+    kind: 'stock',
+    name: 'RELIANCE INDUSTRIES LTD',
+    exchange: 'NSE',
+    lot_size: 500
+  }
+].map((row) => ({
+  ...row,
+  tick_size: '0.05',
+  strike_step: row.kind === 'index' ? '50' : '5',
+  isin: null,
+  sector: row.kind === 'index' ? null : 'DIVERSIFIED',
+  indices: []
+}));
+
+/** One strike's whole session, for Options Lab → Price vs OI. */
+function strikeSeriesView(symbol) {
+  const spot = symbol === 'BANKNIFTY' ? 50_200 : 23_100;
+  const step = symbol === 'BANKNIFTY' ? 100 : 50;
+  const atm = Math.round(spot / step) * step;
+  const t = [];
+  const ce = [];
+  const pe = [];
+  for (let i = 0; i < 30; i += 1) {
+    const minute = 15 + i;
+    t.push(
+      `2026-01-15T${String(9 + Math.floor(minute / 60)).padStart(2, '0')}:${String(minute % 60).padStart(2, '0')}:00+05:30`
+    );
+    ce.push(Number((120 + Math.sin(i / 4) * 12).toFixed(2)));
+    pe.push(Number((110 - Math.sin(i / 4) * 10).toFixed(2)));
+  }
+  return {
+    instrument_id: symbol,
+    symbol,
+    expiry_date: '2026-01-29',
+    lot_size: symbol === 'BANKNIFTY' ? 15 : 50,
+    spot,
+    atm_strike: atm,
+    strike: atm,
+    strikes: [atm - 2 * step, atm - step, atm, atm + step, atm + 2 * step],
+    open_ts: t[0],
+    now_ts: t[t.length - 1],
+    data_quality: 'intraday',
+    open_is_estimated: false,
+    t,
+    ce_price: ce,
+    pe_price: pe,
+    ce_oi: t.map((_, i) => 500_000 + i * 1_200),
+    pe_oi: t.map((_, i) => 480_000 + i * 900),
+    ce_oi_change: t.map((_, i) => i * 1_200),
+    pe_oi_change: t.map((_, i) => i * 900),
+    straddle: ce.map((v, i) => Number((v + pe[i]).toFixed(2))),
+    pcr: t.map(() => 0.96)
+  };
+}
+
+/** The futures price/OI series the Future Lab page charts. */
+function priceOiView(symbol) {
+  const t = [];
+  const price = [];
+  const oi = [];
+  const base = symbol === 'ITC' ? 410 : 23100;
+  for (let i = 0; i < 40; i += 1) {
+    const minute = 15 + i;
+    const hour = 9 + Math.floor(minute / 60);
+    t.push(
+      `2026-01-15T${String(hour).padStart(2, '0')}:${String(minute % 60).padStart(2, '0')}:00+05:30`
+    );
+    price.push(Number((base + Math.sin(i / 5) * base * 0.004).toFixed(2)));
+    // A null every seventh frame: OI sweeps run slower than price captures,
+    // and the chart must draw the gap rather than a cliff to the axis.
+    oi.push(i % 7 === 6 ? null : 1_000_000 + i * 2_500);
+  }
+  return {
+    instrument_id: symbol,
+    symbol,
+    expiry_date: '2026-01-29',
+    open_ts: t[0],
+    now_ts: t[t.length - 1],
+    data_quality: 'intraday',
+    open_is_estimated: false,
+    interval: '1m',
+    source: 'mock',
+    t,
+    price,
+    oi
+  };
+}
+
 const PROVENANCE = { source: 'mock', age_seconds: 0, fetched_at: '2026-01-01T10:00:00Z' };
 
 const SPOTS = {
@@ -615,6 +718,33 @@ const server = createServer((req, res) => {
       last_error: null,
       redirect_uri: 'http://localhost:5173/settings/broker/callback'
     });
+  }
+
+  if (url.pathname === '/api/v1/instruments') {
+    const kind = url.searchParams.get('kind');
+    const search = (url.searchParams.get('search') ?? '').trim().toUpperCase();
+    const rows = INSTRUMENTS.filter(
+      (row) =>
+        (!kind || row.kind === kind) &&
+        (!search || row.symbol.includes(search) || row.name.toUpperCase().includes(search))
+    );
+    return send(res, 200, { instruments: rows, count: rows.length });
+  }
+
+  if (url.pathname.startsWith('/api/v1/instruments/')) {
+    const symbol = decodeURIComponent(url.pathname.split('/').pop() ?? '');
+    const row = INSTRUMENTS.find((entry) => entry.symbol === symbol.toUpperCase());
+    return row ? send(res, 200, row) : problem(res, 404, 'not_found', `No instrument ${symbol}.`);
+  }
+
+  if (url.pathname.startsWith('/api/v1/options-lab/strike-series/')) {
+    const symbol = decodeURIComponent(url.pathname.split('/').pop() ?? 'NIFTY');
+    return send(res, 200, strikeSeriesView(symbol.toUpperCase()));
+  }
+
+  if (url.pathname.startsWith('/api/v1/futures/price-oi-series/')) {
+    const symbol = decodeURIComponent(url.pathname.split('/').pop() ?? 'NIFTY');
+    return send(res, 200, priceOiView(symbol.toUpperCase()));
   }
 
   return problem(res, 404, 'not_found', `No stub route for ${url.pathname}`);

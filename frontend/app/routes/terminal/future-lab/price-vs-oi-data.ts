@@ -79,63 +79,16 @@ export function getPriceOiSeries(
 
 // -- instrument picker -------------------------------------------------------
 
-/** One row in the picker, derived from the catalog rather than hardcoded. */
-export interface PickerEntry {
-  symbol: string;
-  name: string;
-  /** Two or three characters for the badge — the catalog has no logos. */
-  badge: string;
-}
-
 /**
- * Narrow the universe to what someone typed.
- *
- * Symbol matches sort ahead of name matches, and a prefix ahead of a
- * mid-string hit: typing "TCS" should not bury the contract called TCS under
- * every company whose description happens to contain it.
+ * The picker helpers now live in the catalog context, because the header
+ * search needs the same ranking this page established. Re-exported here so
+ * this module stays the one import the page reaches for.
  */
-export function filterInstruments(
-  entries: PickerEntry[],
-  search: string,
-  limit = 60
-): PickerEntry[] {
-  const needle = search.trim().toUpperCase();
-  if (!needle) return entries.slice(0, limit);
-
-  const scored: { entry: PickerEntry; rank: number }[] = [];
-  for (const entry of entries) {
-    const symbol = entry.symbol.toUpperCase();
-    const name = entry.name.toUpperCase();
-    if (symbol === needle) scored.push({ entry, rank: 0 });
-    else if (symbol.startsWith(needle)) scored.push({ entry, rank: 1 });
-    else if (symbol.includes(needle)) scored.push({ entry, rank: 2 });
-    else if (name.startsWith(needle)) scored.push({ entry, rank: 3 });
-    else if (name.includes(needle)) scored.push({ entry, rank: 4 });
-  }
-  scored.sort((a, b) => a.rank - b.rank || a.entry.symbol.localeCompare(b.entry.symbol));
-  return scored.slice(0, limit).map((hit) => hit.entry);
-}
-
-/** An index sits at the top of the list; the stocks follow alphabetically. */
-export function toPickerEntries(
-  rows: { symbol: string; name: string; kind: string }[]
-): PickerEntry[] {
-  return [...rows]
-    .sort((a, b) => {
-      if (a.kind !== b.kind) return a.kind === 'index' ? -1 : 1;
-      return a.symbol.localeCompare(b.symbol);
-    })
-    .map((row) => ({ symbol: row.symbol, name: row.name, badge: badgeFor(row.symbol) }));
-}
-
-function badgeFor(symbol: string): string {
-  // The leading letters, not an abbreviation anyone has to learn: two of them
-  // fit the circle at every symbol length, and the full ticker sits beside it.
-  return symbol
-    .replace(/[^A-Z0-9]/gi, '')
-    .slice(0, 2)
-    .toUpperCase();
-}
+export {
+  filterInstruments,
+  toPickerEntries,
+  type PickerEntry
+} from '$contexts/instrument-catalog/search';
 
 // -- replay ------------------------------------------------------------------
 

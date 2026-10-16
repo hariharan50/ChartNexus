@@ -1,5 +1,8 @@
 import { useQuery } from '@tanstack/react-query';
 import { type ReactNode, useEffect, useMemo, useState } from 'react';
+import { useInstruments } from '$contexts/instrument-catalog/queries';
+import { toPickerEntries } from '$contexts/instrument-catalog/search';
+import { useSymbolParam } from '$contexts/instrument-catalog/use-symbol-param';
 import EChart from '$shared/charts/EChart';
 import type { EChartsCoreOption } from '$shared/charts/echarts-modules';
 import { buildCallPutOption } from '$shared/charts/options/call-put';
@@ -26,7 +29,6 @@ import {
   freshnessLabel,
   getStrikeSeries,
   normalizeFromOpen,
-  OI_INSTRUMENTS,
   pick,
   PUT_COLOR,
   REFETCH_MS,
@@ -85,7 +87,10 @@ const DEFAULT_VIS: Record<string, boolean> = {
 };
 
 export default function PriceVsOi() {
-  const [instIdx, setInstIdx] = useState(0);
+  // The symbol lives in the URL so the header search can land here on a
+  // specific index, and so a link to this page keeps pointing at what the
+  // sender was looking at.
+  const [symbol, setSymbol] = useSymbolParam();
   const [dataMode, setDataMode] = useState<Mode>('live');
   const [date, setDate] = useState(lastTradingDayIST);
   const [timeframe, setTimeframe] = useState<Timeframe>(DEFAULT_TIMEFRAME);
@@ -122,26 +127,43 @@ export default function PriceVsOi() {
   const p6oi = on('p6.oi');
 
   const theme = useChartTheme();
-  const instrument = OI_INSTRUMENTS[instIdx] ?? OI_INSTRUMENTS[0]!;
+
+  // The chain views are index-only, so the cycler walks the catalog's indices
+  // rather than the three that used to be hardcoded here — FINNIFTY arriving
+  // from the header search now charts FINNIFTY instead of silently showing
+  // NIFTY. An unknown symbol still drives the query: the backend takes any
+  // catalog underlying, and inventing a fallback would chart a lie.
+  const { instruments } = useInstruments({ kind: 'index' });
+  const indices = useMemo(() => toPickerEntries(instruments), [instruments]);
+  const current = indices.find((entry) => entry.symbol === symbol);
 
   function cycle(delta: number) {
-    setInstIdx((current) => (current + delta + OI_INSTRUMENTS.length) % OI_INSTRUMENTS.length);
-    // A strike that exists on NIFTY means nothing on BANKNIFTY.
-    setSelectedStrike(null);
+    if (indices.length === 0) return;
+    const at = indices.findIndex((entry) => entry.symbol === symbol);
+    const from = at === -1 ? 0 : at;
+    const next = indices[(from + delta + indices.length) % indices.length];
+    if (next) setSymbol(next.symbol);
   }
+
+  // A strike that exists on NIFTY means nothing on BANKNIFTY. This is an
+  // effect rather than a line in `cycle` because the symbol can also change
+  // from a link or the back button, which never go through the cycler.
+  useEffect(() => {
+    setSelectedStrike(null);
+  }, [symbol]);
 
   const historyDate = dataMode === 'historical' ? date : undefined;
   const query = useQuery<StrikeSeriesView>({
     queryKey: [
       'options-lab',
       'strike-series',
-      instrument.symbol,
+      symbol,
       selectedStrike ?? 'atm',
       dataMode,
       historyDate
     ],
     queryFn: () =>
-      getStrikeSeries(instrument.symbol, selectedStrike ?? undefined, {
+      getStrikeSeries(symbol, selectedStrike ?? undefined, {
         date: historyDate,
         expiry
       }),
@@ -360,8 +382,10 @@ export default function PriceVsOi() {
                 </div>
 
                 <div className={s.instrument}>
-                  <span className={s.badge}>{instrument.badge}</span>
-                  <span className={s.short}>{instrument.short}</span>
+                  <span className={s.badge}>{current?.badge ?? '··'}</span>
+                  <span className={s.short} title={current?.name ?? symbol}>
+                    {symbol}
+                  </span>
                   <span className={s.cyclers}>
                     <button type="button" aria-label="Previous" onClick={() => cycle(-1)}>
                       ‹
@@ -377,7 +401,7 @@ export default function PriceVsOi() {
                 <div className={s.twoUp}>
                   <div>
                     <ExpiryPicker
-                      instrument={instrument.symbol}
+                      instrument={symbol}
                       value={expiry}
                       onChange={setExpiry}
                       resolved={vw.expiry_date}
