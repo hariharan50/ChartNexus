@@ -6,6 +6,8 @@ import Select from '$shared/ui/Select';
 import IconChart from '$shared/ui/icons/IconChart';
 import { lastTradingDayIST } from '$shared/formatting/ist-clock';
 import ContractPicker from './components/ContractPicker';
+import { useSelectedInstrument } from '$contexts/instrument-catalog/selected-instrument';
+import InstrumentPicker from '$shared/ui/InstrumentPicker';
 import ExpiryPicker from '../components/ExpiryPicker';
 import HistoryMode, { type Mode } from '../components/HistoryMode';
 import SeriesChart from '../components/SeriesChart';
@@ -33,12 +35,6 @@ import type { Route } from './+types/route';
 
 export const meta: Route.MetaFunction = () => [{ title: 'Multi OI & Volume · Options Lab' }];
 
-const INSTRUMENTS = [
-  { short: 'NIFTY', badge: '50', symbol: 'NIFTY' },
-  { short: 'SENSEX', badge: 'BSE', symbol: 'SENSEX' },
-  { short: 'BANKNIFTY', badge: 'BNK', symbol: 'BANKNIFTY' }
-];
-
 /** Charts sharing this group share one crosshair. */
 const CHART_GROUP = 'multi-oi';
 
@@ -52,7 +48,7 @@ const SOURCES: { id: StrikeSourceId; title: string; hint: string }[] = [
 ];
 
 export default function MultiOiVolume() {
-  const [instIdx, setInstIdx] = useState(0);
+  const [symbol, setSymbol] = useSelectedInstrument();
   const [sidebarOpen, setSidebarOpen] = useState(true);
   // `undefined` means "whatever the backend picks" — the nearest expiry.
   const [expiry, setExpiry] = useState<string | undefined>(undefined);
@@ -71,20 +67,24 @@ export default function MultiOiVolume() {
   const [customIds, setCustomIds] = useState<string[]>([]);
   const [picking, setPicking] = useState(false);
 
-  const instrument = INSTRUMENTS[instIdx] ?? INSTRUMENTS[0]!;
-
-  function cycle(delta: number) {
-    setInstIdx((current) => (current + delta + INSTRUMENTS.length) % INSTRUMENTS.length);
+  // Each of these points at the instrument that was showing, so they have
+  // to let go when it changes. An effect rather than a line in a cycler:
+  // the symbol also arrives from a link, the header search and the
+  // remembered choice, none of which go through this page's controls.
+  useEffect(() => {
     // A strike that exists on NIFTY means nothing on BANKNIFTY, so an explicit
     // selection cannot survive an instrument change.
     setCustomIds([]);
-    if (source === 'custom') setSource('oi');
-  }
+    // Functional form so this reads the current source without depending on
+    // it — keyed on `source` it would also fire when the reader changed source
+    // deliberately, snapping them back to OI.
+    setSource((current) => (current === 'custom' ? 'oi' : current));
+  }, [symbol]);
 
   const historyDate = mode === 'historical' ? date : undefined;
   const query = useQuery<OiSeriesView>({
-    queryKey: ['options-lab', 'oi-series', instrument.symbol, interval, mode, historyDate, expiry],
-    queryFn: () => getOiSeries(instrument.symbol, interval, { date: historyDate, expiry }),
+    queryKey: ['options-lab', 'oi-series', symbol, interval, mode, historyDate, expiry],
+    queryFn: () => getOiSeries(symbol, interval, { date: historyDate, expiry }),
     refetchInterval: mode === 'live' ? REFETCH_MS : false
   });
 
@@ -176,25 +176,14 @@ export default function MultiOiVolume() {
                   </button>
                 </div>
 
-                <div className={s.instrument}>
-                  <span className={s.badge}>{instrument.badge}</span>
-                  <span className={s.short}>{instrument.short}</span>
-                  <span className={s.cyclers}>
-                    <button type="button" aria-label="Previous" onClick={() => cycle(-1)}>
-                      ‹
-                    </button>
-                    <button type="button" aria-label="Next" onClick={() => cycle(1)}>
-                      ›
-                    </button>
-                  </span>
-                </div>
+                <InstrumentPicker value={symbol} onChange={setSymbol} />
 
                 <HistoryMode mode={mode} date={date} onMode={setMode} onDate={setDate} />
 
                 <div className={s.twoUp}>
                   <div>
                     <ExpiryPicker
-                      instrument={instrument.symbol}
+                      instrument={symbol}
                       value={expiry}
                       onChange={setExpiry}
                       resolved={view.expiry_date}

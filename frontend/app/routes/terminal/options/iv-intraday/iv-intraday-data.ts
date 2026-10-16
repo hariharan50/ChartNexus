@@ -27,11 +27,9 @@ export {
   expiryLabel,
   freshnessLabel,
   getSkew,
-  OI_INSTRUMENTS,
   REFETCH_MS,
   STALE_AFTER_MS,
   timeLabel,
-  type Instrument,
   type SkewFrame,
   type SkewView
 } from '../volatility-skew/volatility-skew-data';

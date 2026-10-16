@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import { useMemo, useState } from 'react';
+import { useMemo, useState, useEffect } from 'react';
 import EChart from '$shared/charts/EChart';
 import { buildMultiSeriesOption, type SeriesLine } from '$shared/charts/options/multi-series';
 import { useChartTheme } from '$shared/charts/theme/use-chart-theme';
@@ -15,7 +15,6 @@ import {
   formatPrice,
   formatStrike,
   getStraddleChart,
-  OI_INSTRUMENTS,
   pick,
   RANGES,
   REFETCH_MS,
@@ -30,6 +29,8 @@ import {
 } from './straddle-data';
 import s from './route.module.css';
 import type { Route } from './+types/route';
+import { useSelectedInstrument } from '$contexts/instrument-catalog/selected-instrument';
+import InstrumentPicker from '$shared/ui/InstrumentPicker';
 
 export const meta: Route.MetaFunction = () => [{ title: 'Straddle Chart · Tools' }];
 
@@ -48,7 +49,7 @@ export const meta: Route.MetaFunction = () => [{ title: 'Straddle Chart · Tools
  * price axis with the same scale as each other.
  */
 export default function StraddleChart() {
-  const [instIdx, setInstIdx] = useState(0);
+  const [symbol, setSymbol] = useSelectedInstrument();
   const [expiry, setExpiry] = useState<string | undefined>(undefined);
   const [timeframe, setTimeframe] = useState<Timeframe>(DEFAULT_TIMEFRAME);
   const [range, setRange] = useState(DEFAULT_RANGE);
@@ -58,14 +59,20 @@ export default function StraddleChart() {
   // the chart's default window. Same mechanism as MultiStrike.
   const [zoomNonce, setZoomNonce] = useState(0);
 
+  // Expiry, lot and ladder are all per instrument: a NIFTY date means
+  // nothing on ITC. An effect, because the symbol now also arrives from a
+  // link, the header search and the remembered choice.
+  useEffect(() => {
+    setExpiry(undefined);
+  }, [symbol]);
+
   const theme = useChartTheme();
   const colors = straddleColors(theme);
-  const instrument = OI_INSTRUMENTS[instIdx] ?? OI_INSTRUMENTS[0]!;
   const sessions = sessionsOf(range);
 
   const query = useQuery<StraddleChartView>({
-    queryKey: ['tools', 'straddle-chart', instrument.symbol, expiry, sessions],
-    queryFn: () => getStraddleChart(instrument.symbol, { expiry, sessions }),
+    queryKey: ['tools', 'straddle-chart', symbol, expiry, sessions],
+    queryFn: () => getStraddleChart(symbol, { expiry, sessions }),
     refetchInterval: REFETCH_MS
   });
 
@@ -151,23 +158,10 @@ export default function StraddleChart() {
           options={[{ value: 'NFO', label: 'NFO' }]}
         />
 
-        <Select
-          className={s.field}
-          value={String(instIdx)}
-          ariaLabel="Symbol"
-          onChange={(next) => {
-            setInstIdx(Number(next));
-            // Expiries are per instrument; a NIFTY date means nothing on SENSEX.
-            setExpiry(undefined);
-          }}
-          options={OI_INSTRUMENTS.map((entry, index) => ({
-            value: String(index),
-            label: entry.short
-          }))}
-        />
+        <InstrumentPicker value={symbol} onChange={setSymbol} variant="field" />
 
         <ExpiryPicker
-          instrument={instrument.symbol}
+          instrument={symbol}
           value={expiry}
           onChange={setExpiry}
           resolved={view?.expiry_date}
@@ -279,7 +273,7 @@ export default function StraddleChart() {
           {option ? (
             <EChart
               option={option}
-              resetKey={`${instrument.symbol}-${timeframe}-${range}-${zoomNonce}`}
+              resetKey={`${symbol}-${timeframe}-${range}-${zoomNonce}`}
               className={s.chart}
             />
           ) : (

@@ -102,9 +102,9 @@ test('an index goes to the Options Lab view instead', async ({ page }) => {
 
   // The page has to actually adopt the symbol, not merely carry it in the URL.
   // This used to be an integer index into a hardcoded three, so a link could
-  // not reach it at all. The sidebar reads the catalog, so it is the honest
-  // assertion here — the chart itself needs a series the stub does not serve.
-  await expect(page.getByTitle('NIFTYBANK')).toHaveText('BANKNIFTY');
+  // not reach it at all. `toContainText`, not `toHaveText`: the picker's
+  // trigger also holds the avatar's initials and a caret.
+  await expect(page.getByTitle('NIFTYBANK')).toContainText('BANKNIFTY');
 });
 
 test('a symbol nobody trades says so rather than going quiet', async ({ page }) => {

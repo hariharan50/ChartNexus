@@ -15,7 +15,6 @@ import { apiFetch } from '$shared/api/client';
 export {
   CALL_COLOR,
   PUT_COLOR,
-  OI_INSTRUMENTS,
   REFETCH_MS,
   STALE_AFTER_MS,
   clockLabel,
@@ -23,8 +22,7 @@ export {
   freshnessLabel,
   inferStep,
   timeLabel,
-  withinWindow,
-  type Instrument
+  withinWindow
 } from '../open-interest/oi-data';
 
 /** One capture's per-strike premiums, the rolling ATM straddle, the future. */

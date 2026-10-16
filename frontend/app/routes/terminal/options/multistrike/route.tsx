@@ -13,6 +13,8 @@ import { cx } from '$shared/ui/cx';
 import Select from '$shared/ui/Select';
 import IconChart from '$shared/ui/icons/IconChart';
 import SeriesToggle from '$shared/ui/SeriesToggle';
+import { useSelectedInstrument } from '$contexts/instrument-catalog/selected-instrument';
+import InstrumentPicker from '$shared/ui/InstrumentPicker';
 import ExpiryPicker from '../components/ExpiryPicker';
 import HistoryMode, { type Mode } from '../components/HistoryMode';
 import StrikeLadder from './components/StrikeLadder';
@@ -36,7 +38,6 @@ import {
   legSeriesLabel,
   legsOnLadder,
   multistrikeCsv,
-  OI_INSTRUMENTS,
   pick,
   putLegs,
   PUT_COLOR,
@@ -53,6 +54,7 @@ import {
 } from './multistrike-data';
 import s from './route.module.css';
 import type { Route } from './+types/route';
+import { useEmptyReason } from '$contexts/instrument-catalog/coverage';
 
 export const meta: Route.MetaFunction = () => [{ title: 'MultiStrike Chart · Options Lab' }];
 
@@ -68,7 +70,7 @@ const CHART_RIGHT_GUTTER = 16;
 const COMBINED_COLOR = SERIES_PALETTE[1];
 
 export default function MultistrikeChart() {
-  const [instIdx, setInstIdx] = useState(0);
+  const [symbol, setSymbol] = useSelectedInstrument();
   const [dataMode, setDataMode] = useState<Mode>('live');
   const [date, setDate] = useState(lastTradingDayIST);
   const [timeframe, setTimeframe] = useState<Timeframe>(DEFAULT_TIMEFRAME);
@@ -91,20 +93,26 @@ export default function MultistrikeChart() {
    */
   const [picked, setPicked] = useState<Leg[] | null>(null);
 
-  const theme = useChartTheme();
-  const instrument = OI_INSTRUMENTS[instIdx] ?? OI_INSTRUMENTS[0]!;
+  // Why a panel is empty depends on what was picked: an index is waiting
+  // for today's captures, a stock is waiting for captures nobody makes.
+  const emptyMessage = useEmptyReason(symbol, 'strike series', dataMode === 'historical');
 
-  function cycle(delta: number) {
-    setInstIdx((current) => (current + delta + OI_INSTRUMENTS.length) % OI_INSTRUMENTS.length);
+  const theme = useChartTheme();
+
+  // Each of these points at the instrument that was showing, so they have
+  // to let go when it changes. An effect rather than a line in a cycler:
+  // the symbol also arrives from a link, the header search and the
+  // remembered choice, none of which go through this page's controls.
+  useEffect(() => {
     // 23950 means nothing on BANKNIFTY, so a selection cannot survive the move.
     setPicked(null);
     setHidden(new Set());
-  }
+  }, [symbol]);
 
   const historyDate = dataMode === 'historical' ? date : undefined;
   const query = useQuery<StraddleView>({
-    queryKey: ['options-lab', 'straddle-series', instrument.symbol, dataMode, historyDate, expiry],
-    queryFn: () => getStraddle(instrument.symbol, { date: historyDate, expiry }),
+    queryKey: ['options-lab', 'straddle-series', symbol, dataMode, historyDate, expiry],
+    queryFn: () => getStraddle(symbol, { date: historyDate, expiry }),
     refetchInterval: dataMode === 'live' ? REFETCH_MS : false
   });
 
@@ -217,7 +225,7 @@ export default function MultistrikeChart() {
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.href = url;
-    link.download = csvFilename(instrument.symbol, vw);
+    link.download = csvFilename(symbol, vw);
     link.click();
     URL.revokeObjectURL(url);
   }
@@ -238,11 +246,7 @@ export default function MultistrikeChart() {
         // not a dead end — the reader can change the date or return to Live.
         <div className={cx(s.panel, s.emptyPanel)}>
           <HistoryMode mode={dataMode} date={date} onMode={setDataMode} onDate={setDate} />
-          <p className={s.muted}>
-            {dataMode === 'historical'
-              ? 'No session archived for that date.'
-              : 'No premiums recorded for today yet — the series fills in as the ingest worker captures the chain.'}
-          </p>
+          <p className={s.muted}>{emptyMessage}</p>
         </div>
       ) : vw && plot ? (
         <div className={cx(s.layout, !sidebarOpen && s.collapsed)}>
@@ -263,25 +267,14 @@ export default function MultistrikeChart() {
                   </button>
                 </div>
 
-                <div className={s.instrument}>
-                  <span className={s.badge}>{instrument.badge}</span>
-                  <span className={s.short}>{instrument.short}</span>
-                  <span className={s.cyclers}>
-                    <button type="button" aria-label="Previous" onClick={() => cycle(-1)}>
-                      ‹
-                    </button>
-                    <button type="button" aria-label="Next" onClick={() => cycle(1)}>
-                      ›
-                    </button>
-                  </span>
-                </div>
+                <InstrumentPicker value={symbol} onChange={setSymbol} />
 
                 <HistoryMode mode={dataMode} date={date} onMode={setDataMode} onDate={setDate} />
 
                 <div className={s.twoUp}>
                   <div>
                     <ExpiryPicker
-                      instrument={instrument.symbol}
+                      instrument={symbol}
                       value={expiry}
                       onChange={setExpiry}
                       resolved={vw.expiry_date}
@@ -475,7 +468,7 @@ export default function MultistrikeChart() {
               ) : (
                 <EChart
                   option={option}
-                  resetKey={`${view}-${timeframe}-${instrument.symbol}-${zoomNonce}`}
+                  resetKey={`${view}-${timeframe}-${symbol}-${zoomNonce}`}
                   className={s.chart}
                 />
               )}

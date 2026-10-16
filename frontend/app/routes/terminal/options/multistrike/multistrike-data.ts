@@ -17,14 +17,12 @@
 export {
   CALL_COLOR,
   PUT_COLOR,
-  OI_INSTRUMENTS,
   REFETCH_MS,
   STALE_AFTER_MS,
   clockLabel,
   dateLabel,
   freshnessLabel,
-  timeLabel,
-  type Instrument
+  timeLabel
 } from '../open-interest/oi-data';
 
 // The payload, its fetcher and the timeframe machinery are the Straddle

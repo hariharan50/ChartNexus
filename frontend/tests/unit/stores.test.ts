@@ -1,10 +1,11 @@
 import { beforeEach, describe, expect, it } from 'vitest';
+import { useInstrumentStore } from '$shared/ui/instrument-store';
 import { useNotificationPreferencesStore } from '$shared/ui/notification-preferences-store';
 import { usePreferencesStore } from '$shared/ui/preferences-store';
 import { selectIsDark, useThemeStore } from '$shared/ui/theme-store';
 
 /**
- * The three preference stores are the only migrated state that reaches outside
+ * The preference stores are the only migrated state that reaches outside
  * React — they write localStorage and attributes on <html>. That contract, and
  * the "defaults until init() runs" rule that keeps hydration clean, is what
  * these pin down.
@@ -13,6 +14,7 @@ import { selectIsDark, useThemeStore } from '$shared/ui/theme-store';
 const theme = () => useThemeStore.getState();
 const prefs = () => usePreferencesStore.getState();
 const notify = () => useNotificationPreferencesStore.getState();
+const instrument = () => useInstrumentStore.getState();
 
 beforeEach(() => {
   localStorage.clear();
@@ -31,6 +33,7 @@ beforeEach(() => {
     },
     pushTimeout: '10'
   });
+  useInstrumentStore.setState({ symbol: 'NIFTY' });
 });
 
 describe('theme store', () => {
@@ -146,5 +149,56 @@ describe('notification preferences store', () => {
     notify().setPushTimeout('off');
     expect(localStorage.getItem('cn-pref-push-timeout')).toBe('off');
     expect(useNotificationPreferencesStore.getState().pushTimeout).toBe('off');
+  });
+});
+
+/**
+ * The remembered instrument.
+ *
+ * Every analytics page used to own this as `useState(0)` over a hardcoded
+ * three, so walking from Open Interest to Max Pain put you back on NIFTY.
+ */
+describe('instrument store', () => {
+  it('defaults to NIFTY, matching what the server rendered', () => {
+    expect(instrument().symbol).toBe('NIFTY');
+  });
+
+  it('stays on the default until init() runs', () => {
+    localStorage.setItem('cn-pref-instrument', 'ITC');
+
+    // Reading storage during render is what would break hydration.
+    expect(instrument().symbol).toBe('NIFTY');
+
+    instrument().init();
+
+    expect(instrument().symbol).toBe('ITC');
+  });
+
+  it('remembers a choice', () => {
+    instrument().setSymbol('RELIANCE');
+
+    expect(instrument().symbol).toBe('RELIANCE');
+    expect(localStorage.getItem('cn-pref-instrument')).toBe('RELIANCE');
+  });
+
+  it('normalises case, so a hand-typed link cannot miss the catalog', () => {
+    instrument().setSymbol('  itc ');
+
+    expect(instrument().symbol).toBe('ITC');
+  });
+
+  it('ignores an empty symbol rather than charting nothing', () => {
+    instrument().setSymbol('ITC');
+    instrument().setSymbol('   ');
+
+    expect(instrument().symbol).toBe('ITC');
+  });
+
+  it('survives an empty stored value', () => {
+    localStorage.setItem('cn-pref-instrument', '');
+
+    instrument().init();
+
+    expect(instrument().symbol).toBe('NIFTY');
   });
 });

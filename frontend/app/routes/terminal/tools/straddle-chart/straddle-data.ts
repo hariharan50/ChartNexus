@@ -19,7 +19,7 @@ export {
   type Timeframe
 } from '../../options/atm-straddle/straddle-data';
 
-export { OI_INSTRUMENTS, REFETCH_MS, type Instrument } from '../../options/open-interest/oi-data';
+export { REFETCH_MS } from '../../options/open-interest/oi-data';
 
 export interface StraddleSeries {
   t: string[];

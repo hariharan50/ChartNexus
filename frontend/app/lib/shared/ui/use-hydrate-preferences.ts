@@ -1,4 +1,5 @@
 import { useEffect } from 'react';
+import { useInstrumentStore } from './instrument-store';
 import { useNotificationPreferencesStore } from './notification-preferences-store';
 import { usePreferencesStore } from './preferences-store';
 import { useThemeStore } from './theme-store';
@@ -20,5 +21,6 @@ export function useHydratePreferences(): void {
     useThemeStore.getState().init();
     usePreferencesStore.getState().init();
     useNotificationPreferencesStore.getState().init();
+    useInstrumentStore.getState().init();
   }, []);
 }

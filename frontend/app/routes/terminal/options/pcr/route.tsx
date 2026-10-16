@@ -5,6 +5,8 @@ import { cx } from '$shared/ui/cx';
 import Select from '$shared/ui/Select';
 import IconChart from '$shared/ui/icons/IconChart';
 import { lastTradingDayIST } from '$shared/formatting/ist-clock';
+import { useSelectedInstrument } from '$contexts/instrument-catalog/selected-instrument';
+import InstrumentPicker from '$shared/ui/InstrumentPicker';
 import ExpiryPicker from '../components/ExpiryPicker';
 import HistoryMode, { type Mode } from '../components/HistoryMode';
 import SeriesChart from '../components/SeriesChart';
@@ -28,12 +30,6 @@ import type { Route } from './+types/route';
 
 export const meta: Route.MetaFunction = () => [{ title: 'Put-Call Ratio · Options Lab' }];
 
-const INSTRUMENTS = [
-  { short: 'NIFTY', badge: '50', symbol: 'NIFTY' },
-  { short: 'SENSEX', badge: 'BSE', symbol: 'SENSEX' },
-  { short: 'BANKNIFTY', badge: 'BNK', symbol: 'BANKNIFTY' }
-];
-
 /** Charts sharing this group share one crosshair. */
 const CHART_GROUP = 'pcr';
 
@@ -41,7 +37,7 @@ const CHART_GROUP = 'pcr';
 const REPLAY_MS = 15_000;
 
 export default function PutCallRatio() {
-  const [instIdx, setInstIdx] = useState(0);
+  const [symbol, setSymbol] = useSelectedInstrument();
   const [sidebarOpen, setSidebarOpen] = useState(true);
   // `undefined` means "whatever the backend picks" — the nearest expiry.
   const [expiry, setExpiry] = useState<string | undefined>(undefined);
@@ -49,12 +45,10 @@ export default function PutCallRatio() {
   const [date, setDate] = useState(lastTradingDayIST);
   const [timeframe, setTimeframe] = useState<Timeframe>(DEFAULT_TIMEFRAME);
 
-  const instrument = INSTRUMENTS[instIdx] ?? INSTRUMENTS[0]!;
-
   const historyDate = mode === 'historical' ? date : undefined;
   const query = useQuery<PcrSeriesView>({
-    queryKey: ['options-lab', 'pcr-series', instrument.symbol, mode, historyDate, expiry],
-    queryFn: () => getPcrSeries(instrument.symbol, { date: historyDate, expiry }),
+    queryKey: ['options-lab', 'pcr-series', symbol, mode, historyDate, expiry],
+    queryFn: () => getPcrSeries(symbol, { date: historyDate, expiry }),
     refetchInterval: mode === 'live' ? REFETCH_MS : false
   });
 
@@ -168,33 +162,12 @@ export default function PutCallRatio() {
                   </button>
                 </div>
 
-                <div className={s.instrument}>
-                  <span className={s.badge}>{instrument.badge}</span>
-                  <span className={s.short}>{instrument.short}</span>
-                  <span className={s.cyclers}>
-                    <button
-                      type="button"
-                      aria-label="Previous"
-                      onClick={() =>
-                        setInstIdx((i) => (i - 1 + INSTRUMENTS.length) % INSTRUMENTS.length)
-                      }
-                    >
-                      ‹
-                    </button>
-                    <button
-                      type="button"
-                      aria-label="Next"
-                      onClick={() => setInstIdx((i) => (i + 1) % INSTRUMENTS.length)}
-                    >
-                      ›
-                    </button>
-                  </span>
-                </div>
+                <InstrumentPicker value={symbol} onChange={setSymbol} />
 
                 <HistoryMode mode={mode} date={date} onMode={setMode} onDate={setDate} />
 
                 <ExpiryPicker
-                  instrument={instrument.symbol}
+                  instrument={symbol}
                   value={expiry}
                   onChange={setExpiry}
                   resolved={view.expiry_date}

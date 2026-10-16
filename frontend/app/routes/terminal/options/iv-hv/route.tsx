@@ -7,6 +7,8 @@ import { cx } from '$shared/ui/cx';
 import Select from '$shared/ui/Select';
 import IconChart from '$shared/ui/icons/IconChart';
 import IconEye from '$shared/ui/icons/IconEye';
+import { useSelectedInstrument } from '$contexts/instrument-catalog/selected-instrument';
+import InstrumentPicker from '$shared/ui/InstrumentPicker';
 import IconEyeOff from '$shared/ui/icons/IconEyeOff';
 import {
   buildSpreadRows,
@@ -28,7 +30,6 @@ import {
   hvSessions,
   HV_WINDOWS,
   ivHvCsv,
-  OI_INSTRUMENTS,
   PUT_COLOR,
   rangeDays,
   RANGES,
@@ -66,7 +67,7 @@ const LABELS: Record<keyof IvHvVisible, string> = {
 const SERIES_ORDER = ['spread', 'future', 'price'] as const;
 
 export default function IvHvChart() {
-  const [instIdx, setInstIdx] = useState(0);
+  const [symbol, setSymbol] = useSelectedInstrument();
   const [range, setRange] = useState<RangeKey>(DEFAULT_SPREAD_RANGE);
   const [hvWindow, setHvWindow] = useState<HvWindowKey>(DEFAULT_HV_WINDOW);
   const [sidebarOpen, setSidebarOpen] = useState(true);
@@ -81,11 +82,6 @@ export default function IvHvChart() {
   });
 
   const theme = useChartTheme();
-  const instrument = OI_INSTRUMENTS[instIdx] ?? OI_INSTRUMENTS[0]!;
-
-  function cycle(delta: number) {
-    setInstIdx((current) => (current + delta + OI_INSTRUMENTS.length) % OI_INSTRUMENTS.length);
-  }
 
   const days = rangeDays(range);
   const hvSpan = hvSessions(hvWindow);
@@ -102,14 +98,14 @@ export default function IvHvChart() {
   // The same two payloads the IV/HV/IVP page reads, on the same query keys, so
   // moving between the two pages hits a warm cache.
   const history = useQuery<HistoryView>({
-    queryKey: ['market', 'history', instrument.symbol, '1d', fetch],
-    queryFn: () => getHistory(instrument.symbol, '1d', fetch),
+    queryKey: ['market', 'history', symbol, '1d', fetch],
+    queryFn: () => getHistory(symbol, '1d', fetch),
     refetchInterval: REFETCH_MS
   });
 
   const ivHistory = useQuery<IvHistoryView>({
-    queryKey: ['options-lab', 'iv-history', instrument.symbol, fetch],
-    queryFn: () => getIvHistory(instrument.symbol, fetch),
+    queryKey: ['options-lab', 'iv-history', symbol, fetch],
+    queryFn: () => getIvHistory(symbol, fetch),
     refetchInterval: REFETCH_MS
   });
 
@@ -161,7 +157,7 @@ export default function IvHvChart() {
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.href = url;
-    link.download = csvFilename(instrument.symbol, rows);
+    link.download = csvFilename(symbol, rows);
     link.click();
     URL.revokeObjectURL(url);
   }
@@ -190,8 +186,8 @@ export default function IvHvChart() {
       ) : rows.length === 0 ? (
         <div className={cx(s.panel, s.emptyPanel)}>
           <p className={s.muted}>
-            No daily history available for {instrument.short} yet — the price series is what the
-            historical half of this spread is built from.
+            No daily history available for {symbol} yet — the price series is what the historical
+            half of this spread is built from.
           </p>
         </div>
       ) : (
@@ -213,18 +209,7 @@ export default function IvHvChart() {
                   </button>
                 </div>
 
-                <div className={s.instrument}>
-                  <span className={s.badge}>{instrument.badge}</span>
-                  <span className={s.short}>{instrument.short}</span>
-                  <span className={s.cyclers}>
-                    <button type="button" aria-label="Previous" onClick={() => cycle(-1)}>
-                      ‹
-                    </button>
-                    <button type="button" aria-label="Next" onClick={() => cycle(1)}>
-                      ›
-                    </button>
-                  </span>
-                </div>
+                <InstrumentPicker value={symbol} onChange={setSymbol} />
 
                 <p className={s.subLabel}>Range</p>
                 <Select
@@ -328,7 +313,7 @@ export default function IvHvChart() {
 
               <EChart
                 option={option}
-                resetKey={`${instrument.symbol}-${range}-${hvWindow}-${zoomNonce}`}
+                resetKey={`${symbol}-${range}-${hvWindow}-${zoomNonce}`}
                 className={s.chart}
               />
 

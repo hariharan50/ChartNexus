@@ -9,7 +9,7 @@ import {
 } from '$shared/charts/tv/drawings/useDrawings';
 import { preservesBars, transformCandles } from '$shared/charts/tv/series-transforms';
 import { cx } from '$shared/ui/cx';
-import { OI_INSTRUMENTS, REFETCH_MS } from '../../options/open-interest/oi-data';
+import { REFETCH_MS } from '../../options/open-interest/oi-data';
 import {
   getHistory,
   hasNoRealData,
@@ -94,8 +94,11 @@ export default function ChartCell({
   const chartHandleRef = handleRef ?? ownHandleRef;
   // The element the drawing host puts its pointer listeners on.
   const plotRef = useRef<HTMLDivElement>(null);
-  const instrument =
-    OI_INSTRUMENTS.find((entry) => entry.symbol === config.symbol) ?? OI_INSTRUMENTS[0]!;
+  // `config.symbol` is the label. It used to be looked up in a hardcoded
+  // three-index array with `?? OI_INSTRUMENTS[0]`, so every cell showing one of
+  // the other ~218 contracts was captioned "NIFTY" — the picker on this page
+  // has always offered the whole catalog.
+  const badge = badgeFor(config.symbol);
   const timeframe = INTERVALS.find((entry) => entry.value === config.interval) ?? INTERVALS[1]!;
 
   const query = useQuery<HistoryView>({
@@ -231,12 +234,12 @@ export default function ChartCell({
       className={cx(s.cell, active && s.active)}
       onPointerDown={onFocus}
       role="group"
-      aria-label={`${instrument.short} ${config.interval}`}
+      aria-label={`${config.symbol} ${config.interval}`}
     >
       <div ref={plotRef} className={s.plot}>
         {query.isError ? (
           <div className={s.banner} role="alert">
-            <span>Couldn’t load {instrument.short}.</span>
+            <span>Couldn’t load {config.symbol}.</span>
             <button type="button" onClick={() => void query.refetch()}>
               Retry
             </button>
@@ -247,7 +250,7 @@ export default function ChartCell({
               <p>Loading candles…</p>
             ) : hasNoRealData(view) ? (
               <>
-                <p>No live data for {instrument.short} over this range.</p>
+                <p>No live data for {config.symbol} over this range.</p>
                 {/* Named rather than implied: an empty chart reads as a bug,
                     and the reason this one is empty is a deliberate refusal. */}
                 <p className={s.emptyHint}>
@@ -261,12 +264,7 @@ export default function ChartCell({
           </div>
         ) : (
           <>
-            <ChartLegend
-              symbol={instrument.short}
-              badge={instrument.badge}
-              bar={shownBar}
-              volume={shownVolume}
-            />
+            <ChartLegend symbol={config.symbol} badge={badge} bar={shownBar} volume={shownVolume} />
             <LwChart
               candles={drawnCandles}
               volume={drawnVolume}
@@ -333,3 +331,11 @@ export default function ChartCell({
 }
 
 export type { DrawSelection };
+
+/** Two leading characters, matching how the instrument picker marks a row. */
+function badgeFor(symbol: string): string {
+  return symbol
+    .replace(/[^A-Z0-9]/gi, '')
+    .slice(0, 2)
+    .toUpperCase();
+}

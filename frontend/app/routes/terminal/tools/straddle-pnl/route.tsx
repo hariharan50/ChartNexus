@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import { useMemo, useState } from 'react';
+import { useMemo, useState, useEffect } from 'react';
 import { getInstruments } from '$contexts/instrument-catalog/api';
 import EChart from '$shared/charts/EChart';
 import { buildMultiSeriesOption, type SeriesLine } from '$shared/charts/options/multi-series';
@@ -18,7 +18,6 @@ import {
   formatPrice,
   formatStrike,
   getStraddlePnl,
-  OI_INSTRUMENTS,
   pick,
   PNL,
   PNL_NEGATIVE,
@@ -39,6 +38,8 @@ import {
 } from './pnl-data';
 import s from './route.module.css';
 import type { Route } from './+types/route';
+import { useSelectedInstrument } from '$contexts/instrument-catalog/selected-instrument';
+import InstrumentPicker from '$shared/ui/InstrumentPicker';
 
 export const meta: Route.MetaFunction = () => [{ title: 'Straddle PnL Simulator · Tools' }];
 
@@ -58,7 +59,7 @@ export const meta: Route.MetaFunction = () => [{ title: 'Straddle PnL Simulator 
  * makes comparing two settings possible.
  */
 export default function StraddlePnlSimulator() {
-  const [instIdx, setInstIdx] = useState(0);
+  const [symbol, setSymbol] = useSelectedInstrument();
   const [expiry, setExpiry] = useState<string | undefined>(undefined);
   const [timeframe, setTimeframe] = useState<Timeframe>(DEFAULT_TIMEFRAME);
   const [range, setRange] = useState(DEFAULT_RANGE);
@@ -72,8 +73,16 @@ export default function StraddlePnlSimulator() {
   const [run, setRun] = useState<RunParams | null>(null);
   const [zoomNonce, setZoomNonce] = useState(0);
 
+  // Expiry, lot and ladder are all per instrument: a NIFTY date means
+  // nothing on ITC. An effect, because the symbol now also arrives from a
+  // link, the header search and the remembered choice.
+  useEffect(() => {
+    setExpiry(undefined);
+    setLotOverride(null);
+    setAdjOverride(null);
+  }, [symbol]);
+
   const theme = useChartTheme();
-  const instrument = OI_INSTRUMENTS[instIdx] ?? OI_INSTRUMENTS[0]!;
 
   // The contract's own size and ladder, which seed the two number boxes. One
   // unpaged call for ~3 index rows, cached for the session.
@@ -82,7 +91,7 @@ export default function StraddlePnlSimulator() {
     queryFn: () => getInstruments({ kind: 'index' }),
     staleTime: 60 * 60 * 1000
   });
-  const entry = catalog.data?.instruments.find((row) => row.symbol === instrument.symbol);
+  const entry = catalog.data?.instruments.find((row) => row.symbol === symbol);
 
   const lotSize = lotOverride ?? (entry ? String(entry.lot_size) : '');
   const adjPoints = adjOverride ?? (entry?.strike_step ? String(Number(entry.strike_step)) : '');
@@ -91,7 +100,7 @@ export default function StraddlePnlSimulator() {
   const draft: RunParams | null =
     Number(lotSize) > 0 && Number(lots) > 0 && Number(adjPoints) > 0
       ? {
-          instrument: instrument.symbol,
+          instrument: symbol,
           expiry,
           sessions: sessionsOf(range),
           adjustmentPoints: Number(adjPoints),
@@ -211,35 +220,17 @@ export default function StraddlePnlSimulator() {
         <div className={s.controls}>
           <Select
             className={s.narrow}
-            value={exchangeOf(instrument.symbol)}
+            value={exchangeOf(symbol)}
             ariaLabel="Exchange"
             disabled
             onChange={() => undefined}
-            options={[
-              { value: exchangeOf(instrument.symbol), label: exchangeOf(instrument.symbol) }
-            ]}
+            options={[{ value: exchangeOf(symbol), label: exchangeOf(symbol) }]}
           />
 
-          <Select
-            className={s.field}
-            value={String(instIdx)}
-            ariaLabel="Underlying"
-            onChange={(next) => {
-              setInstIdx(Number(next));
-              // All three are per instrument: a NIFTY expiry, lot and ladder
-              // mean nothing on SENSEX.
-              setExpiry(undefined);
-              setLotOverride(null);
-              setAdjOverride(null);
-            }}
-            options={OI_INSTRUMENTS.map((row, index) => ({
-              value: String(index),
-              label: row.short
-            }))}
-          />
+          <InstrumentPicker value={symbol} onChange={setSymbol} variant="field" />
 
           <ExpiryPicker
-            instrument={instrument.symbol}
+            instrument={symbol}
             value={expiry}
             onChange={setExpiry}
             resolved={view?.expiry_date}
@@ -365,7 +356,7 @@ export default function StraddlePnlSimulator() {
             {option ? (
               <EChart
                 option={option}
-                resetKey={`${instrument.symbol}-${timeframe}-${range}-${zoomNonce}`}
+                resetKey={`${symbol}-${timeframe}-${range}-${zoomNonce}`}
                 className={s.chart}
               />
             ) : (

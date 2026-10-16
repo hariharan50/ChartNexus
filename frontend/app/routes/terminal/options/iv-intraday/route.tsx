@@ -11,6 +11,8 @@ import Select from '$shared/ui/Select';
 import IconChart from '$shared/ui/icons/IconChart';
 import IconEye from '$shared/ui/icons/IconEye';
 import IconEyeOff from '$shared/ui/icons/IconEyeOff';
+import { useSelectedInstrument } from '$contexts/instrument-catalog/selected-instrument';
+import InstrumentPicker from '$shared/ui/InstrumentPicker';
 import ExpiryPicker from '../components/ExpiryPicker';
 import HistoryMode, { type Mode } from '../components/HistoryMode';
 import {
@@ -31,7 +33,6 @@ import {
   isFlatCurve,
   ivSeries,
   MAX_EXPIRIES,
-  OI_INSTRUMENTS,
   pick,
   REFETCH_MS,
   shortExpiry,
@@ -62,7 +63,7 @@ const CHART_RIGHT_GUTTER = 16;
 const IV_COLOR = '#3b82f6';
 
 export default function IvIntradayChart() {
-  const [instIdx, setInstIdx] = useState(0);
+  const [symbol, setSymbol] = useSelectedInstrument();
   const [dataMode, setDataMode] = useState<Mode>('live');
   const [date, setDate] = useState(lastTradingDayIST);
   const [timeframe, setTimeframe] = useState<Timeframe>(DEFAULT_TIMEFRAME);
@@ -77,20 +78,22 @@ export default function IvIntradayChart() {
   const [picked, setPicked] = useState<string[] | null>(null);
 
   const theme = useChartTheme();
-  const instrument = OI_INSTRUMENTS[instIdx] ?? OI_INSTRUMENTS[0]!;
 
-  function cycle(delta: number) {
-    setInstIdx((current) => (current + delta + OI_INSTRUMENTS.length) % OI_INSTRUMENTS.length);
+  // Each of these points at the instrument that was showing, so they have
+  // to let go when it changes. An effect rather than a line in a cycler:
+  // the symbol also arrives from a link, the header search and the
+  // remembered choice, none of which go through this page's controls.
+  useEffect(() => {
     // Expiries are per instrument; a NIFTY date means nothing on SENSEX.
     setPicked(null);
-  }
+  }, [symbol]);
 
   const historyDate = dataMode === 'historical' ? date : undefined;
 
   // -- intraday -------------------------------------------------------------
   const skew = useQuery<SkewView>({
-    queryKey: ['options-lab', 'skew', instrument.symbol, dataMode, historyDate, expiry],
-    queryFn: () => getSkew(instrument.symbol, { date: historyDate, expiry }),
+    queryKey: ['options-lab', 'skew', symbol, dataMode, historyDate, expiry],
+    queryFn: () => getSkew(symbol, { date: historyDate, expiry }),
     refetchInterval: dataMode === 'live' ? REFETCH_MS : false,
     enabled: view === 'intraday'
   });
@@ -128,8 +131,8 @@ export default function IvIntradayChart() {
 
   // -- term structure -------------------------------------------------------
   const expiryQuery = useQuery({
-    queryKey: ['market', 'expiries', instrument.symbol],
-    queryFn: () => getExpiries(instrument.symbol),
+    queryKey: ['market', 'expiries', symbol],
+    queryFn: () => getExpiries(symbol),
     staleTime: 60 * 60_000
   });
 
@@ -140,8 +143,8 @@ export default function IvIntradayChart() {
   );
 
   const term = useQuery<TermStructureView>({
-    queryKey: ['options-lab', 'term-structure', instrument.symbol, expiries.join(',')],
-    queryFn: () => getTermStructure(instrument.symbol, expiries),
+    queryKey: ['options-lab', 'term-structure', symbol, expiries.join(',')],
+    queryFn: () => getTermStructure(symbol, expiries),
     refetchInterval: REFETCH_MS,
     enabled: view === 'term' && expiries.length > 0
   });
@@ -190,7 +193,7 @@ export default function IvIntradayChart() {
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.href = url;
-    link.download = csvFilename(instrument.symbol, view, vw?.now_ts ?? term.data?.as_of);
+    link.download = csvFilename(symbol, view, vw?.now_ts ?? term.data?.as_of);
     link.click();
     URL.revokeObjectURL(url);
   }
@@ -236,18 +239,7 @@ export default function IvIntradayChart() {
                   </button>
                 </div>
 
-                <div className={s.instrument}>
-                  <span className={s.badge}>{instrument.badge}</span>
-                  <span className={s.short}>{instrument.short}</span>
-                  <span className={s.cyclers}>
-                    <button type="button" aria-label="Previous" onClick={() => cycle(-1)}>
-                      ‹
-                    </button>
-                    <button type="button" aria-label="Next" onClick={() => cycle(1)}>
-                      ›
-                    </button>
-                  </span>
-                </div>
+                <InstrumentPicker value={symbol} onChange={setSymbol} />
 
                 {view === 'intraday' ? (
                   <HistoryMode mode={dataMode} date={date} onMode={setDataMode} onDate={setDate} />
@@ -256,7 +248,7 @@ export default function IvIntradayChart() {
                 {view === 'intraday' ? (
                   <>
                     <ExpiryPicker
-                      instrument={instrument.symbol}
+                      instrument={symbol}
                       value={expiry}
                       onChange={setExpiry}
                       resolved={vw?.expiry_date ?? null}
@@ -431,7 +423,7 @@ export default function IvIntradayChart() {
                 ) : (
                   <EChart
                     option={intradayOption}
-                    resetKey={`${instrument.symbol}-${timeframe}-${dataMode}-${historyDate ?? ''}-${zoomNonce}`}
+                    resetKey={`${symbol}-${timeframe}-${dataMode}-${historyDate ?? ''}-${zoomNonce}`}
                     className={s.chart}
                   />
                 )
@@ -444,7 +436,7 @@ export default function IvIntradayChart() {
               ) : (
                 <EChart
                   option={termOption}
-                  resetKey={`${instrument.symbol}-term-${expiries.join(',')}`}
+                  resetKey={`${symbol}-term-${expiries.join(',')}`}
                   className={s.chart}
                 />
               )}

@@ -7,6 +7,8 @@ import BarPair from './components/BarPair';
 import OpenInterestChart from './components/OpenInterestChart';
 import PcrDonut from './components/PcrDonut';
 import SentimentDonut from './components/SentimentDonut';
+import { useSelectedInstrument } from '$contexts/instrument-catalog/selected-instrument';
+import InstrumentPicker from '$shared/ui/InstrumentPicker';
 import ExpiryPicker from '../components/ExpiryPicker';
 import HistoryMode, { type Mode } from '../components/HistoryMode';
 import TimeRangeSlider from '../components/TimeRangeSlider';
@@ -21,7 +23,6 @@ import {
   freshnessLabel,
   getOpenInterest,
   inferStep,
-  OI_INSTRUMENTS,
   REFETCH_MS,
   STALE_AFTER_MS,
   timeLabel,
@@ -60,7 +61,7 @@ const QUICK_RANGES: { label: string; value: number | 'all' }[] = [
 ];
 
 export default function OpenInterest() {
-  const [instIdx, setInstIdx] = useState(0);
+  const [symbol, setSymbol] = useSelectedInstrument();
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [dataMode, setDataMode] = useState<Mode>('live');
   const [date, setDate] = useState(lastTradingDayIST);
@@ -76,19 +77,20 @@ export default function OpenInterest() {
   /** Right (window-end) handle position, or -1 to follow live (far right). */
   const [nowFrameIdx, setNowFrameIdx] = useState(-1);
 
-  const instrument = OI_INSTRUMENTS[instIdx] ?? OI_INSTRUMENTS[0]!;
-
-  function cycle(delta: number) {
-    setInstIdx((current) => (current + delta + OI_INSTRUMENTS.length) % OI_INSTRUMENTS.length);
+  // The window handles index into the previous instrument's series, so they
+  // have to let go when the series changes. An effect rather than a line in a
+  // cycler: the symbol also changes from a link, the header search and the
+  // remembered choice, none of which go through this page's controls.
+  useEffect(() => {
     setOpenFrameIdx(-1);
     setNowFrameIdx(-1);
     setActivePreset('all');
-  }
+  }, [symbol]);
 
   const historyDate = dataMode === 'historical' ? date : undefined;
   const query = useQuery<OiView>({
-    queryKey: ['options-lab', 'oi', instrument.symbol, dataMode, historyDate, expiry],
-    queryFn: () => getOpenInterest(instrument.symbol, { date: historyDate, expiry }),
+    queryKey: ['options-lab', 'oi', symbol, dataMode, historyDate, expiry],
+    queryFn: () => getOpenInterest(symbol, { date: historyDate, expiry }),
     refetchInterval: dataMode === 'live' ? REFETCH_MS : false
   });
 
@@ -239,23 +241,12 @@ export default function OpenInterest() {
                   </button>
                 </div>
 
-                <div className={s.instrument}>
-                  <span className={s.badge}>{instrument.badge}</span>
-                  <span className={s.short}>{instrument.short}</span>
-                  <span className={s.cyclers}>
-                    <button type="button" aria-label="Previous" onClick={() => cycle(-1)}>
-                      ‹
-                    </button>
-                    <button type="button" aria-label="Next" onClick={() => cycle(1)}>
-                      ›
-                    </button>
-                  </span>
-                </div>
+                <InstrumentPicker value={symbol} onChange={setSymbol} />
 
                 <HistoryMode mode={dataMode} date={date} onMode={setDataMode} onDate={setDate} />
 
                 <ExpiryPicker
-                  instrument={instrument.symbol}
+                  instrument={symbol}
                   value={expiry}
                   onChange={setExpiry}
                   resolved={view?.expiry_date ?? null}

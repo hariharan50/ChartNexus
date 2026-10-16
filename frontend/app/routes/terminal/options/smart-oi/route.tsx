@@ -10,12 +10,12 @@ import type { Mode } from '../components/HistoryMode';
 import SeriesChart from '../components/SeriesChart';
 import PricePanel from './components/PricePanel';
 import ReplayBar, { REPLAY_SPEEDS, type ReplaySpeed } from './components/ReplayBar';
+import { useSelectedInstrument } from '$contexts/instrument-catalog/selected-instrument';
 import SmartOiToolbar from './components/SmartOiToolbar';
 import {
   CALL_COLOR,
   DEFAULT_INTERVAL,
   DEFAULT_SPAN,
-  OI_INSTRUMENTS,
   PUT_COLOR,
   REFETCH_MS,
   STALE_AFTER_MS,
@@ -50,7 +50,7 @@ const NO_TIMES: string[] = [];
 const NO_VALUES: (number | null)[] = [];
 
 export default function SmartOi() {
-  const [instIdx, setInstIdx] = useState(0);
+  const [symbol, setSymbol] = useSelectedInstrument();
   const [dataMode, setDataMode] = useState<Mode>('live');
   const [date, setDate] = useState(lastTradingDayIST);
   const [interval, setIntervalChoice] = useState<Interval>(DEFAULT_INTERVAL);
@@ -76,7 +76,6 @@ export default function SmartOi() {
     return () => window.clearInterval(id);
   }, []);
 
-  const instrument = OI_INSTRUMENTS[instIdx] ?? OI_INSTRUMENTS[0]!;
   const historyDate = dataMode === 'historical' ? date : undefined;
 
   // Custom bounds only reach the request once both ends parse. A half-typed
@@ -95,7 +94,7 @@ export default function SmartOi() {
     queryKey: [
       'options-lab',
       'smart-oi',
-      instrument.symbol,
+      symbol,
       interval,
       strikeMode,
       span,
@@ -106,7 +105,7 @@ export default function SmartOi() {
       historyDate
     ],
     queryFn: () =>
-      getSmartOi(instrument.symbol, {
+      getSmartOi(symbol, {
         interval,
         mode: strikeMode,
         span,
@@ -121,8 +120,8 @@ export default function SmartOi() {
   });
 
   const expiryQuery = useQuery({
-    queryKey: ['market', 'expiries', instrument.symbol],
-    queryFn: () => getExpiries(instrument.symbol),
+    queryKey: ['market', 'expiries', symbol],
+    queryFn: () => getExpiries(symbol),
     staleTime: 60 * 60_000
   });
 
@@ -197,10 +196,6 @@ export default function SmartOi() {
     ];
   }, [view]);
 
-  function cycle(step: number) {
-    setInstIdx((current) => (current + step + OI_INSTRUMENTS.length) % OI_INSTRUMENTS.length);
-  }
-
   function download() {
     if (!view) return;
     const blob = new Blob([smartOiCsv(view)], { type: 'text/csv;charset=utf-8' });
@@ -239,8 +234,8 @@ export default function SmartOi() {
   return (
     <div className={s.page}>
       <SmartOiToolbar
-        instrument={instrument}
-        onCycle={cycle}
+        symbol={symbol}
+        onSymbol={setSymbol}
         expiry={expiry}
         expiries={expiryQuery.data?.expiries ?? []}
         resolvedExpiry={view.expiry_date}
@@ -303,8 +298,8 @@ export default function SmartOi() {
           smartOi={shown.smartOi}
           callVol={shown.call}
           putVol={shown.put}
-          symbol={instrument.short}
-          resetKey={`${instrument.symbol}-${interval}-${dataMode}-${historyDate ?? ''}`}
+          symbol={symbol}
+          resetKey={`${symbol}-${interval}-${dataMode}-${historyDate ?? ''}`}
         />
 
         <div className={s.side}>

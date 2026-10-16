@@ -1,3 +1,4 @@
+import { useEffect, useMemo } from 'react';
 import { useExpiriesQuery } from '$contexts/market-data/queries';
 import { cx } from '$shared/ui/cx';
 import Select from '$shared/ui/Select';
@@ -52,6 +53,8 @@ interface Props {
  * and had no way to say so, which read as a broken dropdown rather than as a
  * missing feature.
  */
+const NONE: string[] = [];
+
 export default function ExpiryPicker({
   instrument,
   value,
@@ -63,7 +66,26 @@ export default function ExpiryPicker({
   className
 }: Props) {
   const query = useExpiriesQuery(instrument);
-  const expiries = query.data?.expiries ?? [];
+  // Memoised because the reset effect below depends on it: `?? []` would be a
+  // fresh array every render and re-run the effect forever.
+  const expiries = useMemo(() => query.data?.expiries ?? NONE, [query.data]);
+
+  /**
+   * Let go of an expiry that belongs to a different instrument.
+   *
+   * Expiries are per instrument — a NIFTY date means nothing on ITC, and
+   * stocks settle monthly where an index may be weekly. Without this the
+   * control silently falls back to its placeholder while the stale date is
+   * still sent with every request, which was survivable when the picker
+   * offered three symbols and is not now that it offers the whole catalog.
+   *
+   * Keyed on the loaded list rather than on `instrument` so an in-flight
+   * fetch never wipes an expiry someone deep-linked to.
+   */
+  useEffect(() => {
+    if (!query.isSuccess || value === undefined) return;
+    if (!expiries.includes(value)) onChange(undefined);
+  }, [query.isSuccess, expiries, value, onChange]);
 
   // Only speak up once a specific expiry is picked, and only when the answer
   // that came back really was degraded.

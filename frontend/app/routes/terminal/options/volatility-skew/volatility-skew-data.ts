@@ -17,7 +17,6 @@ import { apiFetch } from '$shared/api/client';
 export {
   CALL_COLOR,
   PUT_COLOR,
-  OI_INSTRUMENTS,
   REFETCH_MS,
   STALE_AFTER_MS,
   clockLabel,
@@ -29,7 +28,6 @@ export {
   sessionPositions,
   sessionTicks,
   timeLabel,
-  type Instrument,
   type SliderTick
 } from '../open-interest/oi-data';
 

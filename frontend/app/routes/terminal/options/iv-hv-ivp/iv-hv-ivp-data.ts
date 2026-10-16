@@ -23,13 +23,11 @@ import { apiFetch } from '$shared/api/client';
 // Shared clock/instrument helpers, reused rather than duplicated so this page
 // reads the same session the rest of the Lab does.
 export {
-  OI_INSTRUMENTS,
   REFETCH_MS,
   STALE_AFTER_MS,
   clockLabel,
   dateLabel,
-  freshnessLabel,
-  type Instrument
+  freshnessLabel
 } from '../open-interest/oi-data';
 
 // The daily-bar fetcher is the Analyse page's; one history endpoint, one client.

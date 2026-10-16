@@ -1,8 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { type ReactNode, useEffect, useMemo, useState } from 'react';
-import { useInstruments } from '$contexts/instrument-catalog/queries';
-import { toPickerEntries } from '$contexts/instrument-catalog/search';
-import { useSymbolParam } from '$contexts/instrument-catalog/use-symbol-param';
+import { useSelectedInstrument } from '$contexts/instrument-catalog/selected-instrument';
 import EChart from '$shared/charts/EChart';
 import type { EChartsCoreOption } from '$shared/charts/echarts-modules';
 import { buildCallPutOption } from '$shared/charts/options/call-put';
@@ -39,6 +37,8 @@ import {
 } from './price-vs-oi-data';
 import s from './route.module.css';
 import type { Route } from './+types/route';
+import InstrumentPicker from '$shared/ui/InstrumentPicker';
+import { useEmptyReason } from '$contexts/instrument-catalog/coverage';
 
 export const meta: Route.MetaFunction = () => [{ title: 'Price vs OI · Options Lab' }];
 
@@ -90,7 +90,7 @@ export default function PriceVsOi() {
   // The symbol lives in the URL so the header search can land here on a
   // specific index, and so a link to this page keeps pointing at what the
   // sender was looking at.
-  const [symbol, setSymbol] = useSymbolParam();
+  const [symbol, setSymbol] = useSelectedInstrument();
   const [dataMode, setDataMode] = useState<Mode>('live');
   const [date, setDate] = useState(lastTradingDayIST);
   const [timeframe, setTimeframe] = useState<Timeframe>(DEFAULT_TIMEFRAME);
@@ -126,6 +126,10 @@ export default function PriceVsOi() {
   const p6price = on('p6.price');
   const p6oi = on('p6.oi');
 
+  // Why a panel is empty depends on what was picked: an index is waiting
+  // for today's captures, a stock is waiting for captures nobody makes.
+  const emptyMessage = useEmptyReason(symbol, 'strike series', dataMode === 'historical');
+
   const theme = useChartTheme();
 
   // The chain views are index-only, so the cycler walks the catalog's indices
@@ -133,17 +137,6 @@ export default function PriceVsOi() {
   // from the header search now charts FINNIFTY instead of silently showing
   // NIFTY. An unknown symbol still drives the query: the backend takes any
   // catalog underlying, and inventing a fallback would chart a lie.
-  const { instruments } = useInstruments({ kind: 'index' });
-  const indices = useMemo(() => toPickerEntries(instruments), [instruments]);
-  const current = indices.find((entry) => entry.symbol === symbol);
-
-  function cycle(delta: number) {
-    if (indices.length === 0) return;
-    const at = indices.findIndex((entry) => entry.symbol === symbol);
-    const from = at === -1 ? 0 : at;
-    const next = indices[(from + delta + indices.length) % indices.length];
-    if (next) setSymbol(next.symbol);
-  }
 
   // A strike that exists on NIFTY means nothing on BANKNIFTY. This is an
   // effect rather than a line in `cycle` because the symbol can also change
@@ -357,11 +350,7 @@ export default function PriceVsOi() {
       ) : vw && vw.data_quality === 'empty' ? (
         <div className={cx(s.panel, s.emptyPanel)}>
           <HistoryMode mode={dataMode} date={date} onMode={setDataMode} onDate={setDate} />
-          <p className={s.muted}>
-            {dataMode === 'historical'
-              ? 'No session archived for that date.'
-              : 'No option data recorded for today yet — the charts fill in as the ingest worker captures the chain.'}
-          </p>
+          <p className={s.muted}>{emptyMessage}</p>
         </div>
       ) : vw && d ? (
         <div className={cx(s.layout, !sidebarOpen && s.collapsed)}>
@@ -381,20 +370,7 @@ export default function PriceVsOi() {
                   </button>
                 </div>
 
-                <div className={s.instrument}>
-                  <span className={s.badge}>{current?.badge ?? '··'}</span>
-                  <span className={s.short} title={current?.name ?? symbol}>
-                    {symbol}
-                  </span>
-                  <span className={s.cyclers}>
-                    <button type="button" aria-label="Previous" onClick={() => cycle(-1)}>
-                      ‹
-                    </button>
-                    <button type="button" aria-label="Next" onClick={() => cycle(1)}>
-                      ›
-                    </button>
-                  </span>
-                </div>
+                <InstrumentPicker value={symbol} onChange={setSymbol} kind="index" />
 
                 <HistoryMode mode={dataMode} date={date} onMode={setDataMode} onDate={setDate} />
 

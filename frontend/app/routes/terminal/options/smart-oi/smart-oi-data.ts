@@ -17,7 +17,6 @@ import type { Candle, VolumeBar } from '$shared/charts/tv/LwChart';
 // open", "stale" and "1.2Cr" mean while sitting next to each other in one menu.
 export {
   CALL_COLOR,
-  OI_INSTRUMENTS,
   PUT_COLOR,
   REFETCH_MS,
   STALE_AFTER_MS,
@@ -26,8 +25,7 @@ export {
   fmtOi,
   fmtSigned,
   freshnessLabel,
-  timeLabel,
-  type Instrument
+  timeLabel
 } from '../open-interest/oi-data';
 
 // -- wire -------------------------------------------------------------------

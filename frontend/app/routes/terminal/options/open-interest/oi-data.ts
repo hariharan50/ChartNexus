@@ -99,20 +99,6 @@ export function getOpenInterest(
   });
 }
 
-/** The instrument catalog the sidebar cycles through (wraparound). */
-export interface Instrument {
-  id: number;
-  short: string;
-  badge: string;
-  symbol: string;
-}
-
-export const OI_INSTRUMENTS: Instrument[] = [
-  { id: 1, short: 'NIFTY', badge: '50', symbol: 'NIFTY' },
-  { id: 2, short: 'SENSEX', badge: 'BSE', symbol: 'SENSEX' },
-  { id: 3, short: 'BANKNIFTY', badge: 'BNK', symbol: 'BANKNIFTY' }
-];
-
 export const CALL_COLOR = '#22c55e';
 export const PUT_COLOR = '#ef4444';
 

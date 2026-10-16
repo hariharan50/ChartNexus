@@ -27,13 +27,8 @@ import BuildupBadge from './components/BuildupBadge';
 import OIBar from './components/OIBar';
 import VolCell from './components/VolCell';
 import s from './route.module.css';
-
-// --- instrument catalog --------------------------------------------------
-const CATALOG = [
-  { id: 1, short: 'NIFTY', badge: '50', symbol: 'NIFTY' },
-  { id: 2, short: 'SENSEX', badge: 'BSE', symbol: 'SENSEX' },
-  { id: 3, short: 'BANKNIFTY', badge: 'BNK', symbol: 'BANKNIFTY' }
-];
+import { useSelectedInstrument } from '$contexts/instrument-catalog/selected-instrument';
+import InstrumentPicker from '$shared/ui/InstrumentPicker';
 
 // --- small view helpers --------------------------------------------------
 function pctTone(v?: number): 'up' | 'down' | 'flat' {
@@ -51,19 +46,17 @@ function ivText(leg?: Leg, fallback?: Leg): string {
 const SKELETON_ROWS = Array.from({ length: 16 }, (_, i) => i);
 
 export default function OptionChain() {
-  const [idx, setIdx] = useState(0);
+  const [symbol, setSymbol] = useSelectedInstrument();
   const [selectedExpiry, setSelectedExpiry] = useState<string | undefined>(undefined);
   const [strikeCount, setStrikeCount] = useState<StrikeCount>(5);
 
-  const instrument = CATALOG[idx] ?? CATALOG[0]!;
-
-  function cycle(delta: number) {
-    setIdx((current) => (current + delta + CATALOG.length) % CATALOG.length);
-    setSelectedExpiry(undefined); // the previous expiry may not exist on the new instrument
-  }
+  // The previous instrument's expiry does not exist on the new one.
+  useEffect(() => {
+    setSelectedExpiry(undefined);
+  }, [symbol]);
 
   // --- data ----------------------------------------------------------------
-  const chainQ = useOptionChainForExpiryQuery(instrument.symbol, selectedExpiry);
+  const chainQ = useOptionChainForExpiryQuery(symbol, selectedExpiry);
 
   const chain = chainQ.data;
   const loading = chainQ.isLoading;
@@ -133,29 +126,7 @@ export default function OptionChain() {
       {/* 1. Control bar ------------------------------------------------------ */}
       <section className={cx(s.panel, s.controls)}>
         <div className={s.row}>
-          {/* instrument pill */}
-          <div className={s.instrument}>
-            <button
-              type="button"
-              className={s.cycle}
-              aria-label="Previous instrument"
-              onClick={() => cycle(-1)}
-            >
-              ‹
-            </button>
-            <span className={s.instBody}>
-              <span className={s.badge}>{instrument.badge}</span>
-              <span className={s.instName}>{instrument.short}</span>
-            </span>
-            <button
-              type="button"
-              className={s.cycle}
-              aria-label="Next instrument"
-              onClick={() => cycle(1)}
-            >
-              ›
-            </button>
-          </div>
+          <InstrumentPicker value={symbol} onChange={setSymbol} />
 
           {/* expiry dropdown */}
           <details className={s.expiry} ref={expiryMenu}>

@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import { useMemo, useState } from 'react';
+import { useMemo, useState, useEffect } from 'react';
 import EChart from '$shared/charts/EChart';
 import { buildGreekLineOption } from '$shared/charts/options/greek-line';
 import { useChartTheme } from '$shared/charts/theme/use-chart-theme';
@@ -19,7 +19,6 @@ import {
   GREEK_TABS,
   latestOf,
   legSeries,
-  OI_INSTRUMENTS,
   pick,
   PUT_COLOR,
   qualityNote,
@@ -32,6 +31,8 @@ import {
 } from './greeks-data';
 import s from './route.module.css';
 import type { Route } from './+types/route';
+import { useSelectedInstrument } from '$contexts/instrument-catalog/selected-instrument';
+import InstrumentPicker from '$shared/ui/InstrumentPicker';
 
 export const meta: Route.MetaFunction = () => [{ title: 'Option Greeks · Tools' }];
 
@@ -48,20 +49,26 @@ export const meta: Route.MetaFunction = () => [{ title: 'Option Greeks · Tools'
  * money right now".
  */
 export default function OptionGreeks() {
-  const [instIdx, setInstIdx] = useState(0);
+  const [symbol, setSymbol] = useSelectedInstrument();
   const [expiry, setExpiry] = useState<string | undefined>(undefined);
   const [timeframe, setTimeframe] = useState<Timeframe>(DEFAULT_TIMEFRAME);
   const [greek, setGreek] = useState<GreekKey>(DEFAULT_GREEK);
   const [live, setLive] = useState(true);
   const [date, setDate] = useState(lastTradingDayIST);
 
+  // Expiry, lot and ladder are all per instrument: a NIFTY date means
+  // nothing on ITC. An effect, because the symbol now also arrives from a
+  // link, the header search and the remembered choice.
+  useEffect(() => {
+    setExpiry(undefined);
+  }, [symbol]);
+
   const theme = useChartTheme();
-  const instrument = OI_INSTRUMENTS[instIdx] ?? OI_INSTRUMENTS[0]!;
   const historyDate = live ? undefined : date;
 
   const query = useQuery<GreeksView>({
-    queryKey: ['tools', 'greeks', instrument.symbol, expiry, historyDate],
-    queryFn: () => getGreeks(instrument.symbol, { date: historyDate, expiry }),
+    queryKey: ['tools', 'greeks', symbol, expiry, historyDate],
+    queryFn: () => getGreeks(symbol, { date: historyDate, expiry }),
     refetchInterval: live ? REFETCH_MS : false
   });
 
@@ -123,23 +130,10 @@ export default function OptionGreeks() {
           options={[{ value: 'NFO', label: 'NFO' }]}
         />
 
-        <Select
-          className={s.field}
-          value={String(instIdx)}
-          ariaLabel="Symbol"
-          onChange={(next) => {
-            setInstIdx(Number(next));
-            // Expiries are per instrument; a NIFTY date means nothing on SENSEX.
-            setExpiry(undefined);
-          }}
-          options={OI_INSTRUMENTS.map((entry, index) => ({
-            value: String(index),
-            label: entry.short
-          }))}
-        />
+        <InstrumentPicker value={symbol} onChange={setSymbol} variant="field" />
 
         <ExpiryPicker
-          instrument={instrument.symbol}
+          instrument={symbol}
           value={expiry}
           onChange={setExpiry}
           resolved={view?.expiry_date}

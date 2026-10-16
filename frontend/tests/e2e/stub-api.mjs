@@ -142,7 +142,10 @@ const PROVENANCE = { source: 'mock', age_seconds: 0, fetched_at: '2026-01-01T10:
 const SPOTS = {
   NIFTY: { price: '24500.25', change: '112.40', change_percent: '0.46' },
   SENSEX: { price: '80250.75', change: '-180.20', change_percent: '-0.22' },
-  BANKNIFTY: { price: '52100.50', change: '340.10', change_percent: '0.66' }
+  BANKNIFTY: { price: '52100.50', change: '340.10', change_percent: '0.66' },
+  // A stock, so the suite can prove the picker reaches past the three indices
+  // that used to be hardcoded — and that a capture-only page says so honestly.
+  ITC: { price: '263.50', change: '1.85', change_percent: '0.71' }
 };
 
 /**
@@ -473,6 +476,22 @@ function pcrSeriesView(symbol) {
  * positive above, so there is exactly one crossing near the money for the flip
  * and the cross to find.
  */
+/** What `/gex` returns for an underlying nothing has archived. */
+function emptyGexView(symbol) {
+  return {
+    instrument_id: '1',
+    symbol,
+    expiry_date: '2026-01-29',
+    open_ts: new Date(SESSION_OPEN_MS).toISOString(),
+    now_ts: new Date(SESSION_OPEN_MS).toISOString(),
+    data_quality: 'empty',
+    open_is_estimated: false,
+    strikes: [],
+    t: [],
+    frames: []
+  };
+}
+
 function gexView(symbol) {
   const chain = optionChain(symbol in SPOTS ? symbol : 'NIFTY');
   const spot = Number.parseFloat(chain.spot_price);
@@ -688,6 +707,12 @@ const server = createServer((req, res) => {
 
   if (url.pathname.startsWith('/api/v1/options-lab/gex/')) {
     const symbol = decodeURIComponent(url.pathname.split('/').pop() ?? 'NIFTY');
+    // Gamma is computed from archived chain snapshots, and the ingest worker
+    // captures indices only — so a stock is genuinely empty here, exactly as
+    // the real service returns it.
+    if (!(symbol in SPOTS) || symbol === 'ITC') {
+      return send(res, 200, emptyGexView(symbol));
+    }
     return send(res, 200, gexView(symbol));
   }
 

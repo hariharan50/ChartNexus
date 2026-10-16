@@ -12,12 +12,12 @@ import {
   expiryLabel,
   freshnessLabel,
   windowLabel,
-  type Instrument,
   type Interval,
   type RangeMode,
   type StrikeMode
 } from '../smart-oi-data';
 import s from './SmartOiToolbar.module.css';
+import InstrumentPicker from '$shared/ui/InstrumentPicker';
 
 /**
  * The page header: two rows of controls above the charts.
@@ -31,8 +31,8 @@ import s from './SmartOiToolbar.module.css';
  * Row one is *what* is being looked at, row two is *how much of it*.
  */
 interface Props {
-  instrument: Instrument;
-  onCycle: (step: number) => void;
+  symbol: string;
+  onSymbol: (symbol: string) => void;
 
   expiry: string | undefined;
   expiries: string[];
@@ -77,22 +77,7 @@ export default function SmartOiToolbar(props: Props) {
   return (
     <div className={s.toolbar}>
       <div className={s.row}>
-        <div className={s.instrument}>
-          <span className={s.badge}>{props.instrument.badge}</span>
-          <span className={s.short}>{props.instrument.short}</span>
-          <span className={s.cyclers}>
-            <button
-              type="button"
-              aria-label="Previous instrument"
-              onClick={() => props.onCycle(-1)}
-            >
-              ‹
-            </button>
-            <button type="button" aria-label="Next instrument" onClick={() => props.onCycle(1)}>
-              ›
-            </button>
-          </span>
-        </div>
+        <InstrumentPicker value={props.symbol} onChange={props.onSymbol} />
 
         <Select
           className={s.expiry}

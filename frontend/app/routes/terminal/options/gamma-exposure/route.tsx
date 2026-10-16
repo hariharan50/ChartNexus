@@ -10,6 +10,8 @@ import IconEyeOff from '$shared/ui/icons/IconEyeOff';
 import { lastTradingDayIST } from '$shared/formatting/ist-clock';
 import GexLevels from './components/GexLevels';
 import GexReadout from './components/GexReadout';
+import { useSelectedInstrument } from '$contexts/instrument-catalog/selected-instrument';
+import InstrumentPicker from '$shared/ui/InstrumentPicker';
 import ExpiryPicker from '../components/ExpiryPicker';
 import HistoryMode, { type Mode } from '../components/HistoryMode';
 import {
@@ -31,7 +33,6 @@ import {
   dateLabel,
   freshnessLabel,
   inferStep,
-  OI_INSTRUMENTS,
   PUT_COLOR,
   REFETCH_MS,
   sessionPositions,
@@ -43,6 +44,7 @@ import {
 import TimeRangeSlider from '../components/TimeRangeSlider';
 import s from './route.module.css';
 import type { Route } from './+types/route';
+import { useEmptyReason } from '$contexts/instrument-catalog/coverage';
 
 export const meta: Route.MetaFunction = () => [{ title: 'Gamma Exposure · Options Lab' }];
 
@@ -69,7 +71,7 @@ const WALL_IDS = ['callWall', 'putWall'];
 const FLIP_IDS = ['gammaFlip', 'netCross'];
 
 export default function GammaExposure() {
-  const [instIdx, setInstIdx] = useState(0);
+  const [symbol, setSymbol] = useSelectedInstrument();
   const [dataMode, setDataMode] = useState<Mode>('live');
   const [date, setDate] = useState(lastTradingDayIST);
   const [layout, setLayout] = useState<GexLayout>('horizontal');
@@ -84,20 +86,26 @@ export default function GammaExposure() {
   /** Frame being shown, or -1 to follow live (far right of the track). */
   const [frameIdx, setFrameIdx] = useState(-1);
 
-  const theme = useChartTheme();
-  const instrument = OI_INSTRUMENTS[instIdx] ?? OI_INSTRUMENTS[0]!;
+  // Why a panel is empty depends on what was picked: an index is waiting
+  // for today's captures, a stock is waiting for captures nobody makes.
+  const emptyMessage = useEmptyReason(symbol, 'gamma profile', dataMode === 'historical');
 
-  function cycle(delta: number) {
-    setInstIdx((current) => (current + delta + OI_INSTRUMENTS.length) % OI_INSTRUMENTS.length);
+  const theme = useChartTheme();
+
+  // Each of these points at the instrument that was showing, so they have
+  // to let go when it changes. An effect rather than a line in a cycler:
+  // the symbol also arrives from a link, the header search and the
+  // remembered choice, none of which go through this page's controls.
+  useEffect(() => {
     // A frame index means nothing on another instrument: the two sessions have
     // different capture counts, so index 40 is a different time on each.
     setFrameIdx(-1);
-  }
+  }, [symbol]);
 
   const historyDate = dataMode === 'historical' ? date : undefined;
   const query = useQuery<GexView>({
-    queryKey: ['options-lab', 'gex', instrument.symbol, dataMode, historyDate, expiry],
-    queryFn: () => getGex(instrument.symbol, { date: historyDate, expiry }),
+    queryKey: ['options-lab', 'gex', symbol, dataMode, historyDate, expiry],
+    queryFn: () => getGex(symbol, { date: historyDate, expiry }),
     refetchInterval: dataMode === 'live' ? REFETCH_MS : false
   });
 
@@ -275,11 +283,7 @@ export default function GammaExposure() {
         // not a dead end — the reader can change the date or return to Live.
         <div className={cx(s.panel, s.emptyPanel)}>
           <HistoryMode mode={dataMode} date={date} onMode={setDataMode} onDate={setDate} />
-          <p className={s.muted}>
-            {dataMode === 'historical'
-              ? 'No session archived for that date.'
-              : 'No gamma data recorded for today yet — the profile fills in as the ingest worker captures the chain.'}
-          </p>
+          <p className={s.muted}>{emptyMessage}</p>
         </div>
       ) : view && frame ? (
         <div className={cx(s.layout, !sidebarOpen && s.collapsed)}>
@@ -300,23 +304,12 @@ export default function GammaExposure() {
                   </button>
                 </div>
 
-                <div className={s.instrument}>
-                  <span className={s.badge}>{instrument.badge}</span>
-                  <span className={s.short}>{instrument.short}</span>
-                  <span className={s.cyclers}>
-                    <button type="button" aria-label="Previous" onClick={() => cycle(-1)}>
-                      ‹
-                    </button>
-                    <button type="button" aria-label="Next" onClick={() => cycle(1)}>
-                      ›
-                    </button>
-                  </span>
-                </div>
+                <InstrumentPicker value={symbol} onChange={setSymbol} />
 
                 <HistoryMode mode={dataMode} date={date} onMode={setDataMode} onDate={setDate} />
 
                 <ExpiryPicker
-                  instrument={instrument.symbol}
+                  instrument={symbol}
                   value={expiry}
                   onChange={setExpiry}
                   resolved={view.expiry_date}

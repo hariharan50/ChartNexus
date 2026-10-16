@@ -7,6 +7,8 @@ import { lastTradingDayIST } from '$shared/formatting/ist-clock';
 import { cx } from '$shared/ui/cx';
 import Select from '$shared/ui/Select';
 import IconChart from '$shared/ui/icons/IconChart';
+import { useSelectedInstrument } from '$contexts/instrument-catalog/selected-instrument';
+import InstrumentPicker from '$shared/ui/InstrumentPicker';
 import ExpiryPicker from '../components/ExpiryPicker';
 import HistoryMode, { type Mode } from '../components/HistoryMode';
 import {
@@ -23,7 +25,6 @@ import {
   futureSeries,
   getStraddle,
   inferStep,
-  OI_INSTRUMENTS,
   pick,
   REFETCH_MS,
   selectedSeries,
@@ -39,6 +40,7 @@ import {
 } from './straddle-data';
 import s from './route.module.css';
 import type { Route } from './+types/route';
+import { useEmptyReason } from '$contexts/instrument-catalog/coverage';
 
 export const meta: Route.MetaFunction = () => [{ title: 'ATM Straddle Chart · Options Lab' }];
 
@@ -71,7 +73,7 @@ interface Indicators {
 }
 
 export default function AtmStraddleChart() {
-  const [instIdx, setInstIdx] = useState(0);
+  const [symbol, setSymbol] = useSelectedInstrument();
   const [dataMode, setDataMode] = useState<Mode>('live');
   const [date, setDate] = useState(lastTradingDayIST);
   const [timeframe, setTimeframe] = useState<Timeframe>(DEFAULT_TIMEFRAME);
@@ -93,20 +95,26 @@ export default function AtmStraddleChart() {
   // zoom alone (see `use-echart.ts`).
   const [zoomNonce, setZoomNonce] = useState(0);
 
-  const theme = useChartTheme();
-  const instrument = OI_INSTRUMENTS[instIdx] ?? OI_INSTRUMENTS[0]!;
+  // Why a panel is empty depends on what was picked: an index is waiting
+  // for today's captures, a stock is waiting for captures nobody makes.
+  const emptyMessage = useEmptyReason(symbol, 'straddle series', dataMode === 'historical');
 
-  function cycle(delta: number) {
-    setInstIdx((current) => (current + delta + OI_INSTRUMENTS.length) % OI_INSTRUMENTS.length);
+  const theme = useChartTheme();
+
+  // Each of these points at the instrument that was showing, so they have
+  // to let go when it changes. An effect rather than a line in a cycler:
+  // the symbol also arrives from a link, the header search and the
+  // remembered choice, none of which go through this page's controls.
+  useEffect(() => {
     // A strike that exists on NIFTY means nothing on BANKNIFTY, so an explicit
     // strike selection cannot survive an instrument change.
     setSelection('auto');
-  }
+  }, [symbol]);
 
   const historyDate = dataMode === 'historical' ? date : undefined;
   const query = useQuery<StraddleView>({
-    queryKey: ['options-lab', 'straddle-series', instrument.symbol, dataMode, historyDate, expiry],
-    queryFn: () => getStraddle(instrument.symbol, { date: historyDate, expiry }),
+    queryKey: ['options-lab', 'straddle-series', symbol, dataMode, historyDate, expiry],
+    queryFn: () => getStraddle(symbol, { date: historyDate, expiry }),
     refetchInterval: dataMode === 'live' ? REFETCH_MS : false
   });
 
@@ -211,7 +219,7 @@ export default function AtmStraddleChart() {
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.href = url;
-    link.download = csvFilename(instrument.symbol, vw);
+    link.download = csvFilename(symbol, vw);
     link.click();
     URL.revokeObjectURL(url);
   }
@@ -230,11 +238,7 @@ export default function AtmStraddleChart() {
       ) : vw && vw.data_quality === 'empty' ? (
         <div className={cx(s.panel, s.emptyPanel)}>
           <HistoryMode mode={dataMode} date={date} onMode={setDataMode} onDate={setDate} />
-          <p className={s.muted}>
-            {dataMode === 'historical'
-              ? 'No session archived for that date.'
-              : 'No straddle data recorded for today yet — the series fills in as the ingest worker captures the chain.'}
-          </p>
+          <p className={s.muted}>{emptyMessage}</p>
         </div>
       ) : vw && plot ? (
         <div className={cx(s.layout, !sidebarOpen && s.collapsed)}>
@@ -255,25 +259,14 @@ export default function AtmStraddleChart() {
                   </button>
                 </div>
 
-                <div className={s.instrument}>
-                  <span className={s.badge}>{instrument.badge}</span>
-                  <span className={s.short}>{instrument.short}</span>
-                  <span className={s.cyclers}>
-                    <button type="button" aria-label="Previous" onClick={() => cycle(-1)}>
-                      ‹
-                    </button>
-                    <button type="button" aria-label="Next" onClick={() => cycle(1)}>
-                      ›
-                    </button>
-                  </span>
-                </div>
+                <InstrumentPicker value={symbol} onChange={setSymbol} />
 
                 <HistoryMode mode={dataMode} date={date} onMode={setDataMode} onDate={setDate} />
 
                 <div className={s.twoUp}>
                   <div>
                     <ExpiryPicker
-                      instrument={instrument.symbol}
+                      instrument={symbol}
                       value={expiry}
                       onChange={setExpiry}
                       resolved={vw.expiry_date}

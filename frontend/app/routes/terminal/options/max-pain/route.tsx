@@ -6,6 +6,8 @@ import { useChartTheme } from '$shared/charts/theme/use-chart-theme';
 import { cx } from '$shared/ui/cx';
 import IconChart from '$shared/ui/icons/IconChart';
 import { lastTradingDayIST } from '$shared/formatting/ist-clock';
+import { useSelectedInstrument } from '$contexts/instrument-catalog/selected-instrument';
+import InstrumentPicker from '$shared/ui/InstrumentPicker';
 import ExpiryPicker from '../components/ExpiryPicker';
 import HistoryMode, { type Mode } from '../components/HistoryMode';
 import IntradayMaxPain from './components/IntradayMaxPain';
@@ -16,7 +18,6 @@ import {
   dateLabel,
   getOpenInterest,
   inferStep,
-  OI_INSTRUMENTS,
   PUT_COLOR,
   REFETCH_MS,
   withinWindow,
@@ -45,7 +46,7 @@ const STRIKE_FILTERS: { label: string; value: 'all' | number }[] = [
 ];
 
 export default function MaxPain() {
-  const [instIdx, setInstIdx] = useState(0);
+  const [symbol, setSymbol] = useSelectedInstrument();
   const [sidebarOpen, setSidebarOpen] = useState(true);
   // `undefined` means "whatever the backend picks" — the nearest expiry.
   const [expiry, setExpiry] = useState<string | undefined>(undefined);
@@ -54,15 +55,13 @@ export default function MaxPain() {
   const [strikeFilter, setStrikeFilter] = useState<'all' | number>(20);
   const theme = useChartTheme();
 
-  const instrument = OI_INSTRUMENTS[instIdx] ?? OI_INSTRUMENTS[0]!;
-
   // The same endpoint the Open Interest page reads — a shared query key, so the
   // two pages share one cached payload rather than polling it twice (they share
   // it whenever both are in the same mode/day).
   const historyDate = mode === 'historical' ? date : undefined;
   const query = useQuery<OiView>({
-    queryKey: ['options-lab', 'oi', instrument.symbol, mode, historyDate, expiry],
-    queryFn: () => getOpenInterest(instrument.symbol, { date: historyDate, expiry }),
+    queryKey: ['options-lab', 'oi', symbol, mode, historyDate, expiry],
+    queryFn: () => getOpenInterest(symbol, { date: historyDate, expiry }),
     refetchInterval: mode === 'live' ? REFETCH_MS : false
   });
 
@@ -70,8 +69,8 @@ export default function MaxPain() {
   // payload: it reads the whole archive for the day, which the snapshot
   // endpoint has no business carrying.
   const seriesQuery = useQuery<MaxPainSeriesView>({
-    queryKey: ['options-lab', 'max-pain-series', instrument.symbol, mode, historyDate, expiry],
-    queryFn: () => getMaxPainSeries(instrument.symbol, { date: historyDate, expiry }),
+    queryKey: ['options-lab', 'max-pain-series', symbol, mode, historyDate, expiry],
+    queryFn: () => getMaxPainSeries(symbol, { date: historyDate, expiry }),
     refetchInterval: mode === 'live' ? REFETCH_MS : false
   });
 
@@ -157,33 +156,12 @@ export default function MaxPain() {
                   </button>
                 </div>
 
-                <div className={s.instrument}>
-                  <span className={s.badge}>{instrument.badge}</span>
-                  <span className={s.short}>{instrument.short}</span>
-                  <span className={s.cyclers}>
-                    <button
-                      type="button"
-                      aria-label="Previous"
-                      onClick={() =>
-                        setInstIdx((i) => (i - 1 + OI_INSTRUMENTS.length) % OI_INSTRUMENTS.length)
-                      }
-                    >
-                      ‹
-                    </button>
-                    <button
-                      type="button"
-                      aria-label="Next"
-                      onClick={() => setInstIdx((i) => (i + 1) % OI_INSTRUMENTS.length)}
-                    >
-                      ›
-                    </button>
-                  </span>
-                </div>
+                <InstrumentPicker value={symbol} onChange={setSymbol} />
 
                 <HistoryMode mode={mode} date={date} onMode={setMode} onDate={setDate} />
 
                 <ExpiryPicker
-                  instrument={instrument.symbol}
+                  instrument={symbol}
                   value={expiry}
                   onChange={setExpiry}
                   resolved={view.expiry_date}

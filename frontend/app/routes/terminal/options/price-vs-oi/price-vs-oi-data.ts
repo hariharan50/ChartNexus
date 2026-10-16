@@ -15,15 +15,13 @@ import { apiFetch } from '$shared/api/client';
 export {
   CALL_COLOR,
   PUT_COLOR,
-  OI_INSTRUMENTS,
   REFETCH_MS,
   STALE_AFTER_MS,
   clockLabel,
   dateLabel,
   freshnessLabel,
   fmtOi,
-  timeLabel,
-  type Instrument
+  timeLabel
 } from '../open-interest/oi-data';
 
 export {

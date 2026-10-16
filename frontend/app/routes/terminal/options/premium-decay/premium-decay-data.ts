@@ -34,7 +34,6 @@ export {
 export {
   CALL_COLOR,
   PUT_COLOR,
-  OI_INSTRUMENTS,
   REFETCH_MS,
   STALE_AFTER_MS,
   clockLabel,
@@ -42,8 +41,7 @@ export {
   freshnessLabel,
   inferStep,
   timeLabel,
-  withinWindow,
-  type Instrument
+  withinWindow
 } from '../open-interest/oi-data';
 
 import { inferStep, withinWindow } from '../open-interest/oi-data';

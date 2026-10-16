@@ -17,8 +17,6 @@ export {
   type Timeframe
 } from '../../options/atm-straddle/straddle-data';
 
-export { OI_INSTRUMENTS, type Instrument } from '../../options/open-interest/oi-data';
-
 export {
   formatPrice,
   formatPremium,
