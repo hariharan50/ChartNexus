@@ -216,6 +216,29 @@ class GetSpotPrice(_FallbackMixin):
 #: latched after it is the session's opening print and is frozen.
 OPENING_SETTLE_MINUTES: Final = 5
 
+#: How far back :meth:`GetSessionGap._previous_session` will walk looking for a
+#: day the exchange traded. Diwali plus the weekend around it is the longest
+#: real NSE closure; the bound exists so a misconfigured holiday list degrades
+#: to a stale date rather than looping.
+_MAX_CLOSED_RUN_DAYS: Final = 10
+
+
+@dataclass(frozen=True, slots=True)
+class SessionAnchor:
+    """Which session a gap reading is about, and what state that session is in."""
+
+    date: date
+    """The trading day the reading belongs to - the key the latch is held under."""
+
+    is_today: bool
+    """False when the reader is outside a session, so a past day is on screen."""
+
+    has_opened: bool
+    """Whether that session's bell has rung. False only in the pre-open window."""
+
+    settled: bool
+    """Whether the opening print has had time to firm up. See ``SessionGap``."""
+
 
 class GetSessionGap:
     """The session's opening gap for one instrument, latched for the day.
@@ -246,9 +269,47 @@ class GetSessionGap:
 
     async def __call__(self, tenant_id: TenantId, quote: Quote) -> SessionGap | None:
         now = self._clock.now()
-        session_date, settled = self._anchor(now)
+        anchor = self._anchor(now)
 
-        observed = measure(
+        if not anchor.is_today:
+            # The session on screen has already finished - the reader is here
+            # before today's bell, on a weekend, or on a holiday. Serve what was
+            # latched while that session was actually running, and never write:
+            # a quote taken now says nothing new about a print taken hours ago,
+            # and overwriting the real one with a re-measurement is how the card
+            # acquired gaps nobody could reconcile against their terminal.
+            latched = await self._read(tenant_id, quote, anchor.date)
+            if latched is not None:
+                return latched
+            # No latch - a cold cache, or a restart since that session ran. The
+            # broker's OHLC still carries that session's pair, so it is read
+            # (and only read) rather than leaving the card blank.
+            return self._measure(quote, now, settled=True)
+
+        if not anchor.has_opened:
+            # Before the bell there is no opening print to measure. Brokers fill
+            # ``open_price`` with the *previous* session's figure until the
+            # auction runs, so measuring here published yesterday's gap as
+            # today's verdict - the reading that was wrong every morning. The
+            # pre-open window belongs to the forecast, which is a different
+            # claim and is labelled as one.
+            return None
+
+        observed = self._measure(quote, now, settled=anchor.settled)
+
+        latched = await self._read(tenant_id, quote, anchor.date)
+        if latched is None:
+            if observed is not None:
+                await self._write(tenant_id, quote, anchor.date, observed)
+            return observed
+
+        if observed is not None and supersedes(observed, latched):
+            await self._write(tenant_id, quote, anchor.date, observed)
+            return observed
+        return latched
+
+    def _measure(self, quote: Quote, now: datetime, *, settled: bool) -> SessionGap | None:
+        return measure(
             quote.day_open,
             quote.previous_close,
             source=quote.provenance.source,
@@ -257,34 +318,61 @@ class GetSessionGap:
             reference_price=quote.price,
         )
 
-        latched = await self._read(tenant_id, quote, session_date)
-        if latched is None:
-            if observed is not None:
-                await self._write(tenant_id, quote, session_date, observed)
-            return observed
+    def _anchor(self, now: datetime) -> SessionAnchor:
+        """Which session the gap belongs to, and how far into it ``now`` is.
 
-        if observed is not None and supersedes(observed, latched):
-            await self._write(tenant_id, quote, session_date, observed)
-            return observed
-        return latched
+        Three states, and keeping them apart is most of this card's
+        correctness:
 
-    def _anchor(self, now: datetime) -> tuple[date, bool]:
-        """The session the gap belongs to, and whether its open has settled.
+        * **Today, after the bell.** The live session. ``settled`` turns true
+          once the auction has had :data:`OPENING_SETTLE_MINUTES` to produce a
+          real print.
+        * **Today, before the bell.** The session exists but has not opened, so
+          there is no opening print to read at all.
+        * **A day the exchange never traded** - a weekend, or a holiday in the
+          calendar's list. The reading belongs to the last session that
+          actually ran, and that session is long settled.
 
-        A weekend rolls back to Friday, whose session is over by definition -
-        without it a Saturday reader would be shown an empty card on a date the
-        market never traded. On a weekday the flag turns true once the auction
-        has had :data:`OPENING_SETTLE_MINUTES` to produce a real print.
+        The holiday arm is a fix rather than a nicety: the old rollback counted
+        weekdays, so on Republic Day the card latched the previous session's
+        pair under *today's* date and reported it as today's open.
         """
         local = now.astimezone(_IST)
-        session_date = local.date()
+        today = local.date()
 
-        weekend_days = local.weekday() - 4
-        if weekend_days > 0:
-            return session_date - timedelta(days=weekend_days), True
+        if self._trades_on(today):
+            opens_at = datetime.combine(today, self._session_open(), tzinfo=_IST)
+            if local < opens_at:
+                return SessionAnchor(date=today, is_today=True, has_opened=False, settled=False)
+            settled = local >= opens_at + timedelta(minutes=OPENING_SETTLE_MINUTES)
+            return SessionAnchor(date=today, is_today=True, has_opened=True, settled=settled)
 
-        opens_at = datetime.combine(session_date, self._session_open(), tzinfo=_IST)
-        return session_date, local >= opens_at + timedelta(minutes=OPENING_SETTLE_MINUTES)
+        return SessionAnchor(
+            date=self._previous_session(today), is_today=False, has_opened=True, settled=True
+        )
+
+    def _trades_on(self, day: date) -> bool:
+        """Whether the exchange runs a session on ``day``.
+
+        Asked of the calendar at its own opening minute rather than
+        reimplemented here, so the weekend rule and the holiday list stay in the
+        one place the rest of the app already reads them from.
+        """
+        return self._calendar.is_open(datetime.combine(day, self._session_open(), tzinfo=_IST))
+
+    def _previous_session(self, day: date) -> date:
+        """The most recent trading day strictly before ``day``.
+
+        Bounded rather than open-ended: a calendar misconfigured with a long
+        holiday run must degrade to a stale date, not spin. Ten days clears
+        every real NSE closure, Diwali and the weekend around it included.
+        """
+        candidate = day
+        for _ in range(_MAX_CLOSED_RUN_DAYS):
+            candidate -= timedelta(days=1)
+            if self._trades_on(candidate):
+                return candidate
+        return day - timedelta(days=1)
 
     def _session_open(self) -> time:
         hour, _, minute = self._calendar.opens_at.partition(":")

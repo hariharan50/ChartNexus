@@ -8,7 +8,9 @@ import {
   toBackendSymbol,
   vixCard
 } from '$contexts/market-data/derive';
+import { useGlobalViewQuery } from '$contexts/global-markets/queries';
 import { useFiiDiiSummaryQuery } from '$contexts/market-breadth/queries';
+import { gapForecast } from '$contexts/market-data/gap-forecast';
 import {
   useMarketStatusQuery,
   useOptionChainQuery,
@@ -85,6 +87,22 @@ export default function Dashboard() {
     [focusedLabel, focusedSpotQ.data]
   );
 
+  // Before the bell there is no opening print, so the backend sends no gap and
+  // the card forecasts one instead. The estimate is GIFT NIFTY's, read off the
+  // GIA response under the key that page already caches, so the dashboard and
+  // GIA can never quote different numbers for the same morning.
+  //
+  // Only NIFTY: GIFT is the one contract that settles to an index on this
+  // strip, and inferring SENSEX's open from it would be a guess wearing a
+  // quote's clothes. Only while there is no print: once the auction runs the
+  // measurement replaces the estimate and this query stops polling.
+  const wantsForecast = focused === 'NIFTY50' && !gap && !focusedSpotQ.isPending;
+  const globalQ = useGlobalViewQuery({ enabled: wantsForecast });
+  const forecast = useMemo(
+    () => (wantsForecast ? gapForecast(globalQ.data, focusedLabel) : undefined),
+    [wantsForecast, globalQ.data, focusedLabel]
+  );
+
   // Provenance for the source badge: prefer the chain, fall back to status.
   const provenance = chain?.provenance;
   const isLive = statusQ.data?.is_open ?? false;
@@ -134,7 +152,12 @@ export default function Dashboard() {
           )}
         </div>
         <aside className={s.right}>
-          <GapIndicatorCard reading={gap} loading={focusedSpotQ.isPending} label={focusedLabel} />
+          <GapIndicatorCard
+            reading={gap}
+            forecast={forecast}
+            loading={focusedSpotQ.isPending || (wantsForecast && globalQ.isPending)}
+            label={focusedLabel}
+          />
           {chainMetrics ? <OptionsMetricsCard metrics={chainMetrics} /> : null}
           <FiiDiiCard summary={flowQ.data} loading={flowQ.isPending} />
         </aside>

@@ -41,6 +41,8 @@ TENANT = TenantId(UUID("019fbe6d-18a2-72f8-b106-12d2c0bb4b3b"))
 MIDMORNING = datetime(2026, 9, 28, 4, 0, tzinfo=UTC)
 # 03:30Z is 09:00 IST, before the bell.
 PRE_OPEN = datetime(2026, 9, 28, 3, 30, tzinfo=UTC)
+# The Friday before it, 09:30 IST - a session that ran and finished.
+FRIDAY_MIDMORNING = datetime(2026, 10, 2, 4, 0, tzinfo=UTC)
 # The Saturday after.
 WEEKEND = datetime(2026, 10, 3, 6, 0, tzinfo=UTC)
 
@@ -257,23 +259,53 @@ class TestGetSessionGap:
         assert gap.source is DataSource.LIVE
         assert store.writes == 2
 
-    async def test_a_pre_open_reading_is_replaced_by_the_real_opening_print(self) -> None:
-        # Brokers fill open_price with the previous session's figure until the
-        # auction runs. Freezing that would be wrong all day.
+    async def test_before_the_bell_there_is_no_opening_gap_to_report(self) -> None:
+        # The defect behind "the gap indicator is wrong at 8am". A broker fills
+        # open_price with the *previous* session's figure until the auction
+        # runs, so measuring in the pre-open window published yesterday's gap
+        # under today's date and called it today's verdict. There is no opening
+        # print before the open; the card says so and the forecast fills the
+        # window.
+        store = _Store()
+        use_case = _use_case(store, _Clock(PRE_OPEN))
+
+        assert await use_case(TENANT, _quote(day_open="22800.00", at=PRE_OPEN)) is None
+        assert store.writes == 0
+
+    async def test_the_pre_open_window_cannot_poison_the_real_opening_print(self) -> None:
+        # Having written nothing before the bell, the first post-bell poll is
+        # the one that latches - and it latches the real print, not the
+        # placeholder that preceded it.
         store = _Store()
         clock = _Clock(PRE_OPEN)
         use_case = _use_case(store, clock)
 
-        stale = await use_case(TENANT, _quote(day_open="22800.00", at=PRE_OPEN))
-        assert stale is not None
-        assert not stale.settled
-
+        await use_case(TENANT, _quote(day_open="22800.00", at=PRE_OPEN))
         clock.set(MIDMORNING)
         opened = await use_case(TENANT, _quote())
 
         assert opened is not None
         assert opened.opened_at == Decimal("23064.90")
         assert opened.settled
+
+    async def test_a_finished_session_is_served_from_its_latch_and_never_rewritten(
+        self,
+    ) -> None:
+        # Saturday, reading Friday's open. It comes out of the latch written
+        # while Friday was running - a weekend quote carrying some other pair
+        # must not be able to re-measure a print that is already a fact.
+        store = _Store()
+        clock = _Clock(FRIDAY_MIDMORNING)
+        use_case = _use_case(store, clock)
+
+        latched = await use_case(TENANT, _quote(at=FRIDAY_MIDMORNING))
+        clock.set(WEEKEND)
+        writes_before = store.writes
+
+        shown = await use_case(TENANT, _quote(day_open="99999.00", at=WEEKEND))
+
+        assert shown == latched
+        assert store.writes == writes_before
 
     async def test_it_keeps_the_latch_across_a_quote_that_lost_the_pair(self) -> None:
         store = _Store()
@@ -293,11 +325,44 @@ class TestGetSessionGap:
         assert gap is None
 
     async def test_a_weekend_reads_the_session_that_actually_traded(self) -> None:
-        store = _Store()
-        clock = _Clock(WEEKEND)
+        anchor = _use_case(_Store(), _Clock(WEEKEND))._anchor(WEEKEND)
 
         # Friday 2 October, not Saturday the 3rd.
-        assert _use_case(store, clock)._anchor(WEEKEND) == (date(2026, 10, 2), True)
+        assert anchor.date == date(2026, 10, 2)
+        assert not anchor.is_today
+        assert anchor.settled
+
+    async def test_a_holiday_rolls_back_to_the_last_session_that_ran(self) -> None:
+        # The old rollback counted weekdays, so a mid-week holiday left the
+        # anchor on a date the exchange never opened - and the previous
+        # session's pair was latched under it and reported as that day's open.
+        # Thursday 1 October 2026 is the holiday here; Wednesday the 30th ran.
+        holiday = date(2026, 10, 1)
+        calendar = ExchangeCalendar(holidays=frozenset({holiday}))
+        clock = _Clock(datetime(2026, 10, 1, 6, 0, tzinfo=UTC))  # 11:30 IST
+        use_case = GetSessionGap(store=_Store(), clock=clock, calendar=calendar)  # type: ignore[arg-type]
+
+        anchor = use_case._anchor(clock.now())
+
+        assert anchor.date == date(2026, 9, 30)
+        assert not anchor.is_today
+
+    async def test_a_holiday_before_a_weekend_walks_past_both(self) -> None:
+        # Friday 2 October 2026 shut: the session before it is Thursday the
+        # 1st, and if that is shut too the walk keeps going rather than landing
+        # on a Sunday.
+        calendar = ExchangeCalendar(holidays=frozenset({date(2026, 10, 1), date(2026, 10, 2)}))
+        clock = _Clock(WEEKEND)
+        use_case = GetSessionGap(store=_Store(), clock=clock, calendar=calendar)  # type: ignore[arg-type]
+
+        assert use_case._anchor(WEEKEND).date == date(2026, 9, 30)
+
+    async def test_the_pre_open_anchor_names_today_without_opening_it(self) -> None:
+        anchor = _use_case(_Store(), _Clock(PRE_OPEN))._anchor(PRE_OPEN)
+
+        assert anchor.date == date(2026, 9, 28)
+        assert anchor.is_today
+        assert not anchor.has_opened
 
     async def test_a_store_outage_still_answers_from_the_poll_in_hand(self) -> None:
         # The latch buys steadiness, not correctness. Losing Redis must cost the

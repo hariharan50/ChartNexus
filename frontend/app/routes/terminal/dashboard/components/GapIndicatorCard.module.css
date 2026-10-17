@@ -55,6 +55,59 @@
   border-color: var(--cn-border-strong);
 }
 
+/* "Expected" rides inside the verdict pill, in the pill's own colour at a
+   lighter weight. Set beside the pill instead, it read as a separate chip and
+   a reader skimming the rail could take GAP UP without its tense. */
+.expected {
+  margin-right: 0.45em;
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  opacity: 0.75;
+}
+
+/* Countdown on the left, confidence on the right - the two things a reader
+   checks in the pre-open window, in the order they ask them. */
+.statusRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--cn-space-3);
+  flex-wrap: wrap;
+  padding-top: var(--cn-space-3);
+  border-top: 1px solid var(--cn-border);
+}
+
+.countdown {
+  margin: 0;
+  font-size: var(--cn-text-xs);
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  color: var(--cn-text-subtle);
+}
+
+.confidence {
+  font-size: var(--cn-text-xs);
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  white-space: nowrap;
+}
+
+/* Deliberately not the bullish/bearish set: confidence says how much to trust
+   the arrow, not which way it points, and sharing those colours would have the
+   card appear to call direction twice. */
+.conf_high {
+  color: var(--cn-text);
+}
+
+.conf_medium {
+  color: var(--cn-text-subtle);
+}
+
+.conf_low {
+  color: var(--cn-warning);
+}
+
 .figures {
   display: grid;
   grid-template-columns: 1fr 1fr;
