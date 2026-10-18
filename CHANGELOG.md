@@ -9,6 +9,62 @@ changes are not recorded here.
 
 ## [Unreleased]
 
+## [1.7.0] — 2026-10-18
+
+Realtime delivery over websockets, the Future Lab market-watch build-out, a
+production deployment path with runbooks, and a sweep through the dependency
+and container advisories.
+
+### Added
+
+**Realtime delivery**
+
+- Websocket fan-out replaces polling for live quotes, with a browser client and
+  a versioned message contract under `contracts/websocket/v1`. Wired through to
+  production rather than left behind a flag.
+
+**Future Lab**
+
+- Market-watch page and a per-stock watch workspace: futures and chain panels,
+  levels, contract compare, a trade plan, journal, alerts and events.
+- Option-chain analytics for the workspace — Black-Scholes pricing, Greeks and
+  derived levels — computed client-side from the chain.
+
+**Operations**
+
+- Deployment, backup, restore and certificate-issuance scripts under
+  `scripts/operations/`, plus runbooks for local development, VPS deployment
+  and production handoff.
+
+### Changed
+
+- Header nav collapses to five top-level items; the Options Lab mega-panel
+  carries what the header no longer has room for.
+- Nav-bar search panel for jumping to a module or instrument.
+- Unbuilt placeholder boxes are gone from the Tools grid, and the `New` chip is
+  gone from Sector Rotation — a menu full of dead entries trains readers to
+  ignore it.
+- Options Lab drops the `Timeseries` and `PE-CE Difference` placeholders. Both
+  addresses redirect to the Lab index, so an open tab or a bookmark does not
+  land on the root error page.
+- The dev web container reaches the API over the compose network instead of its
+  own loopback, which had failed every SSR render with `ECONNREFUSED`.
+
+### Fixed
+
+- Charts collapsed to 0px height in the production build.
+- Premium Decay, Vega Analysis and the GAP indicator each read the chain wrong
+  in ways that only showed on live data.
+- The integration database now has a catalog to load, so the suite no longer
+  depends on a catalog refresh having run first.
+
+### Security
+
+- Locked dependencies upgraded out of 24 advisories, including the critical and
+  high findings under `react-router-serve`.
+- Container CVEs cleared out of the base-image tooling, and `trivy-action`
+  pinned to a tag that exists so the scan actually runs.
+
 ## [1.6.0] — 2026-10-01
 
 Futures: a real instrument universe, the Future Lab build-out, institutional
