@@ -93,12 +93,18 @@ export default [
       route('oi-crossover', 'routes/terminal/options/oi-crossover.tsx'),
       route('option-triggers', 'routes/terminal/options/option-triggers.tsx'),
       route('pcr', 'routes/terminal/options/pcr/route.tsx'),
-      route('pe-ce-difference', 'routes/terminal/options/pe-ce-difference.tsx'),
+      // Removed modules. Kept as redirects so open tabs and bookmarks land
+      // in the Lab instead of the root error page.
+      route('pe-ce-difference', 'routes/terminal/options/retired.tsx', {
+        id: 'options-retired-pe-ce-difference'
+      }),
       route('premium-decay', 'routes/terminal/options/premium-decay/route.tsx'),
       route('price-vs-oi', 'routes/terminal/options/price-vs-oi/route.tsx'),
       route('smart-oi', 'routes/terminal/options/smart-oi/route.tsx'),
       route('strategy-chart', 'routes/terminal/options/strategy-chart.tsx'),
-      route('timeseries', 'routes/terminal/options/timeseries.tsx'),
+      route('timeseries', 'routes/terminal/options/retired.tsx', {
+        id: 'options-retired-timeseries'
+      }),
       route('vega-analysis', 'routes/terminal/options/vega-analysis/route.tsx'),
       route('volatility-skew', 'routes/terminal/options/volatility-skew/route.tsx')
     ]),

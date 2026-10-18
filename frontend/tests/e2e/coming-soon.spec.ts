@@ -47,18 +47,12 @@ const PAGES: Array<{ path: string; heading: string; title?: string }> = [
     heading: 'Option Triggers',
     title: 'Option Triggers · ChartNexus'
   },
-  {
-    path: '/options/pe-ce-difference',
-    heading: 'PE-CE Difference',
-    title: 'PE-CE Difference · ChartNexus'
-  },
   { path: '/options/smart-oi', heading: 'Smart OI', title: 'Smart OI · ChartNexus' },
   {
     path: '/options/strategy-chart',
     heading: 'Strategy Chart',
     title: 'Strategy Chart · ChartNexus'
   },
-  { path: '/options/timeseries', heading: 'Timeseries', title: 'Timeseries · ChartNexus' },
   {
     path: '/options/vega-analysis',
     heading: 'Vega Analysis',

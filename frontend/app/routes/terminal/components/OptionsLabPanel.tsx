@@ -31,8 +31,6 @@ const sections: Section[] = [
   {
     title: 'Popular Tools',
     items: [
-      { label: 'PE-CE Difference', glyph: 'diff', href: '/options/pe-ce-difference' },
-      { label: 'Timeseries', glyph: 'trend', href: '/options/timeseries' },
       { label: 'Smart OI', glyph: 'sparkle', href: '/options/smart-oi' },
       { label: 'Vega Analysis', glyph: 'flow', href: '/options/vega-analysis' }
     ]
