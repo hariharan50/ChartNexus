@@ -37,6 +37,15 @@ STRIKES_EITHER_SIDE = LADDER_REACH
 _CENTS = Decimal("0.01")
 _SPREAD = Decimal("0.5")
 
+#: Scales the synthetic day change on a leg's premium. Sized so an ATM option
+#: moves a few percent over a session and a deep wing barely moves, which is
+#: the shape a reader expects — it is not a pricing model and does not claim
+#: to be one.
+_MOCK_DAY_DRIFT = 0.08
+
+#: Fraction of a leg's traded volume left resting at the touch.
+_MOCK_DEPTH_SHARE = 0.015
+
 
 def build_option_chain(
     instrument: InstrumentSymbol, moment: datetime, expiry: str | None = None
@@ -141,20 +150,43 @@ def _build_row(
 
 def _quote(leg: Leg, *, delta: float, term: _Term = _NEAR_TERM) -> OptionQuote:
     last = _money(leg.ltp * term.premium)
+    open_interest = int(leg.oi * term.oi)
+    oi_change = int(leg.oi_change * term.oi)
+    # The model carries the leg's open interest at the session open but not its
+    # premium there, so the leg's own day change is derived from the one thing
+    # that is modelled: a premium rises with the option's moneyness drift. It
+    # is dressing, like the bid/ask spread beside it, and the chain is stamped
+    # MOCK so nothing downstream can mistake it for a traded print.
+    previous = _money(leg.ltp * term.premium / (1 + _MOCK_DAY_DRIFT * delta))
+    change = (last - previous).quantize(_CENTS)
     return OptionQuote(
         last_price=last,
-        open_interest=int(leg.oi * term.oi),
+        open_interest=open_interest,
         # The day change a broker actually reports. This used to be a made-up
         # fraction of the current OI, which the Open Interest service's
         # single-snapshot tier then inverted to "reconstruct" a session open —
         # producing an open that never existed.
-        open_interest_change=int(leg.oi_change * term.oi),
+        open_interest_change=oi_change,
         volume=int(leg.volume * term.oi),
         implied_volatility=Decimal(str(round(leg.iv * term.iv, 2))),
         bid=(last - _SPREAD).quantize(_CENTS),
         ask=(last + _SPREAD).quantize(_CENTS),
         delta=Decimal(str(round(delta, 4))),
+        change=change,
+        change_percent=(
+            (change / previous * Decimal(100)).quantize(_CENTS) if previous > 0 else None
+        ),
+        previous_oi=max(0, open_interest - oi_change),
+        # Depth scaled off traded volume rather than a constant: a far strike
+        # with no volume should look thin on the ladder, because it is.
+        bid_qty=_depth(leg, term),
+        ask_qty=_depth(leg, term),
     )
+
+
+def _depth(leg: Leg, term: _Term) -> int:
+    """A plausible resting quantity at the touch, in units not lots."""
+    return max(0, int(leg.volume * term.oi * _MOCK_DEPTH_SHARE))
 
 
 def _delta(moneyness: float) -> float:

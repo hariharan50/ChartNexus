@@ -185,6 +185,14 @@ class FuturesQuoteResponse(_Schema):
 
 
 class OptionQuoteResponse(_Schema):
+    """One leg, exactly as the provider quoted it.
+
+    Nothing here is model-derived. ``delta`` is the broker's own when the
+    broker sends one and ``null`` otherwise - a client wanting greeks for an
+    unquoted leg computes them and labels them as computed, rather than this
+    endpoint quietly filling the field from a pricing model.
+    """
+
     ltp: Decimal
     oi: int
     oi_change: int
@@ -193,6 +201,16 @@ class OptionQuoteResponse(_Schema):
     bid: Decimal | None
     ask: Decimal | None
     delta: Decimal | None
+
+    #: The leg's own day move. Null when not quoted - never 0, which would read
+    #: as "unchanged" and flip a build-up classification.
+    change: Decimal | None = None
+    change_percent: Decimal | None = None
+    #: Open interest at the previous close, when the provider carries it.
+    previous_oi: int | None = None
+    #: Depth at the touch. Null when the feed quotes price without size.
+    bid_qty: int | None = None
+    ask_qty: int | None = None
 
     @classmethod
     def of(cls, quote: OptionQuote) -> OptionQuoteResponse:
@@ -205,6 +223,11 @@ class OptionQuoteResponse(_Schema):
             bid=quote.bid,
             ask=quote.ask,
             delta=quote.delta,
+            change=quote.change,
+            change_percent=quote.change_percent,
+            previous_oi=quote.previous_oi,
+            bid_qty=quote.bid_qty,
+            ask_qty=quote.ask_qty,
         )
 
 

@@ -110,6 +110,7 @@ export default [
       route('heatmap', 'routes/terminal/future-lab/heatmap.tsx'),
       route('market-movers', 'routes/terminal/future-lab/market-movers.tsx'),
       route('price-vs-oi', 'routes/terminal/future-lab/price-vs-oi.tsx'),
+      route('stock-watch', 'routes/terminal/future-lab/stock-watch/route.tsx'),
 
       // Analysis — institutional flow and index internals. Flat under
       // /future-lab rather than nested under /future-lab/analysis: the nav

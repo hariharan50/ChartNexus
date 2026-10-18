@@ -117,7 +117,19 @@ export interface OptionQuote {
   iv: string | null;
   bid: string | null;
   ask: string | null;
+  /** The *broker's* delta, when it sends one. Never a model's — a client that
+      wants greeks for an unquoted leg computes them and says it computed them. */
   delta: string | null;
+  /** The leg's own day move in rupees. `null` when the feed did not quote it;
+      never 0, which would read as "unchanged" and flip a build-up read. */
+  change?: string | null;
+  change_percent?: string | null;
+  /** Open interest at the previous close, when the provider carries it. */
+  previous_oi?: number | null;
+  /** Quantity resting at the touch. `null` when the feed quotes price without
+      size — a different thing from an empty book. */
+  bid_qty?: number | null;
+  ask_qty?: number | null;
 }
 
 export interface StrikeRow {

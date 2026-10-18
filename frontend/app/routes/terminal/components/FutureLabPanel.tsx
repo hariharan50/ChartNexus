@@ -36,7 +36,10 @@ const sections: Section[] = [
   },
   {
     title: 'OI Tools',
-    items: [{ label: 'Price vs OI', glyph: 'bars', href: '/future-lab/price-vs-oi' }]
+    items: [
+      { label: 'Price vs OI', glyph: 'bars', href: '/future-lab/price-vs-oi' },
+      { label: 'Stock Watch', glyph: 'eye', href: '/future-lab/stock-watch', isNew: true }
+    ]
   },
   {
     title: 'FII/DII',

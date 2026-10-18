@@ -258,3 +258,64 @@ def test_expiry_formats_normalise_to_iso(raw: str, expected: str) -> None:
 def test_unparseable_expiries_are_dropped_not_guessed(raw: str | None) -> None:
     """A wrong expiry silently prices the wrong contract."""
     assert _normalise_date(raw) is None
+
+
+def test_a_leg_carries_its_own_day_change_and_book_depth() -> None:
+    """The fields this mapper used to drop on the floor.
+
+    An option's own premium move is not derivable from anything else on the
+    chain, and it is what separates "calls were written" from "calls were
+    bought" when open interest rises. Depth at the touch is the same kind of
+    fact: a one-lot bid and a two-hundred-lot bid at the same price are
+    different books, and only the quantity says which one this is.
+    """
+    payload = {
+        "s": "ok",
+        "data": {
+            "optionsChain": [
+                {"strike_price": -1, "ltp": 24123.45, "ltpchp": -0.42},
+                {
+                    "strike_price": 24100,
+                    "option_type": "CE",
+                    "ltp": 150.25,
+                    "oi": 123456,
+                    "oich": 6400,
+                    "volume": 32100,
+                    "ltpch": -12.75,
+                    "ltpchp": -7.82,
+                    "prev_oi": 117056,
+                    "bid_qty": 1500,
+                    "ask_qty": 2250,
+                },
+            ]
+        },
+    }
+
+    chain = to_option_chain(payload, instrument=InstrumentSymbol("NIFTY"), fetched_at=NOW)
+    leg = chain.strikes[0].call
+
+    assert leg is not None
+    assert leg.change == Decimal("-12.75")
+    assert leg.change_percent == Decimal("-7.82")
+    assert leg.previous_oi == 117056
+    assert leg.bid_qty == 1500
+    assert leg.ask_qty == 2250
+
+
+def test_a_leg_the_feed_did_not_size_stays_unquoted_rather_than_empty(
+    chain_payload: dict[str, Any],
+) -> None:
+    """None, never 0.
+
+    A zero bid quantity is a claim about the book — "nobody is bidding" — and
+    the fixture's legs simply do not carry the field. Defaulting it to 0 would
+    put a liquidity warning on every strike of a perfectly ordinary chain.
+    """
+    chain = to_option_chain(chain_payload, instrument=InstrumentSymbol("NIFTY"), fetched_at=NOW)
+    leg = next(row for row in chain.strikes if row.strike == Decimal(24100)).call
+
+    assert leg is not None
+    assert leg.bid_qty is None
+    assert leg.ask_qty is None
+    assert leg.previous_oi is None
+    assert leg.change is None

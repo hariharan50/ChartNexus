@@ -199,7 +199,14 @@ class CandleSeries:
 
 @dataclass(frozen=True, slots=True)
 class OptionQuote:
-    """One side of a strike."""
+    """One side of a strike.
+
+    Everything below ``volume`` is optional because a feed may not carry it,
+    and ``None`` must survive to the client as "not quoted". Zero is a price
+    and an empty book is not one: a leg shown as 0.00 bid / 0.00 ask reads as
+    "no bids", which is a tradeable fact, where the truth is that the provider
+    said nothing at all.
+    """
 
     last_price: Decimal
     open_interest: int
@@ -209,6 +216,34 @@ class OptionQuote:
     bid: Decimal | None = None
     ask: Decimal | None = None
     delta: Decimal | None = None
+
+    change: Decimal | None = None
+    """The leg's own day change in rupees, against its previous close.
+
+    Not derivable from anything else on the chain. The underlying's change says
+    where the index went; an option's own premium move is what decides whether
+    rising open interest is writing or buying, and without it the build-up read
+    has to fall back on inferring the leg's direction from the underlying -
+    which is wrong for every leg whose IV moved against its delta.
+    """
+
+    change_percent: Decimal | None = None
+    """The same move in percent, as the provider reports it."""
+
+    previous_oi: int | None = None
+    """Open interest at the previous close.
+
+    Carried rather than back-computed from ``open_interest_change``: on a leg
+    listed today the two are not the same statement, and the subtraction
+    silently invents a prior session for a contract that had none.
+    """
+
+    bid_qty: int | None = None
+    """Quantity resting at ``bid``. Depth, not price - a one-lot bid and a
+    two-hundred-lot bid at the same price are different books."""
+
+    ask_qty: int | None = None
+    """Quantity resting at ``ask``."""
 
 
 @dataclass(frozen=True, slots=True)

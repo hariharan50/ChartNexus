@@ -131,7 +131,33 @@ def _to_option_quote(entry: dict[str, Any]) -> OptionQuote:
         bid=_decimal(entry.get("bid")),
         ask=_decimal(entry.get("ask")),
         delta=_decimal(entry.get("delta")),
+        # Read with `.get` and kept optional on purpose. These are the fields
+        # the payload has carried all along and this mapper discarded; the
+        # chain table and the build-up classifier both want them, and a leg's
+        # own premium move in particular is not recoverable from anything else
+        # on the response. If a payload shape or a plan tier omits one, it
+        # stays None and renders as "not quoted" rather than as zero.
+        change=_decimal(entry.get("ltpch")),
+        change_percent=_decimal(entry.get("ltpchp")),
+        previous_oi=_optional_int(entry.get("prev_oi")),
+        bid_qty=_optional_int(entry.get("bid_qty")),
+        ask_qty=_optional_int(entry.get("ask_qty")),
     )
+
+
+def _optional_int(value: Any) -> int | None:
+    """``_int`` but preserving absence.
+
+    ``_int`` floors a missing field to 0, which is right for open interest -
+    the chain's totals have to add up - and wrong for every field here, where 0
+    is a claim about the book rather than a stand-in for silence.
+    """
+    if value is None or value == "":
+        return None
+    try:
+        return int(float(value))
+    except (TypeError, ValueError):
+        return None
 
 
 def parse_expiry_epochs(payload: dict[str, Any]) -> dict[str, str]:
