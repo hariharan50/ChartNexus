@@ -17,6 +17,24 @@
   max-width: var(--cn-page-max);
 }
 
+/* The app's default font, on the numbers too.
+
+   `.cn-numeric` is global and sets `--cn-font-mono`, whose first family
+   (JetBrains Mono) is the one font the app never self-hosted — only
+   `inter-latin-var.woff2` ships. So every price, strike and greek here fell
+   back to Consolas, while the rest of Future Lab — dashboard, heatmap,
+   price-vs-oi, none of which use `.cn-numeric` — stayed in Inter. That is the
+   "looks slightly different" report, and it is a missing webfont rather than a
+   design choice.
+
+   Inter carries real tabular figures, so moving to `--cn-font-sans` keeps the
+   column alignment `.cn-numeric` exists for: this overrides the family alone,
+   and the global rule's `font-variant-numeric`/`font-feature-settings` still
+   apply. Scoped to `.page` so the override stops at this module. */
+.page :global(.cn-numeric) {
+  font-family: var(--cn-font-sans);
+}
+
 /* -- panels ---------------------------------------------------------------- */
 
 .panel {

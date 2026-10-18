@@ -1,5 +1,6 @@
 import { Link, useLocation } from 'react-router';
 import { cx } from '$shared/ui/cx';
+import FireIcon from './FireIcon';
 import OptionsLabIcon from './OptionsLabIcon';
 import s from './FutureLabPanel.module.css';
 
@@ -38,7 +39,7 @@ const sections: Section[] = [
     title: 'OI Tools',
     items: [
       { label: 'Price vs OI', glyph: 'bars', href: '/future-lab/price-vs-oi' },
-      { label: 'Stock Watch', glyph: 'eye', href: '/future-lab/stock-watch', isNew: true }
+      { label: 'Stock Watch', glyph: 'eye', href: '/future-lab/stock-watch' }
     ]
   },
   {
@@ -66,7 +67,10 @@ export default function FutureLabPanel() {
   return (
     <div className={s.mega}>
       <div className={s.megaHead}>
-        <p className={s.megaTitle}>Future Lab</p>
+        <p className={s.megaTitle}>
+          Future Lab
+          <FireIcon className={s.fire} />
+        </p>
         <p className={s.megaSub}>Futures analytics toolkit · All modules in development</p>
       </div>
 

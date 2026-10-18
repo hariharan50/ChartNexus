@@ -35,12 +35,30 @@
 }
 
 .mega-title {
+  display: flex;
+  align-items: center;
+  /* The 0.08em tracking already leaves a gap after the final L, so the flame
+     needs less than it looks like it should. */
+  gap: 0.3em;
   margin: 0;
   font-size: var(--cn-text-xs);
   font-weight: 700;
   letter-spacing: 0.08em;
   text-transform: uppercase;
   color: var(--cn-text-subtle);
+}
+
+/* Sized off the title rather than in rem so the flame tracks the type if the
+   heading scale ever changes. Well over 1em: the title is 11px uppercase, and
+   the flame's artwork carries its own padding, so matching cap height reads far
+   smaller than it measures. `.mega-head` has the room — the flame grows into
+   the line box without shifting the subtitle below it. */
+.fire {
+  flex: none;
+  width: 1.75em;
+  height: 1.75em;
+  /* The artwork's visual mass sits low; nudging up centres it on the caps. */
+  margin-top: -0.1em;
 }
 
 .mega-sub {
