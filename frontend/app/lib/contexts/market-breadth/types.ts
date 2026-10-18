@@ -338,3 +338,45 @@ export interface SectorRotationView {
   header: IndexHeader;
   sectors: SectorPosition[];
 }
+
+/** The four quadrants of the rotation plane, as the API spells them. */
+export type RrgQuadrant = 'leading' | 'weakening' | 'lagging' | 'improving';
+
+export interface RrgPoint {
+  /** ISO instant of the period this point closes. */
+  at: string;
+  /**
+   * Both axes are centred on 100 and are *unitless* — z-scores of the sector's
+   * own relative strength, not index points. Formatting either as a price is
+   * reading it wrong.
+   */
+  rs_ratio: number;
+  rs_momentum: number;
+}
+
+export interface RrgTail {
+  sector: string;
+  quadrant: RrgQuadrant;
+  /** Oldest point first; the last one is where the sector stands now. */
+  points: RrgPoint[];
+  /** Members that priced into the composite, out of the sector's total. */
+  measured: number;
+  members: number;
+}
+
+export interface SectorRrgView {
+  benchmark: string;
+  interval: string;
+  tails: RrgTail[];
+  sessions: string[];
+  /**
+   * Periods on the grid against the number a tail needs. When `periods` is
+   * below `periods_required` an empty board means the archive is still
+   * filling — a different problem from no sector pricing, and the page says
+   * which one it is rather than showing one "no data" for both.
+   */
+  periods: number;
+  periods_required: number;
+  window: number;
+  source?: DataSourceName;
+}

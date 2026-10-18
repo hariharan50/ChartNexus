@@ -28,6 +28,7 @@ from chartnexus.contexts.market_breadth.api.schemas import (
     FlowSummaryResponse,
     SectorRailResponse,
     SectorRotationResponse,
+    SectorRrgResponse,
     WeightageResponse,
 )
 from chartnexus.contexts.market_breadth.application.get_breadth_series import (
@@ -43,6 +44,11 @@ from chartnexus.contexts.market_breadth.application.get_fii_dii import (
 from chartnexus.contexts.market_breadth.application.get_index_analysis import (
     DEFAULT_INDEX,
     IndexQuery,
+)
+from chartnexus.contexts.market_breadth.application.get_sector_rrg import (
+    DEFAULT_INTERVAL as RRG_DEFAULT_INTERVAL,
+    INTERVALS as RRG_INTERVALS,
+    SectorRrgQuery,
 )
 from chartnexus.infrastructure.transport.http.dependencies import CurrentPrincipal
 
@@ -295,6 +301,51 @@ async def sector_rotation(
 ) -> SectorRotationResponse:
     result = await services.sector_rotation(_index_query(principal, services, index))
     return SectorRotationResponse.of(result)
+
+
+@router.get(
+    "/sector-rotation/rrg",
+    response_model=SectorRrgResponse,
+    summary="Relative Rotation Graph — every sector's tail against the benchmark",
+    description=(
+        "The classical RRG the snapshot board above cannot draw. Both axes are "
+        "centred on 100 and unitless: `rs_ratio` is the sector's relative "
+        "strength as a z-score of its own recent range, `rs_momentum` the "
+        "normalised rate of change of that ratio. Joined oldest-point-first "
+        "they trace a tail that tends to rotate clockwise through leading, "
+        "weakening, lagging and improving. "
+        "Built from the archived futures board, so the depth of the archive "
+        "decides what can be drawn: when `periods` is below "
+        "`periods_required` the board comes back empty because the window "
+        "cannot be filled yet, which is a different thing from no sector "
+        "pricing. Sectors have no index of their own, so each one's level is "
+        "an equal-weighted composite of its members."
+    ),
+    responses={422: {"description": "Unknown index or interval"}},
+)
+async def sector_rrg(
+    principal: CurrentPrincipal,
+    services: Services,
+    index: IndexParam = DEFAULT_INDEX,
+    interval: Annotated[
+        str, Query(description=f"Period width. One of {', '.join(RRG_INTERVALS)}.")
+    ] = RRG_DEFAULT_INTERVAL,
+    tail: Annotated[int, Query(ge=2, le=30, description="Trailing points per sector")] = 8,
+) -> SectorRrgResponse:
+    if interval not in RRG_INTERVALS:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail=f"Unknown interval. Expected one of {', '.join(RRG_INTERVALS)}.",
+        )
+    result = await services.sector_rrg(
+        SectorRrgQuery(
+            tenant_id=principal.tenant_id,
+            index=_known_index(services, index),
+            interval=interval,
+            tail=tail,
+        )
+    )
+    return SectorRrgResponse.of(result)
 
 
 def _known_index(services: Services, index: str) -> str:

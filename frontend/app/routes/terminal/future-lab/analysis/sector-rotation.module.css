@@ -1,0 +1,253 @@
+/* The Relative Rotation Graph's own furniture.
+ *
+ * Page chrome, cards and tables come from `analysis.module.css` like every
+ * other Analysis page — only the pieces this board does not share live here:
+ * the control strip, the sector rail beside the plot, and the quadrant tints
+ * that have to agree with the chart's own four colours.
+ *
+ * Those tints are the one real constraint. The plot paints its quadrants from
+ * the chart theme (call / accent / marker / put) and the rail and legend have
+ * to read as the same four, so both sides resolve to the same `--cn-*` tokens
+ * rather than to two lists of hexes that drift apart the first time a theme
+ * changes. */
+
+/* -- control strip --------------------------------------------------------- */
+
+.controls {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--cn-space-4);
+  padding: var(--cn-space-3) var(--cn-space-4);
+  border: 1px solid var(--cn-border);
+  border-radius: var(--cn-radius-lg);
+  background: var(--cn-surface);
+}
+
+.control {
+  display: flex;
+  align-items: center;
+  gap: var(--cn-space-2);
+}
+
+.stepper {
+  display: flex;
+  align-items: center;
+  gap: 1px;
+  border: 1px solid var(--cn-field-border);
+  border-radius: var(--cn-radius-sm);
+  overflow: hidden;
+}
+
+.step {
+  width: 1.75rem;
+  height: var(--cn-control-h-sm);
+  border: 0;
+  background: var(--cn-field-bg);
+  color: var(--cn-text);
+  cursor: pointer;
+  line-height: 1;
+}
+
+.step:hover:not(:disabled) {
+  background: var(--cn-surface-raised);
+}
+
+.step:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.step-value {
+  min-width: 2rem;
+  text-align: center;
+  font-size: var(--cn-text-sm);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.unit,
+.meta {
+  margin: 0;
+  font-size: var(--cn-text-xs);
+  color: var(--cn-text-subtle);
+}
+
+/* Pushed to the far end so the controls stay left-grouped at every width. */
+.meta {
+  margin-left: auto;
+  font-variant-numeric: tabular-nums;
+}
+
+.toggle {
+  display: flex;
+  align-items: center;
+  gap: var(--cn-space-2);
+  font-size: var(--cn-text-xs);
+  color: var(--cn-text-muted);
+  cursor: pointer;
+}
+
+/* -- board: rail beside plot ----------------------------------------------- */
+
+.board {
+  display: grid;
+  /* The rail is fixed and the plot takes the rest: a percentage split would
+     shrink the rail below its longest sector name on a laptop. `minmax(0, 1fr)`
+     rather than `1fr` so the chart can actually shrink — a grid child's
+     automatic minimum is its content, which ECharts reports as its last
+     rendered width, and the plot would then only ever grow. */
+  grid-template-columns: 15rem minmax(0, 1fr);
+  border: 1px solid var(--cn-border);
+  border-radius: var(--cn-radius-lg);
+  background: var(--cn-surface);
+  overflow: hidden;
+}
+
+@media (max-width: 60rem) {
+  .board {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+.rail {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  border-right: 1px solid var(--cn-border);
+}
+
+@media (max-width: 60rem) {
+  .rail {
+    border-right: 0;
+    border-bottom: 1px solid var(--cn-border);
+  }
+}
+
+.rail-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--cn-space-2);
+  padding: var(--cn-space-3) var(--cn-space-3);
+  border-bottom: 1px solid var(--cn-border);
+}
+
+.rail-count {
+  font-size: var(--cn-text-xs);
+  font-variant-numeric: tabular-nums;
+  color: var(--cn-text-subtle);
+}
+
+.list {
+  margin: 0;
+  padding: var(--cn-space-2);
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  overflow-y: auto;
+  /* Matches the plot's height so a long sector list scrolls inside the rail
+     rather than stretching the board past the chart. */
+  max-height: 30rem;
+}
+
+.row {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto auto;
+  align-items: center;
+  gap: var(--cn-space-2);
+  padding: var(--cn-space-2);
+  border-radius: var(--cn-radius-sm);
+  /* The quadrant tint lands on this edge; the rule below sets its colour. */
+  border-left: 3px solid transparent;
+  cursor: pointer;
+}
+
+.row:hover {
+  background: var(--cn-surface-raised);
+}
+
+/* Unchecked is dimmed rather than hidden: the row still has to be clickable
+   to bring the sector back, and a row you cannot read is one you cannot find. */
+.row-off {
+  opacity: 0.45;
+}
+
+.row-name {
+  font-size: var(--cn-text-xs);
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.row-value {
+  font-size: var(--cn-text-xs);
+  color: var(--cn-text-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.plot {
+  min-width: 0;
+  padding: var(--cn-space-2);
+}
+
+.chart {
+  width: 100%;
+  height: 30rem;
+}
+
+@media (max-width: 60rem) {
+  .chart {
+    height: 24rem;
+  }
+}
+
+/* -- quadrant legend ------------------------------------------------------- */
+
+.legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--cn-space-2);
+}
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--cn-space-2);
+  padding: var(--cn-space-1) var(--cn-space-3);
+  border: 1px solid var(--cn-border);
+  border-left-width: 3px;
+  border-radius: var(--cn-radius-sm);
+  background: var(--cn-surface);
+  font-size: var(--cn-text-xs);
+  color: var(--cn-text-muted);
+}
+
+.chip strong {
+  color: var(--cn-text);
+  font-variant-numeric: tabular-nums;
+}
+
+/* -- the four quadrants ---------------------------------------------------- */
+
+/* Shared by the rail rows and the legend chips, and deliberately the same four
+   roles the chart paints with: bullish for leading, accent for improving,
+   warning for weakening, bearish for lagging. */
+
+.leading {
+  border-left-color: var(--cn-bullish);
+}
+
+.improving {
+  border-left-color: var(--cn-accent);
+}
+
+.weakening {
+  border-left-color: var(--cn-warning);
+}
+
+.lagging {
+  border-left-color: var(--cn-bearish);
+}

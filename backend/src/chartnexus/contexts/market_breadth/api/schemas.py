@@ -7,7 +7,7 @@ known", and the client must render them as a dash rather than as zero.
 
 from __future__ import annotations
 
-from datetime import date
+from datetime import date, datetime
 from decimal import Decimal
 
 from pydantic import BaseModel, Field
@@ -27,6 +27,7 @@ from chartnexus.contexts.market_breadth.application.get_index_analysis import (
     SectorRotationResult,
     WeightageResult,
 )
+from chartnexus.contexts.market_breadth.application.get_sector_rrg import SectorRrgResult
 from chartnexus.contexts.market_breadth.domain.breadth import (
     BreadthCount,
     SectorBreadth,
@@ -50,6 +51,7 @@ from chartnexus.contexts.market_breadth.domain.open_interest import (
     OptionLegs,
 )
 from chartnexus.contexts.market_breadth.domain.rotation import SectorPosition
+from chartnexus.contexts.market_breadth.domain.rrg import RrgPoint, RrgTail
 
 # -- FII/DII -----------------------------------------------------------------
 
@@ -708,4 +710,74 @@ class SectorRotationResponse(BaseModel):
         return cls(
             header=IndexHeaderResponse.of(result.header),
             sectors=[SectorPositionResponse.of(entry) for entry in result.sectors],
+        )
+
+
+class RrgPointResponse(BaseModel):
+    """One sector at one period on the rotation plane.
+
+    Both axes are centred on 100 and are unitless: they are z-scores of the
+    sector's own relative strength, not index points. A client that formats
+    them as prices is reading them wrong.
+    """
+
+    at: datetime
+    rs_ratio: float
+    rs_momentum: float
+
+    @classmethod
+    def of(cls, point: RrgPoint) -> RrgPointResponse:
+        return cls(at=point.at, rs_ratio=point.rs_ratio, rs_momentum=point.rs_momentum)
+
+
+class RrgTailResponse(BaseModel):
+    """One sector's path across the plane, oldest point first."""
+
+    sector: str
+    quadrant: str
+    points: list[RrgPointResponse] = Field(default_factory=list)
+    #: Members that priced into the composite, out of the sector's total. A
+    #: tail measured over 4 of 7 names is a weaker claim than one over all of
+    #: them, and the page says which it is rather than implying the latter.
+    measured: int = 0
+    members: int = 0
+
+    @classmethod
+    def of(cls, tail: RrgTail) -> RrgTailResponse:
+        return cls(
+            sector=tail.sector,
+            quadrant=str(tail.quadrant),
+            points=[RrgPointResponse.of(point) for point in tail.points],
+            measured=tail.measured,
+            members=tail.members,
+        )
+
+
+class SectorRrgResponse(BaseModel):
+    """The rotation board: one tail per sector, and what it was measured over."""
+
+    benchmark: str
+    interval: str
+    tails: list[RrgTailResponse] = Field(default_factory=list)
+    sessions: list[date] = Field(default_factory=list)
+    #: Periods on the grid, and the number a tail needs before it can exist.
+    #: An empty board with ``periods`` below ``periods_required`` means the
+    #: archive is still filling, which is a different thing from no sector
+    #: pricing — and the page explains them differently.
+    periods: int = 0
+    periods_required: int = 0
+    window: int = 0
+    source: str = "mock"
+
+    @classmethod
+    def of(cls, result: SectorRrgResult) -> SectorRrgResponse:
+        return cls(
+            benchmark=result.benchmark,
+            interval=result.interval,
+            tails=[RrgTailResponse.of(tail) for tail in result.tails],
+            sessions=list(result.sessions),
+            periods=result.periods,
+            periods_required=result.periods_required,
+            window=result.window,
+            source=result.source,
         )

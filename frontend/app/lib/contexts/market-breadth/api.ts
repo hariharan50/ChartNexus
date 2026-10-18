@@ -7,6 +7,7 @@ import type {
   ContributorsView,
   FlowSummary,
   SectorRotationView,
+  SectorRrgView,
   WeightageView
 } from './types';
 
@@ -124,6 +125,40 @@ export function getSectorRotation(
   return apiFetch<SectorRotationView>({
     url: '/breadth/sector-rotation',
     params: { index },
+    fetcher
+  });
+}
+
+/** Period widths the rotation graph offers — the backend's own set. */
+export const RRG_INTERVALS = [
+  { id: '15m', label: '15m' },
+  { id: '1h', label: '1h' },
+  { id: '1d', label: 'Daily' }
+] as const;
+
+export type RrgInterval = (typeof RRG_INTERVALS)[number]['id'];
+
+/**
+ * Intraday by default. The daily axis needs thirteen archived sessions before
+ * it can draw a point, so opening on it would show an empty board on a
+ * deployment whose capture worker started this week.
+ */
+export const DEFAULT_RRG_INTERVAL: RrgInterval = '15m';
+
+/** Trailing points per sector. The reference terminals default to eight. */
+export const DEFAULT_RRG_TAIL = 8;
+
+export function getSectorRrg(
+  opts: { index: string; interval?: RrgInterval; tail?: number },
+  fetcher?: typeof fetch
+): Promise<SectorRrgView> {
+  return apiFetch<SectorRrgView>({
+    url: '/breadth/sector-rotation/rrg',
+    params: {
+      index: opts.index,
+      interval: opts.interval ?? DEFAULT_RRG_INTERVAL,
+      tail: String(opts.tail ?? DEFAULT_RRG_TAIL)
+    },
     fetcher
   });
 }

@@ -9,9 +9,10 @@ import {
   getFiiDiiSummary,
   getIndexContributors,
   getIndexWeightage,
-  getSectorRotation
+  getSectorRotation,
+  getSectorRrg
 } from './api';
-import type { BreadthInterval } from './api';
+import type { BreadthInterval, RrgInterval } from './api';
 import type {
   AdvanceDeclineView,
   BreadthSeries,
@@ -20,7 +21,8 @@ import type {
   ContributorsView,
   FlowSummary,
   SectorRotationView,
-  WeightageView
+  WeightageView,
+  SectorRrgView
 } from './types';
 
 /**
@@ -131,6 +133,16 @@ export function useSectorRotationQuery(index: string) {
   return useQuery<SectorRotationView>({
     queryKey: ['breadth', 'sector-rotation', index],
     queryFn: () => getSectorRotation(index),
+    refetchInterval: INDEX_REFETCH_MS
+  });
+}
+
+export function useSectorRrgQuery(index: string, interval: RrgInterval, tail: number) {
+  return useQuery<SectorRrgView>({
+    // Interval and tail are part of the key: they change what the server
+    // computes, not just how the page draws it.
+    queryKey: ['breadth', 'sector-rrg', index, interval, tail],
+    queryFn: () => getSectorRrg({ index, interval, tail }),
     refetchInterval: INDEX_REFETCH_MS
   });
 }

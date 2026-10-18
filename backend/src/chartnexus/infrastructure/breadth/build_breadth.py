@@ -32,6 +32,7 @@ from chartnexus.contexts.market_breadth.application.get_index_analysis import (
     GetIndexWeightage,
     GetSectorRotation,
 )
+from chartnexus.contexts.market_breadth.application.get_sector_rrg import GetSectorRrg
 from chartnexus.contexts.market_breadth.application.ports import (
     BreadthHistorySource,
     BreadthUniverseSource,
@@ -79,6 +80,10 @@ class BreadthServices:
     sector_rail: GetSectorRail
     weightage: GetIndexWeightage
     sector_rotation: GetSectorRotation
+    #: The rotation *graph*: the same sectors, but traced over the archive
+    #: rather than read from one snapshot, so it carries a real momentum
+    #: axis and a tail. Reads the captured board, like `breadth_series`.
+    sector_rrg: GetSectorRrg
     #: Which indices the constituent source can actually answer for. Exposed as
     #: a callable rather than a list so the routes validate against the live
     #: table instead of a copy that can drift from it.
@@ -107,6 +112,7 @@ class BreadthServices:
             advance_decline=GetAdvanceDecline(source=index_source),
             weightage=GetIndexWeightage(source=index_source),
             sector_rotation=GetSectorRotation(source=index_source),
+            sector_rrg=GetSectorRrg(history=history, universe=universe),
             indices=index_source.universe,
         )
 
