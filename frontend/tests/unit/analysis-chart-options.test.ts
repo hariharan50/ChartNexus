@@ -26,6 +26,8 @@ const THEME: ChartTheme = {
   surface: '#a40000',
   tooltipBg: '#a50000',
   tooltipText: '#a60000',
+  up: '#a90000',
+  down: '#aa0000',
   call: '#a70000',
   put: '#a80000',
   marker: '#a90000',
@@ -127,9 +129,9 @@ describe('index contributors', () => {
     )[0].data;
 
     // Reversed, so INFY (negative) is first.
-    expect(data[0]!.itemStyle.color).toBe(THEME.put);
+    expect(data[0]!.itemStyle.color).toBe(THEME.down);
     expect(data[0]!.itemStyle.borderRadius).toEqual([4, 0, 0, 4]);
-    expect(data[1]!.itemStyle.color).toBe(THEME.call);
+    expect(data[1]!.itemStyle.color).toBe(THEME.up);
     expect(data[1]!.itemStyle.borderRadius).toEqual([0, 4, 4, 0]);
   });
 

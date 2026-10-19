@@ -63,8 +63,8 @@ export function buildSectorBreadthOption(
         if (!bar) return '';
         return `
           <div style="font-weight:700;margin-bottom:4px">${bar.sector}</div>
-          <div style="color:${theme.call}">Advancing: ${bar.advancing}</div>
-          <div style="color:${theme.put}">Declining: ${bar.declining}</div>
+          <div style="color:${theme.up}">Advancing: ${bar.advancing}</div>
+          <div style="color:${theme.down}">Declining: ${bar.declining}</div>
           <div style="color:${theme.axis}">Unchanged: ${bar.unchanged}</div>
           <div>Sector move: ${options.formatPercent(bar.changePercent)}</div>
           <div>Weight: ${bar.weightPercent.toFixed(2)}%</div>`;
@@ -87,7 +87,7 @@ export function buildSectorBreadthOption(
       segment(
         'Advancing',
         ordered.map((bar) => share(bar, bar.advancing)),
-        theme.call,
+        theme.up,
         theme
       ),
       segment(
@@ -99,7 +99,7 @@ export function buildSectorBreadthOption(
       segment(
         'Declining',
         ordered.map((bar) => share(bar, bar.declining)),
-        theme.put,
+        theme.down,
         theme
       )
     ]

@@ -19,7 +19,6 @@ import HistoryMode, { type Mode } from '../components/HistoryMode';
 import ReplayBar, { REPLAY_SPEEDS, type ReplaySpeed } from '../smart-oi/components/ReplayBar';
 import TimeRangeSlider from '../components/TimeRangeSlider';
 import {
-  CALL_COLOR,
   clampWindow,
   clockLabel,
   coverageNote,
@@ -33,7 +32,6 @@ import {
   nearestStrike,
   overlayValues,
   prevTradingDay,
-  PUT_COLOR,
   REFETCH_MS,
   sessionPositions,
   sessionTicks,
@@ -190,8 +188,8 @@ export default function VolatilitySkew() {
           showRatio,
           overlays,
           ivColor: IV_COLOR,
-          callColor: CALL_COLOR,
-          putColor: PUT_COLOR,
+          callColor: theme.call,
+          putColor: theme.put,
           formatOi: (value: number) => fmtOi(value),
           formatIv: fmtIv
         },
@@ -371,13 +369,13 @@ export default function VolatilitySkew() {
                     />
                     <Toggle
                       label="Call OI"
-                      color={CALL_COLOR}
+                      color={theme.call}
                       on={showCallOi}
                       onToggle={() => setShowCallOi((v) => !v)}
                     />
                     <Toggle
                       label="Put OI"
-                      color={PUT_COLOR}
+                      color={theme.put}
                       on={showPutOi}
                       onToggle={() => setShowPutOi((v) => !v)}
                     />

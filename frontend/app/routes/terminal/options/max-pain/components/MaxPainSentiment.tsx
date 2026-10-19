@@ -33,7 +33,7 @@ interface Props {
  * graphical element, and the zone it lands in is named in words beside it.
  */
 function zoneColor(zone: MaxPainZone, theme: ChartTheme): string {
-  if (zone === 'Strong sell' || zone === 'Sell') return theme.put;
+  if (zone === 'Strong sell' || zone === 'Sell') return theme.down;
   if (zone === 'Buy' || zone === 'Strong buy') return theme.accent;
   return theme.axis;
 }

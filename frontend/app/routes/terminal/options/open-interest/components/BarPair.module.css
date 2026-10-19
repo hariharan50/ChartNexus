@@ -18,11 +18,11 @@
 }
 
 .val.call {
-  color: var(--cn-bullish);
+  color: var(--cn-call);
 }
 
 .val.put {
-  color: var(--cn-bearish);
+  color: var(--cn-put);
 }
 
 .track {
@@ -39,11 +39,11 @@
 }
 
 .bar.call {
-  background: var(--cn-bullish);
+  background: var(--cn-call);
 }
 
 .bar.put {
-  background: var(--cn-bearish);
+  background: var(--cn-put);
 }
 
 .k {

@@ -18,7 +18,7 @@ export {
   type Timeframe
 } from '../../options/atm-straddle/straddle-data';
 
-export { CALL_COLOR, PUT_COLOR, REFETCH_MS, timeLabel } from '../../options/open-interest/oi-data';
+export { REFETCH_MS, timeLabel } from '../../options/open-interest/oi-data';
 
 /** One leg's five series, aligned index-for-index with {@link GreeksView.t}. */
 export interface GreekLeg {

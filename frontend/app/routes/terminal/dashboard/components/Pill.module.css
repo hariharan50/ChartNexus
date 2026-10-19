@@ -23,6 +23,22 @@
   border-color: color-mix(in srgb, var(--cn-bearish) 30%, transparent);
 }
 
+/* The option sides. Same treatment as the two above, a different pair of
+   tokens: `bullish`/`bearish` are a direction and never move, `call`/`put`
+   follow Settings > Global > Call / Put Colour. A CE badge is the second
+   thing, not the first. */
+.call {
+  color: var(--cn-call);
+  background: color-mix(in srgb, var(--cn-call) 12%, transparent);
+  border-color: color-mix(in srgb, var(--cn-call) 30%, transparent);
+}
+
+.put {
+  color: var(--cn-put);
+  background: color-mix(in srgb, var(--cn-put) 12%, transparent);
+  border-color: color-mix(in srgb, var(--cn-put) 30%, transparent);
+}
+
 .warning {
   color: var(--cn-warning);
   background: color-mix(in srgb, var(--cn-warning) 14%, transparent);

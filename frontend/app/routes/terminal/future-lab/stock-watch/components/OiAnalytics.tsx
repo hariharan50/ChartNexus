@@ -29,10 +29,6 @@ const MODES: { value: OiChartMode; label: string }[] = [
   { value: 'change_total', label: 'OI with change' }
 ];
 
-/** Call and put colours, owned by this page rather than the global theme. */
-const CALL_COLOR = '#f2495c';
-const PUT_COLOR = '#17b877';
-
 interface Props {
   chain: EnrichedChain;
 }
@@ -92,9 +88,8 @@ export default function OiAnalytics({ chain }: Props) {
           mode,
           spot: chain.spot,
           maxPain: pain ?? 0,
-          callColor: CALL_COLOR,
-          putColor: PUT_COLOR,
-          showTooltip: true,
+          callColor: theme.call,
+          putColor: theme.put,
           formatOi: (value) => fmtIndian(value),
           formatSigned: (value) => fmtIndianSigned(value),
           openLabel: 'Prev close',

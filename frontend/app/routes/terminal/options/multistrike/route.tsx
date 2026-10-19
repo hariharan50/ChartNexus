@@ -21,7 +21,6 @@ import StrikeLadder from './components/StrikeLadder';
 import {
   bucketIndices,
   callLegs,
-  CALL_COLOR,
   clockLabel,
   csvFilename,
   dateLabel,
@@ -40,7 +39,6 @@ import {
   multistrikeCsv,
   pick,
   putLegs,
-  PUT_COLOR,
   REFETCH_MS,
   STALE_AFTER_MS,
   sumLegs,
@@ -156,13 +154,13 @@ export default function MultistrikeChart() {
               {
                 id: 'total-call',
                 label: 'Total Call Premium',
-                color: CALL_COLOR,
+                color: theme.call,
                 values: pick(sumLegs(vw, callLegs(legs)), keep)
               },
               {
                 id: 'total-put',
                 label: 'Total Put Premium',
-                color: PUT_COLOR,
+                color: theme.put,
                 values: pick(sumLegs(vw, putLegs(legs)), keep)
               }
             ].filter((line) => line.values.some((value) => value !== null))
@@ -178,7 +176,7 @@ export default function MultistrikeChart() {
               ];
 
     return { timestamps, futures, lines };
-  }, [vw, legs, timeframe, view]);
+  }, [vw, legs, timeframe, view, theme.call, theme.put]);
 
   /** The same lines minus the ones the reader has an eye closed on. */
   const visible = useMemo(

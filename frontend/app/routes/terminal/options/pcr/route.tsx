@@ -1,6 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { SeriesLine } from '$shared/charts/options/multi-series';
+import { useCallPutColors } from '$shared/charts/theme/use-call-put';
 import { cx } from '$shared/ui/cx';
 import Select from '$shared/ui/Select';
 import IconChart from '$shared/ui/icons/IconChart';
@@ -10,7 +11,7 @@ import InstrumentPicker from '$shared/ui/InstrumentPicker';
 import ExpiryPicker from '../components/ExpiryPicker';
 import HistoryMode, { type Mode } from '../components/HistoryMode';
 import SeriesChart from '../components/SeriesChart';
-import { CALL_COLOR, feedAgeLabel, feedAgeMs, PUT_COLOR } from '../open-interest/oi-data';
+import { feedAgeLabel, feedAgeMs } from '../open-interest/oi-data';
 import {
   bucketIndices,
   DEFAULT_TIMEFRAME,
@@ -57,6 +58,8 @@ export default function PutCallRatio() {
   // -- resampling -----------------------------------------------------------
   // Every array below is derived from one payload; changing the timeframe never
   // refetches, which is the whole reason the endpoint sends the raw cadence.
+  const { call, put } = useCallPutColors();
+
   const kept = useMemo(() => bucketIndices(view?.t ?? [], timeframe), [view, timeframe]);
   // Raw ISO, not display strings — the chart derives its own axis labels from
   // the instants. Resampling drops points but never reorders them, so these
@@ -81,17 +84,17 @@ export default function PutCallRatio() {
       {
         id: 'call-chg',
         label: 'Call OI Change',
-        color: CALL_COLOR,
+        color: call,
         values: pick(view?.call_oi_chg ?? [], kept)
       },
       {
         id: 'put-chg',
         label: 'Put OI Change',
-        color: PUT_COLOR,
+        color: put,
         values: pick(view?.put_oi_chg ?? [], kept)
       }
     ],
-    [view, kept]
+    [view, kept, call, put]
   );
 
   const totalLines = useMemo<SeriesLine[]>(
@@ -99,12 +102,12 @@ export default function PutCallRatio() {
       {
         id: 'call-oi',
         label: 'Call OI',
-        color: CALL_COLOR,
+        color: call,
         values: pick(view?.call_oi ?? [], kept)
       },
-      { id: 'put-oi', label: 'Put OI', color: PUT_COLOR, values: pick(view?.put_oi ?? [], kept) }
+      { id: 'put-oi', label: 'Put OI', color: put, values: pick(view?.put_oi ?? [], kept) }
     ],
-    [view, kept]
+    [view, kept, call, put]
   );
 
   // -- replay ---------------------------------------------------------------

@@ -33,7 +33,6 @@ export interface OpenInterestInput {
   /** Call-side colour. Owned by the Open Interest tool, not the global theme. */
   callColor: string;
   putColor: string;
-  showTooltip: boolean;
   /** Formats an OI magnitude for the axis and the tooltip. */
   formatOi: (value: number) => string;
   /** Same, but always signed. */
@@ -278,30 +277,32 @@ export function buildOpenInterestOption(
   input: OpenInterestInput,
   theme: ChartTheme
 ): EChartsCoreOption {
-  const { bars, showTooltip, formatOi } = input;
+  const { bars, formatOi } = input;
   const atmStrike = bars.find((b) => b.atm)?.strike;
 
   return {
     backgroundColor: 'transparent',
     grid: { left: 8, right: 24, top: 28, bottom: 8, containLabel: true },
-    tooltip: showTooltip
-      ? {
-          trigger: 'axis',
-          axisPointer: { type: 'shadow' },
-          // The chart sits in an `overflow-x: auto` wrapper so wide ladders can
-          // scroll, and that wrapper clips its own descendants — which cut the
-          // tooltip off mid-number ("OI @ 9:1…"). Rendering it on the body puts
-          // it outside that clipping context entirely.
-          appendTo: 'body',
-          backgroundColor: theme.tooltipBg,
-          borderColor: theme.grid,
-          textStyle: { color: theme.tooltipText, fontSize: 12 },
-          formatter: (params: unknown) => {
-            const arr = params as Array<{ dataIndex: number }>;
-            return arr.length ? tooltipHtml(input, arr[0]!.dataIndex) : '';
-          }
-        }
-      : { show: false },
+    // Declared unconditionally. This used to sit behind a per-chart flag
+    // that both call sites hard-coded to `true`; the real switch is
+    // Settings > Global > Show chart tooltip, and `EChart` applies that
+    // to every chart in the app rather than each builder carrying one.
+    tooltip: {
+      trigger: 'axis',
+      axisPointer: { type: 'shadow' },
+      // The chart sits in an `overflow-x: auto` wrapper so wide ladders can
+      // scroll, and that wrapper clips its own descendants — which cut the
+      // tooltip off mid-number ("OI @ 9:1…"). Rendering it on the body puts
+      // it outside that clipping context entirely.
+      appendTo: 'body',
+      backgroundColor: theme.tooltipBg,
+      borderColor: theme.grid,
+      textStyle: { color: theme.tooltipText, fontSize: 12 },
+      formatter: (params: unknown) => {
+        const arr = params as Array<{ dataIndex: number }>;
+        return arr.length ? tooltipHtml(input, arr[0]!.dataIndex) : '';
+      }
+    },
     xAxis: {
       type: 'category',
       data: bars.map((b) => String(b.strike)),

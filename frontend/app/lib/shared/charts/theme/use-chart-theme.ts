@@ -10,7 +10,9 @@ import type { ChartTheme } from './types';
  * `data-theme` (and preferences write `data-callput`), so a MutationObserver on
  * those attributes is the signal.
  *
- * One observer and one cached snapshot are shared by every chart on the page.
+ * One observer and one cached snapshot are shared by every chart on the page,
+ * and the snapshot is re-read whenever the first chart of a page subscribes —
+ * the observer only exists while something is listening.
  */
 
 let snapshot: ChartTheme = SERVER_CHART_THEME;
@@ -32,6 +34,14 @@ function subscribe(listener: () => void): () => void {
   if (!initialised) {
     snapshot = readChartTheme();
     initialised = true;
+  } else if (listeners.size === 0) {
+    // Nothing has been watching since the last chart unmounted, so the
+    // observer was disconnected and any attribute change in between went
+    // unseen. Settings is a page with no chart on it: without this, choosing
+    // a theme or flipping Call / Put Colour there and navigating back to the
+    // Options Lab repainted nothing, because the cached snapshot outlived the
+    // observer that was supposed to invalidate it.
+    recompute();
   }
 
   listeners.add(listener);

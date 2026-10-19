@@ -366,7 +366,6 @@ export default function OpenInterest() {
                 maxPain={maxPainNow}
                 showLot={showLot}
                 lotSize={lotSize}
-                showTooltip={true}
                 openLabel={openLabel}
                 nowLabel={nowLabel}
               />

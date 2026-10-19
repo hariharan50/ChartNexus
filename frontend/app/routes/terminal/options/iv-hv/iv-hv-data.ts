@@ -50,8 +50,6 @@ export {
   type WireCandle
 } from '../iv-hv-ivp/iv-hv-ivp-data';
 
-export { CALL_COLOR, PUT_COLOR } from '../open-interest/oi-data';
-
 import { rollingHv, type DailyBar, type IvSession } from '../iv-hv-ivp/iv-hv-ivp-data';
 
 /**

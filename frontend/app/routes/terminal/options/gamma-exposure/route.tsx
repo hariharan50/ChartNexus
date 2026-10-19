@@ -28,12 +28,10 @@ import {
   type GexView
 } from './gex-data';
 import {
-  CALL_COLOR,
   clockLabel,
   dateLabel,
   freshnessLabel,
   inferStep,
-  PUT_COLOR,
   REFETCH_MS,
   sessionPositions,
   sessionTicks,
@@ -49,22 +47,30 @@ import { useEmptyReason } from '$contexts/instrument-catalog/coverage';
 export const meta: Route.MetaFunction = () => [{ title: 'Gamma Exposure · Options Lab' }];
 
 /**
- * Marker colours, and the vertical slot each chip occupies.
+ * The vertical slot each marker chip occupies.
  *
  * Slot 0 belongs to spot, which is drawn by the chart builder itself. The four
  * derived levels stack beneath it in the order they are read: where the book
  * turns, then where the profile turns, then the two walls.
  */
-const LEVEL_STYLE: Record<string, { color: string; slot: number }> = {
-  gammaFlip: { color: '#22d3ee', slot: 1 },
-  netCross: { color: '#f59e0b', slot: 2 },
-  callWall: { color: CALL_COLOR, slot: 3 },
-  putWall: { color: PUT_COLOR, slot: 4 }
+const LEVEL_SLOT: Record<string, number> = {
+  gammaFlip: 1,
+  netCross: 2,
+  callWall: 3,
+  putWall: 4
 };
 
-const LEVEL_COLORS: Record<string, string> = Object.fromEntries(
-  Object.entries(LEVEL_STYLE).map(([id, style]) => [id, style.color])
-);
+/**
+ * The colour of each marker chip.
+ *
+ * The two walls borrow the call and put colours so a wall reads as belonging
+ * to the side it is a wall of — which means they move with Settings > Global >
+ * Call / Put Colour, and so cannot be a module constant. The flip and the
+ * crossover are their own hues: neither belongs to a side.
+ */
+function levelColors(call: string, put: string): Record<string, string> {
+  return { gammaFlip: '#22d3ee', netCross: '#f59e0b', callWall: call, putWall: put };
+}
 
 /** Which sidebar toggle governs which levels. */
 const WALL_IDS = ['callWall', 'putWall'];
@@ -160,22 +166,18 @@ export default function GammaExposure() {
     return ids;
   }, [showWalls, showFlip]);
 
+  const levelColor = useMemo(() => levelColors(theme.call, theme.put), [theme.call, theme.put]);
+
   const markers = useMemo<GexMarker[]>(
     () =>
       levels.flatMap((level) => {
-        const style = LEVEL_STYLE[level.id];
-        if (!style || level.strike === null || !shownIds.has(level.id)) return [];
-        return [
-          {
-            id: level.id,
-            label: level.label,
-            strike: level.strike,
-            color: style.color,
-            slot: style.slot
-          }
-        ];
+        const slot = LEVEL_SLOT[level.id];
+        const color = levelColor[level.id];
+        if (slot === undefined || !color || level.strike === null || !shownIds.has(level.id))
+          return [];
+        return [{ id: level.id, label: level.label, strike: level.strike, color, slot }];
       }),
-    [levels, shownIds]
+    [levels, shownIds, levelColor]
   );
 
   const option = useMemo(
@@ -188,8 +190,8 @@ export default function GammaExposure() {
           markers,
           showNet,
           showAbs,
-          callColor: CALL_COLOR,
-          putColor: PUT_COLOR,
+          callColor: theme.call,
+          putColor: theme.put,
           formatGex: fmtGex
         },
         theme
@@ -235,12 +237,12 @@ export default function GammaExposure() {
             layout,
             showNet,
             showAbs,
-            callColor: CALL_COLOR,
-            putColor: PUT_COLOR,
+            callColor: theme.call,
+            putColor: theme.put,
             absColor: theme.marker
           })
         : [],
-    [activeBar, layout, showNet, showAbs, theme.marker]
+    [activeBar, layout, showNet, showAbs, theme.call, theme.put, theme.marker]
   );
 
   // -- live clock -----------------------------------------------------------
@@ -451,7 +453,7 @@ export default function GammaExposure() {
                 </div>
               )}
 
-              <GexLevels levels={levels} shown={shownIds} colors={LEVEL_COLORS} />
+              <GexLevels levels={levels} shown={shownIds} colors={levelColor} />
 
               {/* time scrub */}
               <div className={s.sliderRow}>

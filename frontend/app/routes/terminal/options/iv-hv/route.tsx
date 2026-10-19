@@ -12,7 +12,6 @@ import InstrumentPicker from '$shared/ui/InstrumentPicker';
 import IconEyeOff from '$shared/ui/icons/IconEyeOff';
 import {
   buildSpreadRows,
-  CALL_COLOR,
   clockLabel,
   coverageNote,
   csvFilename,
@@ -30,7 +29,6 @@ import {
   hvSessions,
   HV_WINDOWS,
   ivHvCsv,
-  PUT_COLOR,
   rangeDays,
   RANGES,
   REFETCH_MS,
@@ -124,8 +122,8 @@ export default function IvHvChart() {
         {
           rows,
           visible,
-          callColor: CALL_COLOR,
-          putColor: PUT_COLOR,
+          upColor: theme.up,
+          downColor: theme.down,
           futureColor: FUTURE_COLOR,
           priceColor: PRICE_COLOR,
           formatPrice: fmtPrice,
@@ -266,7 +264,7 @@ export default function IvHvChart() {
                         label={LABELS[key]}
                         color={
                           key === 'spread'
-                            ? CALL_COLOR
+                            ? theme.up
                             : key === 'future'
                               ? FUTURE_COLOR
                               : PRICE_COLOR

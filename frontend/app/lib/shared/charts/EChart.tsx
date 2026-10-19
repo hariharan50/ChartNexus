@@ -1,7 +1,9 @@
-import { useEffect, useRef, type CSSProperties } from 'react';
+import { useEffect, useMemo, useRef, type CSSProperties } from 'react';
 import { cx } from '$shared/ui/cx';
+import { usePreferencesStore } from '$shared/ui/preferences-store';
 import type { EChartsCoreOption } from './echarts-modules';
 import s from './EChart.module.css';
+import { withoutTooltipContent } from './tooltip-preference';
 import { useEChart } from './use-echart';
 
 interface Props {
@@ -35,10 +37,35 @@ interface Props {
  * On the server this renders the sized container and nothing else, so the
  * layout is identical before and after hydration and the chart never causes a
  * shift when it appears.
+ *
+ * Being the only mount point is also what makes Settings › Global › Show chart
+ * tooltip a one-line preference rather than a flag threaded through twenty
+ * option builders: it is applied here, to whatever option arrives.
  */
 export default function EChart({ option, resetKey, group, className, style, onAxisHover }: Props) {
   const container = useRef<HTMLDivElement>(null);
-  const chartRef = useEChart({ option, resetKey, group }, container);
+  const showTooltip = usePreferencesStore((state) => state.showChartTooltip);
+
+  const painted = useMemo(
+    () => (showTooltip ? option : withoutTooltipContent(option)),
+    [option, showTooltip]
+  );
+
+  /*
+   * Flipping the preference has to *rebuild*, not merge.
+   *
+   * `setOption` merges, and a merge can set `showContent: false` but cannot
+   * clear it again — switching tooltips back on would have left every chart
+   * mounted at the time still silent. Folding the preference into the reset
+   * key routes the change through `chart.clear()` instead.
+   *
+   * The key is left exactly as the caller gave it while tooltips are on, which
+   * is the default and every server render: a chart that is not toggling must
+   * not take a different paint path because this line exists.
+   */
+  const paintKey = showTooltip ? resetKey : `${resetKey ?? ''} :no-tooltip`;
+
+  const chartRef = useEChart({ option: painted, resetKey: paintKey, group }, container);
   // Through a ref so the subscription below is installed once, rather than
   // being torn down and re-added every time the parent re-renders with a fresh
   // inline callback.

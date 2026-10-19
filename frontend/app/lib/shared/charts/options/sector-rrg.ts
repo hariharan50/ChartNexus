@@ -69,9 +69,9 @@ const SPAN_PADDING = 1.35;
 function quadrantColor(quadrant: RrgSeries['quadrant'], theme: ChartTheme): string {
   switch (quadrant) {
     case 'leading':
-      return theme.call;
+      return theme.up;
     case 'lagging':
-      return theme.put;
+      return theme.down;
     case 'improving':
       return theme.accent;
     case 'weakening':
@@ -198,7 +198,7 @@ function quadrantLayer(span: number, theme: ChartTheme) {
       silent: true,
       data: [
         [
-          { ...tint(theme.call), xAxis: CENTRE, yAxis: CENTRE },
+          { ...tint(theme.up), xAxis: CENTRE, yAxis: CENTRE },
           { xAxis: high, yAxis: high }
         ],
         [
@@ -210,7 +210,7 @@ function quadrantLayer(span: number, theme: ChartTheme) {
           { xAxis: high, yAxis: CENTRE }
         ],
         [
-          { ...tint(theme.put), xAxis: low, yAxis: low },
+          { ...tint(theme.down), xAxis: low, yAxis: low },
           { xAxis: CENTRE, yAxis: CENTRE }
         ]
       ]

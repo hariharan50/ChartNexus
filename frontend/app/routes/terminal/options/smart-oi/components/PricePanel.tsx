@@ -3,8 +3,6 @@ import LwChart, { type Candle, type HistogramSpec } from '$shared/charts/tv/LwCh
 import { useChartTheme } from '$shared/charts/theme/use-chart-theme';
 import { cx } from '$shared/ui/cx';
 import {
-  CALL_COLOR,
-  PUT_COLOR,
   fmtOi,
   fmtPrice,
   toCandles,
@@ -69,8 +67,11 @@ export default function PricePanel({
         paneIndex: SMART_OI_PANE,
         paneFraction: SUB_PANE_FRACTION,
         format: axisOi,
-        // Green where puts were written into the bar, red where calls were.
-        data: toFlowBars(bars, smartOi, { up: CALL_COLOR, down: PUT_COLOR })
+        // A net flow, so this is direction and not an option side: green where
+        // puts were written into the bar, red where calls were. It stays that
+        // way under an inverted Call / Put palette — the bar is the sign of a
+        // number, and the sign has not moved.
+        data: toFlowBars(bars, smartOi, { up: theme.up, down: theme.down })
       });
     }
     if (showVolume) {
@@ -82,18 +83,18 @@ export default function PricePanel({
         paneIndex: VOLUME_PANE,
         paneFraction: SUB_PANE_FRACTION,
         format: axisOi,
-        data: toVolumeBars(bars, callVol, CALL_COLOR)
+        data: toVolumeBars(bars, callVol, theme.call)
       });
       specs.push({
         id: 'put-vol',
         paneIndex: VOLUME_PANE,
         paneFraction: SUB_PANE_FRACTION,
         format: axisOi,
-        data: toVolumeBars(bars, putVol, PUT_COLOR)
+        data: toVolumeBars(bars, putVol, theme.put)
       });
     }
     return specs;
-  }, [bars, smartOi, callVol, putVol, showFlow, showVolume]);
+  }, [bars, smartOi, callVol, putVol, showFlow, showVolume, theme]);
 
   // The bar the legend describes: whatever the crosshair is on, else the newest.
   const at = useMemo(() => {
@@ -123,7 +124,7 @@ export default function PricePanel({
           onClick={() => setShowVolume((on) => !on)}
           aria-pressed={showVolume}
         >
-          <span className={s.swatch} style={{ background: CALL_COLOR }} />
+          <span className={s.swatch} style={{ background: theme.call }} />
           Volume
         </button>
 
@@ -148,10 +149,10 @@ export default function PricePanel({
               Smart OI <b>{signed(smartOi[at])}</b>
             </span>
             <span className={s.pair}>
-              Call Vol <b style={{ color: CALL_COLOR }}>{plain(callVol[at])}</b>
+              Call Vol <b style={{ color: theme.call }}>{plain(callVol[at])}</b>
             </span>
             <span className={s.pair}>
-              Put Vol <b style={{ color: PUT_COLOR }}>{plain(putVol[at])}</b>
+              Put Vol <b style={{ color: theme.put }}>{plain(putVol[at])}</b>
             </span>
           </span>
         ) : null}

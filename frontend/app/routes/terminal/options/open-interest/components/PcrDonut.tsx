@@ -1,5 +1,4 @@
 import { cx } from '$shared/ui/cx';
-import { CALL_COLOR, PUT_COLOR } from '../oi-data';
 import s from './PcrDonut.module.css';
 
 interface Props {
@@ -16,7 +15,8 @@ export default function PcrDonut({ pcr, callNow, putNow }: Props) {
   const callPct = Math.round((callNow / total) * 100);
   const putPct = 100 - callPct;
 
-  // Green arc = call share, drawn over the full red ring.
+  // Call arc drawn over the full put ring; which hue each is comes from the
+  // tokens, so the preference flips both together.
   const dash = `${(callPct / 100) * CIRC} ${CIRC}`;
 
   return (
@@ -24,13 +24,13 @@ export default function PcrDonut({ pcr, callNow, putNow }: Props) {
       <span className={cx(s.side, s.call)}>{callPct}% Call OI</span>
       <div className={s.donut}>
         <svg viewBox="0 0 140 140" width="140" height="140" className={s.ring} aria-hidden="true">
-          <circle cx="70" cy="70" r={R} fill="none" stroke={PUT_COLOR} strokeWidth="14" />
+          <circle cx="70" cy="70" r={R} fill="none" className={s.arcPut} strokeWidth="14" />
           <circle
             cx="70"
             cy="70"
             r={R}
             fill="none"
-            stroke={CALL_COLOR}
+            className={s.arcCall}
             strokeWidth="14"
             strokeDasharray={dash}
           />

@@ -13,8 +13,6 @@ import { apiFetch } from '$shared/api/client';
 // Shared session/clock/window helpers, reused rather than duplicated so the
 // Straddle chart reads the same session the OI-family pages do.
 export {
-  CALL_COLOR,
-  PUT_COLOR,
   REFETCH_MS,
   STALE_AFTER_MS,
   clockLabel,

@@ -33,8 +33,6 @@ import {
   TIMEFRAMES,
   vegaCsv,
   withinWindow,
-  CALL_COLOR,
-  PUT_COLOR,
   type StrikeMode,
   type Timeframe,
   type VegaRow,
@@ -145,7 +143,7 @@ export default function VegaAnalysis() {
       lines.push({
         id: 'call',
         label: 'Call Vega',
-        color: CALL_COLOR,
+        color: theme.call,
         values: series.call,
         fill: true
       });
@@ -153,7 +151,7 @@ export default function VegaAnalysis() {
       lines.push({
         id: 'put',
         label: 'Put Vega',
-        color: PUT_COLOR,
+        color: theme.put,
         values: series.put,
         fill: true
       });
@@ -375,13 +373,13 @@ export default function VegaAnalysis() {
                 />
                 <LegendEntry
                   label="Call Vega"
-                  color={CALL_COLOR}
+                  color={theme.call}
                   on={showCall}
                   onToggle={() => setShowCall((v) => !v)}
                 />
                 <LegendEntry
                   label="Put Vega"
-                  color={PUT_COLOR}
+                  color={theme.put}
                   on={showPut}
                   onToggle={() => setShowPut((v) => !v)}
                 />

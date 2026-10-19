@@ -26,6 +26,8 @@ const THEME: ChartTheme = {
   surface: '#a40000',
   tooltipBg: '#a50000',
   tooltipText: '#a60000',
+  up: '#a90000',
+  down: '#aa0000',
   call: '#a70000',
   put: '#a80000',
   marker: '#a90000',
@@ -149,8 +151,8 @@ describe('sector rotation graph', () => {
       built.find((entry) => entry.type === 'scatter' && entry.name === name) as {
         itemStyle: { color: string };
       };
-    expect(head('IT').itemStyle.color).toBe(THEME.call);
-    expect(head('PHARMA').itemStyle.color).toBe(THEME.put);
+    expect(head('IT').itemStyle.color).toBe(THEME.up);
+    expect(head('PHARMA').itemStyle.color).toBe(THEME.down);
   });
 
   it('tints the four quadrants from the four status roles', () => {
@@ -161,7 +163,7 @@ describe('sector rotation graph', () => {
     const built = seriesOf(buildSectorRrgOption(series, THEME));
     const layer = built[0] as { markArea: { data: [{ itemStyle: { color: string } }, unknown][] } };
     const tints = layer.markArea.data.map(([corner]) => corner.itemStyle.color);
-    for (const role of [THEME.call, THEME.accent, THEME.marker, THEME.put]) {
+    for (const role of [THEME.up, THEME.accent, THEME.marker, THEME.down]) {
       const rgb = withAlpha(role, 1).replace(/,\s*1\)$/, '');
       expect(tints.some((tint) => tint.startsWith(rgb))).toBe(true);
     }

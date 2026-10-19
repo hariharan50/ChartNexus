@@ -2,6 +2,7 @@ import { useQuery } from '@tanstack/react-query';
 import { useEffect, useMemo, useState } from 'react';
 import { getExpiries } from '$contexts/broker-connections/api';
 import type { SeriesLine } from '$shared/charts/options/multi-series';
+import { useCallPutColors } from '$shared/charts/theme/use-call-put';
 import { lastTradingDayIST } from '$shared/formatting/ist-clock';
 import { cx } from '$shared/ui/cx';
 import IconChart from '$shared/ui/icons/IconChart';
@@ -13,10 +14,8 @@ import ReplayBar, { REPLAY_SPEEDS, type ReplaySpeed } from './components/ReplayB
 import { useSelectedInstrument } from '$contexts/instrument-catalog/selected-instrument';
 import SmartOiToolbar from './components/SmartOiToolbar';
 import {
-  CALL_COLOR,
   DEFAULT_INTERVAL,
   DEFAULT_SPAN,
-  PUT_COLOR,
   REFETCH_MS,
   STALE_AFTER_MS,
   csvFilename,
@@ -179,14 +178,16 @@ export default function SmartOi() {
     };
   }, [replay, view, bars, head]);
 
+  const { call, put } = useCallPutColors();
+
   const oiLines = useMemo<SeriesLine[]>(() => {
     if (!view) return [];
     return [
-      { id: 'put', label: 'Put OI (Chg Day)', color: PUT_COLOR, values: view.put_oi_chg },
-      { id: 'call', label: 'Call OI (Chg Day)', color: CALL_COLOR, values: view.call_oi_chg },
+      { id: 'put', label: 'Put OI (Chg Day)', color: put, values: view.put_oi_chg },
+      { id: 'call', label: 'Call OI (Chg Day)', color: call, values: view.call_oi_chg },
       { id: 'spread', label: 'PE-CE (Chg Day)', color: SPREAD_COLOR, values: view.pe_ce_chg }
     ];
-  }, [view]);
+  }, [view, call, put]);
 
   const pcrLines = useMemo<SeriesLine[]>(() => {
     if (!view) return [];

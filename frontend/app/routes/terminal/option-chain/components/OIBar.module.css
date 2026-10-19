@@ -16,10 +16,10 @@
 
 .fill.ce {
   right: 0;
-  background: var(--cn-bullish);
+  background: var(--cn-call);
 }
 
 .fill.pe {
   left: 0;
-  background: var(--cn-bearish);
+  background: var(--cn-put);
 }

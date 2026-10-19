@@ -15,8 +15,6 @@
 // Shared session/clock/window helpers, reused rather than duplicated so this
 // page reads the same session the rest of the Options Lab does.
 export {
-  CALL_COLOR,
-  PUT_COLOR,
   REFETCH_MS,
   STALE_AFTER_MS,
   clockLabel,

@@ -727,11 +727,11 @@ function markerSeries(
       // dark surface; on the light and warm themes a 70%-alpha amber hairline
       // all but disappeared, and a reference line nobody can see is worse than
       // no reference line — every ratio on the chart is read against it.
-      lineStyle: { color: withAlpha(theme.put, 0.7), type: 'dashed', width: 1 },
+      lineStyle: { color: withAlpha(theme.down, 0.7), type: 'dashed', width: 1 },
       label: {
         formatter: reference.label,
         position: 'insideEndTop',
-        color: theme.put,
+        color: theme.down,
         fontSize: 10,
         fontWeight: 600
       }

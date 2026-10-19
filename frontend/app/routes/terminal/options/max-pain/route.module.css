@@ -296,6 +296,17 @@
   border-radius: 2px;
 }
 
+/* The legend reads the same two tokens the bars are painted from, so it
+   cannot drift out of step with the chart when the Call / Put Colour
+   preference flips. */
+.sw-call {
+  background: var(--cn-call-series);
+}
+
+.sw-put {
+  background: var(--cn-put-series);
+}
+
 .caption {
   margin: var(--cn-space-3) 0 0;
   font-size: var(--cn-text-xs);

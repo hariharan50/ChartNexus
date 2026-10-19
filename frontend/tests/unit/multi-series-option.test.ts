@@ -22,6 +22,8 @@ const THEME: ChartTheme = {
   surface: '#111524',
   tooltipBg: '#111524',
   tooltipText: '#e6e9f2',
+  up: '#11aa66',
+  down: '#dd3344',
   call: '#22c55e',
   put: '#ef4444',
   marker: '#f59e0b',

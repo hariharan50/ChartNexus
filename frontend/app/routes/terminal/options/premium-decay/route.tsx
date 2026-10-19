@@ -17,7 +17,6 @@ import StrikePicker from './components/StrikePicker';
 import {
   atmOf,
   bucketIndices,
-  CALL_COLOR,
   changeFromRef,
   clockLabel,
   csvFilename,
@@ -36,7 +35,6 @@ import {
   premiumDecayCsv,
   premiumTotals,
   firstBarClose,
-  PUT_COLOR,
   rangeLabel,
   REFETCH_MS,
   resolveWindow,
@@ -204,7 +202,7 @@ export default function PremiumDecay() {
       lines.push({
         id: 'ce',
         label: 'CE Change',
-        color: CALL_COLOR,
+        color: theme.call,
         values: derived.ceChange,
         fill: true,
         fillOrigin: 0
@@ -214,7 +212,7 @@ export default function PremiumDecay() {
       lines.push({
         id: 'pe',
         label: 'PE Change',
-        color: PUT_COLOR,
+        color: theme.put,
         values: derived.peChange,
         fill: true,
         fillOrigin: 0
@@ -240,8 +238,8 @@ export default function PremiumDecay() {
   const cvpOption = useMemo(() => {
     if (!derived || derived.window.strikes.length === 0) return null;
     const lines: SeriesLine[] = [];
-    if (showCe) lines.push({ id: 'ce', label: 'CE', color: CALL_COLOR, values: derived.ceTotal });
-    if (showPe) lines.push({ id: 'pe', label: 'PE', color: PUT_COLOR, values: derived.peTotal });
+    if (showCe) lines.push({ id: 'ce', label: 'CE', color: theme.call, values: derived.ceTotal });
+    if (showPe) lines.push({ id: 'pe', label: 'PE', color: theme.put, values: derived.peTotal });
     return buildMultiSeriesOption(
       {
         timestamps: derived.times,
@@ -495,13 +493,13 @@ export default function PremiumDecay() {
                     />
                     <LegendToggle
                       label="CE Change"
-                      color={CALL_COLOR}
+                      color={theme.call}
                       on={showCe}
                       onToggle={() => setShowCe((v) => !v)}
                     />
                     <LegendToggle
                       label="PE Change"
-                      color={PUT_COLOR}
+                      color={theme.put}
                       on={showPe}
                       onToggle={() => setShowPe((v) => !v)}
                     />
@@ -607,13 +605,13 @@ export default function PremiumDecay() {
                     />
                     <LegendToggle
                       label="CE"
-                      color={CALL_COLOR}
+                      color={theme.call}
                       on={showCe}
                       onToggle={() => setShowCe((v) => !v)}
                     />
                     <LegendToggle
                       label="PE"
-                      color={PUT_COLOR}
+                      color={theme.put}
                       on={showPe}
                       onToggle={() => setShowPe((v) => !v)}
                     />

@@ -84,7 +84,7 @@ export function buildContributorsOption(
         data: ordered.map((bar) => ({
           value: bar.points,
           itemStyle: {
-            color: bar.points >= 0 ? theme.call : theme.put,
+            color: bar.points >= 0 ? theme.up : theme.down,
             // Rounded only at the data end, anchored square to the zero line.
             borderRadius: bar.points >= 0 ? [0, 4, 4, 0] : [4, 0, 0, 4]
           },

@@ -25,6 +25,8 @@ const THEME: ChartTheme = {
   surface: 'rgb(14, 14, 14)',
   tooltipBg: 'rgb(3, 3, 3)',
   tooltipText: 'rgb(4, 4, 4)',
+  up: 'rgb(31, 31, 31)',
+  down: 'rgb(32, 32, 32)',
   call: 'rgb(5, 5, 5)',
   put: 'rgb(6, 6, 6)',
   marker: 'rgb(7, 7, 7)',
@@ -76,7 +78,6 @@ function input(over: Partial<OpenInterestInput> = {}): OpenInterestInput {
     maxPain: 24_450,
     callColor: '#22c55e',
     putColor: '#ef4444',
-    showTooltip: true,
     formatOi: (v) => `${v}`,
     formatSigned: (v) => (v >= 0 ? `+${v}` : `${v}`),
     openLabel: '9:15 am',
@@ -246,11 +247,15 @@ describe('theming', () => {
     expect(series[1]!.itemStyle!.color).toBe('#ef4444');
   });
 
-  it('can be switched off entirely', () => {
-    const option = buildOpenInterestOption(input({ showTooltip: false }), THEME) as {
-      tooltip: { show: boolean };
+  it('is always declared, so the preference has something to suppress', () => {
+    // Switching tooltips off is `EChart`'s job now (see tooltip-preference.ts)
+    // and it works by setting `showContent` on whatever the builder declared.
+    // A builder that omitted the component would be silently exempt.
+    const option = buildOpenInterestOption(input(), THEME) as {
+      tooltip: { trigger: string; show?: boolean };
     };
-    expect(option.tooltip.show).toBe(false);
+    expect(option.tooltip.trigger).toBe('axis');
+    expect(option.tooltip.show).toBeUndefined();
   });
 });
 

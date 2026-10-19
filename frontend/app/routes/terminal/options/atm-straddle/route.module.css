@@ -256,11 +256,11 @@
 }
 
 .call {
-  color: var(--cn-bullish);
+  color: var(--cn-call);
 }
 
 .put {
-  color: var(--cn-bearish);
+  color: var(--cn-put);
 }
 
 .atm-row td {

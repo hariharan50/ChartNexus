@@ -32,8 +32,6 @@ export {
 // Shared session/clock/window helpers, reused so Premium Decay reads the same
 // session — and speaks the same call-green / put-red — as the OI-family pages.
 export {
-  CALL_COLOR,
-  PUT_COLOR,
   REFETCH_MS,
   STALE_AFTER_MS,
   clockLabel,

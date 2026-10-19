@@ -13,12 +13,10 @@ import HistoryMode, { type Mode } from '../components/HistoryMode';
 import IntradayMaxPain from './components/IntradayMaxPain';
 import MaxPainSentiment from './components/MaxPainSentiment';
 import {
-  CALL_COLOR,
   clockLabel,
   dateLabel,
   getOpenInterest,
   inferStep,
-  PUT_COLOR,
   REFETCH_MS,
   withinWindow,
   type OiView
@@ -107,8 +105,8 @@ export default function MaxPain() {
           spot: view?.spot ?? 0,
           maxPain: view?.max_pain ?? 0,
           formatPain: fmtPain,
-          callColor: CALL_COLOR,
-          putColor: PUT_COLOR
+          callColor: theme.call,
+          putColor: theme.put
         },
         theme
       ),
@@ -245,10 +243,10 @@ export default function MaxPain() {
                   <EChart option={option} className={s.chart} />
                   <div className={s.legend}>
                     <span>
-                      <i className={s.sw} style={{ background: CALL_COLOR }} /> Call Pain
+                      <i className={cx(s.sw, s.swCall)} /> Call Pain
                     </span>
                     <span>
-                      <i className={s.sw} style={{ background: PUT_COLOR }} /> Put Pain
+                      <i className={cx(s.sw, s.swPut)} /> Put Pain
                     </span>
                   </div>
                 </>

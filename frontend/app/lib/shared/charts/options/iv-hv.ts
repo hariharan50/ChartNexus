@@ -70,10 +70,16 @@ export interface IvHvVisible {
 export interface IvHvInput {
   rows: IvHvRow[];
   visible: IvHvVisible;
-  /** Bars above zero. */
-  callColor: string;
-  /** Bars below zero. */
-  putColor: string;
+  /**
+   * Bars above and below zero.
+   *
+   * The sign of IV minus HV, not an option side — these were named for the
+   * option sides until the Call / Put Colour preference arrived and made the
+   * distinction load-bearing. A user who asks for red calls has not asked for
+   * a positive volatility premium to turn red.
+   */
+  upColor: string;
+  downColor: string;
   futureColor: string;
   priceColor: string;
   /** Formats the left-axis index level. */
@@ -288,7 +294,7 @@ function spreadBars(input: IvHvInput) {
     barCategoryGap: '10%',
     data: input.rows.map((row, index) => {
       if (row.spread === null) return null;
-      const color = row.spread >= 0 ? input.callColor : input.putColor;
+      const color = row.spread >= 0 ? input.upColor : input.downColor;
       return {
         value: row.spread,
         itemStyle: { color },
@@ -391,7 +397,7 @@ export function tooltipHtml(input: IvHvInput, row: IvHvRow): string {
 
   if (input.visible.spread) {
     const color =
-      row.spread === null ? input.priceColor : row.spread >= 0 ? input.callColor : input.putColor;
+      row.spread === null ? input.priceColor : row.spread >= 0 ? input.upColor : input.downColor;
     lines.push(entry(color, 'IV − HV', row.spread === null ? '—' : input.formatSpread(row.spread)));
   }
   if (input.visible.future) {

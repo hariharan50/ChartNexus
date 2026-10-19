@@ -386,10 +386,10 @@ export default function OptionChain() {
           <BuildupBadge buildup="Long Unwinding" /> Long Unwinding
         </span>
         <span className={s.legItem}>
-          <span className={cx(s.dot, s.green)} /> Call OI bar
+          <span className={cx(s.dot, s.call)} /> Call OI bar
         </span>
         <span className={s.legItem}>
-          <span className={cx(s.dot, s.rose)} /> Put OI bar
+          <span className={cx(s.dot, s.put)} /> Put OI bar
         </span>
         <span className={s.legItem}>
           <span className={s.volChip}>Vol</span> Top-3 volume — hover for rank

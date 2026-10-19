@@ -62,9 +62,9 @@ const MIN_STRENGTH_SPAN = 1;
 function quadrantColor(quadrant: RotationPoint['quadrant'], theme: ChartTheme): string {
   switch (quadrant) {
     case 'leading':
-      return theme.call;
+      return theme.up;
     case 'lagging':
-      return theme.put;
+      return theme.down;
     case 'improving':
       return theme.accent;
     case 'weakening':
@@ -221,7 +221,7 @@ function quadrantBands(span: number, theme: ChartTheme) {
   const tint = (color: string) => ({ itemStyle: { color: withAlpha(color, 0.06) } });
   return [
     [
-      { ...tint(theme.call), xAxis: 0, yAxis: 0 },
+      { ...tint(theme.up), xAxis: 0, yAxis: 0 },
       { xAxis: span, yAxis: 50 }
     ],
     [
@@ -233,7 +233,7 @@ function quadrantBands(span: number, theme: ChartTheme) {
       { xAxis: span, yAxis: 0 }
     ],
     [
-      { ...tint(theme.put), xAxis: -span, yAxis: -50 },
+      { ...tint(theme.down), xAxis: -span, yAxis: -50 },
       { xAxis: 0, yAxis: 0 }
     ]
   ];

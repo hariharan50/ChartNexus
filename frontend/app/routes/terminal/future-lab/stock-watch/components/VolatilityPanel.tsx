@@ -75,8 +75,8 @@ export default function VolatilityPanel({ chain, dailyCloses, dailyBars }: Props
           type: 'line',
           smooth: true,
           showSymbol: false,
-          lineStyle: { width: 2, color: '#f2495c' },
-          itemStyle: { color: '#f2495c' },
+          lineStyle: { width: 2, color: theme.call },
+          itemStyle: { color: theme.call },
           // `null`, not 0: an unquoted strike must leave a gap in the curve
           // rather than drag it to the axis and invent a volatility smile.
           data: smile.map((point) => point.callIv ?? null)
@@ -86,8 +86,8 @@ export default function VolatilityPanel({ chain, dailyCloses, dailyBars }: Props
           type: 'line',
           smooth: true,
           showSymbol: false,
-          lineStyle: { width: 2, color: '#17b877' },
-          itemStyle: { color: '#17b877' },
+          lineStyle: { width: 2, color: theme.put },
+          itemStyle: { color: theme.put },
           data: smile.map((point) => point.putIv ?? null)
         }
       ]

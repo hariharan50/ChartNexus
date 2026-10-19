@@ -421,12 +421,13 @@
   border-radius: 2px;
 }
 
+/* The chart's own pair, so a swatch always matches the bar it labels. */
 .sw.call {
-  --c: #22c55e;
+  --c: var(--cn-call-series);
 }
 
 .sw.put {
-  --c: #ef4444;
+  --c: var(--cn-put-series);
 }
 
 .sw.solid {

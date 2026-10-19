@@ -30,9 +30,28 @@ export interface ChartTheme {
   surface: string;
   tooltipBg: string;
   tooltipText: string;
-  /** Call-side series. */
+  /**
+   * Up and down — a price that rose, a sector advancing, a positive
+   * contribution.
+   *
+   * Fixed to `--cn-bullish`/`--cn-bearish` and never affected by the Call /
+   * Put Colour preference. A candle that closed lower is red in every
+   * configuration of the app; a user who asks for red calls has not asked for
+   * green down-candles, and giving them that is the one way this preference
+   * can make a chart lie.
+   */
+  up: string;
+  down: string;
+  /**
+   * The two sides of an option ladder.
+   *
+   * Reads `--cn-call-series`/`--cn-put-series`, which Settings › Global ›
+   * Call / Put Colour swaps. Use these *only* where the colour encodes CE
+   * versus PE — a call OI bar, a put IV line, a premium-decay leg. For
+   * anything that encodes direction use `up`/`down` above, which is what
+   * these two roles used to be before the preference existed.
+   */
   call: string;
-  /** Put-side series. */
   put: string;
   /** Reference markers: spot, max pain. */
   marker: string;

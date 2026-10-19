@@ -2,7 +2,7 @@ import type { ReactNode } from 'react';
 import { cx } from '$shared/ui/cx';
 import s from './Pill.module.css';
 
-type Tone = 'bullish' | 'bearish' | 'warning' | 'accent' | 'neutral';
+type Tone = 'bullish' | 'bearish' | 'call' | 'put' | 'warning' | 'accent' | 'neutral';
 
 interface Props {
   tone?: Tone;

@@ -120,13 +120,13 @@ export function buildAdvanceDeclineSeriesOption(
       line(
         ADVANCES,
         points.map((point) => pick(point, 'up')),
-        theme.call,
+        theme.up,
         theme
       ),
       line(
         DECLINES,
         points.map((point) => pick(point, 'down')),
-        theme.put,
+        theme.down,
         theme
       ),
       ...(hasLevel

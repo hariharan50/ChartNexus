@@ -430,8 +430,8 @@ export default function LwChart({
         switch (SERIES_KIND[type]) {
           case 'bar':
             return chart.addSeries(BarSeries, {
-              upColor: theme.call,
-              downColor: theme.put,
+              upColor: theme.up,
+              downColor: theme.down,
               // High-Low is a bar stripped of its open tick — the range on its
               // own, which is what that type is for.
               openVisible: type !== 'highlow'
@@ -452,12 +452,12 @@ export default function LwChart({
             // sets it; without one the library would flatten every bar against
             // zero and colour the whole series "above".
             return chart.addSeries(BaselineSeries, {
-              topLineColor: theme.call,
-              topFillColor1: withAlpha(theme.call, 0.28),
-              topFillColor2: withAlpha(theme.call, 0.05),
-              bottomLineColor: theme.put,
-              bottomFillColor1: withAlpha(theme.put, 0.05),
-              bottomFillColor2: withAlpha(theme.put, 0.28),
+              topLineColor: theme.up,
+              topFillColor1: withAlpha(theme.up, 0.28),
+              topFillColor2: withAlpha(theme.up, 0.05),
+              bottomLineColor: theme.down,
+              bottomFillColor1: withAlpha(theme.down, 0.05),
+              bottomFillColor2: withAlpha(theme.down, 0.28),
               lineWidth: 2
             });
           default:
@@ -465,12 +465,12 @@ export default function LwChart({
               // Hollow candles outline a rising bar instead of filling it, so an
               // up bar reads as "unfilled" and a down bar as "filled" without
               // relying on the two hues being distinguishable.
-              upColor: type === 'hollow' ? 'rgba(0,0,0,0)' : theme.call,
-              downColor: theme.put,
-              borderUpColor: theme.call,
-              borderDownColor: theme.put,
-              wickUpColor: theme.call,
-              wickDownColor: theme.put
+              upColor: type === 'hollow' ? 'rgba(0,0,0,0)' : theme.up,
+              downColor: theme.down,
+              borderUpColor: theme.up,
+              borderDownColor: theme.down,
+              wickUpColor: theme.up,
+              wickDownColor: theme.down
             });
         }
       })();
@@ -579,7 +579,7 @@ export default function LwChart({
         sortedVolume.map((bar) => ({
           time: bar.time as UTCTimestamp,
           value: bar.value,
-          color: bar.rising ? theme.call : theme.put
+          color: bar.rising ? theme.up : theme.down
         }))
       );
     }
@@ -778,23 +778,23 @@ export default function LwChart({
     const kind = SERIES_KIND[type];
     if (kind === 'candlestick') {
       current.price.applyOptions({
-        upColor: type === 'hollow' ? 'rgba(0,0,0,0)' : theme.call,
-        downColor: theme.put,
-        borderUpColor: theme.call,
-        borderDownColor: theme.put,
-        wickUpColor: theme.call,
-        wickDownColor: theme.put
+        upColor: type === 'hollow' ? 'rgba(0,0,0,0)' : theme.up,
+        downColor: theme.down,
+        borderUpColor: theme.up,
+        borderDownColor: theme.down,
+        wickUpColor: theme.up,
+        wickDownColor: theme.down
       });
     } else if (kind === 'bar') {
-      current.price.applyOptions({ upColor: theme.call, downColor: theme.put });
+      current.price.applyOptions({ upColor: theme.up, downColor: theme.down });
     } else if (kind === 'baseline') {
       current.price.applyOptions({
-        topLineColor: theme.call,
-        topFillColor1: withAlpha(theme.call, 0.28),
-        topFillColor2: withAlpha(theme.call, 0.05),
-        bottomLineColor: theme.put,
-        bottomFillColor1: withAlpha(theme.put, 0.05),
-        bottomFillColor2: withAlpha(theme.put, 0.28)
+        topLineColor: theme.up,
+        topFillColor1: withAlpha(theme.up, 0.28),
+        topFillColor2: withAlpha(theme.up, 0.05),
+        bottomLineColor: theme.down,
+        bottomFillColor1: withAlpha(theme.down, 0.05),
+        bottomFillColor2: withAlpha(theme.down, 0.28)
       });
     } else {
       current.price.applyOptions({ color: theme.accent, lineColor: theme.accent });

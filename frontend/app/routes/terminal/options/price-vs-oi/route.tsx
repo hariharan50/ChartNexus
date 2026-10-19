@@ -17,7 +17,6 @@ import ExpiryPicker from '../components/ExpiryPicker';
 import HistoryMode, { type Mode } from '../components/HistoryMode';
 import {
   bucketIndices,
-  CALL_COLOR,
   clockLabel,
   dateLabel,
   DEFAULT_TIMEFRAME,
@@ -28,7 +27,6 @@ import {
   getStrikeSeries,
   normalizeFromOpen,
   pick,
-  PUT_COLOR,
   REFETCH_MS,
   STALE_AFTER_MS,
   TIMEFRAMES,
@@ -199,13 +197,13 @@ export default function PriceVsOi() {
           plot: normalizeFromOpen(d.cePrice),
           abs: d.cePrice,
           name: `${strike} CE Price`,
-          color: CALL_COLOR
+          color: theme.call
         },
         pe: {
           plot: normalizeFromOpen(d.pePrice),
           abs: d.pePrice,
           name: `${strike} PE Price`,
-          color: PUT_COLOR
+          color: theme.put
         },
         normalized: true,
         formatAbs: fmtPrice,
@@ -249,13 +247,13 @@ export default function PriceVsOi() {
           plot: normalizeFromOpen(d.ceOi),
           abs: d.ceOi,
           name: `${strike} CE OI`,
-          color: CALL_COLOR
+          color: theme.call
         },
         pe: {
           plot: normalizeFromOpen(d.peOi),
           abs: d.peOi,
           name: `${strike} PE OI`,
-          color: PUT_COLOR
+          color: theme.put
         },
         normalized: true,
         formatAbs: (v) => fmtOi(v),
@@ -274,8 +272,8 @@ export default function PriceVsOi() {
         timestamps: d.times,
         zoomable: true,
         windowMinutes,
-        ce: { plot: d.ceOiChg, abs: d.ceOiChg, name: `${strike} CE OI Change`, color: CALL_COLOR },
-        pe: { plot: d.peOiChg, abs: d.peOiChg, name: `${strike} PE OI Change`, color: PUT_COLOR },
+        ce: { plot: d.ceOiChg, abs: d.ceOiChg, name: `${strike} CE OI Change`, color: theme.call },
+        pe: { plot: d.peOiChg, abs: d.peOiChg, name: `${strike} PE OI Change`, color: theme.put },
         normalized: false,
         formatAbs: (v) => fmtOi(v),
         showCe: p4ce,
@@ -298,7 +296,7 @@ export default function PriceVsOi() {
         formatOi: (v) => fmtOi(v),
         showPrice: p5price,
         showOi: p5oi,
-        priceColor: CALL_COLOR,
+        priceColor: theme.call,
         priceName: `${strike} CE Price`,
         oiName: 'CE OI'
       },
@@ -319,7 +317,7 @@ export default function PriceVsOi() {
         formatOi: (v) => fmtOi(v),
         showPrice: p6price,
         showOi: p6oi,
-        priceColor: PUT_COLOR,
+        priceColor: theme.put,
         priceName: `${strike} PE Price`,
         oiName: 'PE OI'
       },
@@ -486,13 +484,13 @@ export default function PriceVsOi() {
                 <>
                   <Toggle
                     label={`${strike} CE Price`}
-                    color={CALL_COLOR}
+                    color={theme.call}
                     on={p1ce}
                     onToggle={() => toggle('p1.ce')}
                   />
                   <Toggle
                     label={`${strike} PE Price`}
-                    color={PUT_COLOR}
+                    color={theme.put}
                     on={p1pe}
                     onToggle={() => toggle('p1.pe')}
                   />
@@ -528,13 +526,13 @@ export default function PriceVsOi() {
                 <>
                   <Toggle
                     label={`${strike} CE OI`}
-                    color={CALL_COLOR}
+                    color={theme.call}
                     on={p3ce}
                     onToggle={() => toggle('p3.ce')}
                   />
                   <Toggle
                     label={`${strike} PE OI`}
-                    color={PUT_COLOR}
+                    color={theme.put}
                     on={p3pe}
                     onToggle={() => toggle('p3.pe')}
                   />
@@ -552,13 +550,13 @@ export default function PriceVsOi() {
                 <>
                   <Toggle
                     label={`${strike} CE OI Change`}
-                    color={CALL_COLOR}
+                    color={theme.call}
                     on={p4ce}
                     onToggle={() => toggle('p4.ce')}
                   />
                   <Toggle
                     label={`${strike} PE OI Change`}
-                    color={PUT_COLOR}
+                    color={theme.put}
                     on={p4pe}
                     onToggle={() => toggle('p4.pe')}
                   />
@@ -575,7 +573,7 @@ export default function PriceVsOi() {
                 <>
                   <Toggle
                     label={`${strike} CE Price`}
-                    color={CALL_COLOR}
+                    color={theme.call}
                     on={p5price}
                     onToggle={() => toggle('p5.price')}
                   />
@@ -593,7 +591,7 @@ export default function PriceVsOi() {
                 <>
                   <Toggle
                     label={`${strike} PE Price`}
-                    color={PUT_COLOR}
+                    color={theme.put}
                     on={p6price}
                     onToggle={() => toggle('p6.price')}
                   />

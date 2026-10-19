@@ -99,8 +99,13 @@ export function getOpenInterest(
   });
 }
 
-export const CALL_COLOR = '#22c55e';
-export const PUT_COLOR = '#ef4444';
+/*
+ * Call and Put used to be two exported constants here, imported by every tool
+ * in the Options Lab. They are now the `--cn-call-series`/`--cn-put-series`
+ * tokens, read through `useCallPutColors()` (or the chart theme's `call`/`put`
+ * roles), because Settings > Global > Call / Put Colour swaps them at runtime
+ * and a module constant cannot follow a preference.
+ */
 
 /** Chart modes. */
 export type OiMode = 'change_total' | 'change' | 'total';

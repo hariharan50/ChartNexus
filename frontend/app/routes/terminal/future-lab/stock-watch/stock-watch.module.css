@@ -380,11 +380,11 @@
 /* ITM shading, one step per side. Deliberately faint: it groups the ladder,
    it does not compete with the change colours that carry the reading. */
 .itm-call {
-  background: color-mix(in srgb, var(--cn-bullish) 7%, transparent);
+  background: color-mix(in srgb, var(--cn-call) 7%, transparent);
 }
 
 .itm-put {
-  background: color-mix(in srgb, var(--cn-bearish) 7%, transparent);
+  background: color-mix(in srgb, var(--cn-put) 7%, transparent);
 }
 
 /* -- heat ------------------------------------------------------------------ */
@@ -405,12 +405,16 @@
   opacity: 0.35;
 }
 
+/* These were hard-wired the other way round — call red, put green — which is
+   the inverted convention this page happened to be built in. They are the
+   preference's now, so the page agrees with the Options Lab under either
+   setting instead of contradicting it under both. */
 .heat-call .heat-fill {
-  background: var(--cn-bearish);
+  background: var(--cn-call);
 }
 
 .heat-put .heat-fill {
-  background: var(--cn-bullish);
+  background: var(--cn-put);
 }
 
 /* -- semantics ------------------------------------------------------------- */

@@ -10,7 +10,6 @@ import Select from '$shared/ui/Select';
 import ExpiryPicker from '../../options/components/ExpiryPicker';
 import {
   bucketIndices,
-  CALL_COLOR,
   DEFAULT_GREEK,
   DEFAULT_TIMEFRAME,
   formatGreek,
@@ -20,7 +19,6 @@ import {
   latestOf,
   legSeries,
   pick,
-  PUT_COLOR,
   qualityNote,
   REFETCH_MS,
   timeLabel,
@@ -106,8 +104,8 @@ export default function OptionGreeks() {
         )
       : null;
 
-  const ceOption = plot ? option(plot.ce, CALL_COLOR, `CE ${tab.label}`) : null;
-  const peOption = plot ? option(plot.pe, PUT_COLOR, `PE ${tab.label}`) : null;
+  const ceOption = plot ? option(plot.ce, theme.call, `CE ${tab.label}`) : null;
+  const peOption = plot ? option(plot.pe, theme.put, `PE ${tab.label}`) : null;
   const note = qualityNote(view);
 
   return (

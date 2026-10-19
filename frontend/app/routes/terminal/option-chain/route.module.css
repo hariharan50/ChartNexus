@@ -344,14 +344,18 @@
   text-transform: uppercase;
 }
 
+/* The two sides of the ladder read `--cn-call`/`--cn-put`, not the direction
+   tokens: these say "this column is the call side", and which hue that is
+   belongs to Settings > Global > Call / Put Colour. The change and LTP columns
+   further down stay on bullish/bearish — those are prices moving. */
 .call-head {
-  background: color-mix(in srgb, var(--cn-bullish) 12%, transparent);
-  color: var(--cn-bullish);
+  background: color-mix(in srgb, var(--cn-call) 12%, transparent);
+  color: var(--cn-call);
 }
 
 .put-head {
-  background: color-mix(in srgb, var(--cn-bearish) 12%, transparent);
-  color: var(--cn-bearish);
+  background: color-mix(in srgb, var(--cn-put) 12%, transparent);
+  color: var(--cn-put);
 }
 
 .center-head {
@@ -369,8 +373,8 @@
 }
 
 .head-b th.ce {
-  background: color-mix(in srgb, var(--cn-bullish) 12%, transparent);
-  color: var(--cn-bullish);
+  background: color-mix(in srgb, var(--cn-call) 12%, transparent);
+  color: var(--cn-call);
   text-align: right;
 }
 
@@ -379,8 +383,8 @@
 }
 
 .head-b th.pe {
-  background: color-mix(in srgb, var(--cn-bearish) 12%, transparent);
-  color: var(--cn-bearish);
+  background: color-mix(in srgb, var(--cn-put) 12%, transparent);
+  color: var(--cn-put);
   text-align: left;
 }
 
@@ -449,11 +453,11 @@
 }
 
 .call-ltp {
-  color: var(--cn-bullish);
+  color: var(--cn-call);
 }
 
 .put-ltp {
-  color: var(--cn-bearish);
+  color: var(--cn-put);
 }
 
 .brc {
@@ -603,12 +607,16 @@
   gap: 0.375rem;
 }
 
-.legend .dot.green {
-  background: var(--cn-bullish);
+/* These two label the CE and PE OI bars in the table above, so they take the
+   same tokens those bars do and follow the Call / Put Colour preference with
+   them. Named for the side rather than the hue, which is the whole point:
+   under the inverted palette `.dot.green` would have been a red dot. */
+.legend .dot.call {
+  background: var(--cn-call);
 }
 
-.legend .dot.rose {
-  background: var(--cn-bearish);
+.legend .dot.put {
+  background: var(--cn-put);
 }
 
 .vol-chip {

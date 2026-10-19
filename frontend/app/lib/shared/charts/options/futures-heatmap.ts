@@ -83,8 +83,8 @@ export function buildFuturesHeatmapOption(
   theme: ChartTheme,
   { layout = 'flat', size = 'turnover' }: HeatmapOptions = {}
 ): EChartsCoreOption {
-  const bullish = parseRgb(theme.call);
-  const bearish = parseRgb(theme.put);
+  const bullish = parseRgb(theme.up);
+  const bearish = parseRgb(theme.down);
   // Flat sits just off the panel colour — near-invisible against the
   // background, which is what makes the coloured cells carry the whole board.
   const neutral = mix(parseRgb(theme.surface), parseRgb(theme.axis), 0.22);
@@ -340,7 +340,7 @@ function fixed(value: string | number | null | undefined): string {
 /** Values wear the direction they describe; an unmeasured one stays neutral. */
 function toneOf(value: number | null | undefined, theme: ChartTheme): string {
   if (value === null || value === undefined || value === 0) return theme.tooltipText;
-  return value > 0 ? theme.call : theme.put;
+  return value > 0 ? theme.up : theme.down;
 }
 
 /** Company names are exchange-supplied text going into a tooltip's HTML. */

@@ -15,6 +15,18 @@
   transform: rotate(-90deg);
 }
 
+/* The arcs read the tokens rather than taking a `stroke` prop, so the ring
+   follows Settings > Global > Call / Put Colour with no React state at all.
+   `-series` here, not the plain pair: the donut sits beside the chart and has
+   to be the same two colours it is. */
+.arc-put {
+  stroke: var(--cn-put-series);
+}
+
+.arc-call {
+  stroke: var(--cn-call-series);
+}
+
 .center {
   position: absolute;
   inset: 0;
@@ -43,10 +55,10 @@
 }
 
 .side.call {
-  color: var(--cn-bullish);
+  color: var(--cn-call);
   text-align: right;
 }
 
 .side.put {
-  color: var(--cn-bearish);
+  color: var(--cn-put);
 }

@@ -16,8 +16,6 @@ import type { Candle, VolumeBar } from '$shared/charts/tv/LwChart';
 // rather than re-derived: the Options Lab tools have to agree about what "the
 // open", "stale" and "1.2Cr" mean while sitting next to each other in one menu.
 export {
-  CALL_COLOR,
-  PUT_COLOR,
   REFETCH_MS,
   STALE_AFTER_MS,
   clockLabel,

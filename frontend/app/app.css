@@ -59,6 +59,37 @@
   --cn-bullish-weak: #0f3d2c;
   --cn-bearish: #f2495c;
   --cn-bearish-weak: #47202a;
+
+  /* Call / Put, as roles rather than hues.
+
+     `--cn-bullish`/`--cn-bearish` mean *direction* — a price up, a sector
+     advancing, a decline. They are never flipped by a user preference: a stock
+     that fell has to read red in every configuration of the app.
+
+     A call and a put are not directions, they are the two sides of an option
+     ladder, and which hue reads as which side is a house convention that
+     traders disagree about. Settings › Global › Call / Put Colour writes
+     `data-callput` on <html>, and the one rule at the bottom of this block of
+     themes swaps these four — nothing else in the app moves.
+
+     Two pairs, because the app paints a call in two different places:
+
+     - `--cn-call` / `--cn-put` are the UI pair, aliased to this theme's own
+       bullish/bearish so option-chain headers and ladder cells stay tuned to
+       the surface they sit on, light or dark.
+     - `--cn-call-series` / `--cn-put-series` are the plotted pair: the Open
+       Interest tool's palette, fixed across all five themes because a series
+       colour is read against the other series, not against the panel. The
+       chart theme (lib/shared/charts/theme) exposes these as its `call`/`put`
+       roles, and `up`/`down` for the direction pair above.
+
+     Declared once here rather than per theme: `var()` inside a custom property
+     resolves against the element it lands on, so `:root[data-theme='light']`
+     rewriting `--cn-bullish` carries straight through. */
+  --cn-call: var(--cn-bullish);
+  --cn-put: var(--cn-bearish);
+  --cn-call-series: #22c55e;
+  --cn-put-series: #ef4444;
   /* Categorical series colours, for the one chart that encodes identity rather
      than direction: the Index Weightage donut. Eight slots, always assigned in
      this order and never cycled — a ninth category folds into "Other" instead
@@ -378,6 +409,24 @@
   --cn-shadow: 0 1px 2px rgb(0 0 0 / 0.55), 0 6px 18px rgb(0 0 0 / 0.45);
 
   color-scheme: dark;
+}
+
+/* The whole of the Call / Put Colour preference.
+
+   Written on <html> by the bootstrap in root.tsx before first paint and kept
+   there by the preferences store, so an inverted user never sees a frame of
+   the classic palette. Last in the file and one attribute deeper than the
+   theme blocks, so it wins over the `:root` defaults under every theme.
+
+   Deliberately only four declarations. Anything that should follow a trader's
+   call/put convention reads `--cn-call`/`--cn-put` (or the chart theme's
+   `call`/`put` roles); anything that means up-versus-down keeps reading
+   `--cn-bullish`/`--cn-bearish` and is untouched by this rule. */
+:root[data-callput='inverted'] {
+  --cn-call: var(--cn-bearish);
+  --cn-put: var(--cn-bullish);
+  --cn-call-series: #ef4444;
+  --cn-put-series: #22c55e;
 }
 
 /* --------------------------------------------------------------------------- */

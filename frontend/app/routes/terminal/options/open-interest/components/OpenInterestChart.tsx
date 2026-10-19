@@ -2,7 +2,7 @@ import { useMemo } from 'react';
 import EChart from '$shared/charts/EChart';
 import { buildOpenInterestOption } from '$shared/charts/options/open-interest';
 import { useChartTheme } from '$shared/charts/theme/use-chart-theme';
-import { CALL_COLOR, fmtOi, fmtSigned, PUT_COLOR, type OiBar, type OiMode } from '../oi-data';
+import { fmtOi, fmtSigned, type OiBar, type OiMode } from '../oi-data';
 import s from './OpenInterestChart.module.css';
 
 interface Props {
@@ -12,7 +12,6 @@ interface Props {
   maxPain: number;
   showLot: boolean;
   lotSize: number;
-  showTooltip: boolean;
   openLabel: string;
   nowLabel: string;
 }
@@ -26,10 +25,15 @@ interface Props {
  * dark one. `warm` is a cream surface, so it was being drawn with light-grey
  * axis text on near-white: legible only by accident.
  *
- * Call and Put stay on the Open Interest tool's own palette (`oi-data.ts`)
- * rather than `--cn-bullish`/`--cn-bearish`. They are a domain signal, not
- * chrome — the legend swatches, the donuts and the table all use these exact
- * two colours, and they read correctly against every theme surface.
+ * Call and Put stay on the Open Interest tool's own palette
+ * (`--cn-call-series`/`--cn-put-series`) rather than `--cn-bullish`/
+ * `--cn-bearish`. They are a domain signal, not chrome — the legend swatches,
+ * the donuts and the table all use these exact two colours, and they read
+ * correctly against every theme surface.
+ *
+ * Which of the two is the call is the user's: Settings › Global › Call / Put
+ * Colour swaps the tokens, and `theme.call`/`theme.put` follow because the
+ * chart theme watches `data-callput` alongside `data-theme`.
  */
 export default function OpenInterestChart({
   bars,
@@ -38,7 +42,6 @@ export default function OpenInterestChart({
   maxPain,
   showLot,
   lotSize,
-  showTooltip,
   openLabel,
   nowLabel
 }: Props) {
@@ -58,9 +61,8 @@ export default function OpenInterestChart({
           mode,
           spot,
           maxPain,
-          callColor: CALL_COLOR,
-          putColor: PUT_COLOR,
-          showTooltip,
+          callColor: theme.call,
+          putColor: theme.put,
           formatOi: (value) => fmtOi(value, showLot, lotSize),
           formatSigned: (value) => fmtSigned(value, showLot, lotSize),
           openLabel,
@@ -68,7 +70,7 @@ export default function OpenInterestChart({
         },
         theme
       ),
-    [bars, mode, spot, maxPain, showTooltip, showLot, lotSize, openLabel, nowLabel, theme]
+    [bars, mode, spot, maxPain, showLot, lotSize, openLabel, nowLabel, theme]
   );
 
   return (

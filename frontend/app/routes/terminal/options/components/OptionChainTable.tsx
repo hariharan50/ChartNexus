@@ -98,7 +98,7 @@ export default function OptionChainTable({ rows, loading = false }: Props) {
                     ) : null}
                   </td>
                   <td>
-                    <Pill tone={row.type === 'CE' ? 'bullish' : 'bearish'}>{row.type}</Pill>
+                    <Pill tone={row.type === 'CE' ? 'call' : 'put'}>{row.type}</Pill>
                   </td>
                   <td className={cx(s.num, 'cn-numeric')}>{formatInt(row.oi)}</td>
                   <td

@@ -3,8 +3,12 @@ import type { ChartTheme } from './types';
 /**
  * The `--cn-*` token behind each chart role.
  *
- * All of these already exist in app.css for every theme, so charts follow a
- * theme switch without any new tokens being defined.
+ * All of these are defined in app.css for every theme, so charts follow a
+ * theme switch without a chart knowing any theme exists.
+ *
+ * Note the split between `up`/`down` and `call`/`put`: the first pair is
+ * direction and is fixed, the second is the option side and is swapped by the
+ * Call / Put Colour preference. See the tokens' own note in app.css.
  */
 const CHART_TOKENS: Record<keyof ChartTheme, string> = {
   axis: '--cn-text-subtle',
@@ -13,8 +17,10 @@ const CHART_TOKENS: Record<keyof ChartTheme, string> = {
   surface: '--cn-surface',
   tooltipBg: '--cn-surface',
   tooltipText: '--cn-text',
-  call: '--cn-bullish',
-  put: '--cn-bearish',
+  up: '--cn-bullish',
+  down: '--cn-bearish',
+  call: '--cn-call-series',
+  put: '--cn-put-series',
   marker: '--cn-warning',
   atmBand: '--cn-warning',
   onMarker: '--cn-on-brand',
@@ -45,8 +51,10 @@ export const SERVER_CHART_THEME: ChartTheme = Object.freeze({
   surface: 'rgb(19, 23, 34)',
   tooltipBg: 'rgb(19, 23, 34)',
   tooltipText: 'rgb(230, 233, 240)',
-  call: 'rgb(23, 184, 119)',
-  put: 'rgb(242, 73, 92)',
+  up: 'rgb(23, 184, 119)',
+  down: 'rgb(242, 73, 92)',
+  call: 'rgb(34, 197, 94)',
+  put: 'rgb(239, 68, 68)',
   marker: 'rgb(240, 173, 78)',
   atmBand: 'rgb(240, 173, 78)',
   onMarker: 'rgb(255, 255, 255)',

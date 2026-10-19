@@ -13,8 +13,6 @@ import { apiFetch } from '$shared/api/client';
 // The Price vs OI tool reads the same session the OI-family pages do, so it
 // reuses their session/clock/format helpers rather than restating them.
 export {
-  CALL_COLOR,
-  PUT_COLOR,
   REFETCH_MS,
   STALE_AFTER_MS,
   clockLabel,
