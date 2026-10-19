@@ -9,6 +9,93 @@ changes are not recorded here.
 
 ## [Unreleased]
 
+## [1.8.0] — 2026-10-19
+
+A real Relative Rotation Graph for sector rotation, the two inert Global
+Settings controls wired up to something, and the three failing CI checks
+greened — which meant fixing the bugs the drifted end-to-end suite had stopped
+being able to report.
+
+### Added
+
+**Sector Rotation**
+
+- Sector rotation is a classical Relative Rotation Graph now: RS-Ratio against
+  RS-Momentum, each a z-score centred on 100, every sector carrying a tail that
+  rotates clockwise through leading, weakening, lagging and improving.
+  `GET /api/v1/breadth/sector-rotation/rrg` serves it at `15m`, `1h` or `1d`
+  with a configurable tail length.
+- The page used to plot strength against *participation* — the share of a
+  sector's members advancing — because a momentum axis needs multi-period
+  history and nothing stored it. The futures board archive is that history, so
+  both axes are the real measure. Its depth is what decides what can be drawn,
+  and the board says which limit it hit: thirteen captured sessions before the
+  daily axis fills its window, two for the intraday ones. "24 of 35 periods"
+  and "no sector could be priced" are different problems with different fixes.
+
+**Future Lab**
+
+- Flame glyph on the Future Lab header panel.
+
+### Changed
+
+- `--cn-bullish` / `--cn-bearish` were doing two unrelated jobs — direction (a
+  price up, a sector advancing) and option side (CE vs PE) — so inverting calls
+  and puts would have turned every falling price green. The meanings are
+  separate now: direction keeps those tokens and the `up`/`down` chart roles
+  and never follows the preference, while `--cn-call` / `--cn-put` and
+  `--cn-call-series` / `--cn-put-series` carry the option side and swap under
+  one `:root[data-callput='inverted']` rule.
+- The `CALL_COLOR` / `PUT_COLOR` constants a dozen Options Lab pages imported
+  are replaced by the chart theme's roles and a `useCallPutColors()` hook; a
+  constant cannot follow a preference. Charts that asked for the `call`/`put`
+  roles without drawing calls at all — advance/decline, the RRG quadrants, the
+  futures heatmap, candles, the PCR reference line, the IV-HV spread — moved to
+  `up`/`down`: same colours, now immune to the setting.
+- Stock Watch loses its `New` chip in the Future Lab panel.
+- The nginx image is scanned without a GitHub Actions layer cache. `apk
+  upgrade` caches on its instruction text alone, so once a builder had run that
+  layer the scanned image kept shipping the package set from whenever it was
+  first built. Backend and web keep their caches, where the content moves with
+  the Dockerfile and the lockfiles.
+
+### Fixed
+
+- Both controls on Settings → Global were inert: the preferences store wrote
+  localStorage and a `data-callput` attribute nothing read, and the chart
+  tooltip switch had no consumer at all.
+- The tooltip preference lands in `EChart` as `showContent: false` rather than
+  `show: false` — the latter drops the axis pointer and the `updateAxisPointer`
+  event with it, which Gamma Exposure drives its side panel off.
+- `useChartTheme` cached its palette behind a `MutationObserver` that only
+  exists while a chart is mounted, so changing the setting on the chartless
+  Settings page and navigating back repainted nothing. Theme switching was
+  affected the same way.
+- Futures Lab stock watch was hard-wired to call=red/put=green, contradicting
+  the Options Lab. It follows the setting now.
+- Every price, strike and greek on Stock Watch fell back to Consolas: the
+  global `.cn-numeric` class asks for JetBrains Mono, the one font the app
+  never self-hosted.
+- Real bugs the end-to-end suite had stopped being able to report — a second
+  `<main>` nested inside the one `root.tsx` already wraps every route in, in
+  all three layouts; the landing drawer's `position: fixed` panel, which left
+  the `<dialog>` no height, so a menu taller than the phone could not scroll
+  and measured as hidden; Gamma Exposure's chart collapsing to nothing on a
+  phone once the plot row stacked; and two contrast failures, the landing
+  accent at 4.27:1 on a card and the settings sub-nav's active description
+  against `--cn-accent-weak`.
+- CI installed chromium only while `playwright.config.ts` also declares a
+  firefox project, so every firefox test failed on a missing executable. Two
+  flake sources closed with it: the stub API kept Node's 5s keep-alive timeout,
+  which surfaced as `ECONNRESET` on whichever test sat between fetches, and the
+  stub proxies now swallow a response disposed during teardown.
+
+### Security
+
+- `CVE-2026-77214` (HIGH, libexpat) in the nginx image, which Alpine had
+  already fixed in `2.9.0-r0`. The gate was measuring a months-old `apk
+  upgrade` layer rather than the package set the image actually ships.
+
 ## [1.7.0] — 2026-10-18
 
 Realtime delivery over websockets, the Future Lab market-watch build-out, a
