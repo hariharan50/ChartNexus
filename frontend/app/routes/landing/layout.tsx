@@ -50,9 +50,11 @@ export default function MarketingLayout() {
   return (
     <div className={s.landing}>
       <Nav />
-      <main key={pathname} className={s.pageEnter}>
+      {/* A <div>, not a <main>: root.tsx already wraps every route in
+          `<main id="main">`, and a second one nests two main landmarks. */}
+      <div key={pathname} className={s.pageEnter}>
         <Outlet />
-      </main>
+      </div>
       <FinalCta />
       <Footer />
     </div>

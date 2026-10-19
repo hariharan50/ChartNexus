@@ -27,8 +27,17 @@ test.beforeEach(async ({ context, baseURL, page }) => {
   // headers are needed on the stub; fulfilling makes the response same-origin.
   await page.route('**/api/v1/**', async (route) => {
     const url = new URL(route.request().url());
-    const upstream = await route.fetch({ url: `${STUB_API}${url.pathname}${url.search}` });
-    await route.fulfill({ response: upstream });
+    try {
+      const upstream = await route.fetch({ url: `${STUB_API}${url.pathname}${url.search}` });
+      await route.fulfill({ response: upstream });
+    } catch {
+      // These pages poll, so a request can still be in flight when the test
+      // body finishes and the context starts tearing down — which surfaces as
+      // "Fetch response has been disposed" on a test that already passed.
+      // Nothing is waiting on the answer by then. `symbol-search.spec.ts`
+      // guards its proxy the same way.
+      await route.abort().catch(() => {});
+    }
   });
 
   await page.goto('/options/open-interest');

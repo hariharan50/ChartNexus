@@ -60,7 +60,18 @@ function tail(
   };
 }
 
-type Series = { type: string; name?: string; data?: unknown[]; z?: number; itemStyle?: unknown };
+// `markArea` and `label` are declared here for the same reason as `itemStyle`:
+// the assertions below narrow an entry to the one shape they care about, and a
+// cast only type-checks against a type the property exists on.
+type Series = {
+  type: string;
+  name?: string;
+  data?: unknown[];
+  z?: number;
+  itemStyle?: unknown;
+  label?: unknown;
+  markArea?: unknown;
+};
 
 function seriesOf(option: unknown): Series[] {
   return (option as { series: Series[] }).series;

@@ -89,7 +89,10 @@ test('the Options page itself still highlights Dashboards → Options', async ({
 test('the Dashboard page highlights only its own entry', async ({ page }) => {
   await page.goto('/dashboard');
 
-  await page.locator('summary', { hasText: 'Dashboards' }).click();
+  // Through `openMenu` rather than a bare click, for the hydration race it
+  // documents: a click that lands first is undone by the mount effect, and the
+  // submenu this asserts on is then not in the DOM at all.
+  await openMenu(page, 'Dashboards');
   await expect(page.getByRole('link', { name: /^Dashboard\b/ }).first()).toHaveClass(ACTIVE);
   await expect(page.getByRole('link', { name: /^Options\b/ }).first()).not.toHaveClass(ACTIVE);
 });

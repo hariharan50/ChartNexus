@@ -130,6 +130,13 @@
   white-space: nowrap;
 }
 
+/* The active item's ground is `--cn-accent-weak`, not the page, and
+   `--cn-text-subtle` is only tuned to clear AA on the page — it lands at 4.3:1
+   here, and 4.0:1 in sepia. `--cn-text-muted` clears it on all four themes. */
+.nav-item.active .nav-desc {
+  color: var(--cn-text-muted);
+}
+
 .nav-caret {
   display: inline-flex;
   flex: none;

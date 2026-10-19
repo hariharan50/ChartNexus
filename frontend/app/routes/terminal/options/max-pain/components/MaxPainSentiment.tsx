@@ -61,9 +61,10 @@ export default function MaxPainSentiment({ bias, maxPain, spot }: Props) {
       <div className={s.gaugeWrap}>
         <h3 className={s.summary}>Summary</h3>
         <EChart option={option} className={s.gauge} />
-        {/* The gauge's own labels live on a canvas, so they are invisible to a
-            screen reader and unsearchable. The verdict is repeated here in
-            markup — the one place it must always be readable. */}
+        {/* The gauge draws its own labels, but as plot furniture: unlabelled
+            <text> nodes in the SVG, in reading order of the arc rather than of
+            the panel. The verdict is repeated here in markup — the one place
+            it is a sentence, and the one a screen reader announces as one. */}
         <p className={s.verdict}>
           <span className={s.label} style={{ color }}>
             {bias.label}

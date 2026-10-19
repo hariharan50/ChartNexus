@@ -3,7 +3,7 @@ import { expect, test, type Page } from '@playwright/test';
 /**
  * Options Lab → Multi OI & Volume.
  *
- * The three charts are ECharts canvases and opaque to Playwright, so the
+ * The three charts are ECharts plots and largely opaque to Playwright, so the
  * assertions land on the DOM around them — the legends, the chips and the
  * picker. That is a sound proxy: every one of them is rebuilt from the same
  * derived series the charts draw, and it is far less flaky than pixels.
@@ -21,13 +21,22 @@ test.beforeEach(async ({ context, baseURL, page }) => {
   // loaders use.
   await page.route('**/api/v1/**', async (route) => {
     const url = new URL(route.request().url());
-    const upstream = await route.fetch({ url: `${STUB_API}${url.pathname}${url.search}` });
-    await route.fulfill({ response: upstream });
+    try {
+      const upstream = await route.fetch({ url: `${STUB_API}${url.pathname}${url.search}` });
+      await route.fulfill({ response: upstream });
+    } catch {
+      // These pages poll, so a request can still be in flight when the test
+      // body finishes and the context starts tearing down — which surfaces as
+      // "Fetch response has been disposed" on a test that already passed.
+      // Nothing is waiting on the answer by then. `symbol-search.spec.ts`
+      // guards its proxy the same way.
+      await route.abort().catch(() => {});
+    }
   });
 
   await page.goto('/options/multi-oi-volume');
   // `exact` matters: without it this also matches "MultiStrike OI Change".
-  // Generous: this page mounts ECharts canvases, and under the suite's eight
+  // Generous: this page mounts ECharts plots, and under the suite's eight
   // parallel workers a first paint can genuinely take longer than the 5s
   // default. A slow mount is not the same as a broken page.
   await expect(page.getByRole('heading', { name: 'MultiStrike OI', exact: true })).toBeVisible({
@@ -37,6 +46,19 @@ test.beforeEach(async ({ context, baseURL, page }) => {
 
 const chartPanel = (page: Page, title: string) =>
   page.locator('section').filter({ has: page.getByRole('heading', { name: title, exact: true }) });
+
+/**
+ * The interval dropdown's popup.
+ *
+ * `$shared/ui/Select` is a button plus a `role="listbox"` and never a
+ * `<select>` — the app owns the popup so it can draw a tick and aligned
+ * secondary columns — so `selectOption()` has nothing to act on. The rows only
+ * exist while the popup is open, which is why opening it is a step of its own.
+ */
+async function openIntervals(page: Page) {
+  await page.getByRole('button', { name: 'Time interval' }).click();
+  return page.getByRole('listbox', { name: 'Time interval' });
+}
 
 test('stacks open interest above its change', async ({ page }) => {
   await expect(page.getByRole('heading', { name: 'MultiStrike OI', exact: true })).toBeVisible();
@@ -102,7 +124,8 @@ test('a coarser interval refetches a thinner series', async ({ page }) => {
   const caption = page.locator('p').filter({ hasText: /buckets/ });
   const before = await caption.innerText();
 
-  await page.getByLabel('Time interval').selectOption('15m');
+  const intervals = await openIntervals(page);
+  await intervals.getByRole('option', { name: '15m', exact: true }).click();
 
   await expect
     .poll(async () => caption.innerText(), {
@@ -113,12 +136,16 @@ test('a coarser interval refetches a thinner series', async ({ page }) => {
 });
 
 test('1D is offered but not selectable until multi-day history exists', async ({ page }) => {
-  const option = page.locator('option[value="1D"]');
+  const intervals = await openIntervals(page);
+  const option = intervals.getByRole('option', { name: '1D', exact: true });
 
+  // Offered, so the reader can see the bucket exists rather than wondering
+  // where it went, and refused, because the archive has no cross-session
+  // history to build it from.
   await expect(option).toHaveCount(1);
-  // The attribute rather than `toBeDisabled()`: Playwright's enabled-state
-  // check does not cover `<option>`, and reports a disabled one as enabled.
-  await expect(option).toHaveAttribute('disabled', '');
+  // `aria-disabled` rather than `toBeDisabled()`: the row is an `<li>`, and
+  // Playwright's enabled-state check reports a disabled one as enabled.
+  await expect(option).toHaveAttribute('aria-disabled', 'true');
 });
 
 test('Custom Strikes picks a contract and it joins the charts', async ({ page }) => {

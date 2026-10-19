@@ -46,7 +46,7 @@ test.describe('signed in', () => {
     const response = await page.goto('/settings/profile');
     expect(response?.status()).toBe(200);
     await expect(page).toHaveURL('/settings/profile');
-    await expect(page).toHaveTitle('Personal Info · Settings · ChartNexus');
+    await expect(page).toHaveTitle('Profile · Settings · ChartNexus');
   });
 });
 

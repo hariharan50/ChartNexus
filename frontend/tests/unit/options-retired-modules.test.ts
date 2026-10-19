@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { loader } from '../../app/routes/terminal/options/retired.tsx';
+import { loader } from '../../app/routes/terminal/options/retired';
 
 /**
  * Retired Options Lab modules.

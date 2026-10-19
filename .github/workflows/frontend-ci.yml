@@ -82,10 +82,13 @@ jobs:
       - name: Install
         run: pnpm install --frozen-lockfile
 
-      # --with-deps pulls the system libraries the browsers need; the runner
-      # image does not carry them.
+      # Both engines: playwright.config.ts declares three projects — chromium,
+      # firefox, and a Pixel 7 that is chromium again — and `pnpm test:e2e` runs
+      # all of them, so installing chromium alone failed every firefox test on
+      # a missing executable. --with-deps pulls the system libraries the
+      # browsers need; the runner image does not carry them.
       - name: Install browsers
-        run: pnpm exec playwright install --with-deps chromium
+        run: pnpm exec playwright install --with-deps chromium firefox
 
       - name: End-to-end and accessibility tests
         run: pnpm test:e2e

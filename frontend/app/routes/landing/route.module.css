@@ -24,12 +24,12 @@
   --cn-text-muted: #8a8a8a; /* 5.1:1 on #131313 */
   --cn-text-subtle: #9a9aa2; /* 6.3:1 — the reference's #6a6a6a fails AA on this ground */
 
-  --cn-accent: #cf5a30;
+  --cn-accent: #d9663b;
   --cn-accent-weak: #2a140b;
 
   /* The reused ChainWidget reads a few `--cn-landing-*` tokens directly; re-pin
      them here so it wears the rust palette. */
-  --cn-landing-accent: #cf5a30;
+  --cn-landing-accent: #d9663b;
   --cn-landing-accent-weak: #2a140b;
   --cn-landing-text: #ffffff;
 
@@ -37,17 +37,23 @@
   --cn-bullish-weak: rgba(49, 221, 106, 0.12);
   --cn-bearish: #ff5c5c;
   --cn-bearish-weak: rgba(255, 92, 92, 0.12);
-  --cn-brand: #cf5a30;
+  --cn-brand: #d9663b;
 
   /* Landing-local design tokens (`--lp-*`), not part of the app contract.
 
      Accent is a rust / burnt-terracotta (the reference swatch). This single
-     tone (#cf5a30) is chosen to clear AA both ways on the near-black ground: as
-     accent text (~4.6:1) and as a button fill under dark text (~4.6:1). The
-     deeper true-rust tones from the swatch live in the decorative gradient and
-     the CTA glow, where they are never load-bearing for contrast. */
-  --lp-primary: #cf5a30;
-  --lp-primary-hover: #e26a3c;
+     tone (#d9663b) is chosen to clear AA on every ground the page puts it on,
+     not just the page background: as accent text it is 5.2:1 on #131313, 4.9:1
+     on the #1a1a1a card surface, 4.9:1 on the #2a140b accent-weak chip and
+     4.6:1 on the #1f1f1f raised surface, and as a button fill under dark ink it
+     is 5.5:1. The swatch's own #cf5a30 cleared the page background and nothing
+     else — 4.27:1 on a card — which is what the contrast budget caught. The
+     deeper true-rust tones live in the decorative gradient and the CTA glow,
+     where they are never load-bearing for contrast. */
+  --lp-primary: #d9663b;
+  /* The same step lighter that the hover was before the accent moved — close
+     enough and it stops reading as a state change at all. */
+  --lp-primary-hover: #ec7647;
   --lp-on-primary: #150a05;
   /* Heading / emphasis ink. White on the dark page; flipped to near-black in the
      light theme so headings never vanish on a light ground. */
@@ -467,10 +473,17 @@
 .drawer {
   border: none;
   padding: 0;
+  /* `margin: 0` against the UA's `margin: auto`, so the dialog sits at the top
+     of the viewport rather than centred in it. */
   margin: 0;
   width: 100%;
   max-width: 100%;
   max-height: 100dvh;
+  /* A menu taller than the phone has to scroll. The panel used to be
+     `position: fixed`, which took it out of flow and left the dialog itself
+     zero-height: nothing could scroll, and the element reported as hidden to
+     anything measuring it. */
+  overflow-y: auto;
   background: transparent;
 }
 
@@ -479,10 +492,6 @@
 }
 
 .drawer-panel {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
   background: var(--cn-bg);
   border-bottom: 1px solid var(--cn-border);
   box-shadow: var(--lp-shadow-nav);

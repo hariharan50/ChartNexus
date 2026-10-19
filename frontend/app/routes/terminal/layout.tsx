@@ -498,9 +498,10 @@ function TerminalShell({ user }: { user: User }) {
         </div>
       </header>
 
-      <main className={s.content}>
+      {/* A <div>, not a <main>: root.tsx owns the page's one main landmark. */}
+      <div className={s.content}>
         <Outlet />
-      </main>
+      </div>
     </div>
   );
 }

@@ -435,6 +435,15 @@
   .plot-row {
     flex-direction: column;
   }
+
+  /* Stacked, the row's main axis is the height — and `flex: 1` is
+     `flex-basis: 0`, which collapses the 460px above to nothing inside a parent
+     that is itself auto-height. The chart disappeared entirely on a phone. With
+     one item per line there is nothing left to share a row with, so hand the
+     height back and let `align-items: stretch` take care of the width. */
+  .panel .chart {
+    flex: none;
+  }
 }
 
 /* -- time scrub -- */

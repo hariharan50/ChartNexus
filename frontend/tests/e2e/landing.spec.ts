@@ -45,10 +45,11 @@ test.describe('nav drawer', () => {
     await page.getByRole('button', { name: 'Menu', exact: true }).click();
     await expect(page.getByRole('dialog', { name: 'Site navigation' })).toBeVisible();
 
-    // A raw mouse click on the far left, which is backdrop — the panel is on
-    // the right. `locator.click()` on the dialog runs actionability checks
-    // against an element that fills the viewport, which is flaky under load.
-    await page.mouse.click(8, 200);
+    // A raw mouse click below the sheet, which is backdrop — the panel is a
+    // full-width sheet across the top. `locator.click()` on the dialog would
+    // aim at its centre, which is the panel itself.
+    const sheet = await page.getByRole('dialog', { name: 'Site navigation' }).boundingBox();
+    await page.mouse.click(400, Math.round((sheet?.y ?? 0) + (sheet?.height ?? 0)) + 80);
     await expect(page.getByRole('dialog', { name: 'Site navigation' })).toBeHidden();
   });
 

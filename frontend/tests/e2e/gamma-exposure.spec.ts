@@ -3,10 +3,10 @@ import { expect, test, type Page } from '@playwright/test';
 /**
  * Options Lab → Gamma Exposure.
  *
- * The profile is an ECharts canvas and opaque to Playwright, so the assertions
- * land on the DOM around it: the strike-range line, the levels row, the two
- * headline figures and the scrub label are all rendered from the same derived
- * values the chart draws. The arithmetic itself is covered by
+ * The profile is an ECharts plot and largely opaque to Playwright, so the
+ * assertions land on the DOM around it: the strike-range line, the levels row,
+ * the two headline figures and the scrub label are all rendered from the same
+ * derived values the chart draws. The arithmetic itself is covered by
  * `tests/unit/gex-data.test.ts`.
  *
  * The stub serves a 21-strike NIFTY ladder around ATM 24,500 at 50-point steps,
@@ -23,12 +23,21 @@ test.beforeEach(async ({ context, baseURL, page }) => {
 
   await page.route('**/api/v1/**', async (route) => {
     const url = new URL(route.request().url());
-    const upstream = await route.fetch({ url: `${STUB_API}${url.pathname}${url.search}` });
-    await route.fulfill({ response: upstream });
+    try {
+      const upstream = await route.fetch({ url: `${STUB_API}${url.pathname}${url.search}` });
+      await route.fulfill({ response: upstream });
+    } catch {
+      // These pages poll, so a request can still be in flight when the test
+      // body finishes and the context starts tearing down — which surfaces as
+      // "Fetch response has been disposed" on a test that already passed.
+      // Nothing is waiting on the answer by then. `symbol-search.spec.ts`
+      // guards its proxy the same way.
+      await route.abort().catch(() => {});
+    }
   });
 
   await page.goto('/options/gamma-exposure');
-  // Generous: this page mounts an ECharts canvas, and under the suite's eight
+  // Generous: this page mounts an ECharts plot, and under the suite's eight
   // parallel workers a first paint can genuinely take longer than the default.
   await expect(page.getByRole('heading', { name: 'Gamma Exposure', exact: true })).toBeVisible({
     timeout: 15_000
@@ -36,10 +45,21 @@ test.beforeEach(async ({ context, baseURL, page }) => {
 });
 
 const range = (page: Page) => page.getByText(/Showing \d+ strikes/);
+
+/**
+ * The mounted chart.
+ *
+ * ECharts stamps `_echarts_instance_` on the element it initialises, so this
+ * matches the live instance and not merely the container the server rendered.
+ * Deliberately not `canvas`: the app initialises ECharts with the SVG renderer
+ * (see `use-echart.ts`), so there is no canvas on the page to find.
+ */
+const chart = (page: Page) => page.locator('[_echarts_instance_]');
+
 const level = (page: Page, label: string) => page.getByRole('listitem').filter({ hasText: label });
 
 test('draws the profile with both headline figures', async ({ page }) => {
-  await expect(page.locator('canvas')).toBeVisible();
+  await expect(chart(page)).toBeVisible();
 
   // Both totals come off the scrubbed frame, in the unit the caption names.
   await expect(page.getByText(/Net GEX\s/).first()).toBeVisible();
@@ -80,11 +100,11 @@ test('switches between the three chart layouts', async ({ page }) => {
   await expect(vertical).toHaveAttribute('aria-pressed', 'true');
   await expect(horizontal).toHaveAttribute('aria-pressed', 'false');
   // The axes swap wholesale, so the chart has to survive the rebuild.
-  await expect(page.locator('canvas')).toBeVisible();
+  await expect(chart(page)).toBeVisible();
 
   await callPut.click();
   await expect(callPut).toHaveAttribute('aria-pressed', 'true');
-  await expect(page.locator('canvas')).toBeVisible();
+  await expect(chart(page)).toBeVisible();
 });
 
 test('the wall and flip toggles start off and can be switched on', async ({ page }) => {
@@ -102,7 +122,7 @@ test('the wall and flip toggles start off and can be switched on', async ({ page
   await expect(walls).toBeChecked();
   await expect(flip).toBeChecked();
   // The levels stay legible whichever way the toggles sit — that is the whole
-  // reason the row exists beside the canvas.
+  // reason the row exists beside the plot.
   await expect(level(page, 'Call Wall')).toContainText('24,600');
 });
 
@@ -115,7 +135,7 @@ test('the eye chips hide and restore each series', async ({ page }) => {
 
   await net.click();
   await expect(net).toHaveAttribute('aria-pressed', 'false');
-  await expect(page.locator('canvas')).toBeVisible();
+  await expect(chart(page)).toBeVisible();
 
   await net.click();
   await expect(net).toHaveAttribute('aria-pressed', 'true');
@@ -191,7 +211,18 @@ test('cycles to another instrument', async ({ page }) => {
   await expect(level(page, 'Call Wall')).toContainText('80,500');
 });
 
-test('offers Live only, as the other Options Lab tools do', async ({ page }) => {
-  await expect(page.getByRole('button', { name: 'Live', exact: true })).toBeEnabled();
-  await expect(page.getByRole('button', { name: 'Historical', exact: true })).toBeDisabled();
+test('offers Live and Historical, as the other Options Lab tools do', async ({ page }) => {
+  const live = page.getByRole('tab', { name: 'Live', exact: true });
+  const historical = page.getByRole('tab', { name: 'Historical', exact: true });
+
+  await expect(live).toHaveAttribute('aria-selected', 'true');
+  await expect(historical).toHaveAttribute('aria-selected', 'false');
+  // The archive date belongs to historical mode and must not be offered before
+  // it is selected — a date that does nothing reads as a broken control.
+  await expect(page.getByLabel('Session date')).toHaveCount(0);
+
+  await historical.click();
+  await expect(historical).toHaveAttribute('aria-selected', 'true');
+  await expect(live).toHaveAttribute('aria-selected', 'false');
+  await expect(page.getByLabel('Session date')).toBeVisible();
 });

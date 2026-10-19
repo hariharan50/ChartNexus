@@ -102,12 +102,25 @@ jobs:
           - name: backend
             dockerfile: deploy/docker/backend.Dockerfile
             target: runtime
+            cache: true
           - name: web
             dockerfile: deploy/docker/frontend.Dockerfile
             target: runtime
+            cache: true
+          # Built without a layer cache, unlike the other two. Its only mutable
+          # content is the `apk upgrade` in its Dockerfile, and that layer is
+          # keyed on the instruction text alone: once a builder has run it the
+          # layer is reused for as long as the base image digest holds, so the
+          # image keeps shipping whatever package set existed when the layer was
+          # first built. That is how CVE-2026-77214 failed this job while Alpine
+          # had already published the fixed libexpat — the scan was measuring a
+          # months-old upgrade. The build is a base pull plus an upgrade, so
+          # rebuilding it every run costs well under a minute, and it also means
+          # a re-run picks up a fix published minutes ago.
           - name: nginx
             dockerfile: deploy/docker/nginx.Dockerfile
             target: ''
+            cache: false
     steps:
       - uses: actions/checkout@v4
 
@@ -121,8 +134,8 @@ jobs:
           target: ${{ matrix.target }}
           load: true
           tags: chartnexus/${{ matrix.name }}:scan
-          cache-from: type=gha,scope=${{ matrix.name }}
-          cache-to: type=gha,scope=${{ matrix.name }},mode=max
+          cache-from: ${{ matrix.cache && format('type=gha,scope={0}', matrix.name) || '' }}
+          cache-to: ${{ matrix.cache && format('type=gha,scope={0},mode=max', matrix.name) || '' }}
 
       - name: Trivy
         uses: aquasecurity/trivy-action@v0.36.0

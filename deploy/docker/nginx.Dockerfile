@@ -11,6 +11,12 @@ FROM nginx:1.29-alpine
 # them, and what keeps security-scan's HIGH/CRITICAL gate reachable at all —
 # moving the pin alone never reaches zero.
 #
+# This layer is also the one thing in the image that goes stale invisibly: it is
+# cached on its instruction text, so a builder that has run it once reuses it —
+# and keeps shipping that day's package set — for as long as the base image
+# digest holds. security-scan therefore builds this image without a layer cache;
+# see the note on its `nginx` matrix entry.
+#
 # openssl for the placeholder certificate the entrypoint generates; curl for
 # the healthcheck below.
 RUN apk upgrade --no-cache \

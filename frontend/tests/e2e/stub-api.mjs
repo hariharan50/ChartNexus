@@ -775,6 +775,18 @@ const server = createServer((req, res) => {
   return problem(res, 404, 'not_found', `No stub route for ${url.pathname}`);
 });
 
+/*
+ * Node closes an idle keep-alive socket after 5s by default. Playwright's
+ * request pool reuses sockets, and a request written onto one the server is
+ * closing in the same tick arrives as `read ECONNRESET` — a flake with nothing
+ * wrong behind it, and one that lands on whichever test happened to be between
+ * fetches. Holding sockets open for longer than any single test run removes the
+ * race. `headersTimeout` has to stay above `keepAliveTimeout`, or it becomes
+ * the one that closes the socket instead.
+ */
+server.keepAliveTimeout = 120_000;
+server.headersTimeout = 125_000;
+
 server.listen(PORT, () => {
   // Playwright surfaces webServer output prefixed with [WebServer]; this line is
   // how you know the stub, not the real backend, answered a test.

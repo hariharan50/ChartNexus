@@ -77,11 +77,12 @@ export default function PublicLayout() {
         </div>
       </aside>
 
-      <main className={s.formPanel}>
+      {/* A <div>, not a <main>: root.tsx owns the page's one main landmark. */}
+      <div className={s.formPanel}>
         <div key={pathname} className={cx(s.formInner, s.pageEnter)}>
           <Outlet />
         </div>
-      </main>
+      </div>
     </div>
   );
 }
