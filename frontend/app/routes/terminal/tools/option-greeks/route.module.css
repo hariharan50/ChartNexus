@@ -47,9 +47,11 @@
   cursor: pointer;
 }
 
-.refresh:hover:not(:disabled) {
-  border-color: var(--cn-accent);
-  color: var(--cn-accent);
+@media (hover: hover) {
+  .refresh:hover:not(:disabled) {
+    border-color: var(--cn-accent);
+    color: var(--cn-accent);
+  }
 }
 
 .refresh:disabled {
@@ -125,8 +127,10 @@
   cursor: pointer;
 }
 
-.tab:hover {
-  color: var(--cn-text);
+@media (hover: hover) {
+  .tab:hover {
+    color: var(--cn-text);
+  }
 }
 
 .tabActive {

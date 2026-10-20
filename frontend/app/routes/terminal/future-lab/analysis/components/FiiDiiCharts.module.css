@@ -105,7 +105,10 @@
   justify-content: center;
   min-width: 0;
   background: currentcolor;
-  transition: width var(--cn-duration-fast) ease;
+  /* `width` again, for a different reason: this is a flex row that centres a
+     label inside itself, and `scaleX` would squash the text along with the
+     bar. Transform is the rule; a box with content in it is the exception. */
+  transition: width var(--cn-duration-fast) var(--cn-ease);
 }
 
 /* White on the filled side, so the label reads at any width. */

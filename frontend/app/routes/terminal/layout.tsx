@@ -498,8 +498,14 @@ function TerminalShell({ user }: { user: User }) {
         </div>
       </header>
 
-      {/* A <div>, not a <main>: root.tsx owns the page's one main landmark. */}
-      <div className={s.content}>
+      {/* A <div>, not a <main>: root.tsx owns the page's one main landmark.
+
+          Re-keyed on the pathname so the enter animation replays per route —
+          the same device the landing and auth layouts use. The class goes on
+          this existing element rather than a wrapper of its own: pages below
+          resolve their height against it, and an extra `height: auto` div in
+          between is what collapsed the charts to 0px once already. */}
+      <div key={location.pathname} className={cx(s.content, s.pageEnter)}>
         <Outlet />
       </div>
     </div>

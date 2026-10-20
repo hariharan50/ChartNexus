@@ -23,8 +23,10 @@
   line-height: 1;
 }
 
-.btn:hover:not(:disabled) {
-  background: var(--cn-field-bg-hover);
+@media (hover: hover) {
+  .btn:hover:not(:disabled) {
+    background: var(--cn-field-bg-hover);
+  }
 }
 
 .btn:disabled {

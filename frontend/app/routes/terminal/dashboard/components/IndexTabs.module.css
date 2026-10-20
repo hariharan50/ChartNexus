@@ -22,8 +22,10 @@
     color var(--cn-duration-fast) ease;
 }
 
-.tab:hover {
-  color: var(--cn-text);
+@media (hover: hover) {
+  .tab:hover {
+    color: var(--cn-text);
+  }
 }
 
 .tab.active {

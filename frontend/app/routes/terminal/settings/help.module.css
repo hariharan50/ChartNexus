@@ -20,16 +20,18 @@
   border-radius: var(--cn-radius);
   color: var(--cn-text);
   text-decoration: none;
-  transition: background var(--cn-duration-fast) ease;
+  transition: background var(--cn-duration-fast) var(--cn-ease);
 }
 
 .links li:first-child .row {
   border-top: none;
 }
 
-.row:hover {
-  background: var(--cn-surface-raised);
-  text-decoration: none;
+@media (hover: hover) {
+  .row:hover {
+    background: var(--cn-surface-raised);
+    text-decoration: none;
+  }
 }
 
 .ico {

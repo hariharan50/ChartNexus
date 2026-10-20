@@ -114,9 +114,11 @@
   line-height: 1.3;
 }
 
-.item:hover {
-  background: var(--cn-surface-raised);
-  text-decoration: none;
+@media (hover: hover) {
+  .item:hover {
+    background: var(--cn-surface-raised);
+    text-decoration: none;
+  }
 }
 
 .item.active {
@@ -134,9 +136,11 @@
   color: var(--cn-text-muted);
 }
 
-.item:hover .ico,
-.item.active .ico {
-  color: var(--cn-accent);
+@media (hover: hover) {
+  .item:hover .ico,
+  .item.active .ico {
+    color: var(--cn-accent);
+  }
 }
 
 .label {

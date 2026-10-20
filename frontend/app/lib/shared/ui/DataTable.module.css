@@ -47,8 +47,18 @@
   border-bottom: 0;
 }
 
-.table tbody tr:hover td {
-  background: var(--cn-surface-raised);
+/* On the cell, not the row: the hover rule below paints `td` backgrounds, and a
+   transition on the `tr` would never be consulted. Rows are the one surface
+   here that can number in the hundreds, so this is background only — nothing
+   that could invalidate layout while a quote board repaints under it. */
+.table tbody td {
+  transition: background var(--cn-duration-fast) var(--cn-ease);
+}
+
+@media (hover: hover) {
+  .table tbody tr:hover td {
+    background: var(--cn-surface-raised);
+  }
 }
 
 .right {
@@ -67,10 +77,13 @@
   letter-spacing: inherit;
   text-transform: inherit;
   cursor: pointer;
+  transition: color var(--cn-duration-fast) var(--cn-ease);
 }
 
-.sortBtn:hover {
-  color: var(--cn-text);
+@media (hover: hover) {
+  .sortBtn:hover {
+    color: var(--cn-text);
+  }
 }
 
 .sortBtn:focus-visible {
@@ -117,8 +130,10 @@
   background: var(--cn-surface);
 }
 
-.table tbody tr:hover .stickyCell {
-  background: var(--cn-surface-raised);
+@media (hover: hover) {
+  .table tbody tr:hover .stickyCell {
+    background: var(--cn-surface-raised);
+  }
 }
 
 .stickyHead {

@@ -118,8 +118,10 @@
   cursor: pointer;
 }
 
-.row:hover:not(:disabled) {
-  background: var(--cn-surface-raised);
+@media (hover: hover) {
+  .row:hover:not(:disabled) {
+    background: var(--cn-surface-raised);
+  }
 }
 
 .row.on {

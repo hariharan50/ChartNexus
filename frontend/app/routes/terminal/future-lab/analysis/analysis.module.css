@@ -85,14 +85,18 @@
   cursor: pointer;
 }
 
-.segment:hover:not(:disabled) {
-  color: var(--cn-text);
+@media (hover: hover) {
+  .segment:hover:not(:disabled) {
+    color: var(--cn-text);
+  }
 }
 
-.segment-on,
-.segment-on:hover {
-  background: var(--cn-accent-weak);
-  color: var(--cn-accent);
+@media (hover: hover) {
+  .segment-on,
+  .segment-on:hover {
+    background: var(--cn-accent-weak);
+    color: var(--cn-accent);
+  }
 }
 
 .segment:disabled {
@@ -362,8 +366,10 @@
   white-space: nowrap;
 }
 
-.table tbody tr:hover td {
-  background: var(--cn-surface-raised);
+@media (hover: hover) {
+  .table tbody tr:hover td {
+    background: var(--cn-surface-raised);
+  }
 }
 
 .symbol {

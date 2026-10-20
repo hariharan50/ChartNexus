@@ -109,9 +109,11 @@
   min-height: 1.5rem;
 }
 
-.row:hover {
-  background: var(--cn-surface-raised);
-  border-radius: var(--cn-radius-sm);
+@media (hover: hover) {
+  .row:hover {
+    background: var(--cn-surface-raised);
+    border-radius: var(--cn-radius-sm);
+  }
 }
 
 .label {

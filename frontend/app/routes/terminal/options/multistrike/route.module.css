@@ -227,8 +227,10 @@
   cursor: pointer;
 }
 
-.chip-x:hover {
-  color: var(--cn-text);
+@media (hover: hover) {
+  .chip-x:hover {
+    color: var(--cn-text);
+  }
 }
 
 /* -- the Call / Strike / Put ladder --
@@ -301,9 +303,11 @@
   cursor: pointer;
 }
 
-.ladder-cell:hover:not(:disabled) {
-  border-color: var(--cn-border-strong);
-  color: var(--cn-text);
+@media (hover: hover) {
+  .ladder-cell:hover:not(:disabled) {
+    border-color: var(--cn-border-strong);
+    color: var(--cn-text);
+  }
 }
 
 /* A cell at the cap is not an error, so it dims rather than shouting; the count
@@ -430,10 +434,12 @@
   cursor: pointer;
 }
 
-.zoom-reset:hover,
-.download:hover {
-  border-color: var(--cn-border-strong);
-  color: var(--cn-text);
+@media (hover: hover) {
+  .zoom-reset:hover,
+  .download:hover {
+    border-color: var(--cn-border-strong);
+    color: var(--cn-text);
+  }
 }
 
 /* -- live badge -- */
@@ -463,13 +469,7 @@
 }
 
 .dot.pulse {
-  animation: pulse 1.2s ease-in-out infinite;
-}
-
-@keyframes pulse {
-  50% {
-    opacity: 0.35;
-  }
+  animation: cn-pulse var(--cn-duration-pulse) ease-in-out infinite;
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -504,8 +504,10 @@
   cursor: pointer;
 }
 
-.entry:hover {
-  border-color: var(--cn-border-strong);
+@media (hover: hover) {
+  .entry:hover {
+    border-color: var(--cn-border-strong);
+  }
 }
 
 .entry.off {

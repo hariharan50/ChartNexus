@@ -136,9 +136,11 @@
   cursor: pointer;
 }
 
-.chipBtn:hover {
-  border-color: var(--cn-border-strong);
-  color: var(--cn-text);
+@media (hover: hover) {
+  .chipBtn:hover {
+    border-color: var(--cn-border-strong);
+    color: var(--cn-text);
+  }
 }
 
 .chipOn {

@@ -48,9 +48,11 @@
   cursor: pointer;
 }
 
-.close:hover {
-  background: var(--cn-surface-raised);
-  color: var(--cn-text);
+@media (hover: hover) {
+  .close:hover {
+    background: var(--cn-surface-raised);
+    color: var(--cn-text);
+  }
 }
 
 .row {
@@ -156,8 +158,10 @@
   color: var(--cn-text);
 }
 
-.secondary:hover {
-  background: var(--cn-surface-raised);
+@media (hover: hover) {
+  .secondary:hover {
+    background: var(--cn-surface-raised);
+  }
 }
 
 .primary {
@@ -166,6 +170,8 @@
   color: var(--cn-on-brand);
 }
 
-.primary:hover {
-  filter: brightness(1.08);
+@media (hover: hover) {
+  .primary:hover {
+    filter: brightness(1.08);
+  }
 }

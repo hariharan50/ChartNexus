@@ -36,8 +36,10 @@
   cursor: pointer;
 }
 
-.btn:hover {
-  background: var(--cn-surface-raised);
+@media (hover: hover) {
+  .btn:hover {
+    background: var(--cn-surface-raised);
+  }
 }
 
 .btn:focus-visible {
@@ -119,8 +121,10 @@
   cursor: pointer;
 }
 
-.list-row:hover {
-  background: var(--cn-surface-raised);
+@media (hover: hover) {
+  .list-row:hover {
+    background: var(--cn-surface-raised);
+  }
 }
 
 .list-row.list-row-on {

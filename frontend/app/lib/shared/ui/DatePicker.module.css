@@ -69,9 +69,11 @@
   cursor: pointer;
 }
 
-.nav:hover:not(:disabled) {
-  background: var(--cn-surface-raised);
-  color: var(--cn-text);
+@media (hover: hover) {
+  .nav:hover:not(:disabled) {
+    background: var(--cn-surface-raised);
+    color: var(--cn-text);
+  }
 }
 
 .nav:disabled {
@@ -111,12 +113,14 @@
   font-variant-numeric: tabular-nums;
   cursor: pointer;
   transition:
-    background var(--cn-duration-fast, 120ms) ease,
-    color var(--cn-duration-fast, 120ms) ease;
+    background var(--cn-duration-fast) ease,
+    color var(--cn-duration-fast) ease;
 }
 
-.day:hover:not(:disabled):not(.selected) {
-  background: var(--cn-surface-raised);
+@media (hover: hover) {
+  .day:hover:not(:disabled):not(.selected) {
+    background: var(--cn-surface-raised);
+  }
 }
 
 .day.outside {

@@ -119,8 +119,10 @@
   cursor: pointer;
 }
 
-.symbol-button:hover {
-  background: var(--cn-field-bg-hover);
+@media (hover: hover) {
+  .symbol-button:hover {
+    background: var(--cn-field-bg-hover);
+  }
 }
 
 .company {
@@ -291,8 +293,10 @@
   cursor: pointer;
 }
 
-.tab:hover {
-  color: var(--cn-text);
+@media (hover: hover) {
+  .tab:hover {
+    color: var(--cn-text);
+  }
 }
 
 .tab-on {
@@ -340,8 +344,10 @@
   user-select: none;
 }
 
-.table th.sortable:hover {
-  color: var(--cn-text);
+@media (hover: hover) {
+  .table th.sortable:hover {
+    color: var(--cn-text);
+  }
 }
 
 .table td.left,
@@ -349,8 +355,10 @@
   text-align: left;
 }
 
-.table tbody tr:hover {
-  background: var(--cn-surface-raised);
+@media (hover: hover) {
+  .table tbody tr:hover {
+    background: var(--cn-surface-raised);
+  }
 }
 
 /* The strike column is the table's spine — it stays put while the wings
@@ -631,8 +639,10 @@
   cursor: pointer;
 }
 
-.action:hover:not(:disabled) {
-  background: var(--cn-field-bg-hover);
+@media (hover: hover) {
+  .action:hover:not(:disabled) {
+    background: var(--cn-field-bg-hover);
+  }
 }
 
 .action:disabled {
@@ -652,9 +662,11 @@
   color: var(--cn-text-subtle);
 }
 
-.action-danger:hover:not(:disabled) {
-  color: var(--cn-bearish);
-  background: transparent;
+@media (hover: hover) {
+  .action-danger:hover:not(:disabled) {
+    color: var(--cn-bearish);
+    background: transparent;
+  }
 }
 
 /* -- charts ---------------------------------------------------------------- */

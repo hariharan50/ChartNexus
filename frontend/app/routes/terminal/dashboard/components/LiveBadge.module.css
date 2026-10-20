@@ -23,11 +23,5 @@
 .live .dot {
   background: var(--cn-live);
   box-shadow: 0 0 0 3px color-mix(in srgb, var(--cn-live) 22%, transparent);
-  animation: pulse 2s ease-in-out infinite;
-}
-
-@keyframes pulse {
-  50% {
-    opacity: 0.55;
-  }
+  animation: cn-pulse var(--cn-duration-pulse) ease-in-out infinite;
 }

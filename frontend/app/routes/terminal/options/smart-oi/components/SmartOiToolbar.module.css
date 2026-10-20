@@ -92,8 +92,10 @@
   cursor: pointer;
 }
 
-.seg-btn:hover {
-  color: var(--cn-text);
+@media (hover: hover) {
+  .seg-btn:hover {
+    color: var(--cn-text);
+  }
 }
 
 .seg-btn.active {
@@ -219,13 +221,7 @@
 }
 
 .dot.pulse {
-  animation: pulse 1.2s ease-in-out infinite;
-}
-
-@keyframes pulse {
-  50% {
-    opacity: 0.35;
-  }
+  animation: cn-pulse var(--cn-duration-pulse) ease-in-out infinite;
 }
 
 @media (prefers-reduced-motion: reduce) {

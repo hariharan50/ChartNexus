@@ -59,10 +59,13 @@
   background: var(--cn-surface);
   color: var(--cn-text-muted);
   cursor: pointer;
+  transition: color var(--cn-duration-fast) var(--cn-ease);
 }
 
-.cyclers button:hover {
-  color: var(--cn-text);
+@media (hover: hover) {
+  .cyclers button:hover {
+    color: var(--cn-text);
+  }
 }
 
 /* In a horizontal control row the pill must not stretch to the row height, and

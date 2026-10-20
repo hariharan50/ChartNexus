@@ -16,8 +16,10 @@
     transform var(--cn-duration-fast) ease;
 }
 
-.card:hover {
-  border-color: var(--cn-border-strong);
+@media (hover: hover) {
+  .card:hover {
+    border-color: var(--cn-border-strong);
+  }
 }
 
 .card.selected {

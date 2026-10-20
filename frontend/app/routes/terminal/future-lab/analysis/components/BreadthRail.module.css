@@ -51,9 +51,11 @@
   background-clip: padding-box;
 }
 
-.scroller::-webkit-scrollbar-thumb:hover {
-  background: var(--cn-text-subtle);
-  background-clip: padding-box;
+@media (hover: hover) {
+  .scroller::-webkit-scrollbar-thumb:hover {
+    background: var(--cn-text-subtle);
+    background-clip: padding-box;
+  }
 }
 
 .table {
@@ -107,8 +109,10 @@
   overflow: hidden;
 }
 
-.table tbody tr:hover td {
-  background: var(--cn-surface-raised);
+@media (hover: hover) {
+  .table tbody tr:hover td {
+    background: var(--cn-surface-raised);
+  }
 }
 
 /* The selected scope, marked by a rule rather than a fill: a filled row beside

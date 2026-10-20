@@ -49,8 +49,10 @@
   line-height: 1;
 }
 
-.step:hover:not(:disabled) {
-  background: var(--cn-surface-raised);
+@media (hover: hover) {
+  .step:hover:not(:disabled) {
+    background: var(--cn-surface-raised);
+  }
 }
 
 .step:disabled {
@@ -164,8 +166,10 @@
   cursor: pointer;
 }
 
-.row:hover {
-  background: var(--cn-surface-raised);
+@media (hover: hover) {
+  .row:hover {
+    background: var(--cn-surface-raised);
+  }
 }
 
 /* Unchecked is dimmed rather than hidden: the row still has to be clickable

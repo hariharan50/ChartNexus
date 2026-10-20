@@ -176,8 +176,10 @@
     opacity var(--cn-duration-fast) ease;
 }
 
-.save:hover:not(:disabled) {
-  background: var(--cn-brand-hover, var(--cn-accent));
+@media (hover: hover) {
+  .save:hover:not(:disabled) {
+    background: var(--cn-brand-hover, var(--cn-accent));
+  }
 }
 
 .save:disabled {

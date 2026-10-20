@@ -45,8 +45,10 @@
   flex: none;
 }
 
-.btn:hover:not(:disabled) {
-  background: var(--cn-surface-raised);
+@media (hover: hover) {
+  .btn:hover:not(:disabled) {
+    background: var(--cn-surface-raised);
+  }
 }
 
 .btn:focus-visible {
@@ -140,8 +142,10 @@
   text-align: left;
 }
 
-.menu-item:hover {
-  background: var(--cn-surface-raised);
+@media (hover: hover) {
+  .menu-item:hover {
+    background: var(--cn-surface-raised);
+  }
 }
 
 .menu-item.menu-item-on {
@@ -167,8 +171,10 @@
   cursor: not-allowed;
 }
 
-.menu-item:disabled:hover {
-  background: transparent;
+@media (hover: hover) {
+  .menu-item:disabled:hover {
+    background: transparent;
+  }
 }
 
 .menu-hint {
@@ -230,8 +236,10 @@
   flex: none;
 }
 
-.symbol:hover {
-  background: color-mix(in srgb, var(--cn-accent) 18%, transparent);
+@media (hover: hover) {
+  .symbol:hover {
+    background: color-mix(in srgb, var(--cn-accent) 18%, transparent);
+  }
 }
 
 .symbol:focus-visible {

@@ -66,8 +66,10 @@
   cursor: pointer;
 }
 
-.rowBtn:hover {
-  background: var(--cn-surface-raised);
+@media (hover: hover) {
+  .rowBtn:hover {
+    background: var(--cn-surface-raised);
+  }
 }
 
 .rowBtn:focus-visible {

@@ -77,6 +77,8 @@
   text-decoration: none;
 }
 
-.detail:hover {
-  text-decoration: underline;
+@media (hover: hover) {
+  .detail:hover {
+    text-decoration: underline;
+  }
 }

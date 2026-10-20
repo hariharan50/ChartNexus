@@ -88,8 +88,10 @@
   cursor: pointer;
 }
 
-.toggleBtn:hover {
-  color: var(--cn-text);
+@media (hover: hover) {
+  .toggleBtn:hover {
+    color: var(--cn-text);
+  }
 }
 
 .toggleOn {
@@ -112,8 +114,10 @@
   cursor: pointer;
 }
 
-.export:hover:not(:disabled) {
-  color: var(--cn-text);
+@media (hover: hover) {
+  .export:hover:not(:disabled) {
+    color: var(--cn-text);
+  }
 }
 
 .export:disabled {

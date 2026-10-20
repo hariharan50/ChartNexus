@@ -24,8 +24,10 @@
     background var(--cn-duration-fast) ease;
 }
 
-.shell:hover {
-  background: var(--cn-field-bg-hover);
+@media (hover: hover) {
+  .shell:hover {
+    background: var(--cn-field-bg-hover);
+  }
 }
 
 .shell:focus-within {

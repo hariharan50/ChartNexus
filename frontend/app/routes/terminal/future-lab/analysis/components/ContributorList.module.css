@@ -130,8 +130,10 @@
   border-bottom: 0;
 }
 
-.table tbody tr:hover td {
-  background: var(--cn-surface-raised);
+@media (hover: hover) {
+  .table tbody tr:hover td {
+    background: var(--cn-surface-raised);
+  }
 }
 
 .numeric {

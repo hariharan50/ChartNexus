@@ -247,8 +247,10 @@
   cursor: pointer;
 }
 
-.strike-table tbody tr:hover {
-  background: color-mix(in srgb, var(--cn-accent) 8%, transparent);
+@media (hover: hover) {
+  .strike-table tbody tr:hover {
+    background: color-mix(in srgb, var(--cn-accent) 8%, transparent);
+  }
 }
 
 .mono {
@@ -277,8 +279,10 @@
   background: color-mix(in srgb, var(--cn-accent) 12%, transparent);
 }
 
-.auto-row:hover {
-  background: color-mix(in srgb, var(--cn-accent) 18%, transparent);
+@media (hover: hover) {
+  .auto-row:hover {
+    background: color-mix(in srgb, var(--cn-accent) 18%, transparent);
+  }
 }
 
 .auto-label {
@@ -409,9 +413,11 @@
   cursor: pointer;
 }
 
-.zoom-reset:hover {
-  border-color: var(--cn-border-strong);
-  color: var(--cn-text);
+@media (hover: hover) {
+  .zoom-reset:hover {
+    border-color: var(--cn-border-strong);
+    color: var(--cn-text);
+  }
 }
 
 .chart-top-right {
@@ -448,13 +454,7 @@
 }
 
 .dot.pulse {
-  animation: pulse 1.2s ease-in-out infinite;
-}
-
-@keyframes pulse {
-  50% {
-    opacity: 0.35;
-  }
+  animation: cn-pulse var(--cn-duration-pulse) ease-in-out infinite;
 }
 
 @media (prefers-reduced-motion: reduce) {

@@ -89,9 +89,11 @@
   cursor: pointer;
 }
 
-.step:hover:not(:disabled) {
-  border-color: var(--cn-border-strong);
-  color: var(--cn-text);
+@media (hover: hover) {
+  .step:hover:not(:disabled) {
+    border-color: var(--cn-border-strong);
+    color: var(--cn-text);
+  }
 }
 
 .step:disabled {
@@ -159,8 +161,10 @@
   cursor: pointer;
 }
 
-.value-row:hover {
-  background: var(--cn-surface-raised);
+@media (hover: hover) {
+  .value-row:hover {
+    background: var(--cn-surface-raised);
+  }
 }
 
 .value-name {
@@ -187,7 +191,7 @@
   width: 0.75rem;
   color: var(--cn-text-subtle);
   transform: rotate(-90deg);
-  transition: transform 120ms ease;
+  transition: transform var(--cn-duration-fast) var(--cn-ease);
 }
 
 .caret-open {
@@ -325,8 +329,10 @@
   cursor: pointer;
 }
 
-.expand:hover {
-  color: var(--cn-accent);
+@media (hover: hover) {
+  .expand:hover {
+    color: var(--cn-accent);
+  }
 }
 
 /* -- the expanded leg breakdown ------------------------------------------- */
@@ -407,7 +413,9 @@
     border-color var(--cn-duration-fast) ease;
 }
 
-.help:hover {
-  color: var(--cn-accent);
-  border-color: var(--cn-accent);
+@media (hover: hover) {
+  .help:hover {
+    color: var(--cn-accent);
+    border-color: var(--cn-accent);
+  }
 }

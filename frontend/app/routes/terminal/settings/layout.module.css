@@ -66,10 +66,12 @@
     border-color var(--cn-duration-fast) ease;
 }
 
-.nav-item:hover {
-  background: var(--cn-surface-raised);
-  color: var(--cn-text);
-  text-decoration: none;
+@media (hover: hover) {
+  .nav-item:hover {
+    background: var(--cn-surface-raised);
+    color: var(--cn-text);
+    text-decoration: none;
+  }
 }
 
 .nav-item.active {
@@ -117,8 +119,10 @@
   color: var(--cn-text-muted);
 }
 
-.nav-item:hover .nav-name {
-  color: var(--cn-text);
+@media (hover: hover) {
+  .nav-item:hover .nav-name {
+    color: var(--cn-text);
+  }
 }
 
 .nav-desc {

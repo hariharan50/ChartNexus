@@ -103,8 +103,10 @@
   cursor: pointer;
 }
 
-.download:hover {
-  color: var(--cn-text);
+@media (hover: hover) {
+  .download:hover {
+    color: var(--cn-text);
+  }
 }
 
 /* No intermediate step any more: an even split is already fluid, so the two

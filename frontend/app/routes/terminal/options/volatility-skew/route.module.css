@@ -372,9 +372,11 @@
   cursor: pointer;
 }
 
-.download:hover {
-  border-color: var(--cn-border-strong);
-  color: var(--cn-text);
+@media (hover: hover) {
+  .download:hover {
+    border-color: var(--cn-border-strong);
+    color: var(--cn-text);
+  }
 }
 
 /* -- live badge -- */
@@ -404,13 +406,7 @@
 }
 
 .dot.pulse {
-  animation: pulse 1.2s ease-in-out infinite;
-}
-
-@keyframes pulse {
-  50% {
-    opacity: 0.35;
-  }
+  animation: cn-pulse var(--cn-duration-pulse) ease-in-out infinite;
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -445,8 +441,10 @@
   cursor: pointer;
 }
 
-.entry:hover {
-  border-color: var(--cn-border-strong);
+@media (hover: hover) {
+  .entry:hover {
+    border-color: var(--cn-border-strong);
+  }
 }
 
 .entry.off {

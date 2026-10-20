@@ -81,15 +81,17 @@
   line-height: 1;
   cursor: pointer;
   transition:
-    background var(--cn-duration-fast, 120ms) ease,
-    color var(--cn-duration-fast, 120ms) ease,
-    transform var(--cn-duration-fast, 120ms) ease;
+    background var(--cn-duration-fast) ease,
+    color var(--cn-duration-fast) ease,
+    transform var(--cn-duration-fast) ease;
 }
 
-.infoBtn:hover {
-  background: var(--cn-accent, #6366f1);
-  color: #fff;
-  transform: translateY(-1px);
+@media (hover: hover) {
+  .infoBtn:hover {
+    background: var(--cn-accent, #6366f1);
+    color: #fff;
+    transform: translateY(-1px);
+  }
 }
 
 /* The app's standard index switcher, matching the dashboard's IndexTabs: a
@@ -114,12 +116,14 @@
   letter-spacing: 0.02em;
   cursor: pointer;
   transition:
-    color var(--cn-duration-fast, 120ms) ease,
-    background var(--cn-duration-fast, 120ms) ease;
+    color var(--cn-duration-fast) ease,
+    background var(--cn-duration-fast) ease;
 }
 
-.tab:hover {
-  color: var(--cn-text);
+@media (hover: hover) {
+  .tab:hover {
+    color: var(--cn-text);
+  }
 }
 
 .tab.active {

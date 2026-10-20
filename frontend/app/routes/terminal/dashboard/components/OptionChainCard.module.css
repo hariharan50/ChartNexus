@@ -27,8 +27,10 @@
     color 0.12s ease;
 }
 
-.strike-toggle button:hover {
-  color: var(--cn-text);
+@media (hover: hover) {
+  .strike-toggle button:hover {
+    color: var(--cn-text);
+  }
 }
 
 .strike-toggle button.active {
@@ -76,16 +78,20 @@
   border-bottom: none;
 }
 
-.scroll tbody tr:hover {
-  background: var(--cn-surface-raised);
+@media (hover: hover) {
+  .scroll tbody tr:hover {
+    background: var(--cn-surface-raised);
+  }
 }
 
 .scroll tr.atm {
   background: color-mix(in srgb, var(--cn-accent) 6%, transparent);
 }
 
-.scroll tr.atm:hover {
-  background: color-mix(in srgb, var(--cn-accent) 10%, transparent);
+@media (hover: hover) {
+  .scroll tr.atm:hover {
+    background: color-mix(in srgb, var(--cn-accent) 10%, transparent);
+  }
 }
 
 .strike {

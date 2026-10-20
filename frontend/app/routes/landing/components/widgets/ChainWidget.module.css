@@ -32,8 +32,10 @@
   cursor: pointer;
 }
 
-.tab:hover {
-  color: var(--cn-text);
+@media (hover: hover) {
+  .tab:hover {
+    color: var(--cn-text);
+  }
 }
 
 .tab-on {
