@@ -50,15 +50,17 @@
   text-decoration: none;
   color: inherit;
   transition:
-    transform var(--cn-duration-fast, 120ms) ease,
-    border-color var(--cn-duration-fast, 120ms) ease,
-    box-shadow var(--cn-duration-fast, 120ms) ease;
+    transform var(--cn-duration-fast) ease,
+    border-color var(--cn-duration-fast) ease,
+    box-shadow var(--cn-duration-fast) ease;
 }
 
-.box:hover {
-  transform: translateY(-2px);
-  border-color: var(--cn-accent);
-  box-shadow: 0 10px 26px -14px var(--cn-accent);
+@media (hover: hover) {
+  .box:hover {
+    transform: translateY(-2px);
+    border-color: var(--cn-accent);
+    box-shadow: 0 10px 26px -14px var(--cn-accent);
+  }
 }
 
 .boxIcon {
@@ -129,6 +131,8 @@
   text-decoration: none;
 }
 
-.back:hover {
-  color: var(--cn-accent);
+@media (hover: hover) {
+  .back:hover {
+    color: var(--cn-accent);
+  }
 }

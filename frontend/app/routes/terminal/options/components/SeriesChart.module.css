@@ -48,9 +48,11 @@
   cursor: pointer;
 }
 
-.zoom-reset:hover {
-  border-color: var(--cn-border-strong);
-  color: var(--cn-text);
+@media (hover: hover) {
+  .zoom-reset:hover {
+    border-color: var(--cn-border-strong);
+    color: var(--cn-text);
+  }
 }
 
 .legend {
@@ -77,8 +79,10 @@
   cursor: pointer;
 }
 
-.entry:hover {
-  background: var(--cn-surface-raised);
+@media (hover: hover) {
+  .entry:hover {
+    background: var(--cn-surface-raised);
+  }
 }
 
 .entry:focus-visible {

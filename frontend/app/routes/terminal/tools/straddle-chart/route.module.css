@@ -46,9 +46,11 @@
   cursor: pointer;
 }
 
-.refresh:hover:not(:disabled) {
-  border-color: var(--cn-accent);
-  color: var(--cn-accent);
+@media (hover: hover) {
+  .refresh:hover:not(:disabled) {
+    border-color: var(--cn-accent);
+    color: var(--cn-accent);
+  }
 }
 
 .refresh:disabled {
@@ -133,9 +135,11 @@
   cursor: pointer;
 }
 
-.zoom-reset:hover {
-  border-color: var(--cn-border-strong);
-  color: var(--cn-text);
+@media (hover: hover) {
+  .zoom-reset:hover {
+    border-color: var(--cn-border-strong);
+    color: var(--cn-text);
+  }
 }
 
 /* -- footnotes ------------------------------------------------------------- */

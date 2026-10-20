@@ -30,8 +30,10 @@
   cursor: pointer;
 }
 
-.btn:hover:not(:disabled) {
-  background: var(--cn-surface);
+@media (hover: hover) {
+  .btn:hover:not(:disabled) {
+    background: var(--cn-surface);
+  }
 }
 
 .btn:disabled {

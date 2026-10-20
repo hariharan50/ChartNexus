@@ -203,9 +203,11 @@
   cursor: pointer;
 }
 
-.range-chip:hover {
-  border-color: var(--cn-border-strong);
-  color: var(--cn-text);
+@media (hover: hover) {
+  .range-chip:hover {
+    border-color: var(--cn-border-strong);
+    color: var(--cn-text);
+  }
 }
 
 .range-chip.active {
@@ -251,9 +253,11 @@
   background-clip: padding-box;
 }
 
-.strike-list::-webkit-scrollbar-thumb:hover {
-  background: var(--cn-text-subtle);
-  background-clip: padding-box;
+@media (hover: hover) {
+  .strike-list::-webkit-scrollbar-thumb:hover {
+    background: var(--cn-text-subtle);
+    background-clip: padding-box;
+  }
 }
 
 .strike-col {
@@ -290,8 +294,10 @@
   border-bottom: none;
 }
 
-.strike-row:hover {
-  background: color-mix(in srgb, var(--cn-accent) 8%, transparent);
+@media (hover: hover) {
+  .strike-row:hover {
+    background: color-mix(in srgb, var(--cn-accent) 8%, transparent);
+  }
 }
 
 /* The selected row: a light-blue band spanning the box, the number kept dark
@@ -369,9 +375,11 @@
   cursor: pointer;
 }
 
-.zoom-reset:hover {
-  border-color: var(--cn-border-strong);
-  color: var(--cn-text);
+@media (hover: hover) {
+  .zoom-reset:hover {
+    border-color: var(--cn-border-strong);
+    color: var(--cn-text);
+  }
 }
 
 .hint {
@@ -423,13 +431,7 @@
 }
 
 .dot.pulse {
-  animation: pulse 1.2s ease-in-out infinite;
-}
-
-@keyframes pulse {
-  50% {
-    opacity: 0.35;
-  }
+  animation: cn-pulse var(--cn-duration-pulse) ease-in-out infinite;
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -460,8 +462,10 @@
   cursor: pointer;
 }
 
-.entry:hover {
-  border-color: var(--cn-border-strong);
+@media (hover: hover) {
+  .entry:hover {
+    border-color: var(--cn-border-strong);
+  }
 }
 
 .entry.off {

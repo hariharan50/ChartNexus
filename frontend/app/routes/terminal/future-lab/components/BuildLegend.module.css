@@ -19,9 +19,11 @@
   cursor: pointer;
 }
 
-.item:hover {
-  border-color: var(--cn-border);
-  color: var(--cn-text);
+@media (hover: hover) {
+  .item:hover {
+    border-color: var(--cn-border);
+    color: var(--cn-text);
+  }
 }
 
 .item:focus-visible {

@@ -314,9 +314,11 @@
   align-self: start;
 }
 
-.collapseBtn:hover,
-.restore:hover {
-  color: var(--cn-text);
+@media (hover: hover) {
+  .collapseBtn:hover,
+  .restore:hover {
+    color: var(--cn-text);
+  }
 }
 
 /* -- instrument picker ------------------------------------------------------ */
@@ -366,8 +368,10 @@
   cursor: pointer;
 }
 
-.pickRow:hover {
-  background: var(--cn-surface-2, var(--cn-surface));
+@media (hover: hover) {
+  .pickRow:hover {
+    background: var(--cn-surface-2, var(--cn-surface));
+  }
 }
 
 .pickOn {

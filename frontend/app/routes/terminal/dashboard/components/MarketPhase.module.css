@@ -37,7 +37,7 @@
 .tone-open .dot {
   background: var(--cn-live);
   box-shadow: 0 0 0 3px color-mix(in srgb, var(--cn-live) 22%, transparent);
-  animation: pulse 2s ease-in-out infinite;
+  animation: cn-pulse var(--cn-duration-pulse) ease-in-out infinite;
 }
 
 .tone-pre .dot {
@@ -59,10 +59,4 @@
 
 .tone-closed .label {
   color: var(--cn-text-muted);
-}
-
-@keyframes pulse {
-  50% {
-    opacity: 0.55;
-  }
 }

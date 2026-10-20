@@ -15,18 +15,12 @@
   padding: 84px 20px 28px;
   background: color-mix(in srgb, #000 55%, transparent);
   backdrop-filter: blur(3px);
-  animation: aiw-fade 140ms ease;
+  animation: cn-fade var(--cn-duration) var(--cn-ease-out);
 }
 
 @media (max-width: 640px) {
   .overlay {
     padding: 72px 14px 16px;
-  }
-}
-
-@keyframes aiw-fade {
-  from {
-    opacity: 0;
   }
 }
 
@@ -54,14 +48,7 @@
   background: var(--cn-surface-raised, var(--cn-surface));
   box-shadow: 0 24px 60px -20px rgba(0, 0, 0, 0.6);
   overflow: hidden;
-  animation: aiw-pop 160ms ease;
-}
-
-@keyframes aiw-pop {
-  from {
-    opacity: 0;
-    transform: translateY(8px) scale(0.98);
-  }
+  animation: cn-pop var(--cn-duration) var(--cn-ease-out);
 }
 
 .head {
@@ -125,13 +112,15 @@
   line-height: 1;
   cursor: pointer;
   transition:
-    color var(--cn-duration-fast, 120ms) ease,
-    border-color var(--cn-duration-fast, 120ms) ease;
+    color var(--cn-duration-fast) ease,
+    border-color var(--cn-duration-fast) ease;
 }
 
-.close:hover {
-  color: var(--cn-text);
-  border-color: var(--cn-accent, #6366f1);
+@media (hover: hover) {
+  .close:hover {
+    color: var(--cn-text);
+    border-color: var(--cn-accent, #6366f1);
+  }
 }
 
 .tabs {
@@ -151,11 +140,13 @@
   font-weight: 700;
   padding: var(--cn-space-2) var(--cn-space-3);
   cursor: pointer;
-  transition: color var(--cn-duration-fast, 120ms) ease;
+  transition: color var(--cn-duration-fast, var(--cn-duration-fast)) var(--cn-ease);
 }
 
-.tab:hover {
-  color: var(--cn-text);
+@media (hover: hover) {
+  .tab:hover {
+    color: var(--cn-text);
+  }
 }
 
 .tabActive {

@@ -35,8 +35,10 @@
   height: var(--cn-control-h-sm);
 }
 
-.trigger:hover:not(:disabled) {
-  border-color: var(--cn-border-strong);
+@media (hover: hover) {
+  .trigger:hover:not(:disabled) {
+    border-color: var(--cn-border-strong);
+  }
 }
 
 .trigger:focus-visible {
@@ -61,7 +63,7 @@
 .caret {
   display: inline-flex;
   color: var(--cn-text-subtle);
-  transition: transform 120ms ease;
+  transition: transform var(--cn-duration-fast) var(--cn-ease);
 }
 
 .caretOpen {
@@ -123,8 +125,10 @@
   cursor: pointer;
 }
 
-.option:hover {
-  background: var(--cn-field-bg-hover);
+@media (hover: hover) {
+  .option:hover {
+    background: var(--cn-field-bg-hover);
+  }
 }
 
 /* Focus, not hover, is what the keyboard moves — and it has to be visible

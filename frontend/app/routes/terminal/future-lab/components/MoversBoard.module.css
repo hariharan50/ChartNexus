@@ -32,12 +32,6 @@
   gap: var(--cn-space-2);
 }
 
-@keyframes pulse {
-  50% {
-    opacity: 0.35;
-  }
-}
-
 .legendRow {
   display: flex;
   flex-wrap: wrap;

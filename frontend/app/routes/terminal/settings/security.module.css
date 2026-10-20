@@ -14,11 +14,13 @@
   padding: var(--cn-space-6) var(--cn-space-4);
   border-top: 1.5px solid var(--cn-border-strong);
   border-radius: var(--cn-radius);
-  transition: background var(--cn-duration-fast) ease;
+  transition: background var(--cn-duration-fast) var(--cn-ease);
 }
 
-.row:hover {
-  background: var(--cn-surface-raised);
+@media (hover: hover) {
+  .row:hover {
+    background: var(--cn-surface-raised);
+  }
 }
 
 .row.first {

@@ -14,18 +14,12 @@
   padding: 84px 20px 28px;
   background: color-mix(in srgb, #000 55%, transparent);
   backdrop-filter: blur(3px);
-  animation: info-fade 140ms ease;
+  animation: cn-fade var(--cn-duration) var(--cn-ease-out);
 }
 
 @media (max-width: 40rem) {
   .overlay {
     padding: 72px 14px 16px;
-  }
-}
-
-@keyframes info-fade {
-  from {
-    opacity: 0;
   }
 }
 
@@ -53,14 +47,7 @@
   background: var(--cn-surface-raised, var(--cn-surface));
   box-shadow: 0 24px 60px -20px rgb(0 0 0 / 60%);
   overflow: hidden;
-  animation: info-pop 160ms ease;
-}
-
-@keyframes info-pop {
-  from {
-    opacity: 0;
-    transform: translateY(8px) scale(0.98);
-  }
+  animation: cn-pop var(--cn-duration) var(--cn-ease-out);
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -134,9 +121,11 @@
     border-color var(--cn-duration-fast) ease;
 }
 
-.close:hover {
-  color: var(--cn-text);
-  border-color: var(--cn-accent);
+@media (hover: hover) {
+  .close:hover {
+    color: var(--cn-text);
+    border-color: var(--cn-accent);
+  }
 }
 
 .tabs {
@@ -156,11 +145,13 @@
   font-weight: 700;
   padding: var(--cn-space-2) var(--cn-space-3);
   cursor: pointer;
-  transition: color var(--cn-duration-fast) ease;
+  transition: color var(--cn-duration-fast) var(--cn-ease);
 }
 
-.tab:hover {
-  color: var(--cn-text);
+@media (hover: hover) {
+  .tab:hover {
+    color: var(--cn-text);
+  }
 }
 
 .tab-active {

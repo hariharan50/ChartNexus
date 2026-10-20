@@ -244,8 +244,40 @@
   --cn-z-modal: 400;
   --cn-z-toast: 500;
 
+  /* Motion.
+
+     Four durations and four curves, because a product that moves at a dozen
+     speeds reads as unfinished however well each piece is tuned. These are
+     the values the app had already converged on, named — `--cn-duration` and
+     `--cn-duration-fast` keep their exact values and every existing reference
+     to them still means what it meant.
+
+     Nothing here exceeds 500ms except the two ambient loops at the bottom,
+     which are not transitions: they repeat, so their period is a pulse rate
+     rather than a delay anyone waits out. */
   --cn-duration-fast: 120ms;
   --cn-duration: 200ms;
+  --cn-duration-slow: 320ms;
+
+  /* Entering and exiting are not symmetrical. Something arriving should
+     decelerate into place — fast at first, so it feels responsive, then
+     settling — which is what ease-out does. Something leaving should
+     accelerate away, because nobody needs to watch it go. A move between two
+     on-screen positions is eased at both ends. */
+  --cn-ease-out: cubic-bezier(0.22, 0.61, 0.36, 1);
+  --cn-ease-in: cubic-bezier(0.4, 0, 1, 1);
+  --cn-ease: cubic-bezier(0.2, 0.8, 0.2, 1);
+  /* Reserved for confirmations — a saved setting, a completed action. The
+     overshoot is deliberate and deliberately rare: nothing on a quote board
+     should bounce. */
+  --cn-ease-spring: cubic-bezier(0.34, 1.4, 0.64, 1);
+
+  /* Ambient loops. One rate each, so the four "this is live" indicators that
+     can share a dashboard viewport breathe together instead of beating
+     against each other. */
+  --cn-duration-pulse: 1.6s;
+  --cn-duration-spin: 800ms;
+  --cn-duration-flash: 900ms;
 
   color-scheme: dark;
 }
@@ -486,8 +518,10 @@ body {
   text-decoration: none;
 }
 
-:where(a):hover {
-  text-decoration: underline;
+@media (hover: hover) {
+  :where(a):hover {
+    text-decoration: underline;
+  }
 }
 
 :where(button, input, select, textarea) {
@@ -526,6 +560,99 @@ body {
   overflow: hidden;
   clip-path: inset(50%);
   white-space: nowrap;
+}
+
+/* ---------------------------------------------------------------------------
+   Motion, app-wide.
+
+   These keyframes were each defined per-component before — `pulse` in
+   twenty-five separate files, at six different durations, in two different
+   shapes. One definition each, here, so a loading placeholder breathes at the
+   same rate wherever it appears.
+
+   The reduced-motion block at the bottom of this file already flattens every
+   duration with `!important`, so nothing below needs its own guard.
+   --------------------------------------------------------------------------- */
+
+/* A placeholder, a live dot, anything waiting. Opacity only: a pulse that
+   moved or resized would drag layout with it twice a second. */
+@keyframes cn-pulse {
+  50% {
+    opacity: 0.35;
+  }
+}
+
+@keyframes cn-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Overlays enter on both axes at once: the ground fades, the panel rises into
+   it. Exits are not animated anywhere in the app — an element cannot animate
+   out while React unmounts it synchronously, and holding it through an exit
+   means restructuring the component that owns it. */
+@keyframes cn-fade {
+  from {
+    opacity: 0;
+  }
+}
+
+@keyframes cn-pop {
+  from {
+    opacity: 0;
+    transform: translateY(8px) scale(0.98);
+  }
+}
+
+/* A route arriving. Further than a pop travels, because the whole page is
+   moving and a short slide at page scale reads as a twitch. */
+@keyframes cn-rise {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+}
+
+/* Press feedback for everything clickable.
+
+   The app had 180 `:hover` rules and two `:active` rules, so every card, tab,
+   row and icon button was silent when pressed — and silent specifically on
+   touch, where `:hover` never fires at all and a tap got no acknowledgement
+   whatsoever.
+
+   One rule rather than 180 edits. Wrapped in `:where()` so it carries almost
+   no specificity: a component that defines its own press state wins, and this
+   is only the floor. `translateY` is the gesture `Button` already used, and
+   the opacity step is what reaches inline links, which `transform` does not
+   apply to. */
+:where(
+    button,
+    summary,
+    a[href],
+    [role='button'],
+    [role='tab'],
+    [role='option'],
+    [role='menuitem'],
+    [role='switch'],
+    [role='checkbox']
+  ):where(:not(:disabled, [aria-disabled='true'])):active {
+  transform: translateY(1px);
+  opacity: 0.85;
+}
+
+/* Validation and failure messages.
+
+   Thirty-one `role="alert"` regions across the app and not one of them had an
+   entrance: a message that appears with no transition is easy to miss when it
+   lands below the fold of a form, and a screen reader announcing it is the
+   only signal some of them gave. Every one is a block-level `div` or `p`, so
+   the rise applies to all of them rather than silently degrading to a fade on
+   the inline ones.
+
+   `:where()` again: a banner with its own entrance keeps it. */
+:where([role='alert']) {
+  animation: cn-rise var(--cn-duration) var(--cn-ease-out);
 }
 
 @media (prefers-reduced-motion: reduce) {

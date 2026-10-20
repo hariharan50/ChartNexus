@@ -61,17 +61,7 @@
   text-align: center;
   color: var(--cn-text-muted);
   font-size: var(--cn-text-sm);
-  animation: pulse 1.6s ease-in-out infinite;
-}
-
-@keyframes pulse {
-  0%,
-  100% {
-    opacity: 0.55;
-  }
-  50% {
-    opacity: 1;
-  }
+  animation: cn-pulse var(--cn-duration-pulse) ease-in-out infinite;
 }
 
 /* -- Guidance hero --------------------------------------------------------- */
@@ -289,12 +279,14 @@
   cursor: pointer;
   color: var(--cn-text-muted);
   transition:
-    background var(--cn-duration-fast, 120ms) ease,
-    color var(--cn-duration-fast, 120ms) ease;
+    background var(--cn-duration-fast) ease,
+    color var(--cn-duration-fast) ease;
 }
 
-.switchBtn:hover {
-  color: var(--cn-text);
+@media (hover: hover) {
+  .switchBtn:hover {
+    color: var(--cn-text);
+  }
 }
 
 .switchOn {
@@ -787,7 +779,14 @@
   height: 100%;
   border-radius: 3px;
   background: linear-gradient(90deg, var(--cn-accent, #8b5cf6), #a78bfa);
-  transition: width 500ms cubic-bezier(0.2, 0.8, 0.2, 1);
+  /* `width`, and deliberately not `transform: scaleX()`.
+     The fill carries a gradient across its own length, so scaling a
+     full-width bar down would compress the colour ramp instead of revealing
+     part of it — the bar would end up a different colour at 30% than at 90%.
+     A gradient meter is one of the few honest reasons to animate a layout
+     property; it is one element, off the hot path, and it animates on a
+     user-initiated update rather than on every tick. */
+  transition: width var(--cn-duration-slow) var(--cn-ease);
 }
 
 .certaintyFill.buy {

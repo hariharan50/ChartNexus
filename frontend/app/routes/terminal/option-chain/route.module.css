@@ -56,9 +56,11 @@
   cursor: pointer;
 }
 
-.cycle:hover {
-  background: var(--cn-surface);
-  color: var(--cn-text);
+@media (hover: hover) {
+  .cycle:hover {
+    background: var(--cn-surface);
+    color: var(--cn-text);
+  }
 }
 
 .inst-body {
@@ -154,8 +156,10 @@
   cursor: pointer;
 }
 
-.expiry-item:hover {
-  background: var(--cn-surface-raised);
+@media (hover: hover) {
+  .expiry-item:hover {
+    background: var(--cn-surface-raised);
+  }
 }
 
 .expiry-item.selected {
@@ -236,17 +240,7 @@
 }
 
 .dot.pulse {
-  animation: pulse 1.2s ease-in-out infinite;
-}
-
-@keyframes pulse {
-  0%,
-  100% {
-    opacity: 1;
-  }
-  50% {
-    opacity: 0.35;
-  }
+  animation: cn-pulse var(--cn-duration-pulse) ease-in-out infinite;
 }
 
 /* --- strike toggles + summary chips ----------------------------------- */
@@ -267,9 +261,11 @@
   cursor: pointer;
 }
 
-.toggle:hover {
-  border-color: var(--cn-border-strong);
-  color: var(--cn-text);
+@media (hover: hover) {
+  .toggle:hover {
+    border-color: var(--cn-border-strong);
+    color: var(--cn-text);
+  }
 }
 
 .toggle.active {
@@ -414,16 +410,20 @@
   border-bottom: none;
 }
 
-.scroll tbody tr:hover td {
-  background: color-mix(in srgb, var(--cn-surface-raised) 55%, transparent);
+@media (hover: hover) {
+  .scroll tbody tr:hover td {
+    background: color-mix(in srgb, var(--cn-surface-raised) 55%, transparent);
+  }
 }
 
 .scroll tr.atm td {
   background: color-mix(in srgb, var(--cn-warning) 10%, transparent);
 }
 
-.scroll tr.atm:hover td {
-  background: color-mix(in srgb, var(--cn-warning) 16%, transparent);
+@media (hover: hover) {
+  .scroll tr.atm:hover td {
+    background: color-mix(in srgb, var(--cn-warning) 16%, transparent);
+  }
 }
 
 .scroll td.num {

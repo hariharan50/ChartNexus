@@ -53,7 +53,7 @@
   border-radius: 999px;
   background: var(--cn-border-strong);
   cursor: pointer;
-  transition: background var(--cn-duration-fast) ease;
+  transition: background var(--cn-duration-fast) var(--cn-ease);
 }
 
 .switch.on {
@@ -68,7 +68,7 @@
   height: 1.125rem;
   border-radius: 50%;
   background: #fff;
-  transition: transform var(--cn-duration-fast) ease;
+  transition: transform var(--cn-duration-fast) var(--cn-ease);
 }
 
 .switch.on .knob {
@@ -100,8 +100,10 @@
     background var(--cn-duration-fast) ease;
 }
 
-.choice:hover {
-  border-color: var(--cn-border-strong);
+@media (hover: hover) {
+  .choice:hover {
+    border-color: var(--cn-border-strong);
+  }
 }
 
 .choice.active {

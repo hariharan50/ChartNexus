@@ -32,13 +32,7 @@
 /* Breathing only while the page is actually polling. A paused page shows a
    steady dot, which is the honest difference between "live" and "held". */
 .pulse {
-  animation: session-pulse 1.6s ease-in-out infinite;
-}
-
-@keyframes session-pulse {
-  50% {
-    opacity: 0.35;
-  }
+  animation: cn-pulse var(--cn-duration-pulse) ease-in-out infinite;
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -98,8 +92,10 @@
   cursor: not-allowed;
 }
 
-.replay:not(:disabled):hover {
-  color: var(--cn-text);
+@media (hover: hover) {
+  .replay:not(:disabled):hover {
+    color: var(--cn-text);
+  }
 }
 
 .replay:focus-visible {
@@ -115,7 +111,7 @@
   border-radius: 999px;
   background: var(--cn-surface);
   position: relative;
-  transition: background 120ms ease;
+  transition: background var(--cn-duration-fast) var(--cn-ease);
 }
 
 .switch::after {

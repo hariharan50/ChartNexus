@@ -71,9 +71,11 @@
   cursor: pointer;
 }
 
-.segment:hover:not(:disabled),
-.toggleBtn:hover {
-  color: var(--cn-text);
+@media (hover: hover) {
+  .segment:hover:not(:disabled),
+  .toggleBtn:hover {
+    color: var(--cn-text);
+  }
 }
 
 .segmentOn,
@@ -262,9 +264,11 @@
 
 /* Ties the three cells together as one row while the eye crosses from the mark
    to the numbers — and it is the cue that the row carries a hover title. */
-.panelTable tbody tr:hover td,
-.panelTable tbody tr:hover th {
-  background: var(--cn-surface-raised);
+@media (hover: hover) {
+  .panelTable tbody tr:hover td,
+  .panelTable tbody tr:hover th {
+    background: var(--cn-surface-raised);
+  }
 }
 
 .num {

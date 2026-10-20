@@ -49,8 +49,10 @@
   cursor: pointer;
 }
 
-.item:hover {
-  background: var(--cn-surface-raised);
+@media (hover: hover) {
+  .item:hover {
+    background: var(--cn-surface-raised);
+  }
 }
 
 .item:focus-visible {
@@ -107,8 +109,10 @@
   cursor: pointer;
 }
 
-.action:hover {
-  color: var(--cn-bearish);
+@media (hover: hover) {
+  .action:hover {
+    color: var(--cn-bearish);
+  }
 }
 
 .action:focus-visible {

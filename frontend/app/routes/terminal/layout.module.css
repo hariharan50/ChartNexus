@@ -98,10 +98,12 @@
     color var(--cn-duration-fast) ease;
 }
 
-.nav-link:hover {
-  background: var(--cn-surface-raised);
-  color: var(--cn-text);
-  text-decoration: none;
+@media (hover: hover) {
+  .nav-link:hover {
+    background: var(--cn-surface-raised);
+    color: var(--cn-text);
+    text-decoration: none;
+  }
 }
 
 .nav-link.active {
@@ -186,9 +188,11 @@
   text-decoration: none;
 }
 
-.submenu-item:hover {
-  background: var(--cn-surface-raised);
-  text-decoration: none;
+@media (hover: hover) {
+  .submenu-item:hover {
+    background: var(--cn-surface-raised);
+    text-decoration: none;
+  }
 }
 
 .submenu-item.active {
@@ -208,9 +212,11 @@
   color: var(--cn-text-muted);
 }
 
-.submenu-item:hover .submenu-ico,
-.submenu-item.active .submenu-ico {
-  color: var(--cn-accent);
+@media (hover: hover) {
+  .submenu-item:hover .submenu-ico,
+  .submenu-item.active .submenu-ico {
+    color: var(--cn-accent);
+  }
 }
 
 .submenu-text {
@@ -256,9 +262,11 @@
     border-color var(--cn-duration-fast) ease;
 }
 
-.icon-btn:hover {
-  color: var(--cn-text);
-  border-color: var(--cn-border-strong);
+@media (hover: hover) {
+  .icon-btn:hover {
+    color: var(--cn-text);
+    border-color: var(--cn-border-strong);
+  }
 }
 
 .icon-btn svg {
@@ -286,8 +294,10 @@
   display: none;
 }
 
-.account summary:hover {
-  background: var(--cn-surface-raised);
+@media (hover: hover) {
+  .account summary:hover {
+    background: var(--cn-surface-raised);
+  }
 }
 
 .account[open] summary {
@@ -404,9 +414,11 @@
   cursor: pointer;
 }
 
-.menu-item:hover {
-  background: var(--cn-surface-raised);
-  text-decoration: none;
+@media (hover: hover) {
+  .menu-item:hover {
+    background: var(--cn-surface-raised);
+    text-decoration: none;
+  }
 }
 
 .menu-item:disabled {
@@ -439,8 +451,10 @@
   color: var(--cn-danger);
 }
 
-.menu-item.danger:hover {
-  background: var(--cn-bearish-weak);
+@media (hover: hover) {
+  .menu-item.danger:hover {
+    background: var(--cn-bearish-weak);
+  }
 }
 
 /* Stays a block box. It was briefly a flex column so a full-height page could
@@ -501,4 +515,16 @@
   .who {
     display: none;
   }
+}
+
+/* A route arriving.
+
+   Opacity only — deliberately no `translateY`, unlike the landing and auth
+   layouts. `.content` is the height every page below resolves against, and a
+   transform on it would also become the containing block for the five
+   `position: fixed` toolbars and pickers inside the terminal, which would slide
+   from the wrong origin for the length of the animation. A fade carries the
+   route change on its own and costs neither. */
+.page-enter {
+  animation: cn-fade var(--cn-duration-slow) var(--cn-ease-out);
 }

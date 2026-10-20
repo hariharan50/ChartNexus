@@ -45,9 +45,11 @@
   flex: none;
 }
 
-.btn:hover:not(:disabled) {
-  background: var(--cn-surface-raised);
-  color: var(--cn-text);
+@media (hover: hover) {
+  .btn:hover:not(:disabled) {
+    background: var(--cn-surface-raised);
+    color: var(--cn-text);
+  }
 }
 
 .btn:focus-visible {
@@ -87,7 +89,7 @@
   font-size: var(--cn-text-xs);
   opacity: 0;
   box-shadow: var(--cn-shadow);
-  transition: opacity 75ms ease;
+  transition: opacity var(--cn-duration-fast) var(--cn-ease);
 }
 
 .btn:hover .tip,
@@ -113,7 +115,7 @@
   line-height: 0;
   cursor: pointer;
   opacity: 0;
-  transition: opacity 75ms ease;
+  transition: opacity var(--cn-duration-fast) var(--cn-ease);
 }
 
 .group:hover .caret,
@@ -121,8 +123,10 @@
   opacity: 1;
 }
 
-.group:hover .caret:hover {
-  color: var(--cn-accent);
+@media (hover: hover) {
+  .group:hover .caret:hover {
+    color: var(--cn-accent);
+  }
 }
 
 /* -- flyout -- */
@@ -172,8 +176,10 @@
   cursor: pointer;
 }
 
-.row:hover {
-  background: var(--cn-surface-raised);
+@media (hover: hover) {
+  .row:hover {
+    background: var(--cn-surface-raised);
+  }
 }
 
 .row.row-on {

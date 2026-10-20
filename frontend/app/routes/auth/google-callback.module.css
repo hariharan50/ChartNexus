@@ -34,11 +34,5 @@
   border: 2px solid var(--cn-auth-border);
   border-top-color: var(--cn-brand);
   border-radius: 50%;
-  animation: spin 800ms linear infinite;
-}
-
-@keyframes spin {
-  to {
-    transform: rotate(360deg);
-  }
+  animation: cn-spin var(--cn-duration-spin) linear infinite;
 }

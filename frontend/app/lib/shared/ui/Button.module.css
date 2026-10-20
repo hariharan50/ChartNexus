@@ -35,8 +35,10 @@
   color: var(--cn-on-brand);
 }
 
-.primary:not(:disabled):hover {
-  background: var(--cn-brand-hover);
+@media (hover: hover) {
+  .primary:not(:disabled):hover {
+    background: var(--cn-brand-hover);
+  }
 }
 
 .secondary {
@@ -45,8 +47,10 @@
   color: var(--cn-text);
 }
 
-.secondary:not(:disabled):hover {
-  background: var(--cn-field-bg-hover);
+@media (hover: hover) {
+  .secondary:not(:disabled):hover {
+    background: var(--cn-field-bg-hover);
+  }
 }
 
 .ghost {
@@ -54,8 +58,10 @@
   color: var(--cn-text-muted);
 }
 
-.ghost:not(:disabled):hover {
-  color: var(--cn-text);
+@media (hover: hover) {
+  .ghost:not(:disabled):hover {
+    color: var(--cn-text);
+  }
 }
 
 .spinner {
@@ -64,11 +70,5 @@
   border: 2px solid currentColor;
   border-top-color: transparent;
   border-radius: 50%;
-  animation: spin 700ms linear infinite;
-}
-
-@keyframes spin {
-  to {
-    transform: rotate(360deg);
-  }
+  animation: cn-spin var(--cn-duration-spin) linear infinite;
 }

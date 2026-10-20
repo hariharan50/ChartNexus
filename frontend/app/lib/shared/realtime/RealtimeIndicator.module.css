@@ -47,7 +47,7 @@
 }
 
 .pulse {
-  animation: pulse 1.6s ease-in-out infinite;
+  animation: cn-pulse var(--cn-duration-pulse) ease-in-out infinite;
 }
 
 /* Honours a reader who asked for less motion; the colour already carries the
@@ -55,15 +55,5 @@
 @media (prefers-reduced-motion: reduce) {
   .pulse {
     animation: none;
-  }
-}
-
-@keyframes pulse {
-  0%,
-  100% {
-    opacity: 1;
-  }
-  50% {
-    opacity: 0.35;
   }
 }

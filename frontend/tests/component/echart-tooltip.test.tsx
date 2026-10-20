@@ -37,10 +37,19 @@ beforeEach(() => {
 });
 
 describe('EChart and the tooltip preference', () => {
-  it('paints the option untouched while tooltips are on', () => {
+  it('leaves the tooltip and the reset key alone while tooltips are on', () => {
     render(<EChart option={OPTION} resetKey="lot" />);
 
-    expect(last().option).toBe(OPTION);
+    // The tooltip itself passes through by identity — this transform is the
+    // only thing that may touch it, and with the preference on it does not.
+    //
+    // The *option* is no longer identical, because `withMotionDefaults` adds
+    // the house animation duration on this same seam. That is deliberate: the
+    // charts animate inside a canvas no stylesheet reaches, so the default had
+    // to be applied somewhere, and this is the one place every chart passes
+    // through. What still has to hold is the reset key, which is what decides
+    // whether a chart repaints by merge or by rebuild.
+    expect(tooltipOf(last())).toBe(OPTION.tooltip);
     expect(last().resetKey).toBe('lot');
   });
 

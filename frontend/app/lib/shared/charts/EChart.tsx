@@ -1,8 +1,10 @@
 import { useEffect, useMemo, useRef, type CSSProperties } from 'react';
 import { cx } from '$shared/ui/cx';
 import { usePreferencesStore } from '$shared/ui/preferences-store';
+import { useReducedMotion } from '$shared/ui/use-reduced-motion';
 import type { EChartsCoreOption } from './echarts-modules';
 import s from './EChart.module.css';
+import { withMotionDefaults } from './motion-preference';
 import { withoutTooltipContent } from './tooltip-preference';
 import { useEChart } from './use-echart';
 
@@ -45,11 +47,12 @@ interface Props {
 export default function EChart({ option, resetKey, group, className, style, onAxisHover }: Props) {
   const container = useRef<HTMLDivElement>(null);
   const showTooltip = usePreferencesStore((state) => state.showChartTooltip);
+  const reducedMotion = useReducedMotion();
 
-  const painted = useMemo(
-    () => (showTooltip ? option : withoutTooltipContent(option)),
-    [option, showTooltip]
-  );
+  const painted = useMemo(() => {
+    const motioned = withMotionDefaults(option, reducedMotion);
+    return showTooltip ? motioned : withoutTooltipContent(motioned);
+  }, [option, showTooltip, reducedMotion]);
 
   /*
    * Flipping the preference has to *rebuild*, not merge.
@@ -59,11 +62,20 @@ export default function EChart({ option, resetKey, group, className, style, onAx
    * mounted at the time still silent. Folding the preference into the reset
    * key routes the change through `chart.clear()` instead.
    *
-   * The key is left exactly as the caller gave it while tooltips are on, which
-   * is the default and every server render: a chart that is not toggling must
-   * not take a different paint path because this line exists.
+   * The key is left exactly as the caller gave it while tooltips are on and
+   * motion is allowed, which is the default and every server render: a chart
+   * that is not toggling must not take a different paint path because this line
+   * exists.
+   *
+   * Reduced motion rides the same seam for the same reason. `animation: false`
+   * merges in cleanly but cannot be merged back out, so a visitor turning the
+   * preference off again would otherwise have been left with every mounted
+   * chart permanently still.
    */
-  const paintKey = showTooltip ? resetKey : `${resetKey ?? ''} :no-tooltip`;
+  const paintKey =
+    showTooltip && !reducedMotion
+      ? resetKey
+      : `${resetKey ?? ''}${showTooltip ? '' : ' :no-tooltip'}${reducedMotion ? ' :still' : ''}`;
 
   const chartRef = useEChart({ option: painted, resetKey: paintKey, group }, container);
   // Through a ref so the subscription below is installed once, rather than

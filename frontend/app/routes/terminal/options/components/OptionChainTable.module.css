@@ -22,8 +22,10 @@
     color 0.12s ease;
 }
 
-.filter button:hover {
-  color: var(--cn-text);
+@media (hover: hover) {
+  .filter button:hover {
+    color: var(--cn-text);
+  }
 }
 
 .filter button.active {
@@ -118,16 +120,20 @@
   border-bottom: none;
 }
 
-.scroll tbody tr:hover {
-  background: var(--cn-surface-raised);
+@media (hover: hover) {
+  .scroll tbody tr:hover {
+    background: var(--cn-surface-raised);
+  }
 }
 
 .scroll tr.atm {
   background: color-mix(in srgb, var(--cn-accent) 6%, transparent);
 }
 
-.scroll tr.atm:hover {
-  background: color-mix(in srgb, var(--cn-accent) 10%, transparent);
+@media (hover: hover) {
+  .scroll tr.atm:hover {
+    background: color-mix(in srgb, var(--cn-accent) 10%, transparent);
+  }
 }
 
 .strike {

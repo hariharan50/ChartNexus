@@ -288,9 +288,11 @@
   box-shadow: var(--lp-shadow-cta);
 }
 
-.btn-primary:hover {
-  background: var(--lp-primary-hover);
-  transform: translateY(-1px);
+@media (hover: hover) {
+  .btn-primary:hover {
+    background: var(--lp-primary-hover);
+    transform: translateY(-1px);
+  }
 }
 
 .btn-ghost {
@@ -299,9 +301,11 @@
   border-color: var(--cn-border-strong);
 }
 
-.btn-ghost:hover {
-  color: var(--lp-heading);
-  border-color: var(--cn-text-subtle);
+@media (hover: hover) {
+  .btn-ghost:hover {
+    color: var(--lp-heading);
+    border-color: var(--cn-text-subtle);
+  }
 }
 
 .btn-lg {
@@ -372,9 +376,11 @@
     background 0.15s ease;
 }
 
-.nav-link:hover {
-  color: var(--lp-heading);
-  background: var(--cn-surface);
+@media (hover: hover) {
+  .nav-link:hover {
+    color: var(--lp-heading);
+    background: var(--cn-surface);
+  }
 }
 
 /* The current section, tracked as you scroll: a soft accent pill rather than a
@@ -436,9 +442,11 @@
     background 0.15s ease;
 }
 
-.theme-toggle:hover {
-  color: var(--lp-heading);
-  border-color: var(--cn-text-subtle);
+@media (hover: hover) {
+  .theme-toggle:hover {
+    color: var(--lp-heading);
+    border-color: var(--cn-text-subtle);
+  }
 }
 
 .theme-toggle span {
@@ -575,18 +583,7 @@
 
 @media (prefers-reduced-motion: no-preference) {
   .page-enter {
-    animation: page-enter 0.32s cubic-bezier(0.22, 0.61, 0.36, 1) both;
-  }
-}
-
-@keyframes page-enter {
-  from {
-    opacity: 0;
-    transform: translateY(12px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
+    animation: cn-rise var(--cn-duration-slow) var(--cn-ease-out) both;
   }
 }
 
@@ -826,10 +823,12 @@
     box-shadow 0.16s ease;
 }
 
-.card:hover {
-  transform: translateY(-2px);
-  border-color: var(--cn-border-strong);
-  box-shadow: var(--lp-shadow-md);
+@media (hover: hover) {
+  .card:hover {
+    transform: translateY(-2px);
+    border-color: var(--cn-border-strong);
+    box-shadow: var(--lp-shadow-md);
+  }
 }
 
 .tile {
@@ -888,9 +887,11 @@
     transform 0.16s ease;
 }
 
-.row:hover {
-  border-color: var(--cn-border-strong);
-  transform: translateY(-1px);
+@media (hover: hover) {
+  .row:hover {
+    border-color: var(--cn-border-strong);
+    transform: translateY(-1px);
+  }
 }
 
 .row-num {
@@ -1036,8 +1037,10 @@
   color: var(--lp-footer-link);
 }
 
-.footer-col a:hover {
-  text-decoration: underline;
+@media (hover: hover) {
+  .footer-col a:hover {
+    text-decoration: underline;
+  }
 }
 
 /* The link for the page you are on: darker and bolder, so the footer echoes the
@@ -1111,9 +1114,11 @@
     border-color 0.15s ease;
 }
 
-.footer-social a:hover {
-  color: var(--lp-footer-heading);
-  border-color: var(--lp-footer-heading);
+@media (hover: hover) {
+  .footer-social a:hover {
+    color: var(--lp-footer-heading);
+    border-color: var(--lp-footer-heading);
+  }
 }
 
 .footer-social svg {
@@ -1603,7 +1608,7 @@
   border-right: 2px solid var(--lp-primary);
   border-bottom: 2px solid var(--lp-primary);
   transform: rotate(45deg);
-  transition: transform 0.18s ease;
+  transition: transform var(--cn-duration) var(--cn-ease);
 }
 
 .faq-item[open] .faq-q::after {
@@ -1686,6 +1691,8 @@
   color: var(--lp-primary);
 }
 
-.card-link:hover .card-cue {
-  gap: 0.625rem;
+@media (hover: hover) {
+  .card-link:hover .card-cue {
+    gap: 0.625rem;
+  }
 }

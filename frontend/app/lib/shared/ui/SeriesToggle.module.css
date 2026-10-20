@@ -15,10 +15,15 @@
   font-size: var(--cn-text-xs);
   font-weight: 600;
   cursor: pointer;
+  transition:
+    border-color,
+    background var(--cn-duration-fast) var(--cn-ease);
 }
 
-.entry:hover {
-  border-color: var(--cn-border-strong);
+@media (hover: hover) {
+  .entry:hover {
+    border-color: var(--cn-border-strong);
+  }
 }
 
 .entry:focus-visible {

@@ -300,13 +300,7 @@
 }
 
 .dot.pulse {
-  animation: pulse 1.2s ease-in-out infinite;
-}
-
-@keyframes pulse {
-  50% {
-    opacity: 0.35;
-  }
+  animation: cn-pulse var(--cn-duration-pulse) ease-in-out infinite;
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -332,9 +326,11 @@
   cursor: pointer;
 }
 
-.zoom-reset:hover {
-  border-color: var(--cn-border-strong);
-  color: var(--cn-text);
+@media (hover: hover) {
+  .zoom-reset:hover {
+    border-color: var(--cn-border-strong);
+    color: var(--cn-text);
+  }
 }
 
 .download {
@@ -371,8 +367,10 @@
   cursor: pointer;
 }
 
-.entry:hover {
-  border-color: var(--cn-border-strong);
+@media (hover: hover) {
+  .entry:hover {
+    border-color: var(--cn-border-strong);
+  }
 }
 
 /* Off: the label struck through, but the eye stays fully lit so the control
@@ -471,8 +469,10 @@
     box-shadow 0.12s ease;
 }
 
-.mode-card:hover {
-  border-color: var(--cn-border-strong);
+@media (hover: hover) {
+  .mode-card:hover {
+    border-color: var(--cn-border-strong);
+  }
 }
 
 .mode-card:focus-visible {
@@ -623,12 +623,14 @@
   white-space: nowrap;
   cursor: pointer;
   user-select: none;
-  transition: color 0.15s ease;
+  transition: color var(--cn-duration-fast) var(--cn-ease);
 }
 
-.switch:hover,
-.switch.on {
-  color: var(--cn-text);
+@media (hover: hover) {
+  .switch:hover,
+  .switch.on {
+    color: var(--cn-text);
+  }
 }
 
 .track {
@@ -637,7 +639,7 @@
   height: 1.0625rem;
   border-radius: 999px;
   background: var(--cn-border-strong);
-  transition: background 0.15s ease;
+  transition: background var(--cn-duration-fast) var(--cn-ease);
   flex: none;
 }
 
@@ -659,7 +661,7 @@
   border-radius: 50%;
   background: #fff;
   box-shadow: 0 1px 2px rgb(0 0 0 / 0.3);
-  transition: transform 0.15s ease;
+  transition: transform var(--cn-duration-fast) var(--cn-ease);
 }
 
 .switch.on .knob {

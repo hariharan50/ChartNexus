@@ -116,9 +116,11 @@
   cursor: pointer;
 }
 
-.simulate:hover:not(:disabled) {
-  border-color: var(--cn-accent);
-  color: var(--cn-accent);
+@media (hover: hover) {
+  .simulate:hover:not(:disabled) {
+    border-color: var(--cn-accent);
+    color: var(--cn-accent);
+  }
 }
 
 .simulate:disabled {
@@ -219,9 +221,11 @@
   cursor: pointer;
 }
 
-.zoomReset:hover {
-  border-color: var(--cn-border-strong);
-  color: var(--cn-text);
+@media (hover: hover) {
+  .zoomReset:hover {
+    border-color: var(--cn-border-strong);
+    color: var(--cn-text);
+  }
 }
 
 /* -- the trade log --------------------------------------------------------- */
@@ -266,8 +270,10 @@
   border-bottom: none;
 }
 
-.table tbody tr:hover td {
-  background: var(--cn-surface-raised);
+@media (hover: hover) {
+  .table tbody tr:hover td {
+    background: var(--cn-surface-raised);
+  }
 }
 
 .right {

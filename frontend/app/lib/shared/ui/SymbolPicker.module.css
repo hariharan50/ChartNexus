@@ -72,10 +72,13 @@
   font-weight: 600;
   cursor: pointer;
   text-align: left;
+  transition: background var(--cn-duration-fast) var(--cn-ease);
 }
 
-.row:hover {
-  background: var(--cn-surface-raised);
+@media (hover: hover) {
+  .row:hover {
+    background: var(--cn-surface-raised);
+  }
 }
 
 .row:focus-visible {
