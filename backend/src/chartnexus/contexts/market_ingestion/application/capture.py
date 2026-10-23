@@ -14,6 +14,7 @@ for the caller to log; the use case itself stays free of I/O and framework.
 
 from __future__ import annotations
 
+import asyncio
 from dataclasses import dataclass, field
 from datetime import date, datetime, timedelta, timezone
 from decimal import Decimal
@@ -102,6 +103,7 @@ class CaptureChainSnapshots:
         symbols: tuple[str, ...],
         allow_mock: bool = False,
         expiries: int = 1,
+        pace_seconds: float = 0.0,
     ) -> None:
         self._source = source
         self._writer = writer
@@ -110,6 +112,7 @@ class CaptureChainSnapshots:
         self._symbols = symbols
         self._allow_mock = allow_mock
         self._expiries = max(1, expiries)
+        self._pace_seconds = max(0.0, pace_seconds)
 
     async def __call__(self) -> CaptureResult:
         now = self._clock.now()
@@ -117,7 +120,15 @@ class CaptureChainSnapshots:
             return CaptureResult(skipped_closed=True)
 
         acc = _Acc()
-        for symbol in self._symbols:
+        for index, symbol in enumerate(self._symbols):
+            # The broker budget is enforced by rejection, not by queueing: the
+            # quota manager raises rather than sleeps so an interactive caller
+            # can fall back to cache. A batch walking the whole universe has no
+            # such fallback, and unpaced it simply outruns the per-second gate
+            # and loses most of the universe to its own limiter. Spacing the
+            # symbols keeps the sustained rate inside the budget.
+            if index and self._pace_seconds:
+                await asyncio.sleep(self._pace_seconds)
             await self._capture_one(symbol, acc)
 
         return CaptureResult(

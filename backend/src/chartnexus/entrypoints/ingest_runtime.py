@@ -56,6 +56,10 @@ class _SystemClock:
         return datetime.now(UTC)
 
 
+#: ``MARKET_INGEST_SYMBOLS=["*"]`` — archive every instrument, not just indices.
+_ALL_SYMBOLS = "*"
+
+
 def ingest_symbols(settings: Settings) -> tuple[str, ...]:
     """Which symbols this loop archives option chains for.
 
@@ -63,11 +67,20 @@ def ingest_symbols(settings: Settings) -> tuple[str, ...]:
     the catalog — resolved per call, so a catalog refresh that adds an index is
     picked up on the next tick without a restart.
 
-    Not the whole universe, and not by accident: one option-chain fetch per
-    symbol per tick against a 100k/day broker quota does not survive 216
-    symbols at a three-minute cadence.
+    ``"*"`` means the whole universe — every index *and* stock. It costs one
+    option-chain fetch per symbol per tick, but only inside session hours:
+    ``OptionChainCapture`` returns ``skipped_closed`` before it fetches, so the
+    bill is the 09:15-15:30 window alone. At the 180s default that is 125 ticks,
+    so ~220 symbols is ~27.5k calls against the 100k/day quota. At a 60s cadence
+    the same universe is ~83k — inside quota, but with little headroom for
+    retries, and one tick cannot walk 220 symbols in 60s at 8 req/s anyway.
     """
     configured = tuple(settings.market.ingest_symbols)
+    if configured == (_ALL_SYMBOLS,):
+        # The whole F&O universe, resolved per call like the index default so a
+        # catalog refresh is picked up without a restart. Pinning 200-odd names
+        # in config would go stale the first time the exchange list moves.
+        return registry.current().symbols()
     if configured:
         return configured
     return registry.current().symbols(kind=InstrumentKind.INDEX)
@@ -98,6 +111,11 @@ async def capture_tick(container: Container, settings: Settings, *, allow_mock: 
         skipped_empty=list(result.skipped_empty),
         skipped_unchanged=list(result.skipped_unchanged),
         failed=[symbol for symbol, _ in result.failed],
+        # The labels alone are undiagnosable once a tick covers the whole
+        # universe: "150 symbols failed" needs the *why*, and the reasons
+        # repeat, so a deduped handful is the whole story at a fraction of
+        # the width.
+        failure_reasons=sorted({reason for _, reason in result.failed})[:5],
     )
 
     await publish_committed(container, settings, result.committed)
