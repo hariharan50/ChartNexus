@@ -151,6 +151,17 @@ def _leg(strike: object, option_type: str, quote: object) -> ChainRowToWrite:
     )
 
 
+def _pace_seconds(requests_per_second: int) -> float:
+    """Spacing between symbols, at half the per-second broker budget.
+
+    Half rather than all of it on purpose: the loop shares one Redis-backed
+    budget with every interactive request, and a capture that consumed the lot
+    would answer a user's chart with the rate-limit error instead. Half still
+    walks ~220 symbols well inside a 180s cadence.
+    """
+    return 2.0 / max(1, requests_per_second)
+
+
 def build_ingest_service(
     *,
     session: object,
@@ -199,4 +210,5 @@ def build_ingest_service(
         symbols=symbols,
         allow_mock=allow_mock,
         expiries=settings.market.ingest_expiries,
+        pace_seconds=_pace_seconds(settings.broker.quota_requests_per_second),
     )

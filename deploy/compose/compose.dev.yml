@@ -24,6 +24,12 @@ services:
       CN_OTEL_LOG_FORMAT: console
       CN_SECURITY_COOKIE_SECURE: "false"
       CN_BROKER_PROVIDER: ${CN_BROKER_PROVIDER:-mock}
+      # The `ingest` service below is the archive's only writer. Left at its
+      # default the API would run a second capture loop inside its own
+      # lifespan (LOCAL auto-start), so every tick was fetched twice and the
+      # two loops split one broker rate budget. Only `main_api` reads this,
+      # so the standalone worker is unaffected.
+      CN_MARKET_INGEST_IN_PROCESS: "false"
       # LLM keys are per-user (set in-app at Settings -> AI, stored encrypted),
       # so no CN_LLM_* provider/key is injected here. Operational knobs
       # (CN_LLM_MAX_OUTPUT_TOKENS, CN_LLM_REQUEST_TIMEOUT_SECONDS,
@@ -49,9 +55,19 @@ services:
       # `skipped_mock` on every tick forever, the archive stays empty, and the
       # Open Interest timeline has nothing to scrub over.
       CN_MARKET_INGEST_ALLOW_MOCK: "true"
-      # Matches `task dev:ingest`. Faster than the 180s default so the page
-      # visibly gains a bar while you are looking at it.
-      CN_MARKET_SNAPSHOT_INTERVAL_SECONDS: "60"
+      # Back to the 180s default, and not a free choice: `["*"]` below is ~220
+      # symbols, one broker call each per tick, and the client is capped at
+      # 8 req/s — a single pass needs ~28s of wall clock. At 60s that is half
+      # the window spent fetching with nothing left for retries, and ~83k
+      # calls/day against the 100k quota. At 180s it is ~27.5k/day.
+      CN_MARKET_SNAPSHOT_INTERVAL_SECONDS: "180"
+      # Every instrument, indices and stocks alike. Without this the archive
+      # holds indices only, and every Options Lab series for a stock degrades
+      # to the two-point `live_proxy` estimate — the straight 9:15-to-now line.
+      # Resolved from the catalog per tick, so it tracks the F&O list rather
+      # than freezing today's names. Narrow it to a JSON list of symbols if the
+      # quota gets tight.
+      CN_MARKET_INGEST_SYMBOLS: '["*"]'
     volumes:
       - ../../backend/src:/app/src:ro
     depends_on:
