@@ -2,8 +2,10 @@
  * Gann Square-of-9 daily levels.
  *
  * The acceptance values come from the reference workbook via
- * `gann_daily_levels.py` at the repo root; that file and this test must agree
- * digit for digit, which is the whole point of pinning them in both places.
+ * `devdocs/gann_daily_levels.py`; that file and this test must agree digit for
+ * digit, which is the whole point of pinning them in both places. `devdocs` is
+ * gitignored, so the workbook does not travel with a clone — the numbers below
+ * are this repository's only record of it.
  */
 
 import { describe, expect, it } from 'vitest';
