@@ -18,7 +18,7 @@ import {
   toVolume,
   type HistoryView
 } from '../analyse-data';
-import { buildOverlays } from '../indicators';
+import { buildOverlays, gannGuard } from '../indicators';
 import { REPLAY_SPEEDS, type CellConfig, type ReplaySpeed } from '../workspace';
 import ChartLegend from './ChartLegend';
 import DrawingStyleBar from './DrawingStyleBar';
@@ -175,9 +175,22 @@ export default function ChartCell({
   const drawnVolume = preservesBars(config.chartType) ? visibleVolume : undefined;
 
   const overlays = useMemo(
-    () => buildOverlays(new Set(config.indicators), drawnCandles, drawnVolume),
-    [config.indicators, drawnCandles, drawnVolume]
+    () => buildOverlays(new Set(config.indicators), drawnCandles, drawnVolume, config.interval),
+    [config.indicators, drawnCandles, drawnVolume, config.interval]
   );
+
+  /**
+   * Why Gann drew nothing, or drew something the reader should distrust.
+   *
+   * An indicator that silently no-ops when the chart is on 1H looks like a
+   * broken toggle. The guard says so out loud instead — and says it only while
+   * the indicator is actually switched on.
+   */
+  const gannNotice = useMemo(() => {
+    if (!config.indicators.includes('gann')) return null;
+    const { error, warning } = gannGuard(drawnCandles, config.interval);
+    return error ?? warning;
+  }, [config.indicators, drawnCandles, config.interval]);
 
   const [hovered, setHovered] = useState<Candle | null>(null);
   const shownBar = hovered ?? drawnCandles[drawnCandles.length - 1] ?? null;
@@ -265,6 +278,11 @@ export default function ChartCell({
         ) : (
           <>
             <ChartLegend symbol={config.symbol} badge={badge} bar={shownBar} volume={shownVolume} />
+            {gannNotice ? (
+              <p className={s.indicatorNotice} role="status">
+                {gannNotice}
+              </p>
+            ) : null}
             <LwChart
               candles={drawnCandles}
               volume={drawnVolume}

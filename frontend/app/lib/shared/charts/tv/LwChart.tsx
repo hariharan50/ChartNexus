@@ -103,6 +103,16 @@ const SERIES_KIND: Record<ChartType, 'bar' | 'candlestick' | 'line' | 'area' | '
  */
 const LINE_TYPE_STEPS = 1;
 
+/** `LineType.Simple` — the default, straight between points. */
+const LINE_TYPE_SIMPLE = 0;
+
+/**
+ * `LineStyle.Solid` and `LineStyle.Dashed`, as numbers, for the same reason the
+ * line type above is a number: the enum is a value import.
+ */
+const LINE_STYLE_SOLID = 0;
+const LINE_STYLE_DASHED = 2;
+
 /** What the parent can ask of a mounted chart. */
 export interface LwChartHandle {
   /** A PNG of the chart as drawn, for the toolbar's snapshot button. */
@@ -125,7 +135,29 @@ export interface OverlaySpec {
   paneIndex: number;
   color: string;
   lineWidth?: number;
-  data: { time: number; value: number }[];
+  /**
+   * Dashed rather than solid. Defaults to solid, which is every overlay that
+   * does not ask — a moving average has no reason to be dashed.
+   */
+  lineStyle?: 'solid' | 'dashed';
+  /**
+   * Hold each value flat until the next point instead of interpolating to it.
+   *
+   * A level that is constant across a session and jumps at the next session's
+   * anchor has to step: interpolating would draw a sloped line through the
+   * overnight gap, implying the level drifted when in fact it was fixed all day
+   * and then moved at once.
+   */
+  stepped?: boolean;
+  /** Show this series' last value in the right-hand price scale. */
+  priceLabel?: boolean;
+  /**
+   * `null` is a gap, not a zero: the line breaks there and resumes at the next
+   * real value. Most indicators simply omit the bars they cannot compute, but
+   * omitting is not enough for a stepped series — the step would hold the stale
+   * value straight across the hole. Same convention as `HistogramSpec.data`.
+   */
+  data: { time: number; value: number | null }[];
 }
 
 /**
@@ -633,18 +665,23 @@ export default function LwChart({
       series.applyOptions({
         color: spec.color,
         lineWidth: (spec.lineWidth ?? 2) as 1 | 2 | 3 | 4,
+        lineStyle: spec.lineStyle === 'dashed' ? LINE_STYLE_DASHED : LINE_STYLE_SOLID,
+        lineType: spec.stepped ? LINE_TYPE_STEPS : LINE_TYPE_SIMPLE,
         priceLineVisible: false,
-        lastValueVisible: false,
+        lastValueVisible: spec.priceLabel ?? false,
         crosshairMarkerVisible: false
       });
       // Same ascending/duplicate-free requirement `paint` guards against, and
       // the same reason: an indicator's points are derived from the candles,
       // so any disorder in the source data reaches here too.
+      // A whitespace point (`{ time }`, no value) is how the library is told the
+      // series has no reading for that bar; giving it a value would invent one.
       series.setData(
-        sortAscending(spec.data).map((point) => ({
-          time: point.time as UTCTimestamp,
-          value: point.value
-        }))
+        sortAscending(spec.data).map((point) =>
+          point.value === null
+            ? { time: point.time as UTCTimestamp }
+            : { time: point.time as UTCTimestamp, value: point.value }
+        )
       );
     }
 
