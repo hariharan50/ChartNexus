@@ -9,6 +9,98 @@ changes are not recorded here.
 
 ## [Unreleased]
 
+## [1.9.0] — 2026-10-26
+
+Gann Square-of-9 levels on the Analyse charts, the whole F&O universe in the
+option-chain archive rather than indices alone, a motion pass that finally
+reaches inside the charts, and the security-scan checks back to green.
+
+### Added
+
+**Analyse**
+
+- Gann Square-of-9 daily levels, under a new `Levels` indicator category. Seven
+  lines per session — the anchor, three rungs above and three below — held flat
+  across the day and stepping at the next session's anchor. The anchor is the
+  close of the last bar that *opens* strictly before session start + 15m, found
+  by time rather than by counting bars, so a missing print, a feed gap or an
+  exchange half-day cannot shift it onto the wrong candle. Nothing publishes
+  until that window closes, and a session whose anchor never arrived carries an
+  explicit gap rather than holding the previous day's level across the hole.
+- On a bar coarser than its opening range the indicator declines to draw and
+  says so beside the price. An indicator that silently no-ops on a 1H chart
+  reads as a broken toggle.
+
+**Accessibility**
+
+- Charts follow `prefers-reduced-motion`. The global block in `app.css`
+  flattens every CSS duration, but ECharts animates inside a canvas/SVG surface
+  no stylesheet can reach, so the charts were the one part of the product
+  ignoring the preference outright.
+
+### Changed
+
+- Chart animation defaults to 260ms rather than the ECharts default of 1000ms.
+  Eighteen of the twenty-one builders in `charts/options/` never said
+  otherwise, so nearly every chart settled for a full second while the
+  surrounding UI moved in 120-320ms — and on a terminal that refetches on a
+  timer, long enough that the next update can arrive mid-animation. A builder
+  that configures animation itself keeps what it set; reduced motion overrides
+  even an explicit duration, which is a preference rather than a house style.
+- Every `:hover` rule is guarded behind `@media (hover: hover)` — 166 blocks
+  across 92 CSS modules — so a tap on a touch device no longer leaves the hover
+  state stuck until something else is pressed.
+- `MARKET_INGEST_SYMBOLS=["*"]` archives the whole F&O universe instead of the
+  indices alone, resolved from the catalog per tick like the index default so
+  the list cannot go stale against an exchange change; pinning 200-odd names
+  would not survive the first one. The quota cost is the 09:15-15:30 window
+  alone, since capture returns `skipped_closed` before it fetches: ~27.5k calls
+  a day against a 100k quota, not the round-the-clock figure the docstring
+  assumed.
+- Ingest cadence returns to the 180s default. ~220 symbols need ~28s of wall
+  clock at 8 req/s, which does not fit a 60s window with room for retries.
+- `backend-ci` installs `--all-extras`, for the reason security-scan.yml
+  already gives for auditing them: the LLM SDKs are installed in production and
+  so are in scope. mypy had been reporting 40 missing-stub errors across the
+  twelve modules under `infrastructure/agent/` rather than checking them.
+
+### Fixed
+
+- A stock's Options Lab series drew as a straight line across the session. With
+  nothing in the option-chain archive the OI service falls back to
+  `live_proxy` — the 09:15 open and the live chain, two points, joined — and
+  only indices were ever archived, so this was every one of the 213 stocks in
+  the catalog.
+- The API ran a second capture loop in its own lifespan alongside the
+  standalone worker, fetching every tick twice and splitting one broker rate
+  budget between them.
+- The capture loop outran the quota gate and lost half the universe to our own
+  limiter: 107 of 222 written. The quota manager enforces by rejection rather
+  than queueing — deliberate, so an interactive caller can serve cache instead
+  of blocking — but a batch has no such fallback. Spacing symbols at half the
+  budget gives 222 written and 0 failed; half rather than all of it so a user's
+  chart is not answered with the rate-limit error the loop itself caused.
+- Capture logs why a symbol failed. `failed=[...150 symbols...]` with the
+  reason discarded gave nothing to diagnose from, and a deduped handful is what
+  identified the limiter as self-inflicted.
+
+### Security
+
+- `CVE-2026-84782` (HIGH, libssl3/openssl) in the backend image, which Debian
+  had already fixed in `3.0.22-1~deb12u2`. The runtime stage installed curl but
+  never upgraded base packages, so the image shipped whatever set existed when
+  the base tag was last cut — the same gap `apk upgrade` closes in nginx. The
+  backend and frontend images both upgrade now.
+- `GHSA-27r3-jxmh-p828` (HIGH, body-parser) reached through
+  `@react-router/serve > express`. It failed the node advisory check and the
+  web image's container scan alike, Trivy finding it in the copied
+  `node_modules`. `2.4.0` satisfies express's own `^2.2.1`, so the lockfile was
+  simply behind.
+- 39 Python advisories across certifi, pillow and the opentelemetry stack, all
+  transitive and all with `>=` constraints. otel moves as a family — the SDK,
+  exporters and instrumentation packages pin each other — so `api` alone could
+  not reach the fixed 1.45.1.
+
 ## [1.8.0] — 2026-10-19
 
 A real Relative Rotation Graph for sector rotation, the two inert Global
