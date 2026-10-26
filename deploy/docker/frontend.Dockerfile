@@ -53,7 +53,13 @@ WORKDIR /app
 # healthcheck shells out to `node`. They were also the entirety of this image's
 # container-scan findings — ten HIGH, every one of them inside npm's own bundled
 # dependencies, none in the application's.
-RUN rm -rf /usr/local/lib/node_modules/npm \
+
+# `apk upgrade` for the same reason nginx.Dockerfile runs one: node:22-alpine
+# is rebuilt on its own cadence and Alpine publishes security updates in
+# between, so without it the image ships whatever package set existed when the
+# base tag was last cut.
+RUN apk upgrade --no-cache \
+    && rm -rf /usr/local/lib/node_modules/npm \
         /usr/local/lib/node_modules/corepack \
         /opt/yarn-v* \
         /usr/local/bin/npm /usr/local/bin/npx /usr/local/bin/corepack \

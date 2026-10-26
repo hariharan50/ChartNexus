@@ -233,9 +233,7 @@ def rotation(
 
     points = [
         RrgPoint(at=at, rs_ratio=x, rs_momentum=y)
-        for at, x, y in zip(
-            stamps[-span:], ratio[-span:], momentum_axis[-span:], strict=True
-        )
+        for at, x, y in zip(stamps[-span:], ratio[-span:], momentum_axis[-span:], strict=True)
     ]
     return tuple(points[-tail:]) if tail > 0 else tuple(points)
 

@@ -224,9 +224,9 @@ class TestTails:
             *ticks(BENCHMARK, [100.0] * periods),
             *ticks("A", rising(periods, 1.0)),
         ]
-        board = await build(
-            points, [sector_row("IT", ["A"]), sector_row("PHARMA", ["GHOST"])]
-        )(SectorRrgQuery(tenant_id=TENANT, index="NIFTY50"))
+        board = await build(points, [sector_row("IT", ["A"]), sector_row("PHARMA", ["GHOST"])])(
+            SectorRrgQuery(tenant_id=TENANT, index="NIFTY50")
+        )
         assert [tail.sector for tail in board.tails] == ["IT"]
 
 

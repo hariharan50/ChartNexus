@@ -42,9 +42,13 @@ jobs:
           cache-dependency-glob: backend/uv.lock
 
       # --frozen so a uv.lock that has drifted from pyproject.toml fails here
-      # rather than resolving to something nobody has run locally.
+      # rather than resolving to something nobody has run locally. --all-extras for
+      # the reason security-scan.yml gives for auditing them: the LLM SDKs are
+      # installed in production, so they are in scope — and without them mypy cannot
+      # see langgraph or the Anthropic SDK, and every module under
+      # infrastructure/agent/ reports a missing stub instead of being checked.
       - name: Install
-        run: uv sync --frozen
+        run: uv sync --frozen --all-extras
 
       - name: Ruff (lint)
         run: uv run ruff check --output-format=github .
