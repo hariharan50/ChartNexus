@@ -45,7 +45,15 @@ FROM base AS runtime
 # out of it, so the base image's pip is dead weight — and its vendored urllib3,
 # msgpack and pkg_resources were the whole of this image's container-scan
 # findings. The project's own venv is clean; only the tool nobody runs was not.
+
+# `upgrade` before `install`, for the same reason nginx.Dockerfile runs
+# `apk upgrade`: the base image is rebuilt on its own cadence, and Debian
+# publishes security updates to the archive in between. Without this the image
+# ships whatever package set existed when the base tag was last cut — which is
+# how CVE-2026-84782 (libssl3/openssl, fixed in 3.0.22-1~deb12u2) failed the
+# container scan while the fixed package was already in bookworm.
 RUN apt-get update \
+    && apt-get upgrade -y \
     && apt-get install -y --no-install-recommends curl \
     && rm -rf /var/lib/apt/lists/* \
     && /usr/local/bin/python -m pip uninstall -y pip \
