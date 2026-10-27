@@ -107,3 +107,16 @@
 .accent.flat {
   background: transparent;
 }
+
+/* The nearest expiry, pinned to the corner the price does not occupy. Absolute
+   rather than in flow: the card's whole job is the number, and a marker that
+   could nudge it down by a line would be paying for a hint with the thing the
+   hint is attached to. */
+.expiry {
+  position: absolute;
+  top: var(--cn-space-3);
+  right: var(--cn-space-3);
+  display: inline-flex;
+  align-items: center;
+  pointer-events: none;
+}

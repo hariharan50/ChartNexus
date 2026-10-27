@@ -149,6 +149,53 @@ const SPOTS = {
 };
 
 /**
+ * Listed expiries per instrument, as `/market/expiries` returns them.
+ *
+ * The stub clock is Thursday 15 January 2026, and these are the dates the
+ * exchanges would actually publish around it: NIFTY settles Tuesdays, SENSEX
+ * Thursdays, and BANK NIFTY has no weekly series at all — only the last
+ * Tuesday of each month. SENSEX's nearest is the stub's own session date, so
+ * the Expiry Radar has a live `TODAY` row to render and the alert has
+ * something to fire on.
+ *
+ * Capped around the backend's 42-day horizon, and deliberately reaching into
+ * February: the UI only calls a date "monthly" when the list demonstrably
+ * contains its month's tail, so a list that stopped at January would exercise
+ * the truncation guard rather than the normal path.
+ */
+const EXPIRIES = {
+  NIFTY: ['2026-01-20', '2026-01-27', '2026-02-03', '2026-02-10', '2026-02-17', '2026-02-24'],
+  SENSEX: [
+    '2026-01-15',
+    '2026-01-22',
+    '2026-01-29',
+    '2026-02-05',
+    '2026-02-12',
+    '2026-02-19',
+    '2026-02-26'
+  ],
+  BANKNIFTY: ['2026-01-27', '2026-02-24']
+};
+
+/**
+ * The one payload whose provenance the UI branches on.
+ *
+ * Everything else here is served as `mock`, which is honest — it is synthetic.
+ * The expiry list cannot be: the Expiry Radar refuses a mock calendar outright
+ * and falls back to the published settlement rule, because the real mock
+ * provider returns Thursdays for every instrument and would otherwise have the
+ * page state NIFTY's weekly as a Thursday. Served as `live`, this exercises the
+ * confirmed path the production page takes; the rule fallback is covered by the
+ * unit suite, which can pin a clock.
+ */
+const EXPIRY_PROVENANCE = {
+  source: 'live',
+  age_seconds: 0,
+  fetched_at: '2026-01-15T04:00:00Z',
+  is_stale: false
+};
+
+/**
  * The session's latched opening gap, as the real `/market/spot` now returns it.
  *
  * Fixed values, like everything else here: the point of this stub is a page
@@ -686,6 +733,14 @@ const server = createServer((req, res) => {
       day_high: (Number.parseFloat(fut.price) + 85).toFixed(2),
       day_low: (Number.parseFloat(fut.price) - 96).toFixed(2),
       provenance: PROVENANCE
+    });
+  }
+
+  if (url.pathname === '/api/v1/market/expiries') {
+    return send(res, 200, {
+      instrument,
+      expiries: EXPIRIES[instrument] ?? EXPIRIES.NIFTY,
+      provenance: EXPIRY_PROVENANCE
     });
   }
 

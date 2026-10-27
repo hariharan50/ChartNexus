@@ -1,0 +1,74 @@
+.single {
+  display: inline-flex;
+  align-items: center;
+  flex: none;
+}
+
+/* `both` draws the monthly behind the weekly, offset by a few pixels, so one
+   glance reads "two contracts, same day" rather than "a triangle in a colour I
+   do not recognise". */
+.stack {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  flex: none;
+  width: 1.75rem;
+  height: 1.25rem;
+}
+
+.stack .glyph {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+}
+
+.stack .glyph.monthly {
+  left: 0.5rem;
+}
+
+.stack .glyph.weekly {
+  left: 0;
+}
+
+.glyph {
+  display: block;
+  width: 1.125rem;
+  height: 1.125rem;
+}
+
+.compact .glyph {
+  width: 0.875rem;
+  height: 0.875rem;
+}
+
+.compact.stack {
+  width: 1.375rem;
+  height: 1rem;
+}
+
+.compact.stack .glyph.monthly {
+  left: 0.375rem;
+}
+
+/* Colour names the contract and nothing else. Both come from the shared token
+   set, so the five themes in app.css are covered without a second palette. */
+.glyph.weekly {
+  color: var(--cn-bearish);
+}
+
+.glyph.monthly {
+  color: var(--cn-warning);
+}
+
+/* A hollow triangle is easy to lose against a dark surface at this size, so
+   the filled state also gets a faint halo of its own colour. */
+.glyph.filled {
+  filter: drop-shadow(0 0 3px color-mix(in srgb, currentcolor 45%, transparent));
+}
+
+/* Expiry day. Opacity rather than a box-shadow spread: SpotCard sets
+   `overflow: hidden`, which would clip a glow at the card's corner. The global
+   prefers-reduced-motion block in app.css already stops this. */
+.glyph.live {
+  animation: cn-pulse var(--cn-duration-pulse) ease-in-out infinite;
+}

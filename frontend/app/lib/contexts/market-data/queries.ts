@@ -12,6 +12,7 @@
  */
 
 import { useQuery } from '@tanstack/react-query';
+import { useMemo } from 'react';
 import {
   getExpiries,
   getFutures,
@@ -27,6 +28,8 @@ import type {
   Quote
 } from '$contexts/broker-connections/types';
 import { queryKeys } from '$shared/api/query-client';
+import { isoDateIST } from '$shared/formatting/ist-clock';
+import { type ExpiryRadar, radarFor } from './expiry-calendar';
 
 const REFETCH_MS = 15_000;
 
@@ -89,4 +92,33 @@ export function useExpiriesQuery(instrument: string) {
     staleTime: 15 * 60_000,
     refetchInterval: 30 * 60_000
   });
+}
+
+/**
+ * All three indices' expiry radars, merged from the listed-expiry queries.
+ *
+ * Composed here rather than in the route because the merge needs the session
+ * date, and `useMarketStatusQuery` already sits in this module — the backend's
+ * IST date is the right baseline for "how many days away", since a browser
+ * clock set wrong would otherwise silently shift every countdown.
+ *
+ * Costs three requests an hour: `useExpiriesQuery` is deliberately slow-polled,
+ * and the Options Lab expiry picker already shares these cache keys.
+ */
+export function useExpiryRadars(): ExpiryRadar[] {
+  const statusQ = useMarketStatusQuery();
+  const niftyQ = useExpiriesQuery('NIFTY');
+  const sensexQ = useExpiriesQuery('SENSEX');
+  const bankQ = useExpiriesQuery('BANKNIFTY');
+
+  const today = statusQ.data?.session_date ?? isoDateIST();
+
+  return useMemo(
+    () => [
+      radarFor('NIFTY50', 'NIFTY 50', niftyQ.data?.expiries, niftyQ.data?.provenance, today),
+      radarFor('SENSEX', 'SENSEX', sensexQ.data?.expiries, sensexQ.data?.provenance, today),
+      radarFor('BANKNIFTY', 'BANK NIFTY', bankQ.data?.expiries, bankQ.data?.provenance, today)
+    ],
+    [niftyQ.data, sensexQ.data, bankQ.data, today]
+  );
 }

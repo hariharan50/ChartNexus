@@ -7,17 +7,22 @@ import {
   toBackendSymbol,
   vixCard
 } from '$contexts/market-data/derive';
+import { leadMarker } from '$contexts/market-data/expiry-calendar';
 import {
+  useExpiryRadars,
   useFuturesQuery,
   useMarketStatusQuery,
   useOptionChainQuery,
   useSpotQuery
 } from '$contexts/market-data/queries';
 import type { IndexKey } from '$contexts/market-data/view-models';
+import { isoDateIST } from '$shared/formatting/ist-clock';
 import { formatInt } from '$shared/formatting/numbers';
 import IndexTabs from '../dashboard/components/IndexTabs';
 import LiveBadge from '../dashboard/components/LiveBadge';
 import { useRealtimeSymbols } from '$shared/realtime/RealtimeProvider';
+import ExpiryAlert from './components/ExpiryAlert';
+import ExpiryCard from './components/ExpiryCard';
 import FuturesCard from './components/FuturesCard';
 import MetricTile from './components/MetricTile';
 import SpotCard from './components/SpotCard';
@@ -104,6 +109,15 @@ export default function AdvancedDashboard() {
   const ivPct = ivPercentile(chain);
   const isLive = statusQ.data?.is_open ?? false;
 
+  // Settlement calendar for all three indices. Slow-polled and cache-shared
+  // with the Options Lab expiry picker, so the section costs the page nothing
+  // on the fifteen-second loop the quotes run on.
+  const radars = useExpiryRadars();
+  const expiryByKey = useMemo(
+    () => new Map(radars.map((radar) => [radar.key, leadMarker(radar)])),
+    [radars]
+  );
+
   return (
     <div className={s.page}>
       <header className={s.pageHead}>
@@ -117,6 +131,8 @@ export default function AdvancedDashboard() {
         </div>
       </header>
 
+      <ExpiryAlert radars={radars} sessionDate={statusQ.data?.session_date ?? isoDateIST()} />
+
       <section className={s.section}>
         <h2 className={s.sectionTitle}>Market Snapshot</h2>
 
@@ -127,6 +143,7 @@ export default function AdvancedDashboard() {
               quote={quote}
               selected={quote.key === focused}
               onSelect={() => setFocused(quote.key as IndexKey)}
+              expiry={expiryByKey.get(quote.key as IndexKey)}
             />
           ))}
         </div>
@@ -156,6 +173,16 @@ export default function AdvancedDashboard() {
           />
           <MetricTile label="ATM IV" value={atmIv != null ? atmIv.toFixed(2) : '—'} />
           <MetricTile label="IV Percentile" value={ivPct != null ? ivPct.toFixed(1) : '—'} />
+        </div>
+      </section>
+
+      <section className={s.section}>
+        <h2 className={s.sectionTitle}>Expiry Radar</h2>
+
+        <div className={s.grid3}>
+          {radars.map((radar) => (
+            <ExpiryCard key={radar.key} radar={radar} />
+          ))}
         </div>
       </section>
     </div>

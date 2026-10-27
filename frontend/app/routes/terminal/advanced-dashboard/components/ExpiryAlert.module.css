@@ -1,0 +1,91 @@
+.banner {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--cn-space-3);
+  padding: var(--cn-space-3) var(--cn-space-4);
+  border: 1px solid var(--cn-border);
+  border-left-width: 3px;
+  border-radius: var(--cn-radius-lg);
+  background: var(--cn-surface);
+  box-shadow: var(--cn-shadow);
+  animation: cn-rise var(--cn-duration) var(--cn-ease-out);
+}
+
+/* The left edge carries the tone. A full-bleed tinted banner competes with the
+   spot cards directly beneath it, which are themselves colour-coded by
+   direction - two colour systems stacked read as one confused one. */
+.banner.today {
+  border-left-color: var(--cn-bearish);
+  background: color-mix(in srgb, var(--cn-bearish) 8%, var(--cn-surface));
+}
+
+.banner.tomorrow {
+  border-left-color: var(--cn-warning);
+  background: color-mix(in srgb, var(--cn-warning) 7%, var(--cn-surface));
+}
+
+.lead {
+  display: inline-flex;
+  align-items: center;
+  flex: none;
+  padding-top: 0.0625rem;
+}
+
+.body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--cn-space-1);
+  flex: 1;
+  min-width: 0;
+}
+
+.headline {
+  margin: 0;
+  font-size: var(--cn-text-sm);
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  color: var(--cn-text);
+}
+
+.list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--cn-space-1) var(--cn-space-4);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.item {
+  font-size: var(--cn-text-xs);
+  line-height: 1.5;
+  color: var(--cn-text-muted);
+}
+
+.name {
+  font-weight: 700;
+  color: var(--cn-text);
+}
+
+.close {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  width: 1.75rem;
+  height: 1.75rem;
+  padding: 0;
+  border: 0;
+  border-radius: var(--cn-radius);
+  background: transparent;
+  color: var(--cn-text-subtle);
+  cursor: pointer;
+  transition: background var(--cn-duration-fast) ease;
+}
+
+@media (hover: hover) {
+  .close:hover {
+    background: var(--cn-surface-raised);
+    color: var(--cn-text);
+  }
+}

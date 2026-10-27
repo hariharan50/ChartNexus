@@ -1,0 +1,149 @@
+.card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--cn-space-3);
+  padding: var(--cn-space-4);
+  background: var(--cn-surface);
+  border: 1px solid var(--cn-border);
+  border-radius: var(--cn-radius-lg);
+  box-shadow: var(--cn-shadow);
+}
+
+.label {
+  font-size: var(--cn-text-xs);
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--cn-text-subtle);
+}
+
+.rows {
+  display: flex;
+  flex-direction: column;
+  gap: var(--cn-space-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+/* Triangle, contract, date, countdown. The date column is fixed so the three
+   cards' dates line up across the row - scanning down the column is how a
+   reader finds the nearest expiry, and ragged dates defeat that. */
+.row {
+  display: grid;
+  grid-template-columns: 1.75rem minmax(0, 1fr) auto;
+  grid-template-areas:
+    'glyph kind countdown'
+    'glyph date countdown';
+  align-items: center;
+  column-gap: var(--cn-space-2);
+  padding: var(--cn-space-2) var(--cn-space-3);
+  border: 1px solid var(--cn-border);
+  border-radius: var(--cn-radius);
+  background: var(--cn-surface-raised);
+}
+
+.glyph {
+  grid-area: glyph;
+  display: inline-flex;
+  align-items: center;
+}
+
+.kind {
+  grid-area: kind;
+  font-size: var(--cn-text-xs);
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--cn-text-subtle);
+}
+
+.date {
+  grid-area: date;
+  font-size: var(--cn-text-sm);
+  font-weight: 700;
+  color: var(--cn-text);
+  white-space: nowrap;
+}
+
+.countdown {
+  grid-area: countdown;
+  font-size: var(--cn-text-xs);
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  white-space: nowrap;
+  color: var(--cn-text-muted);
+}
+
+/* The countdown is where urgency is allowed to use colour, because it is the
+   one piece of text that *means* urgency. The triangle's colour is reserved
+   for naming the contract and never doubles as a severity. */
+.c_today {
+  color: var(--cn-bearish);
+}
+
+.c_tomorrow {
+  color: var(--cn-warning);
+}
+
+.c_near {
+  color: var(--cn-text);
+}
+
+/* Expiry day lifts the whole row, not just its text - at a glance the reader
+   should find the row before reading any of it. */
+.row.today {
+  border-color: var(--cn-bearish);
+  background: var(--cn-bearish-weak);
+}
+
+/* On the tinted ground the row's own text goes to full strength, overriding
+   both the muted label and the red countdown above.
+
+   Not a preference: --cn-text-subtle on --cn-bearish-weak measures 3.82:1 and
+   --cn-bearish on it 3.9:1, against the 4.5:1 axe holds this page to. Red text
+   on a red tint cannot reach 4.5:1 at any tint strength - the two sit too
+   close in luminance - so the fix is the text, not the background.
+
+   Nothing is lost by it. The row already says "today" three times over, in its
+   border, its ground and a solid pulsing triangle; the words are the one part
+   that has to stay readable, so they stop being a fourth colour signal. */
+.row.today .kind,
+.row.today .countdown {
+  color: var(--cn-text);
+}
+
+.row.tomorrow {
+  border-color: var(--cn-warning);
+}
+
+.notes {
+  display: flex;
+  flex-direction: column;
+  gap: var(--cn-space-1);
+}
+
+.note {
+  margin: 0;
+  font-size: var(--cn-text-xs);
+  line-height: 1.45;
+  color: var(--cn-text-subtle);
+}
+
+.noteWarn {
+  color: var(--cn-warning);
+}
+
+.skeleton {
+  display: flex;
+  flex-direction: column;
+  gap: var(--cn-space-2);
+}
+
+.skelRow {
+  width: 100%;
+  height: 2.75rem;
+  border-radius: var(--cn-radius);
+  background: var(--cn-surface-raised);
+  animation: cn-pulse var(--cn-duration-pulse) ease-in-out infinite;
+}
