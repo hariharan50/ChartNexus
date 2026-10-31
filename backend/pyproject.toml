@@ -47,6 +47,20 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
+# The Fyers streaming SDK, for the Trade Buddy tick feed. An extra rather than a
+# default dependency so an install that never streams stays lean; the adapter is
+# confined to infrastructure/brokers/fyers/, so nothing else notices its absence.
+#
+# It pins `aiohttp==3.9.3` exactly, and that release has no cp313/cp314 wheels on
+# any platform — a plain install therefore tries to compile a 2024 aiohttp and
+# fails without a C toolchain. The pin is also pointless for us:
+# `FyersWebsocket/data_ws.py` imports only `websocket-client` and `requests`;
+# aiohttp is used by the SDK's async REST client, which we do not touch (our REST
+# calls go through httpx). `[tool.uv] override-dependencies` relaxes it.
+# Install with:  uv sync --extra fyers-stream
+fyers-stream = [
+    "fyers-apiv3>=3.1.7",
+]
 # Generative LLM providers for the AI guider's copilot layer. Optional: with
 # neither installed the app runs on the rule-based provider (the default), and
 # the provider factory degrades gracefully when a package is absent. Install to
@@ -78,6 +92,7 @@ chartnexus-hugin = "chartnexus.entrypoints.main_hugin:run"
 chartnexus-mme100 = "chartnexus.entrypoints.main_mme100:run"
 chartnexus-report = "chartnexus.entrypoints.main_report:run"
 chartnexus-realtime = "chartnexus.entrypoints.main_realtime:run"
+chartnexus-trade-buddy = "chartnexus.entrypoints.main_trade_buddy:run"
 
 [dependency-groups]
 dev = [
@@ -104,6 +119,15 @@ packages = ["src/chartnexus"]
 
 [tool.uv]
 package = true
+
+# fyers-apiv3 pins `aiohttp==3.9.3`, a 2024 release with no cp313/cp314 wheels on
+# any platform — so installing the `fyers-stream` extra would try to compile it
+# and fail without a C toolchain. The pin is also irrelevant to what we use:
+# `FyersWebsocket/data_ws.py` imports only websocket-client and requests, and
+# aiohttp backs the SDK's async REST client, which this codebase never calls (our
+# REST path is httpx). Relaxing it is therefore safe and keeps the extra
+# installable from a wheel.
+override-dependencies = ["aiohttp>=3.11"]
 
 # ---------------------------------------------------------------------------
 # Architecture rules — enforced in CI alongside tests/architecture/.
@@ -185,6 +209,12 @@ ignore_imports = [
     # from the container. The context owns the handoff maths; only the bridge
     # knows which provider is behind the port.
     "chartnexus.contexts.global_markets.api.dependencies -> chartnexus.infrastructure.global_markets.build_global",
+    # Trade Buddy uses the same sanctioned-bridge pattern: its API dependency
+    # imports only `build_trade_buddy`, which assembles the JSON level store,
+    # the Telegram/CallMeBot notifiers and the Fyers feed into trade_buddy
+    # ports. The context owns the level state machine and declares the ports;
+    # only the bridge knows which adapter is behind each one.
+    "chartnexus.contexts.trade_buddy.api.dependencies -> chartnexus.infrastructure.trade_buddy.build_trade_buddy",
 ]
 modules = [
     "chartnexus.contexts.identity",
@@ -212,4 +242,5 @@ modules = [
     "chartnexus.contexts.report",
     "chartnexus.contexts.realtime_delivery",
     "chartnexus.contexts.audit",
+    "chartnexus.contexts.trade_buddy",
 ]

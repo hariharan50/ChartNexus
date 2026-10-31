@@ -21,18 +21,24 @@ FROM base AS dependencies
 # --------------------------------------------------------------------------
 # Dependencies resolve from the lockfile alone, so this layer is cached until
 # pyproject.toml or uv.lock actually changes.
+#
+# `fyers-stream` is the Fyers streaming SDK, needed by the Trade Buddy level
+# watcher. An extra rather than a default dependency because it pins
+# `aiohttp==3.9.3`, which has no cp313 wheels — `[tool.uv] override-dependencies`
+# relaxes that pin so this installs from wheels with no compiler in the image.
+# Every service shares this image, so it goes in the shared layer.
 COPY backend/pyproject.toml backend/uv.lock ./
 RUN --mount=type=cache,target=/root/.cache/uv \
-    uv sync --frozen --no-install-project --no-dev
+    uv sync --frozen --no-install-project --no-dev --extra fyers-stream
 
 # --------------------------------------------------------------------------
 FROM base AS development
 # --------------------------------------------------------------------------
 COPY backend/pyproject.toml backend/uv.lock ./
 RUN --mount=type=cache,target=/root/.cache/uv \
-    uv sync --frozen --no-install-project
+    uv sync --frozen --no-install-project --extra fyers-stream
 COPY backend/ ./
-RUN --mount=type=cache,target=/root/.cache/uv uv sync --frozen
+RUN --mount=type=cache,target=/root/.cache/uv uv sync --frozen --extra fyers-stream
 EXPOSE 8000
 CMD ["uv", "run", "uvicorn", "chartnexus.entrypoints.main_api:create_app", \
      "--factory", "--host", "0.0.0.0", "--port", "8000", "--reload"]

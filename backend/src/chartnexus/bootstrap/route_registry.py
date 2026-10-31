@@ -25,6 +25,7 @@ from chartnexus.contexts.realtime_delivery.api.router import router as realtime_
 from chartnexus.contexts.report.api.router import router as report_router
 from chartnexus.contexts.signals.api.router import router as signals_router
 from chartnexus.contexts.stryx.api.router import router as stryx_router
+from chartnexus.contexts.trade_buddy.api.router import router as trade_buddy_router
 
 API_PREFIX = "/api/v1"
 
@@ -46,6 +47,7 @@ _ROUTERS: tuple[APIRouter, ...] = (
     messaging_router,
     report_router,
     realtime_router,
+    trade_buddy_router,
 )
 
 

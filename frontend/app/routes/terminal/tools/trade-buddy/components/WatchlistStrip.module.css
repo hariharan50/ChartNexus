@@ -1,0 +1,112 @@
+.strip {
+  display: grid;
+  /* One column per index at any usable width; they wrap rather than shrink
+     below legibility on a narrow terminal. */
+  grid-template-columns: repeat(auto-fit, minmax(13rem, 1fr));
+  gap: var(--cn-space-2);
+}
+
+.card {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: var(--cn-space-3);
+  text-align: left;
+  border: 1px solid var(--cn-border);
+  border-radius: var(--cn-radius-md, 8px);
+  background: var(--cn-surface);
+  color: var(--cn-text);
+  cursor: pointer;
+  font: inherit;
+  /* The selected card shifts by a border width; reserving it here stops the
+     row from twitching as the selection moves. */
+  outline: 2px solid transparent;
+  outline-offset: -2px;
+}
+
+.card:hover {
+  border-color: var(--cn-border-strong);
+}
+
+.card:focus-visible {
+  outline-color: var(--cn-accent);
+}
+
+.active {
+  border-color: var(--cn-accent);
+  outline-color: var(--cn-accent);
+}
+
+/* An index with no levels is legible but recessive: it is a reminder, not a
+   reading. */
+.idle {
+  opacity: 0.72;
+}
+
+.head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--cn-space-2);
+}
+
+.symbol {
+  font-size: var(--cn-text-sm);
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+
+.badge,
+.badgeQuiet {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 0.3em;
+  font-size: var(--cn-text-xs);
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.badgeQuiet {
+  color: var(--cn-text-subtle);
+  font-weight: 400;
+}
+
+.tone_neutral {
+  color: var(--cn-text-subtle);
+}
+
+.tone_info {
+  color: var(--cn-accent);
+}
+
+.tone_warn {
+  color: var(--cn-warning);
+}
+
+.tone_alert {
+  color: var(--cn-danger);
+}
+
+.price {
+  font-size: var(--cn-text-lg);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.meta {
+  font-size: var(--cn-text-xs);
+  color: var(--cn-text-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.unscaled {
+  color: var(--cn-warning);
+  font-weight: 700;
+}
+
+/* Louder than `unscaled`: stale levels stop alerts entirely, where
+   unscaled bands only make them the wrong size. */
+.stale {
+  color: var(--cn-danger);
+  font-weight: 700;
+}

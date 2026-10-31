@@ -42,6 +42,7 @@ describe('tool lookup', () => {
     expect(toolBySlug('option-greeks')?.name).toBe('Option Greeks');
     expect(toolBySlug('straddle-chart')?.name).toBe('Straddle Chart');
     expect(toolBySlug('straddle-pnl')?.name).toBe('Straddle PnL Simulator');
+    expect(toolBySlug('trade-buddy')?.name).toBe('Trade Buddy');
     expect(toolBySlug('nope')).toBeUndefined();
   });
 
@@ -57,7 +58,7 @@ describe('tool lookup', () => {
     // The grid used to generate B4…B12 to fill twelve boxes, advertising nine
     // tools that did not exist. Every entry must now be a built tool.
     expect(TOOLS.filter((tool) => /^b\d+$/i.test(tool.slug))).toEqual([]);
-    expect(TOOLS).toHaveLength(3);
+    expect(TOOLS).toHaveLength(4);
   });
 });
 

@@ -47,6 +47,13 @@ export const TOOLS: readonly ToolEntry[] = [
     description:
       'Replays a short at-the-money straddle that re-strikes as the market moves, with its running P&L and trade log',
     tone: 'sky'
+  },
+  {
+    slug: 'trade-buddy',
+    code: 'TB',
+    name: 'Trade Buddy',
+    description: 'Trade planning and position companion',
+    tone: 'amber'
   }
 ];
 

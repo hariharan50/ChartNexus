@@ -34,6 +34,7 @@ from chartnexus.entrypoints.hugin_runtime import run_hugin_loop
 from chartnexus.entrypoints.ingest_runtime import run_capture_loop
 from chartnexus.entrypoints.mme100_runtime import run_mme100_loop
 from chartnexus.entrypoints.report_runtime import run_report_loop
+from chartnexus.entrypoints.trade_buddy_runtime import run_trade_buddy_loop
 from chartnexus.infrastructure.cache.redis.client import redis_check
 from chartnexus.infrastructure.observability.structured_logging import get_logger
 from chartnexus.infrastructure.persistence.postgresql.health import postgres_check
@@ -174,6 +175,18 @@ def create_app(settings: Settings | None = None) -> FastAPI:
                 enabled=local and resolved.report.enabled and resolved.report.in_process,
                 name="daily-report-loop",
                 make_loop=lambda stop: run_report_loop(container, resolved, stop=stop),
+            ),
+            # Not gated on credentials: the watcher reads the broker the user
+            # connected in the app, which can be connected *after* the API
+            # starts. It idles until one appears rather than refusing to start
+            # and requiring a restart once it does. Deployed environments run
+            # `chartnexus-trade-buddy` instead.
+            _maybe_start(
+                enabled=(
+                    local and resolved.trade_buddy.enabled and resolved.trade_buddy.in_process
+                ),
+                name="trade-buddy-watch-loop",
+                make_loop=lambda stop: run_trade_buddy_loop(container, resolved, stop=stop),
             ),
         )
 

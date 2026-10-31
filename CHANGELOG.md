@@ -9,6 +9,79 @@ changes are not recorded here.
 
 ## [Unreleased]
 
+### Added
+
+**Trade Buddy**
+
+- A level-alert watcher, under Tools. Six levels marked per index before the
+  open (S1-S3, R1-R3); through the session a Fyers WebSocket feeds each tick
+  into a per-level state machine that reports approaches, touches, confirmed
+  breaks, rejected wicks, reclaims and opening gaps. NIFTY, BANKNIFTY and
+  SENSEX, each watched independently.
+- A break is a *held* move, not a crossing: price must pass a buffer beyond the
+  level and stay past it continuously for the confirmation window. The hold
+  timer resets on re-entry rather than accumulating, so twenty one-second pokes
+  never add up to a twenty-second hold — and the rejected wick is reported, so
+  the absence of a break alert is evidence rather than silence.
+- Once broken, a level stays broken until price crosses the buffer on the
+  other side. Chop sitting on a level therefore produces nothing at all, and a
+  broken resistance is named as support in the alert text.
+- Bands scale with each index's own ATR(14) rather than a shared point value.
+  Twelve points is 6% of NIFTY's daily range and 1.5% of SENSEX's, so one
+  constant is a sane buffer on one index and inside the tick noise on another —
+  false breaks on BANKNIFTY and SENSEX, missed touches on SENSEX, from the same
+  number. The multiples reproduce the previous NIFTY behaviour exactly. When
+  ATR cannot be fetched the bands fall back to points and the page says so,
+  because silently measuring three indices with one ruler is the bug itself.
+- Channels are asymmetric on purpose. Telegram receives everything including
+  rejected wicks; CallMeBot's WhatsApp relay receives only confirmed breaks,
+  reclaims, gaps and feed-health alerts, because it throttles at roughly 25
+  messages per four hours and sends plain text alone. The rolling window is
+  counted locally and persisted, so a restart does not hand the process a fresh
+  allowance the provider is still counting, and a spent budget degrades to
+  Telegram-only rather than failing quietly.
+- Feed-health alerts, because silence from a dead watcher is indistinguishable
+  from silence from a quiet market. A dropped socket, a refused token, or no
+  tick for ninety seconds during market hours each raise one, and the page
+  states the verdict in words rather than leaving a timestamp to be decoded.
+- Levels and live state persist to one JSON file per index, so a restart
+  mid-session resumes rather than re-firing alerts for ground already covered.
+  The session date is persisted with them: without it a restart re-ran gap
+  settlement and confirmed a break that had not yet earned its hold.
+- Throttling gates observations only. Confirmed breaks, reclaims and gaps are
+  never suppressed by a cooldown or a daily cap, since a cap that can swallow a
+  real break has made the alerting worse than none. The cooldown is per level
+  *and kind*, so an approach does not silence the touch that follows it.
+- Credentials come from the broker connected in Settings → Broker, re-resolved
+  every session because a Fyers token expires daily. Environment variables
+  remain as an override for running against another account.
+- Each index's own alert bot, connected under Trade Buddy rather than shared
+  with the AI console's. A level break mid-trade and a morning briefing want
+  different notification settings on a phone, and silencing one must not
+  silence the other. The chat is proven by delivering a welcome message to it
+  before the link is stored, so a chat the bot cannot post to is never recorded
+  as ready — the failure otherwise surfaces as a missing alert on a real break.
+- Levels are stamped with the trading session they were marked for, and the
+  watcher refuses to alert on a stamp older than the current session. Intraday
+  levels are a daily artefact; without the stamp a watcher resuming on Tuesday
+  would compare live price against Monday's numbers with full confidence. It
+  goes quiet instead, says so on the page, and sends one notice to the channels
+  rather than leaving the silence to be interpreted. The session boundary is the
+  closing bell rather than midnight, and it skips weekends and holidays, so
+  levels prepared on Friday evening or over the weekend belong to Monday — the
+  natural time to mark them is after a close, since that is what the pivots are
+  computed from.
+
+### Changed
+
+- `infrastructure/brokers/fyers/data_socket.py`, previously an empty
+  placeholder, now holds the streaming adapter. The Fyers SDK is an optional
+  extra (`uv sync --extra fyers-stream`): it pins `aiohttp==3.9.3`, which has
+  no cp313 wheels on any platform, so a default dependency would make the whole
+  project need a C toolchain to install. `[tool.uv] override-dependencies`
+  relaxes the pin — the SDK's socket path uses `websocket-client`, never
+  aiohttp.
+
 ## [1.9.0] — 2026-10-26
 
 Gann Square-of-9 levels on the Analyse charts, the whole F&O universe in the

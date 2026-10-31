@@ -12,7 +12,14 @@ from enum import StrEnum
 from functools import lru_cache
 from typing import Literal
 
-from pydantic import Field, PostgresDsn, RedisDsn, SecretStr, field_validator
+from pydantic import (
+    Field,
+    PostgresDsn,
+    RedisDsn,
+    SecretStr,
+    ValidationInfo,
+    field_validator,
+)
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 _ENV_PREFIX = "CN_"
@@ -407,6 +414,131 @@ class ReportSettings(_Section):
     max_tenants_per_tick: int = Field(default=50, ge=1)
 
 
+class TradeBuddySettings(_Section):
+    """The Trade Buddy level watcher.
+
+    Through the session it compares live price against the six levels marked for
+    the morning and alerts on approaches, touches, confirmed breaks, rejected
+    wicks, reclaims and opening gaps. Every threshold below is a default, not a
+    constant — the whole point is to retune the bands without a deploy.
+
+    Notification credentials live here rather than in the per-user
+    ``messaging`` channel rows: this is a single-operator tool, and a
+    connect-and-verify flow would be ceremony around one bot token.
+    ``MessagingSettings`` stays the right home for the multi-user channels.
+
+    The *broker* credentials are the exception. They come from the connection
+    made in Settings → Broker, because a Fyers token expires daily and a second
+    copy here would go stale silently the first time it was refreshed through
+    the UI. The pair below is an override for running against another account.
+    """
+
+    model_config = _section_config("TRADE_BUDDY_")
+
+    enabled: bool = True
+    #: LOCAL-only auto-start inside the API lifespan, like the other workers.
+    in_process: bool = True
+
+    #: Instruments offered on the page, by canonical name — never the broker
+    #: string. `BANKNIFTY` maps to the broker's `NIFTYBANK`, which is not
+    #: derivable, so translation stays in the Fyers adapter's catalog lookup.
+    #: What is actually *watched* is narrower: whichever of these have levels
+    #: marked, so adding one is a marked level set rather than a config edit.
+    symbols: tuple[str, ...] = ("NIFTY", "BANKNIFTY", "SENSEX")
+
+    # -- the bands ----------------------------------------------------------
+    #
+    # Distances are ATR multiples, not points, because a point value cannot
+    # serve three indices at once: twelve points is 6% of NIFTY's daily range
+    # and 1.5% of SENSEX's, so the same constant is a sane buffer on one and
+    # inside the tick noise on the other. See `domain/bands.py`.
+    #
+    # These defaults reproduce the previous 6/25/12 points on NIFTY, whose
+    # ATR(14) sits near 200 — so NIFTY behaviour is unchanged.
+    touch_atr_multiple: float = Field(default=0.03, gt=0)
+    approach_atr_multiple: float = Field(default=0.125, gt=0)
+    break_atr_multiple: float = Field(default=0.06, gt=0)
+    #: ATR lookback, in daily candles.
+    atr_period: int = Field(default=14, ge=2)
+
+    # Used only when ATR is unavailable (thin history, provider down). A
+    # degraded mode, reported on the page rather than applied silently.
+    touch_band_points: float = Field(default=6.0, gt=0)
+    approach_band_points: float = Field(default=25.0, gt=0)
+    break_buffer_points: float = Field(default=12.0, gt=0)
+
+    #: How long price must stay beyond the buffer to confirm a break. A
+    #: duration, so it does not scale with the instrument: twenty seconds of
+    #: conviction is twenty seconds on any index. The timer resets on re-entry,
+    #: so repeated pokes never accumulate into a hold.
+    confirm_hold_seconds: float = Field(default=20.0, ge=0)
+
+    # -- throttling ---------------------------------------------------------
+    #
+    # These gate observations only. BREAK_CONFIRMED, RECLAIMED and
+    # GAPPED_THROUGH bypass both by policy: a cap that can swallow a real break
+    # has made the alerting worse than none.
+    cooldown_minutes: float = Field(default=20.0, ge=0)
+    daily_alert_cap: int = Field(default=3, ge=1)
+
+    # -- the watch window ---------------------------------------------------
+    #
+    # Narrower than `MarketSettings.session_close` (15:40, derivatives-facing)
+    # on purpose: a level alert at 15:38 is not actionable.
+    watch_open: str = "09:15"
+    watch_close: str = "15:20"
+    #: NSE holidays as ISO dates, comma-separated. Empty means weekday-only,
+    #: which matches every other module — but then the feed watchdog will page
+    #: about a dead feed on each holiday, because no tick is indistinguishable
+    #: from a dead socket. Worth keeping current.
+    holidays: str = ""
+
+    # -- feed health --------------------------------------------------------
+    #: Seconds of silence during market hours before the feed is called suspect.
+    stale_after_seconds: float = Field(default=90.0, gt=0)
+    #: Override only — normally empty. The watcher reads the connected broker;
+    #: these are for running it against a different account, or where there is
+    #: no UI to connect one. Split rather than joined because the WebSocket
+    #: wants "APPID:TOKEN" and the REST history call wants them separately, and
+    #: splitting a stored joined string breaks on a token containing a colon.
+    fyers_app_id: str = ""
+    #: Expires daily.
+    fyers_access_token: SecretStr = SecretStr("")
+    #: Litemode sends only LTP, which is all the level watcher needs.
+    litemode: bool = True
+
+    # -- channels -----------------------------------------------------------
+    telegram_bot_token: SecretStr = SecretStr("")
+    telegram_chat_id: str = ""
+    #: Optional deep link for the inline "Open chart" button.
+    chart_url: str = ""
+    whatsapp_phone: str = ""
+    whatsapp_api_key: SecretStr = SecretStr("")
+    #: Set below CallMeBot's real ~25/4h ceiling. Exceeding it does not reject a
+    #: message, it makes delivery unreliable — and a channel you cannot trust is
+    #: worse than one you know is off.
+    whatsapp_limit_per_window: int = Field(default=20, ge=0)
+    whatsapp_window_hours: int = Field(default=4, ge=1)
+
+    send_attempts: int = Field(default=3, ge=1)
+    send_backoff_seconds: float = Field(default=0.5, ge=0)
+    request_timeout_seconds: float = Field(default=10.0, gt=0)
+
+    #: Where the marks and the live watcher states are kept. A file, not a
+    #: table: six numbers per instrument per day, one writer, worthless by
+    #: tomorrow. Persisted so a restart mid-session resumes rather than
+    #: re-firing alerts for ground already covered.
+    state_directory: str = "var/trade_buddy"
+
+    @field_validator("watch_close")
+    @classmethod
+    def _close_after_open(cls, value: str, info: ValidationInfo) -> str:
+        opened = info.data.get("watch_open")
+        if isinstance(opened, str) and opened >= value:
+            raise ValueError(f"watch_open ({opened}) must precede watch_close ({value})")
+        return value
+
+
 class CatalogSettings(_Section):
     """The instrument-catalog refresh worker.
 
@@ -573,6 +705,7 @@ class Settings(BaseSettings):
     mme100: Mme100Settings = Field(default_factory=Mme100Settings)
     messaging: MessagingSettings = Field(default_factory=MessagingSettings)
     report: ReportSettings = Field(default_factory=ReportSettings)
+    trade_buddy: TradeBuddySettings = Field(default_factory=TradeBuddySettings)
     catalog: CatalogSettings = Field(default_factory=CatalogSettings)
     futures_oi: FuturesOpenInterestSettings = Field(default_factory=FuturesOpenInterestSettings)
     futures_history: FuturesBoardHistorySettings = Field(

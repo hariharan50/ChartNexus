@@ -189,6 +189,12 @@ scratch/
 *.rej
 *.pid
 
+# Runtime state written by the workers. `backend/var/trade_buddy/` holds one
+# JSON file per instrument: the morning's marked levels plus the live watcher
+# states. Per-machine and worthless by the next session, and it would land in
+# review diffs every time the watcher ran.
+backend/var/
+
 # Local database dumps and scratch SQLite files
 *.sqlite
 *.sqlite3

@@ -1,0 +1,147 @@
+.figure {
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--cn-space-2);
+}
+
+.frame {
+  position: relative;
+  /* Only the left gutter is reserved here. The price sits in the row's own
+     flex flow rather than being absolutely positioned over it — which is what
+     previously drew each line straight through its own number. */
+  padding: 0 0 0 2.5rem;
+}
+
+/* -- axis ------------------------------------------------------------------ */
+
+.spine {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 2.5rem;
+  width: 1px;
+  background: var(--cn-border);
+}
+
+/* -- levels ---------------------------------------------------------------- */
+
+.level {
+  position: absolute;
+  left: 0;
+  right: 0;
+  display: flex;
+  align-items: center;
+  gap: var(--cn-space-2);
+  /* `top` positions the line, not the text box, so centre it on the value. */
+  transform: translateY(-50%);
+}
+
+.levelLabel {
+  width: 2.5rem;
+  flex: none;
+  text-align: right;
+  padding-right: var(--cn-space-2);
+  font-size: var(--cn-text-xs);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  /* Text tokens, never the state colour: the mark beside it carries the state. */
+  color: var(--cn-text-muted);
+}
+
+.levelLine {
+  flex: 1;
+  min-width: 0;
+  height: 2px;
+  border-radius: 1px;
+  background: var(--cn-border-strong);
+}
+
+.levelPrice {
+  /* A flex item, not an overlay: the line ends where this begins. */
+  flex: none;
+  width: 5rem;
+  text-align: right;
+  font-size: var(--cn-text-xs);
+  font-variant-numeric: tabular-nums;
+  color: var(--cn-text-subtle);
+}
+
+/* State weights the line only. Idle stays recessive so the levels that are
+   doing something are the ones that catch the eye. */
+.tone_neutral .levelLine {
+  background: var(--cn-border-strong);
+}
+
+.tone_info .levelLine {
+  background: var(--cn-accent);
+}
+
+.tone_warn .levelLine {
+  background: var(--cn-warning);
+}
+
+.tone_alert .levelLine {
+  background: var(--cn-danger);
+}
+
+/* A broken level is the one worth seeing from across the room. */
+.tone_alert .levelLabel,
+.tone_alert .levelPrice {
+  color: var(--cn-text);
+}
+
+/* -- the price cursor ------------------------------------------------------ */
+
+.price {
+  position: absolute;
+  left: 2.5rem;
+  /* Stops where the level prices start, so the cursor never runs beneath
+     them either. */
+  right: 5rem;
+  display: flex;
+  align-items: center;
+  transform: translateY(-50%);
+}
+
+.priceLine {
+  flex: 1;
+  height: 2px;
+  background: var(--cn-text);
+  /* The surface ring: where the cursor crosses a level line the two would
+     otherwise merge into a single thicker mark and read as one thing. */
+  box-shadow:
+    0 2px 0 var(--cn-surface),
+    0 -2px 0 var(--cn-surface);
+}
+
+.priceChip {
+  flex: none;
+  margin-left: var(--cn-space-2);
+  padding: 1px var(--cn-space-2);
+  border-radius: 999px;
+  background: var(--cn-text);
+  color: var(--cn-surface);
+  font-size: var(--cn-text-xs);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.caption {
+  font-size: var(--cn-text-xs);
+  color: var(--cn-text-subtle);
+  line-height: 1.5;
+}
+
+/* Narrow terminals drop the right-hand price column; the table still has every
+   number, so the ladder keeps only the label and the line. */
+@media (max-width: 520px) {
+  .levelPrice {
+    display: none;
+  }
+
+  .price {
+    right: 0;
+  }
+}

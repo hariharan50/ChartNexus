@@ -57,6 +57,7 @@ export default [
       route('option-greeks', 'routes/terminal/tools/option-greeks/route.tsx'),
       route('straddle-chart', 'routes/terminal/tools/straddle-chart/route.tsx'),
       route('straddle-pnl', 'routes/terminal/tools/straddle-pnl/route.tsx'),
+      route('trade-buddy', 'routes/terminal/tools/trade-buddy/route.tsx'),
       route(':tool', 'routes/terminal/tools/tool.tsx')
     ]),
 

@@ -1,0 +1,158 @@
+.panel {
+  display: flex;
+  flex-direction: column;
+  gap: var(--cn-space-3);
+  padding: var(--cn-space-4);
+  border: 1px solid var(--cn-border);
+  border-radius: var(--cn-radius-md, 8px);
+  background: var(--cn-surface);
+  min-width: 0;
+}
+
+.head {
+  display: flex;
+  flex-direction: column;
+  gap: var(--cn-space-2);
+}
+
+.title {
+  margin: 0;
+  font-size: var(--cn-text-base);
+  font-weight: 700;
+  color: var(--cn-text);
+}
+
+.note,
+.hint {
+  margin: 0;
+  font-size: var(--cn-text-xs);
+  color: var(--cn-text-subtle);
+  line-height: 1.5;
+}
+
+.hint code {
+  font-size: 0.95em;
+  color: var(--cn-text-muted);
+}
+
+/* -- which step you are on ------------------------------------------------- */
+
+.status {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--cn-space-3);
+  padding: var(--cn-space-3);
+  border: 1px solid var(--cn-border);
+  border-radius: var(--cn-radius-sm, 6px);
+  background: var(--cn-bg);
+}
+
+.dot {
+  flex: none;
+  width: 10px;
+  height: 10px;
+  margin-top: 0.3rem;
+  border-radius: 50%;
+  background: var(--cn-text-subtle);
+}
+
+/* The dot tints; the label always states the step in words, so the status is
+   never carried by colour alone. */
+.step_ready .dot {
+  background: var(--cn-call-series);
+}
+
+.step_needs-chat .dot {
+  background: var(--cn-warning);
+}
+
+.step_paused .dot {
+  background: var(--cn-text-subtle);
+}
+
+.step_disconnected .dot {
+  background: var(--cn-danger);
+}
+
+.statusLabel {
+  margin: 0;
+  font-size: var(--cn-text-sm);
+  font-weight: 700;
+  color: var(--cn-text);
+}
+
+.bot {
+  color: var(--cn-text-muted);
+  font-weight: 400;
+}
+
+.statusDetail {
+  margin: 0;
+  font-size: var(--cn-text-xs);
+  color: var(--cn-text-muted);
+  line-height: 1.5;
+}
+
+/* -- steps ----------------------------------------------------------------- */
+
+.step {
+  display: flex;
+  flex-direction: column;
+  gap: var(--cn-space-2);
+  padding-top: var(--cn-space-3);
+  border-top: 1px solid var(--cn-border);
+  align-items: flex-start;
+}
+
+.stepTitle {
+  margin: 0;
+  font-size: var(--cn-text-xs);
+  font-weight: 600;
+  color: var(--cn-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: var(--cn-space-2);
+  width: 100%;
+}
+
+.chatField {
+  flex: 1;
+  min-width: 12rem;
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--cn-space-2);
+  padding-top: var(--cn-space-2);
+  border-top: 1px solid var(--cn-border);
+}
+
+/* -- banners --------------------------------------------------------------- */
+
+.banner {
+  margin: 0;
+  padding: var(--cn-space-2) var(--cn-space-3);
+  border-radius: var(--cn-radius-sm, 6px);
+  border: 1px solid transparent;
+  font-size: var(--cn-text-sm);
+  line-height: 1.5;
+}
+
+.bannerError {
+  border-color: var(--cn-danger);
+  color: var(--cn-text);
+  background: color-mix(in srgb, var(--cn-danger) 12%, transparent);
+}
+
+.bannerOk {
+  border-color: var(--cn-border-strong);
+  color: var(--cn-text-muted);
+  background: var(--cn-bg);
+}

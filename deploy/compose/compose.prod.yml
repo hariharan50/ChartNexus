@@ -419,8 +419,27 @@ services:
     <<: *worker
     command: ["python", "-m", "chartnexus.entrypoints.main_report"]
 
+  # The level watcher: one Fyers socket held through the session, comparing
+  # live price against the morning's marked levels. Its own process for the
+  # same reason as the rest — but with an extra edge here, because this one is
+  # stateful within the day. An API redeploy at 11:00 would otherwise be a gap
+  # in the watch, and a gap is indistinguishable from a quiet market.
+  #
+  # Needs the `fyers-stream` extra in the image (see backend.Dockerfile); the
+  # Fyers credentials come from the broker connection in Postgres, not from
+  # the environment.
+  trade-buddy:
+    <<: *worker
+    command: ["python", "-m", "chartnexus.entrypoints.main_trade_buddy"]
+    volumes:
+      # The marked levels and live watcher state. A named volume rather than
+      # the image: it has to survive a redeploy, or every deploy re-fires the
+      # alerts the session already sent.
+      - trade-buddy-state:/app/var
+
 volumes:
   postgres-data:
   redis-data:
+  trade-buddy-state:
   certbot-certs:
   certbot-webroot:
