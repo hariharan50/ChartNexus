@@ -261,6 +261,15 @@ services:
       - --no-access-log
     expose:
       - "8000"
+    # Trade Buddy keeps its marks and live watcher state in a file under
+    # /app/var, not a table (see TradeBuddySettings.state_directory). The API
+    # writes the marks the user saves and reads the state back for the page;
+    # the `trade-buddy` worker reads those marks to know what to subscribe to.
+    # Both ends therefore need the same volume -- without it the API writes to
+    # its own container filesystem, the worker never sees a mark, never
+    # subscribes, and the page sits on "Awaiting first tick" forever.
+    volumes:
+      - trade-buddy-state:/app/var
     depends_on:
       postgres: { condition: service_healthy }
       redis: { condition: service_healthy }
