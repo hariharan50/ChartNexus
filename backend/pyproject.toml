@@ -120,14 +120,41 @@ packages = ["src/chartnexus"]
 [tool.uv]
 package = true
 
-# fyers-apiv3 pins `aiohttp==3.9.3`, a 2024 release with no cp313/cp314 wheels on
-# any platform — so installing the `fyers-stream` extra would try to compile it
-# and fail without a C toolchain. The pin is also irrelevant to what we use:
-# `FyersWebsocket/data_ws.py` imports only websocket-client and requests, and
-# aiohttp backs the SDK's async REST client, which this codebase never calls (our
-# REST path is httpx). Relaxing it is therefore safe and keeps the extra
-# installable from a wheel.
-override-dependencies = ["aiohttp>=3.11"]
+# fyers-apiv3 pins every one of its dependencies with `==`, freezing them at
+# their 2023/2024 versions. We take the SDK for one file —
+# `FyersWebsocket/data_ws.py`, which imports only websocket-client and requests
+# — so the rest of its pins constrain packages the streaming path never calls,
+# while still dragging the whole tree backwards for the entire project.
+#
+# Each override below, and why it is safe:
+#
+#   aiohttp==3.9.3    A 2024 release with no cp313/cp314 wheels on any platform,
+#                     so the extra would try to compile a 2024 aiohttp and fail
+#                     without a C toolchain. It backs the SDK's async REST
+#                     client; our REST path is httpx, so we never reach it.
+#
+#   requests==2.31.0  Carries PYSEC-2026-1872/1873 and PYSEC-2026-2275. This one
+#                     *is* on the path we use, so it is upgraded rather than
+#                     dropped — 2.33 is API-compatible with 2.31 for the plain
+#                     get/post the SDK makes.
+#
+#   setuptools==68.0.0  Carries PYSEC-2025-49, PYSEC-2026-1918, PYSEC-2026-3447
+#                     and GHSA-xmj3-9gf7-h52w. A build-time dependency the
+#                     runtime never imports; the pin only kept a vulnerable copy
+#                     in the image for Trivy to find.
+#
+#   asyncio==3.4.3    The PyPI backport of the stdlib module, last released in
+#                     2015 for Python 3.3. Installing it drops a directory named
+#                     `asyncio` into site-packages, shadowing the stdlib package
+#                     for anything that resolves imports by path rather than by
+#                     sys.path order. A marker that no supported interpreter
+#                     satisfies removes it without forking the SDK.
+override-dependencies = [
+    "aiohttp>=3.11",
+    "requests>=2.33.0",
+    "setuptools>=84.1.0",
+    "asyncio; python_version < '3'",
+]
 
 # ---------------------------------------------------------------------------
 # Architecture rules — enforced in CI alongside tests/architecture/.

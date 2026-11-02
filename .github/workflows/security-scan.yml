@@ -58,8 +58,14 @@ jobs:
       - name: Export the locked dependency set
         run: uv export --frozen --all-extras --no-hashes --no-emit-project -o /tmp/requirements.txt
 
+      # --no-deps --disable-pip because the export is already a fully resolved,
+      # fully pinned set: there is nothing left to resolve, and resolving anyway
+      # means handing the file to pip, which does not understand uv's
+      # `override-dependencies`. pip sees fyers-apiv3's own `requests==2.31.0`
+      # metadata, sees the overridden pin in the file, and fails the step with
+      # ResolutionImpossible before a single advisory is checked.
       - name: pip-audit
-        run: uvx pip-audit --strict --progress-spinner=off --requirement /tmp/requirements.txt
+        run: uvx pip-audit --strict --no-deps --disable-pip --progress-spinner=off --requirement /tmp/requirements.txt
 
   node-dependencies:
     name: node advisories
