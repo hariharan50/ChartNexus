@@ -13,7 +13,11 @@ from datetime import date, datetime, timedelta
 
 import pytest
 
-from chartnexus.contexts.trade_buddy.application.ports import FeedHealth, RuntimeState
+from chartnexus.contexts.trade_buddy.application.ports import (
+    AlertRecord,
+    FeedHealth,
+    RuntimeState,
+)
 from chartnexus.contexts.trade_buddy.application.routing import Notifier
 from chartnexus.contexts.trade_buddy.domain.bands import (
     AlertOverrides,
@@ -44,6 +48,7 @@ class MemoryLevelStore:
     watchers: dict[str, tuple[LevelWatcher, ...]] = field(default_factory=dict)
     runtime: dict[str, RuntimeState] = field(default_factory=dict)
     overrides: dict[str, AlertOverrides] = field(default_factory=dict)
+    alerts: dict[str, list[AlertRecord]] = field(default_factory=dict)
     saves: int = 0
 
     async def load_marks(self, symbol: str) -> MarkSet:
@@ -65,6 +70,18 @@ class MemoryLevelStore:
         self.watchers.pop(symbol, None)
         self.runtime.pop(symbol, None)
         self.overrides.pop(symbol, None)
+        self.alerts.pop(symbol, None)
+
+    async def append_alert(self, symbol: str, record: AlertRecord) -> None:
+        # Prunes on the incoming record's session, exactly as the JSON store
+        # does — the parity test is what keeps the two honest.
+        kept = [r for r in self.alerts.get(symbol, []) if r.session == record.session]
+        kept.append(record)
+        self.alerts[symbol] = kept
+
+    async def load_alerts(self, symbol: str, session: date) -> tuple[AlertRecord, ...]:
+        rows = [r for r in self.alerts.get(symbol, []) if r.session == session]
+        return tuple(reversed(rows))
 
     async def load_runtime(self, symbol: str) -> RuntimeState:
         return self.runtime.get(symbol, RuntimeState())
@@ -93,8 +110,13 @@ class RecordingSink:
     events: list[AlertEvent] = field(default_factory=list)
     health: list[FeedHealth] = field(default_factory=list)
 
-    async def deliver(self, event: AlertEvent) -> None:
+    #: What `deliver` reports back as having taken the alert. Overridden by the
+    #: tests that care which channels a history entry records.
+    channels: tuple[str, ...] = ("telegram",)
+
+    async def deliver(self, event: AlertEvent) -> tuple[str, ...]:
         self.events.append(event)
+        return self.channels
 
     async def deliver_health(self, health: FeedHealth) -> None:
         self.health.append(health)

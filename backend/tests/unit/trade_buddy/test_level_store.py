@@ -12,6 +12,8 @@ from datetime import timedelta
 
 import pytest
 
+from chartnexus.contexts.trade_buddy.application.ports import AlertRecord
+from chartnexus.contexts.trade_buddy.domain.events import AlertKind
 from chartnexus.contexts.trade_buddy.domain.level import LevelMark, LevelRole
 from chartnexus.contexts.trade_buddy.domain.state import LevelState, LevelWatcher
 from chartnexus.infrastructure.trade_buddy.json_level_store import JsonLevelStore
@@ -204,3 +206,141 @@ class TestCorruption:
     async def test_a_write_leaves_no_temp_file_behind(self, store, tmp_path):
         await store.save_marks(SYMBOL, MARKS, SESSION)
         assert list(tmp_path.glob("*.tmp")) == []
+
+
+class TestAlertHistory:
+    """The day's log. Written by the worker, read by the API, kept for a session."""
+
+    def _record(self, **over):
+        fields = {
+            "kind": AlertKind.TOUCHED,
+            "label": "R1",
+            "level_price": 24_700.0,
+            "price": 24_703.0,
+            "role_before": LevelRole.RESISTANCE,
+            "role_after": LevelRole.RESISTANCE,
+            "at": SESSION_START,
+            "session": SESSION,
+            "channels": ("telegram",),
+        }
+        fields.update(over)
+        return AlertRecord(**fields)
+
+    async def test_a_record_round_trips_whole(self, store):
+        record = self._record()
+        await store.append_alert(SYMBOL, record)
+
+        assert await store.load_alerts(SYMBOL, SESSION) == (record,)
+
+    async def test_an_unknown_symbol_has_no_history(self, store):
+        assert await store.load_alerts(SYMBOL, SESSION) == ()
+
+    async def test_the_channels_that_took_it_survive(self, store):
+        """The one field that cannot be reconstructed from the event later."""
+        await store.append_alert(SYMBOL, self._record(channels=("telegram", "whatsapp")))
+
+        (back,) = await store.load_alerts(SYMBOL, SESSION)
+        assert back.channels == ("telegram", "whatsapp")
+
+    async def test_nothing_delivered_is_recorded_as_such(self, store):
+        """An empty tuple is a fact, not a missing value: the engine fired and
+        no channel took it, which is a different fault from never firing."""
+        await store.append_alert(SYMBOL, self._record(channels=()))
+
+        (back,) = await store.load_alerts(SYMBOL, SESSION)
+        assert back.channels == ()
+
+    async def test_newest_first(self, store):
+        await store.append_alert(SYMBOL, self._record(label="R1", at=at(0)))
+        await store.append_alert(SYMBOL, self._record(label="S1", at=at(60)))
+
+        assert [r.label for r in await store.load_alerts(SYMBOL, SESSION)] == ["S1", "R1"]
+
+    async def test_a_new_session_retires_the_old_log(self, store):
+        """Pruned by the arriving record, not by a timer.
+
+        The first alert of the morning is what drops yesterday's, so there is
+        no window in which a stale log is still being served.
+        """
+        yesterday = SESSION - timedelta(days=1)
+        await store.append_alert(SYMBOL, self._record(label="R3", session=yesterday))
+        await store.append_alert(SYMBOL, self._record(label="R1", session=SESSION))
+
+        assert await store.load_alerts(SYMBOL, yesterday) == ()
+        assert [r.label for r in await store.load_alerts(SYMBOL, SESSION)] == ["R1"]
+
+    async def test_the_log_is_capped_and_keeps_the_most_recent(self, store):
+        for i in range(205):
+            await store.append_alert(SYMBOL, self._record(label=f"L{i}", at=at(i)))
+
+        history = await store.load_alerts(SYMBOL, SESSION)
+        assert len(history) == 200
+        # Newest first, so the head is the last one written and the oldest
+        # five have been dropped rather than the newest five refused.
+        assert history[0].label == "L204"
+        assert history[-1].label == "L5"
+
+    async def test_history_coexists_with_marks_and_watchers(self, store):
+        await store.save_marks(SYMBOL, MARKS, SESSION)
+        await store.append_alert(SYMBOL, self._record())
+        watcher = LevelWatcher(symbol=SYMBOL, mark=MARKS[0], bands=bands())
+        await store.save_watchers(SYMBOL, (watcher,))
+
+        assert (await store.load_marks(SYMBOL)).marks == MARKS
+        assert len(await store.load_watchers(SYMBOL)) == 1
+        assert len(await store.load_alerts(SYMBOL, SESSION)) == 1
+
+    async def test_clear_drops_the_history_too(self, store):
+        await store.append_alert(SYMBOL, self._record())
+        await store.clear(SYMBOL)
+
+        assert await store.load_alerts(SYMBOL, SESSION) == ()
+
+    async def test_a_v4_file_keeps_its_marks_and_reads_as_no_alerts(self, store, tmp_path):
+        """The version bump must not wipe a live session.
+
+        v4 is what every deployed instance has on disk when this ships. If the
+        reader rejected it the way it rejects v3, a mid-morning deploy would
+        drop today's marks and watcher states — re-reporting every level price
+        had already passed, which is the exact failure the resume path exists
+        to prevent. A missing `alerts` key simply means nothing has fired.
+        """
+        path = tmp_path / "NSE_NIFTY50-INDEX.json"
+        path.write_text(
+            json.dumps(
+                {
+                    "version": 4,
+                    "marked_on": SESSION.isoformat(),
+                    "marks": [{"label": "R1", "price": 24_700.0, "role": "resistance"}],
+                }
+            ),
+            encoding="utf-8",
+        )
+
+        loaded = await store.load_marks(SYMBOL)
+        assert [m.label for m in loaded.marks] == ["R1"]
+        assert loaded.marked_on == SESSION
+        assert await store.load_alerts(SYMBOL, SESSION) == ()
+
+    async def test_appending_to_a_v4_file_upgrades_it_in_place(self, store, tmp_path):
+        path = tmp_path / "NSE_NIFTY50-INDEX.json"
+        path.write_text(
+            json.dumps({"version": 4, "marked_on": SESSION.isoformat(), "marks": []}),
+            encoding="utf-8",
+        )
+
+        await store.append_alert(SYMBOL, self._record())
+
+        written = json.loads(path.read_text(encoding="utf-8"))
+        assert written["version"] == 5
+        assert len(written["alerts"]) == 1
+
+    async def test_an_unreadable_row_is_skipped_rather_than_failing_the_read(self, store, tmp_path):
+        """One hand-edited entry must not hide a day of good ones."""
+        await store.append_alert(SYMBOL, self._record(label="R1"))
+        path = tmp_path / "NSE_NIFTY50-INDEX.json"
+        data = json.loads(path.read_text(encoding="utf-8"))
+        data["alerts"].insert(0, {"kind": "nonsense", "session": SESSION.isoformat()})
+        path.write_text(json.dumps(data), encoding="utf-8")
+
+        assert [r.label for r in await store.load_alerts(SYMBOL, SESSION)] == ["R1"]

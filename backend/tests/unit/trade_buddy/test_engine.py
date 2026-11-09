@@ -525,3 +525,118 @@ class TestStaleLevels:
 
         assert sink.events == []
         assert sink.health == []
+
+
+class TestAlertHistory:
+    """What the engine writes down about what it sent.
+
+    The live state forgets: a level touched at 09:40 and idle again by 10:00
+    leaves no trace in the state machine, so without this the only record is a
+    message in Telegram. These tests pin that the log and the sends agree —
+    one record per message, none for anything the budget swallowed.
+    """
+
+    async def test_a_delivered_alert_is_recorded(self, store, sink):
+        store.mark(SYMBOL, MARKS[2])  # R1
+        engine, clock = build(store, sink)
+        await engine.load()
+
+        await feed(engine, clock, [(24_698.0, 0.0)])
+
+        (record,) = store.alerts[SYMBOL]
+        assert record.kind is AlertKind.TOUCHED
+        assert record.label == "R1"
+        assert record.level_price == 24_700.0
+        assert record.price == 24_698.0
+
+    async def test_the_record_carries_the_session_not_the_calendar_date(self, store, sink):
+        store.mark(SYMBOL, MARKS[2])
+        engine, clock = build(store, sink)
+        await engine.load()
+
+        await feed(engine, clock, [(24_698.0, 0.0)])
+
+        assert store.alerts[SYMBOL][0].session == SESSION_START.date()
+
+    async def test_the_channels_the_sink_reports_are_what_is_stored(self, store):
+        """Not inferred from the kind. A confirmed break *may* reach WhatsApp;
+        whether it did depends on a budget the engine cannot see."""
+        sink = RecordingSink(channels=("telegram", "whatsapp"))
+        store.mark(SYMBOL, MARKS[2])
+        engine, clock = build(store, sink)
+        await engine.load()
+
+        await feed(engine, clock, [(24_698.0, 0.0)])
+
+        assert store.alerts[SYMBOL][0].channels == ("telegram", "whatsapp")
+
+    async def test_one_record_per_delivered_event(self, store, sink):
+        store.mark(SYMBOL, MARKS[2], MARKS[3])  # R1 and S1
+        engine, clock = build(store, sink)
+        await engine.load()
+
+        # Approach R1, touch it, then fall away and touch S1.
+        await feed(
+            engine,
+            clock,
+            [(24_680.0, 0.0), (24_698.0, 5.0), (24_640.0, 10.0), (24_602.0, 15.0)],
+        )
+
+        assert len(store.alerts[SYMBOL]) == len(sink.events)
+
+    async def test_an_alert_the_cap_suppressed_is_not_recorded(self, store, sink):
+        """The log lists messages, not decisions.
+
+        An entry for a suppressed alert would have the reader hunting a
+        Telegram message that was never sent — and the cap existing at all is
+        how the channel stays worth reading.
+        """
+        store.mark(SYMBOL, MARKS[2])
+        engine, clock = build(store, sink, budget=LevelBudget(cooldown=timedelta(0), daily_cap=1))
+        await engine.load()
+
+        await feed(
+            engine,
+            clock,
+            [
+                (24_698.0, 0.0),  # TOUCHED — delivered
+                (24_500.0, 10.0),  # away, back to IDLE
+                (24_698.0, 20.0),  # TOUCHED again — over the cap
+            ],
+        )
+
+        assert sink.kinds.count(AlertKind.TOUCHED) == 1
+        assert len(store.alerts[SYMBOL]) == 1
+
+    async def test_a_gapped_level_is_recorded_like_any_other(self, store, sink):
+        """Gap settlement feeds the same delivery loop, so it needs no second
+        call site — this is the test that keeps it that way."""
+        store.mark(SYMBOL, MARKS[2])
+        engine, clock = build(store, sink)
+        await engine.load()
+
+        await feed(engine, clock, [(24_800.0, 0.0)])  # opens well above R1
+
+        kinds = [r.kind for r in store.alerts[SYMBOL]]
+        assert AlertKind.GAPPED_THROUGH in kinds
+
+    async def test_stale_levels_record_nothing(self, store, sink):
+        """Nothing is alerted on, so nothing is logged — and an empty log is
+        the honest answer rather than a silence that looks like a quiet day."""
+        store.mark(SYMBOL, MARKS[2], on=SESSION_START.date() - timedelta(days=1))
+        engine, clock = build(store, sink)
+        await engine.load()
+
+        await feed(engine, clock, [(24_698.0, 0.0)])
+
+        assert store.alerts.get(SYMBOL, []) == []
+
+    async def test_the_log_is_readable_back_for_the_session(self, store, sink):
+        store.mark(SYMBOL, MARKS[2])
+        engine, clock = build(store, sink)
+        await engine.load()
+
+        await feed(engine, clock, [(24_698.0, 0.0)])
+
+        history = await store.load_alerts(SYMBOL, SESSION_START.date())
+        assert [r.label for r in history] == ["R1"]

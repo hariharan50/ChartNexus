@@ -6,6 +6,7 @@ from datetime import date, datetime
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
+from chartnexus.contexts.trade_buddy.application.ports import AlertRecord
 from chartnexus.contexts.trade_buddy.domain.bands import (
     AlertOverrides,
     BandOverrides,
@@ -389,3 +390,48 @@ class TestAlertResponse(BaseModel):
     delivered: bool
     kind: AlertKind
     rendered: str
+
+
+class AlertItem(BaseModel):
+    """One alert the watcher has already sent today."""
+
+    kind: AlertKind
+    label: str
+    level_price: float
+    #: The price that triggered it — not the level's, so "touched at 24,703
+    #: against a level of 24,700" is readable after the fact.
+    price: float
+    role_before: LevelRole
+    role_after: LevelRole
+    at: datetime
+    #: Channels that actually took it. Empty means the engine fired and
+    #: nothing delivered, which is a fault worth being able to see.
+    channels: list[str]
+
+    @classmethod
+    def of(cls, record: AlertRecord) -> AlertItem:
+        return cls(
+            kind=record.kind,
+            label=record.label,
+            level_price=record.level_price,
+            price=record.price,
+            role_before=record.role_before,
+            role_after=record.role_after,
+            at=record.at,
+            channels=list(record.channels),
+        )
+
+
+class AlertsResponse(BaseModel):
+    """The day's log for one instrument, newest first.
+
+    Newest first because of how it is read: the question is almost always
+    "what just happened", and an ascending list makes the answer the thing you
+    have to scroll to.
+    """
+
+    symbol: str
+    #: The session these belong to. Stated rather than implied, so an empty
+    #: list at 09:20 is legible as "nothing yet today" rather than "nothing".
+    session: date
+    alerts: list[AlertItem]

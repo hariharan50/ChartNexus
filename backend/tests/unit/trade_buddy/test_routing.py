@@ -262,3 +262,58 @@ class TestRendering:
     def test_direction_is_shown(self):
         up = render(event(AlertKind.TOUCHED), rich=False)
         assert "▲" in up  # price 24715 is above the 24700 level
+
+
+class TestWhatChannelsTookIt:
+    """`deliver` reports back, because the history cannot work it out later.
+
+    The question a trader asks of a logged break is "did that reach my phone,
+    or only Telegram?" — and after the fact nothing but this answer can tell
+    them, since the event itself knows nothing about channels and the budget
+    has moved on.
+    """
+
+    async def test_telegram_only_for_an_observation(self):
+        router, _, whatsapp = build_router()
+
+        used = await router.deliver(event(AlertKind.TOUCHED))
+
+        assert used == ("telegram",)
+        assert whatsapp.sent == []
+
+    async def test_both_for_a_confirmed_break(self):
+        router, _, _ = build_router()
+
+        assert await router.deliver(event(AlertKind.BREAK_CONFIRMED)) == (
+            "telegram",
+            "whatsapp",
+        )
+
+    async def test_an_exhausted_whatsapp_budget_reports_telegram_alone(self):
+        """The degraded mode, visible rather than indistinguishable from a
+        two-channel send."""
+        budget = WhatsAppBudget(limit=1, window=timedelta(hours=4))
+        router, _, _ = build_router(budget=budget)
+
+        first = await router.deliver(event(AlertKind.BREAK_CONFIRMED))
+        second = await router.deliver(event(AlertKind.BREAK_CONFIRMED))
+
+        assert first == ("telegram", "whatsapp")
+        assert second == ("telegram",)
+
+    async def test_a_channel_that_failed_every_attempt_is_not_claimed(self):
+        """Delivered, not attempted. A history entry saying "telegram" has to
+        be evidence a message exists."""
+        router, _, _ = build_router(telegram_fails=99, attempts=2)
+
+        assert await router.deliver(event(AlertKind.TOUCHED)) == ()
+
+    async def test_a_failing_telegram_does_not_cost_whatsapp_its_entry(self):
+        router, _, _ = build_router(telegram_fails=99, attempts=2)
+
+        assert await router.deliver(event(AlertKind.BREAK_CONFIRMED)) == ("whatsapp",)
+
+    async def test_an_unconfigured_channel_contributes_nothing(self):
+        router = AlertRouter(telegram=None, whatsapp=None, clock=FakeClock(SESSION_START))
+
+        assert await router.deliver(event(AlertKind.BREAK_CONFIRMED)) == ()

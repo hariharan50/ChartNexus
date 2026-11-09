@@ -40,6 +40,7 @@ from chartnexus.contexts.trade_buddy.application.routing import AlertRouter, Not
 from chartnexus.contexts.trade_buddy.application.use_cases import (
     ClearLevels,
     FireTestAlert,
+    GetAlerts,
     GetLevels,
     GetOverrides,
     SetLevels,
@@ -143,6 +144,7 @@ class TradeBuddyServices:
     get_levels: GetLevels
     set_levels: SetLevels
     clear_levels: ClearLevels
+    get_alerts: GetAlerts
     fire_test: FireTestAlert
     get_overrides: GetOverrides
     set_overrides: SetOverrides
@@ -160,6 +162,17 @@ class TradeBuddyServices:
     _cooldown: timedelta
     _daily_cap: int
     _whatsapp: WhatsAppBudget
+
+    @property
+    def session_today(self) -> date:
+        """The session the routes should call "today".
+
+        Exposed because two routes need the same answer and the boundary is the
+        closing bell, not midnight: on a Friday evening this is Monday, and a
+        route that reached for `date.today()` would disagree with the stamp
+        `SetLevels` writes.
+        """
+        return self._window.session_date(self._clock.now())
 
     @property
     def defaults(self) -> BandPolicy:
@@ -545,6 +558,7 @@ async def build_trade_buddy_services(request: Request) -> TradeBuddyServices:
         get_levels=GetLevels(store=store),
         set_levels=SetLevels(store=store, window=build_window(container), clock=clock),
         clear_levels=ClearLevels(store=store),
+        get_alerts=GetAlerts(store=store, window=build_window(container), clock=clock),
         fire_test=FireTestAlert(sink=router, clock=clock, store=store),
         get_overrides=GetOverrides(store=store),
         set_overrides=SetOverrides(store=store),

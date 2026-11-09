@@ -31,14 +31,17 @@ from fastapi.testclient import TestClient
 
 from chartnexus.contexts.trade_buddy.api.dependencies import build_services
 from chartnexus.contexts.trade_buddy.api.router import router
+from chartnexus.contexts.trade_buddy.application.ports import AlertRecord
 from chartnexus.contexts.trade_buddy.application.use_cases import (
     ClearLevels,
+    GetAlerts,
     GetLevels,
     GetOverrides,
     SetLevels,
     SetOverrides,
 )
 from chartnexus.contexts.trade_buddy.domain.budget import WhatsAppBudget
+from chartnexus.contexts.trade_buddy.domain.events import AlertKind
 from chartnexus.contexts.trade_buddy.domain.level import LevelMark, LevelRole
 from chartnexus.infrastructure.trade_buddy.build_trade_buddy import TradeBuddyServices
 from chartnexus.infrastructure.trade_buddy.clock import FakeClock
@@ -83,6 +86,7 @@ def _services(store: MemoryLevelStore) -> TradeBuddyServices:
         get_levels=GetLevels(store=store),
         set_levels=SetLevels(store=store, window=win, clock=clock),
         clear_levels=ClearLevels(store=store),
+        get_alerts=GetAlerts(store=store, window=win, clock=clock),
         fire_test=None,  # type: ignore[arg-type]
         get_overrides=GetOverrides(store=store),
         set_overrides=SetOverrides(store=store),
@@ -248,3 +252,106 @@ class TestSymbolValidation:
 
         assert response.status_code == 422
         assert "NIFTY, BANKNIFTY, SENSEX" in response.json()["detail"]
+
+
+class TestTheAlertLogReachesTheClient:
+    """``GET /alerts`` — the record of what the page cannot otherwise show.
+
+    Asserted on the JSON for the same reason as everything else here: the feed
+    panel reads these keys, and a field that does not survive serialisation
+    does not exist.
+    """
+
+    def _record(self, marks_store: MemoryLevelStore, **over) -> None:
+        fields = {
+            "kind": AlertKind.TOUCHED,
+            "label": "R1",
+            "level_price": 24_700.0,
+            "price": 24_703.0,
+            "role_before": LevelRole.RESISTANCE,
+            "role_after": LevelRole.RESISTANCE,
+            "at": SESSION_START,
+            "session": SESSION,
+            "channels": ("telegram",),
+        }
+        fields.update(over)
+        marks_store.alerts.setdefault("NIFTY", []).append(AlertRecord(**fields))
+
+    def test_a_quiet_morning_is_an_empty_list_and_a_named_session(self, client):
+        """Empty, not 404. "Nothing has fired today" is an answer, and the
+        session being stated is what makes it legible as today's nothing."""
+        body = client.get("/api/v1/trade-buddy/alerts", params={"symbol": "NIFTY"}).json()
+
+        assert body == {"symbol": "NIFTY", "session": SESSION.isoformat(), "alerts": []}
+
+    def test_an_alert_arrives_with_every_field_the_feed_renders(self, client, marks_store):
+        self._record(marks_store)
+
+        body = client.get("/api/v1/trade-buddy/alerts", params={"symbol": "NIFTY"}).json()
+
+        (item,) = body["alerts"]
+        assert set(item) == {
+            "kind",
+            "label",
+            "level_price",
+            "price",
+            "role_before",
+            "role_after",
+            "at",
+            "channels",
+        }
+        assert item["kind"] == "touched"
+        assert item["label"] == "R1"
+        assert item["channels"] == ["telegram"]
+
+    def test_newest_first(self, client, marks_store):
+        """The question is "what just happened", so the answer must not be
+        the thing you scroll to."""
+        self._record(marks_store, label="R1", at=SESSION_START)
+        self._record(marks_store, label="S1", at=SESSION_START + timedelta(minutes=5))
+
+        body = client.get("/api/v1/trade-buddy/alerts", params={"symbol": "NIFTY"}).json()
+
+        assert [item["label"] for item in body["alerts"]] == ["S1", "R1"]
+
+    def test_a_role_flip_survives_the_trip(self, client, marks_store):
+        """ "R2 broken, now acting as support" is the sentence the feature
+        exists to produce; both roles are needed to render it."""
+        self._record(
+            marks_store,
+            kind=AlertKind.BREAK_CONFIRMED,
+            role_before=LevelRole.RESISTANCE,
+            role_after=LevelRole.SUPPORT,
+            channels=("telegram", "whatsapp"),
+        )
+
+        (item,) = client.get("/api/v1/trade-buddy/alerts", params={"symbol": "NIFTY"}).json()[
+            "alerts"
+        ]
+
+        assert item["role_before"] == "resistance"
+        assert item["role_after"] == "support"
+        assert item["channels"] == ["telegram", "whatsapp"]
+
+    def test_another_session_is_not_served(self, client, marks_store):
+        self._record(marks_store, session=YESTERDAY)
+
+        body = client.get("/api/v1/trade-buddy/alerts", params={"symbol": "NIFTY"}).json()
+
+        assert body["alerts"] == []
+
+    def test_an_unwatched_index_is_refused_rather_than_answered_empty(self, client):
+        """Same guard as the other reads: an empty log for RELIANCE would read
+        as "nothing happened" when the truth is "never watched"."""
+        response = client.get("/api/v1/trade-buddy/alerts", params={"symbol": "RELIANCE"})
+
+        assert response.status_code == 422
+        assert "NIFTY, BANKNIFTY, SENSEX" in response.json()["detail"]
+
+    def test_the_symbol_is_normalised_like_everywhere_else(self, client, marks_store):
+        self._record(marks_store)
+
+        body = client.get("/api/v1/trade-buddy/alerts", params={"symbol": "nifty"}).json()
+
+        assert body["symbol"] == "NIFTY"
+        assert len(body["alerts"]) == 1

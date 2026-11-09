@@ -1,5 +1,7 @@
 """Commands the HTTP layer issues: mark levels, read them, clear them, test-fire.
 
+Plus ``GetAlerts``, which reads back what the watcher has already sent today.
+
 Thin on purpose. The interesting behaviour is in the domain and the engine; these
 exist so the router never touches a store or a watcher directly.
 """
@@ -9,7 +11,12 @@ from __future__ import annotations
 from dataclasses import dataclass
 from datetime import datetime
 
-from chartnexus.contexts.trade_buddy.application.ports import AlertSink, Clock, LevelStore
+from chartnexus.contexts.trade_buddy.application.ports import (
+    AlertRecord,
+    AlertSink,
+    Clock,
+    LevelStore,
+)
 from chartnexus.contexts.trade_buddy.domain.bands import AlertOverrides
 from chartnexus.contexts.trade_buddy.domain.errors import NoLevelsMarkedError
 from chartnexus.contexts.trade_buddy.domain.events import AlertEvent, AlertKind
@@ -59,6 +66,28 @@ class GetLevels:
 
     async def __call__(self, symbol: str) -> MarkSet:
         return await self.store.load_marks(symbol)
+
+
+@dataclass(slots=True)
+class GetAlerts:
+    """What actually went out for one instrument today.
+
+    Scoped to the current session, computed the same way ``SetLevels`` stamps
+    the marks — so "today's alerts" and "today's levels" can never disagree
+    about where the day starts, which matters because the boundary is the
+    closing bell rather than midnight.
+
+    Test alerts are deliberately absent: :class:`FireTestAlert` goes straight
+    to the sink and never touches the store, so a morning spent proving the
+    channel does not fill the log with breaks that never happened.
+    """
+
+    store: LevelStore
+    window: WatchWindow
+    clock: Clock
+
+    async def __call__(self, symbol: str) -> tuple[AlertRecord, ...]:
+        return await self.store.load_alerts(symbol, self.window.session_date(self.clock.now()))
 
 
 @dataclass(slots=True)
@@ -152,6 +181,7 @@ __all__ = [
     "AlertOverrides",
     "ClearLevels",
     "FireTestAlert",
+    "GetAlerts",
     "GetLevels",
     "GetOverrides",
     "LevelRole",

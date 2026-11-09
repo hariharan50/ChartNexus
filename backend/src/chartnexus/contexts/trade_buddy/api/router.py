@@ -14,6 +14,8 @@ from fastapi import APIRouter, Depends, HTTPException, Query, status
 
 from chartnexus.contexts.trade_buddy.api.dependencies import Services
 from chartnexus.contexts.trade_buddy.api.schemas import (
+    AlertItem,
+    AlertsResponse,
     ChannelResponse,
     ChannelsResponse,
     ConnectChannelRequest,
@@ -165,6 +167,35 @@ async def get_state(
             WatcherStateResponse.of(watcher, alerts_remaining=remaining)
             for watcher, remaining in snapshot.levels
         ],
+    )
+
+
+@router.get(
+    "/alerts",
+    response_model=AlertsResponse,
+    summary="Today's delivered alerts",
+)
+async def get_alerts(
+    services: Services,
+    _: CurrentPrincipal,
+    symbol: WatchedSymbol,
+) -> AlertsResponse:
+    """What has actually gone out for this instrument today, newest first.
+
+    The counterpart to ``GET /state``: that answers "where is price now", this
+    answers "what did I already miss". Both are needed, because the live state
+    forgets — a level touched at 09:40 and idle again by 10:00 leaves no trace
+    in the state machine, and without this the only record of it is a message
+    in Telegram.
+
+    Empty is the ordinary answer for most of the morning, and means nothing has
+    fired rather than that nothing is running; the feed status says which.
+    """
+    records = await services.get_alerts(symbol)
+    return AlertsResponse(
+        symbol=symbol,
+        session=services.session_today,
+        alerts=[AlertItem.of(record) for record in records],
     )
 
 

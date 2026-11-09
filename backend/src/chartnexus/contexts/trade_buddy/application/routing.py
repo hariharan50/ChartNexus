@@ -63,8 +63,11 @@ class AlertRouter(AlertSink):
     """Applies the channel policy, then renders and sends.
 
     Telegram failing is reported but not fatal; WhatsApp being out of budget is
-    expected and silent. The engine never learns which channels were used,
-    because its correctness does not depend on it.
+    expected and silent. Neither changes what the engine does next — its
+    correctness still does not depend on where an alert landed — but
+    :meth:`deliver` returns the channels that took it, because the history
+    written from it is read by someone asking whether a break reached their
+    phone or only Telegram, and nothing else can answer that afterwards.
     """
 
     telegram: Notifier | None
@@ -75,21 +78,31 @@ class AlertRouter(AlertSink):
     attempts: int = 3
     backoff_seconds: float = 0.5
 
-    async def deliver(self, event: AlertEvent) -> None:
-        if self.telegram is not None:
-            await self._try(self.telegram, render(event, rich=True))
+    async def deliver(self, event: AlertEvent) -> tuple[str, ...]:
+        """Send, and report which channels actually took it.
+
+        A channel that was tried and failed is *not* in the result: the tuple
+        says what was delivered, not what was attempted, so a history entry
+        reading "telegram" is evidence a message exists rather than evidence
+        one was posted into a void.
+        """
+        used: list[str] = []
+        if self.telegram is not None and await self._try(self.telegram, render(event, rich=True)):
+            used.append("telegram")
 
         if event.kind not in WHATSAPP_KINDS or self.whatsapp is None:
-            return
+            return tuple(used)
 
         now = self.clock.now()
         if not self.budget.available(now):
             # Budget spent. Deliberately silent on WhatsApp and already
             # delivered on Telegram, which is the degraded mode working as
             # designed rather than a failure to report.
-            return
+            return tuple(used)
         if await self._try(self.whatsapp, render(event, rich=False)):
             self.budget.record(now)
+            used.append("whatsapp")
+        return tuple(used)
 
     async def deliver_health(self, health: FeedHealth) -> None:
         """Feed health reaches both channels: a dead watcher is the one thing

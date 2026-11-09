@@ -19,6 +19,7 @@ from dataclasses import dataclass, field
 from datetime import date, datetime, timedelta
 
 from chartnexus.contexts.trade_buddy.application.ports import (
+    AlertRecord,
     AlertSink,
     AtrSource,
     Clock,
@@ -35,7 +36,7 @@ from chartnexus.contexts.trade_buddy.domain.bands import (
 )
 from chartnexus.contexts.trade_buddy.domain.budget import LevelBudget, WhatsAppBudget
 from chartnexus.contexts.trade_buddy.domain.events import AlertEvent
-from chartnexus.contexts.trade_buddy.domain.level import LevelBands
+from chartnexus.contexts.trade_buddy.domain.level import LevelBands, LevelMark
 from chartnexus.contexts.trade_buddy.domain.schedule import WatchWindow
 from chartnexus.contexts.trade_buddy.domain.state import LevelState, LevelWatcher
 
@@ -121,9 +122,16 @@ class WatchEngine:
         self._marked_on = marked.marked_on
 
         resumed = await self.store.load_watchers(self.symbol)
-        if resumed:
+        if resumed and _describes(resumed, marked.marks):
             self._watchers = list(resumed)
         else:
+            # Either nothing to resume, or the saved states describe levels
+            # that are no longer the marked ones. `SetLevels` clears the
+            # states when marks are replaced, but a running engine saves its
+            # own after every tick and can write the old set back in between,
+            # so the states are checked against the marks rather than trusted
+            # for having survived. Resuming them would watch prices nobody
+            # marked and report them with full confidence.
             self._watchers = [
                 LevelWatcher(symbol=self.symbol, mark=mark, bands=self.bands)
                 for mark in marked.marks
@@ -255,7 +263,17 @@ class WatchEngine:
 
         delivered = [event for event in events if self.budget.allow(event)]
         for event in delivered:
-            await self.sink.deliver(event)
+            # Recorded after the send, with what the send achieved. Only
+            # events that got past the budget reach here, which is the right
+            # set: an alert the cap suppressed was never sent, and a log that
+            # listed it would have the reader hunting a message that does not
+            # exist. Gap settlement needs no separate call — its events are
+            # part of `events` and come through this same loop.
+            channels = await self.sink.deliver(event)
+            await self.store.append_alert(
+                self.symbol,
+                AlertRecord.of(event, session=session, channels=channels or ()),
+            )
 
         await self.store.save_watchers(self.symbol, tuple(self._watchers))
         await self._save_runtime()
@@ -357,3 +375,15 @@ class WatchEngine:
         await self.sink.deliver_health(
             FeedHealth(reason=reason, detail=detail, at=self.clock.now())
         )
+
+
+def _describes(watchers: tuple[LevelWatcher, ...], marks: tuple[LevelMark, ...]) -> bool:
+    """Whether saved states describe exactly the levels currently marked.
+
+    Label, price and starting role all have to match, in order: a state is a
+    statement about one specific price, and carrying it onto a different one is
+    worse than starting that level fresh. Replacing R2 at 24,700 with R2 at
+    24,750 keeps the label, so comparing labels alone would resume a ``BROKEN``
+    that was earned fifty points away.
+    """
+    return tuple(watcher.mark for watcher in watchers) == marks

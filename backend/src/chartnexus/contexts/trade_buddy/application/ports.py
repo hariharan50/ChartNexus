@@ -4,7 +4,8 @@
   and by ``ManualFeed``, which is what lets the engine be tested against a
   scripted market with no network and no clock.
 * ``AlertSink`` — somewhere to deliver a rendered alert. Satisfied by the
-  notifier router, which applies the per-channel policy.
+  notifier router, which applies the per-channel policy, and which reports back
+  which channels actually took it so the history can say.
 * ``LevelStore`` — persistence for the marked levels *and* the live watcher
   states, so a restart mid-session neither loses the marks nor re-fires alerts
   for ground already covered.
@@ -24,8 +25,8 @@ from typing import Protocol, runtime_checkable
 
 from chartnexus.contexts.trade_buddy.domain.bands import AlertOverrides
 from chartnexus.contexts.trade_buddy.domain.channel import AlertChannel, AlertConnection
-from chartnexus.contexts.trade_buddy.domain.events import AlertEvent
-from chartnexus.contexts.trade_buddy.domain.level import LevelMark, MarkSet
+from chartnexus.contexts.trade_buddy.domain.events import AlertEvent, AlertKind
+from chartnexus.contexts.trade_buddy.domain.level import LevelMark, LevelRole, MarkSet
 from chartnexus.contexts.trade_buddy.domain.state import LevelWatcher
 from chartnexus.shared_kernel.types.identifiers import UserId
 
@@ -73,13 +74,68 @@ class TickFeed(Protocol):
 class AlertSink(Protocol):
     """Where alerts go once the engine has decided to send them."""
 
-    async def deliver(self, event: AlertEvent) -> None:
-        """Route one level event to whichever channels its policy allows."""
+    async def deliver(self, event: AlertEvent) -> tuple[str, ...]:
+        """Route one level event to whichever channels its policy allows.
+
+        Returns the channels that actually took it, in delivery order — an
+        empty tuple when nothing did. The engine does not *branch* on this (its
+        correctness still does not depend on where an alert landed), but the
+        history it writes is read by someone asking "did that break reach my
+        phone, or only Telegram?", and that question cannot be answered after
+        the fact from the event alone.
+        """
         ...
 
     async def deliver_health(self, health: FeedHealth) -> None:
         """Route a feed-health alert. Never throttled by the level budget."""
         ...
+
+
+@dataclass(frozen=True, slots=True)
+class AlertRecord:
+    """One delivered alert, as the history keeps it.
+
+    A near-copy of :class:`AlertEvent` rather than the event itself, for two
+    reasons. It carries the session and the channels, which the event has no
+    business knowing — the session is the store's retention key and the
+    channels are the router's answer. And it is the *wire* shape of a thing
+    already sent: an event is a decision the engine is making now, a record is
+    a fact about a message that has gone, and conflating them would let a
+    change to the engine's reasoning silently rewrite yesterday's log.
+
+    Lives here, beside :class:`RuntimeState`, because like that type it exists
+    to be persisted and read back by a different process — the worker writes
+    it, the API serves it — rather than to be reasoned about by the domain.
+    """
+
+    kind: AlertKind
+    label: str
+    level_price: float
+    price: float
+    role_before: LevelRole
+    role_after: LevelRole
+    at: datetime
+    #: The IST session this belongs to. The store keeps only the current one.
+    session: date
+    #: Channel names that took it, in delivery order. Empty when none did —
+    #: worth recording, because "the engine fired and nothing delivered" is a
+    #: different fault from "the engine never fired".
+    channels: tuple[str, ...] = ()
+
+    @classmethod
+    def of(cls, event: AlertEvent, *, session: date, channels: tuple[str, ...]) -> AlertRecord:
+        """The record for an event that has just been delivered."""
+        return cls(
+            kind=event.kind,
+            label=event.label,
+            level_price=event.level_price,
+            price=event.price,
+            role_before=event.role_before,
+            role_after=event.role_after,
+            at=event.at,
+            session=session,
+            channels=channels,
+        )
 
 
 @dataclass(frozen=True, slots=True)
@@ -160,6 +216,24 @@ class LevelStore(Protocol):
 
     async def save_overrides(self, symbol: str, overrides: AlertOverrides) -> None:
         """Replace this instrument's overrides."""
+        ...
+
+    async def append_alert(self, symbol: str, record: AlertRecord) -> None:
+        """Add one delivered alert to the day's history.
+
+        Append-only within a session, and the store drops anything from an
+        earlier one: a level log is worthless the morning after, exactly like
+        the marks it describes.
+        """
+        ...
+
+    async def load_alerts(self, symbol: str, session: date) -> tuple[AlertRecord, ...]:
+        """This session's delivered alerts, newest first.
+
+        Empty when nothing has fired, which is the common answer and not an
+        error — a quiet morning and a broken watcher are told apart by the feed
+        status, not by this.
+        """
         ...
 
 

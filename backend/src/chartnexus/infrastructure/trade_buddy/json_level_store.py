@@ -24,8 +24,9 @@ from datetime import date, datetime
 from pathlib import Path
 from typing import Any
 
-from chartnexus.contexts.trade_buddy.application.ports import RuntimeState
+from chartnexus.contexts.trade_buddy.application.ports import AlertRecord, RuntimeState
 from chartnexus.contexts.trade_buddy.domain.bands import AlertOverrides, BandOverrides
+from chartnexus.contexts.trade_buddy.domain.events import AlertKind
 from chartnexus.contexts.trade_buddy.domain.level import (
     LevelBands,
     LevelMark,
@@ -37,7 +38,20 @@ from chartnexus.infrastructure.observability.structured_logging import get_logge
 
 log = get_logger(__name__)
 
-_VERSION = 4
+_VERSION = 5
+
+#: Versions this reader understands. A bump must not discard a file, because
+#: the thing in it is today's marks and today's watcher states: dropping them
+#: at 11:00 because a deploy added a field would re-report every level price
+#: has already passed, which is precisely the failure the round-trip exists to
+#: prevent. v4 lacked ``alerts``; a missing key reads as "nothing has fired",
+#: which is true of any file written before the history existed.
+_READABLE = frozenset({4, _VERSION})
+
+#: Entries kept per instrument per session. Six levels cannot plausibly produce
+#: this many in one day, so the cap is a guard against a pathological loop
+#: rather than a retention policy — the session filter is the retention policy.
+_ALERT_CAP = 200
 
 
 @dataclass(slots=True)
@@ -73,7 +87,7 @@ class JsonLevelStore:
             # today's resume state is survivable, a crash loop is not.
             log.warning("trade_buddy_state_unreadable", symbol=symbol, error=repr(exc))
             return {}
-        if parsed.get("version") != _VERSION:
+        if parsed.get("version") not in _READABLE:
             log.warning("trade_buddy_state_version_mismatch", symbol=symbol)
             return {}
         return parsed
@@ -128,6 +142,43 @@ class JsonLevelStore:
             data = await self._read(symbol)
             data["watchers"] = [_watcher_to(w) for w in watchers]
             await self._write(symbol, data)
+
+    # -- the day's alert history --------------------------------------------
+
+    async def append_alert(self, symbol: str, record: AlertRecord) -> None:
+        """Append one delivered alert, keeping only the record's own session.
+
+        Pruning on write rather than on read, and against the *incoming*
+        record's session rather than the clock: the first alert of a new
+        session is what retires the old one, which needs no timer and cannot
+        leave yesterday's log visible for the hour before anything fires.
+        """
+        async with self._lock:
+            data = await self._read(symbol)
+            kept = [
+                row for row in _alert_rows(data) if row.get("session") == record.session.isoformat()
+            ]
+            kept.append(_alert_to(record))
+            # Oldest first in the file; the cap drops from the front so the
+            # most recent survive, which is the end anyone reads.
+            data["alerts"] = kept[-_ALERT_CAP:]
+            await self._write(symbol, data)
+
+    async def load_alerts(self, symbol: str, session: date) -> tuple[AlertRecord, ...]:
+        """This session's alerts, newest first. Unreadable rows are skipped."""
+        data = await self._read(symbol)
+        wanted = session.isoformat()
+        records = []
+        for row in _alert_rows(data):
+            if row.get("session") != wanted:
+                continue
+            record = _alert_from(row)
+            # A hand-edited or half-written row is dropped rather than raised
+            # on: the history is a convenience, and failing the whole read
+            # would make one bad entry hide a day of good ones.
+            if record is not None:
+                records.append(record)
+        return tuple(reversed(records))
 
     # -- runtime counters ---------------------------------------------------
 
@@ -232,6 +283,49 @@ def _opt_float(value: Any, *, allow_zero: bool = False) -> float | None:
     if value < 0 or (value == 0 and not allow_zero):
         return None
     return float(value)
+
+
+def _alert_rows(data: dict[str, Any]) -> list[dict[str, Any]]:
+    """The stored alert rows, or none. Absent in every v4 file."""
+    rows = data.get("alerts")
+    if not isinstance(rows, list):
+        return []
+    return [row for row in rows if isinstance(row, dict)]
+
+
+def _alert_to(record: AlertRecord) -> dict[str, Any]:
+    return {
+        "kind": record.kind.value,
+        "label": record.label,
+        "level_price": record.level_price,
+        "price": record.price,
+        "role_before": record.role_before.value,
+        "role_after": record.role_after.value,
+        "at": record.at.isoformat(),
+        "session": record.session.isoformat(),
+        "channels": list(record.channels),
+    }
+
+
+def _alert_from(row: dict[str, Any]) -> AlertRecord | None:
+    """One stored row, or ``None`` when it cannot be read as an alert."""
+    try:
+        channels = row.get("channels")
+        return AlertRecord(
+            kind=AlertKind(row["kind"]),
+            label=str(row["label"]),
+            level_price=float(row["level_price"]),
+            price=float(row["price"]),
+            role_before=LevelRole(row["role_before"]),
+            role_after=LevelRole(row["role_after"]),
+            at=datetime.fromisoformat(row["at"]),
+            session=date.fromisoformat(row["session"]),
+            channels=tuple(c for c in channels if isinstance(c, str))
+            if isinstance(channels, list)
+            else (),
+        )
+    except (KeyError, TypeError, ValueError):
+        return None
 
 
 def _mark_to(mark: LevelMark) -> dict[str, Any]:
