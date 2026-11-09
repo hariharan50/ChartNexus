@@ -1,17 +1,19 @@
-.panel {
+.card {
   display: flex;
   flex-direction: column;
   gap: var(--cn-space-3);
   padding: var(--cn-space-4);
   border: 1px solid var(--cn-border);
-  border-radius: var(--cn-radius-md, 8px);
+  border-radius: var(--cn-radius-lg);
   background: var(--cn-surface);
   min-width: 0;
 }
 
 .head {
   display: flex;
-  flex-direction: column;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
   gap: var(--cn-space-2);
 }
 
@@ -22,30 +24,142 @@
   color: var(--cn-text);
 }
 
-.symbol {
-  color: var(--cn-text-muted);
+.source {
+  font-size: var(--cn-text-xs);
+  color: var(--cn-text-subtle);
+}
+
+/* ATR offline means every band on this index is a NIFTY-sized point default.
+   It changes what each alert means, so it is stated rather than inferred from
+   the hints underneath. */
+.sourceDegraded {
+  color: var(--cn-warning);
   font-weight: 600;
 }
 
-.note {
+/* -- presets ---------------------------------------------------------------- */
+
+.presets {
+  display: flex;
+  gap: 2px;
+  padding: 3px;
+  border: 1px solid var(--cn-border);
+  border-radius: 10px;
+  background: var(--cn-bg);
+}
+
+.preset {
+  flex: 1 1 0;
+  min-height: 34px;
+  border: none;
+  border-radius: 7px;
+  background: none;
+  color: var(--cn-text-muted);
+  font-size: var(--cn-text-xs);
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.preset:hover:not(:disabled) {
+  background: var(--cn-surface-raised);
+  color: var(--cn-text);
+}
+
+.preset:focus-visible {
+  outline: 2px solid var(--cn-accent);
+  outline-offset: 1px;
+}
+
+/* Custom is a state the control reports, not one you can choose — there is
+   nothing for it to write. Dimmed rather than hidden, so the fourth option
+   does not appear and disappear as fields are edited. */
+.preset:disabled {
+  color: var(--cn-text-subtle);
+  cursor: default;
+}
+
+.presetActive {
+  background: var(--cn-surface-raised);
+  color: var(--cn-text);
+  box-shadow: inset 0 0 0 1px var(--cn-border-strong);
+}
+
+.presetNote {
   margin: 0;
   font-size: var(--cn-text-xs);
-  color: var(--cn-text-subtle);
   line-height: 1.5;
+  color: var(--cn-text-subtle);
 }
 
-.rows {
+/* -- the band diagram ------------------------------------------------------- */
+
+.diagram {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 44px;
+  border-radius: var(--cn-radius);
+  background: var(--cn-bg);
+  overflow: hidden;
+}
+
+.approachZone {
+  position: absolute;
+  top: 8px;
+  bottom: 8px;
+  background: color-mix(in srgb, var(--cn-resistance) 10%, transparent);
+  border-radius: 3px;
+}
+
+.touchZone {
+  position: absolute;
+  top: 4px;
+  bottom: 4px;
+  background: color-mix(in srgb, var(--cn-resistance) 26%, transparent);
+  border-radius: 3px;
+}
+
+/* The level itself. Resistance-coloured because the diagram has to pick a
+   side, and the fields below apply to both — the shape is what is being
+   explained, not the direction. */
+.levelLine {
+  position: absolute;
+  top: 2px;
+  bottom: 2px;
+  width: 2px;
+  background: var(--cn-resistance);
+}
+
+.breakLine {
+  position: absolute;
+  top: 6px;
+  bottom: 6px;
+  border-left: 1px dashed var(--cn-text-subtle);
+}
+
+.legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--cn-space-3);
+  margin: 0;
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+  color: var(--cn-text-subtle);
+}
+
+/* -- the six fields --------------------------------------------------------- */
+
+.grid {
   display: grid;
-  /* The panel is full-width, so the six settings lay out as two rows of three
-     — the distances, then the throttles — instead of one tall stack. */
-  grid-template-columns: repeat(auto-fit, minmax(13rem, 1fr));
-  gap: var(--cn-space-3) var(--cn-space-4);
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--cn-space-3);
 }
 
-.row {
+.field {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 3px;
   min-width: 0;
 }
 
@@ -53,90 +167,100 @@
   font-size: var(--cn-text-xs);
   font-weight: 600;
   color: var(--cn-text-muted);
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
 }
 
-.field {
+.inputBox {
   display: flex;
   align-items: center;
-  gap: var(--cn-space-2);
+  /* 44px: these are typed into on a phone as often as at a desk. */
+  height: 44px;
+  padding-right: var(--cn-space-2);
+  border: 1px solid var(--cn-field-border);
+  border-radius: var(--cn-radius);
+  background: var(--cn-field-bg);
+}
+
+.inputBox:focus-within {
+  outline: 2px solid var(--cn-accent);
+  outline-offset: 1px;
+}
+
+/* An overridden field departs from the scaled default, which is worth seeing
+   at a glance — the hint under it says so in words too. */
+.inputBoxOverridden {
+  border-color: var(--cn-accent);
 }
 
 .input {
-  flex: 1;
+  width: 100%;
   min-width: 0;
-  padding: var(--cn-space-2);
-  border: 1px solid var(--cn-border);
-  border-radius: var(--cn-radius-sm, 6px);
-  background: var(--cn-bg);
+  height: 100%;
+  padding: 0 var(--cn-space-2);
+  border: none;
+  background: none;
   color: var(--cn-text);
+  font-family: var(--cn-font-mono);
   font-size: var(--cn-text-sm);
   font-variant-numeric: tabular-nums;
 }
 
-.input::placeholder {
-  /* The placeholder carries the value actually in force, so it has to read as
-     information rather than as absent text. */
-  color: var(--cn-text-muted);
-}
-
-.input:focus-visible {
-  outline: 2px solid var(--cn-accent);
-  outline-offset: 1px;
-  border-color: var(--cn-accent);
-}
-
-/* An overridden field is marked by a border, and the hint says the word —
-   never by colour alone. */
-.inputOverridden {
-  border-color: var(--cn-accent);
+.input:focus {
+  outline: none;
 }
 
 .unit {
   flex: none;
-  font-size: var(--cn-text-xs);
+  font-size: 11px;
   color: var(--cn-text-subtle);
-  min-width: 2.5rem;
+  white-space: nowrap;
 }
 
 .hint {
   margin: 0;
-  font-size: var(--cn-text-xs);
-  color: var(--cn-text-subtle);
+  overflow: hidden;
+  font-size: 11px;
   line-height: 1.4;
-  font-variant-numeric: tabular-nums;
-  /* Two lines reserved. A hint that wraps on one instrument and not on
-     another would shift that column's buttons relative to its neighbours. */
-  min-height: 2.8em;
+  color: var(--cn-text-subtle);
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .overridden {
   color: var(--cn-accent);
-  font-weight: 700;
+  font-weight: 600;
 }
 
 .problem {
   margin: 0;
-  padding: var(--cn-space-2) var(--cn-space-3);
-  border: 1px solid var(--cn-warning);
-  border-radius: var(--cn-radius-sm, 6px);
-  background: color-mix(in srgb, var(--cn-warning) 12%, transparent);
-  font-size: var(--cn-text-sm);
-  color: var(--cn-text);
+  font-size: var(--cn-text-xs);
+  font-weight: 600;
   line-height: 1.5;
+  color: var(--cn-danger);
+}
+
+/* -- footer ----------------------------------------------------------------- */
+
+.foot {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--cn-space-2);
+  padding-top: var(--cn-space-1);
+}
+
+.scope {
+  font-size: 11px;
+  color: var(--cn-text-subtle);
 }
 
 .actions {
   display: flex;
-  flex-wrap: wrap;
-  align-items: center;
   gap: var(--cn-space-2);
-  padding-top: var(--cn-space-2);
-  border-top: 1px solid var(--cn-border);
 }
 
-.count {
-  font-size: var(--cn-text-xs);
-  color: var(--cn-text-subtle);
+@media (max-width: 360px) {
+  .grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
 }
