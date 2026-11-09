@@ -41,25 +41,29 @@
   line-height: 1.6;
 }
 
+/* Same shape as `StaleBanner`, so the three read as one family rather than as
+   three unrelated notices. Tinted against `--cn-bg` rather than against
+   `transparent`: these sit on `--cn-surface` as often as on the page, and a
+   translucent tint changes colour depending on which. */
 .banner {
   margin: 0;
-  padding: var(--cn-space-2) var(--cn-space-3);
-  border-radius: var(--cn-radius-sm, 6px);
+  padding: var(--cn-space-3) var(--cn-space-4);
+  border: 1px solid var(--cn-border);
+  border-radius: var(--cn-radius-lg);
   font-size: var(--cn-text-sm);
   line-height: 1.5;
-  border: 1px solid transparent;
 }
 
 .bannerError {
-  border-color: var(--cn-danger);
+  border-color: color-mix(in srgb, var(--cn-danger) 35%, var(--cn-bg));
   color: var(--cn-text);
-  background: color-mix(in srgb, var(--cn-danger) 12%, transparent);
+  background: color-mix(in srgb, var(--cn-danger) 9%, var(--cn-bg));
 }
 
 .bannerWarn {
-  border-color: var(--cn-warning);
+  border-color: color-mix(in srgb, var(--cn-warning) 30%, var(--cn-bg));
   color: var(--cn-text);
-  background: color-mix(in srgb, var(--cn-warning) 12%, transparent);
+  background: color-mix(in srgb, var(--cn-warning) 8%, var(--cn-bg));
 }
 
 .panelSymbol {
@@ -77,10 +81,13 @@
   font-weight: 600;
 }
 
+/* The one green on the page. Allowed here and nowhere else: a banner appears
+   in response to something you just did, so "that worked" cannot be misread
+   as "price up" the way a green number in a table would be. */
 .bannerOk {
-  border-color: var(--cn-border-strong);
-  color: var(--cn-text-muted);
-  background: var(--cn-surface);
+  border-color: color-mix(in srgb, var(--cn-live) 30%, var(--cn-bg));
+  color: var(--cn-text);
+  background: color-mix(in srgb, var(--cn-live) 8%, var(--cn-bg));
 }
 
 /* -- layout ---------------------------------------------------------------- */

@@ -8,6 +8,7 @@ import AlertSettings from './components/AlertSettings';
 import DeliveryChips from './components/DeliveryChips';
 import LevelLadder from './components/LevelLadder';
 import SessionCard from './components/SessionCard';
+import StaleBanner from './components/StaleBanner';
 import WatchlistStrip from './components/WatchlistStrip';
 import {
   bandWarning,
@@ -93,6 +94,17 @@ export default function TradeBuddy() {
     deliveryRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
   }
 
+  // "Re-mark" has to leave the cursor somewhere useful. An empty form with no
+  // focus is a dead end — the reader has just told the page they want to type.
+  const firstPriceRef = useRef<HTMLInputElement>(null);
+  function remark() {
+    setDraft(emptyDraft());
+    setDirty(true);
+    setError(null);
+    setNotice(null);
+    firstPriceRef.current?.focus();
+  }
+
   // Re-rendered on a timer so "last tick 94s ago" ages even when the poll
   // returns an unchanged payload. Without this the staleness badge would only
   // update when something else happened to change.
@@ -139,6 +151,21 @@ export default function TradeBuddy() {
   useEffect(() => {
     if (marks.data && !dirty) setDraft(draftFrom(marks.data.levels));
   }, [marks.data, dirty]);
+
+  // Re-save the marks exactly as they are. `SetLevels` always stamps the
+  // current session and drops the saved watcher states, so "the same six
+  // numbers, for today" needs nothing from the API that marking does not
+  // already do — and the states it drops described a session that has ended.
+  const carry = useMutation({
+    mutationFn: () => setLevels(symbol, marks.data?.levels ?? []),
+    onSuccess: async () => {
+      setDirty(false);
+      setError(null);
+      setNotice(`Levels carried forward for ${symbol}.`);
+      await queryClient.invalidateQueries({ queryKey: ['trade-buddy'] });
+    },
+    onError: (cause: Error) => setError(cause.message)
+  });
 
   const save = useMutation({
     mutationFn: () => setLevels(symbol, toPayload(draft)),
@@ -243,12 +270,17 @@ export default function TradeBuddy() {
         }
       />
 
-      {/* Loudest banner on the page: it is the only state in which a quiet
-          phone is correct behaviour rather than a fault. */}
+      {/* The only state in which a quiet phone is correct behaviour rather
+          than a fault — and the only banner that carries its own fix. */}
       {staleNote && (
-        <p className={cx(s.banner, s.bannerError)} role="status">
-          {staleNote}
-        </p>
+        <StaleBanner
+          symbol={symbol}
+          markedOn={engine.data?.marked_on}
+          onCarryForward={() => carry.mutate()}
+          onRemark={remark}
+          carrying={carry.isPending}
+          canCarry={(marks.data?.levels.length ?? 0) > 0}
+        />
       )}
 
       {/* A degraded band set changes what every alert on this instrument
@@ -282,6 +314,7 @@ export default function TradeBuddy() {
               <div key={row.label} className={s.row}>
                 <span className={cx(s.rowLabel, s[`role_${row.role}`])}>{row.label}</span>
                 <input
+                  ref={index === 0 ? firstPriceRef : undefined}
                   className={s.input}
                   type="number"
                   inputMode="decimal"

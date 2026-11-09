@@ -1,0 +1,55 @@
+.banner {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--cn-space-3);
+  padding: var(--cn-space-3) var(--cn-space-4);
+  border: 1px solid color-mix(in srgb, var(--cn-warning) 30%, var(--cn-bg));
+  border-radius: var(--cn-radius-lg);
+  background: color-mix(in srgb, var(--cn-warning) 8%, var(--cn-bg));
+}
+
+.icon {
+  flex: none;
+  width: 20px;
+  height: 20px;
+  color: var(--cn-warning);
+}
+
+.body {
+  flex: 1 1 18rem;
+  min-width: 0;
+}
+
+.title {
+  margin: 0;
+  font-size: var(--cn-text-sm);
+  font-weight: 700;
+  color: var(--cn-text);
+}
+
+.detail {
+  margin: 2px 0 0;
+  font-size: var(--cn-text-xs);
+  line-height: 1.5;
+  color: var(--cn-text-muted);
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--cn-space-2);
+}
+
+@media (max-width: 480px) {
+  /* Full width, and the primary action first in the reading order it already
+     has — at this size the buttons stack, and a half-width button beside a
+     wrapped sentence looks like it belongs to the line above it. */
+  .actions {
+    width: 100%;
+  }
+
+  .actions > * {
+    flex: 1 1 10rem;
+  }
+}
