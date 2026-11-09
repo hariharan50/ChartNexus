@@ -1,11 +1,13 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { cx } from '$shared/ui/cx';
 import Button from '$shared/ui/Button';
 import Select from '$shared/ui/Select';
 import AlertChannels from './components/AlertChannels';
 import AlertSettings from './components/AlertSettings';
+import DeliveryChips from './components/DeliveryChips';
 import LevelLadder from './components/LevelLadder';
+import SessionCard from './components/SessionCard';
 import WatchlistStrip from './components/WatchlistStrip';
 import {
   bandWarning,
@@ -13,18 +15,16 @@ import {
   DEFAULT_SYMBOL,
   draftFrom,
   emptyDraft,
-  FEED_COPY,
   feedVerdict,
   fireTestAlert,
   formatPrice,
-  formatTime,
+  getChannels,
   getEngineState,
   getLevels,
   getSettings,
   getWatchlist,
   hasFlipped,
   REFETCH_MS,
-  secondsSince,
   setLevels,
   setSettings,
   markedNote,
@@ -34,6 +34,7 @@ import {
   validateDraft,
   watchableOr,
   type AlertKind,
+  type ChannelsResponse,
   type DraftLevel,
   type EngineState,
   type LevelsResponse,
@@ -84,6 +85,14 @@ export default function TradeBuddy() {
   const [notice, setNotice] = useState<string | null>(null);
   const [testKind, setTestKind] = useState<AlertKind>('touched');
 
+  // The delivery chip is a shortcut to the card that can fix it. Scrolling
+  // rather than opening a dialog: the card is on this page, and a modal would
+  // hide the levels you were looking at when you noticed the bot was off.
+  const deliveryRef = useRef<HTMLDivElement>(null);
+  function openDelivery() {
+    deliveryRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+
   // Re-rendered on a timer so "last tick 94s ago" ages even when the poll
   // returns an unchanged payload. Without this the staleness badge would only
   // update when something else happened to change.
@@ -113,6 +122,16 @@ export default function TradeBuddy() {
     queryKey: ['trade-buddy', 'watchlist'],
     queryFn: getWatchlist,
     refetchInterval: REFETCH_MS
+  });
+
+  // Same key and same fetcher as the Delivery card's own query, so react-query
+  // serves both from one cache entry and one request. Lifting the query out of
+  // that card instead would have made the card unusable on its own and bought
+  // nothing: the page needs the answer for a chip, the card needs it for a
+  // whole flow, and neither is the other's owner.
+  const channels = useQuery<ChannelsResponse>({
+    queryKey: ['trade-buddy', 'channels'],
+    queryFn: getChannels
   });
 
   // Seed the form from the server once, and never again while the user is
@@ -185,19 +204,28 @@ export default function TradeBuddy() {
   const staleNote = staleWarning(engine.data);
   const marked = markedNote(engine.data);
   const bandNote = staleNote ? null : bandWarning(engine.data?.bands);
-  const silence = secondsSince(engine.data?.last_tick_at ?? null, now);
+  const telegram = channels.data?.channels.find((channel) => channel.channel === 'telegram');
   const levels = engine.data?.levels ?? [];
   const validation = useMemo(() => validateDraft(draft), [draft]);
   const busy = save.isPending || wipe.isPending;
 
   return (
     <div className={s.page}>
+      {/* -- the header ------------------------------------------------------
+          Two halves: what this page is, and whether it is working. The second
+          is not a detail — every number below it is only as trustworthy as
+          the answer to "is the feed alive", so it sits at the top right where
+          a status belongs rather than in a band of its own. */}
       <header className={s.head}>
-        <h1 className={s.title}>Trade Buddy</h1>
-        <p className={s.sub}>
-          Mark today&apos;s levels; the watcher compares live price against them and alerts on
-          approaches, touches, confirmed breaks and reclaims.
-        </p>
+        <div className={s.headText}>
+          <p className={s.crumb}>Tools / Trade Buddy</p>
+          <h1 className={s.title}>Trade Buddy</h1>
+          <p className={s.sub}>
+            Mark today&apos;s levels and the watcher alerts on approaches, touches, confirmed breaks
+            and reclaims.
+          </p>
+        </div>
+        <SessionCard verdict={verdict} state={engine.data} now={now} />
       </header>
 
       {/* -- the watchlist ---------------------------------------------------
@@ -206,43 +234,14 @@ export default function TradeBuddy() {
           `InstrumentPicker` the other pages use for two hundred names — but
           the selection still goes through `useSelectedInstrument`, so it
           syncs with them either way. */}
-      <WatchlistStrip rows={watchlist.data?.instruments ?? []} selected={symbol} onSelect={pick} />
-
-      {/* -- status strip ----------------------------------------------------
-          First, and deliberately loud. Every number below it is only as
-          trustworthy as the answer to "is the feed alive". */}
-      <section className={s.strip} aria-label="Watcher status">
-        <div className={cx(s.verdict, s[`verdict_${verdict}`])}>
-          <span className={s.verdictDot} aria-hidden="true" />
-          <div>
-            <p className={s.verdictLabel}>{FEED_COPY[verdict].label}</p>
-            <p className={s.verdictDetail}>{FEED_COPY[verdict].detail}</p>
-          </div>
-        </div>
-
-        <dl className={s.facts}>
-          <div className={s.fact}>
-            <dt>Last price</dt>
-            <dd className={s.factStrong}>
-              {engine.data?.last_price != null ? formatPrice(engine.data.last_price) : '—'}
-            </dd>
-          </div>
-          <div className={s.fact}>
-            <dt>Last tick</dt>
-            <dd>
-              {formatTime(engine.data?.last_tick_at ?? null)}
-              {silence !== null && <span className={s.ago}> · {silence}s ago</span>}
-            </dd>
-          </div>
-          <div className={s.fact}>
-            <dt>WhatsApp budget</dt>
-            <dd>
-              {engine.data ? `${engine.data.whatsapp_used} / ${engine.data.whatsapp_limit}` : '—'}
-              <span className={s.ago}> · 4h window</span>
-            </dd>
-          </div>
-        </dl>
-      </section>
+      <WatchlistStrip
+        rows={watchlist.data?.instruments ?? []}
+        selected={symbol}
+        onSelect={pick}
+        chips={
+          <DeliveryChips telegram={telegram} state={engine.data} onOpenDelivery={openDelivery} />
+        }
+      />
 
       {/* Loudest banner on the page: it is the only state in which a quiet
           phone is correct behaviour rather than a fault. */}
@@ -425,7 +424,9 @@ export default function TradeBuddy() {
         saving={saveSettings.isPending}
         onSave={(overrides) => saveSettings.mutate(overrides)}
       />
-      <AlertChannels />
+      <div ref={deliveryRef}>
+        <AlertChannels />
+      </div>
     </div>
   );
 }

@@ -1,82 +1,88 @@
-.strip {
-  display: grid;
-  /* One column per index at any usable width; they wrap rather than shrink
-     below legibility on a narrow terminal. */
-  grid-template-columns: repeat(auto-fit, minmax(13rem, 1fr));
-  gap: var(--cn-space-2);
+.bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--cn-space-3);
 }
 
-.card {
+.tabs {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 2px;
+  padding: 4px;
+  border: 1px solid var(--cn-border);
+  border-radius: 12px;
+  background: var(--cn-surface);
+}
+
+.tab {
   display: flex;
   flex-direction: column;
-  gap: 2px;
-  padding: var(--cn-space-3);
+  gap: 1px;
+  min-width: 150px;
+  /* 44px of height via padding rather than a fixed value, so the second line
+     can wrap on a narrow screen instead of being clipped. */
+  padding: 8px 14px;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  background: none;
   text-align: left;
-  border: 1px solid var(--cn-border);
-  border-radius: var(--cn-radius-md, 8px);
-  background: var(--cn-surface);
-  color: var(--cn-text);
   cursor: pointer;
-  font: inherit;
-  /* The selected card shifts by a border width; reserving it here stops the
-     row from twitching as the selection moves. */
-  outline: 2px solid transparent;
-  outline-offset: -2px;
+  transition: background var(--cn-duration-fast) var(--cn-ease);
 }
 
-.card:hover {
-  border-color: var(--cn-border-strong);
+.tab:hover {
+  background: var(--cn-surface-raised);
 }
 
-.card:focus-visible {
-  outline-color: var(--cn-accent);
+.tab:focus-visible {
+  outline: 2px solid var(--cn-accent);
+  outline-offset: 1px;
 }
 
 .active {
-  border-color: var(--cn-accent);
-  outline-color: var(--cn-accent);
-}
-
-/* An index with no levels is legible but recessive: it is a reminder, not a
-   reading. */
-.idle {
-  opacity: 0.72;
-}
-
-.head {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--cn-space-2);
+  background: var(--cn-surface-raised);
+  /* An inset ring rather than a border: a real border would shift the text by
+     a pixel as the selection moved between tabs. */
+  box-shadow: inset 0 0 0 1px var(--cn-border-strong);
 }
 
 .symbol {
   font-size: var(--cn-text-sm);
   font-weight: 700;
-  letter-spacing: 0.02em;
+  color: var(--cn-text);
+  letter-spacing: 0.01em;
 }
 
-.badge,
-.badgeQuiet {
-  display: inline-flex;
-  align-items: baseline;
-  gap: 0.3em;
+.status {
+  display: block;
+  overflow: hidden;
   font-size: var(--cn-text-xs);
-  font-weight: 700;
+  font-weight: 500;
+  line-height: 1.4;
+  text-overflow: ellipsis;
   white-space: nowrap;
 }
 
-.badgeQuiet {
+.quiet {
   color: var(--cn-text-subtle);
-  font-weight: 400;
+}
+
+.warn {
+  color: var(--cn-warning);
+}
+
+.armed {
+  color: var(--cn-live);
 }
 
 .tone_neutral {
-  color: var(--cn-text-subtle);
+  color: var(--cn-text-muted);
 }
 
 .tone_info {
-  color: var(--cn-accent);
+  color: var(--cn-support);
 }
 
 .tone_warn {
@@ -87,26 +93,30 @@
   color: var(--cn-danger);
 }
 
-.price {
-  font-size: var(--cn-text-lg);
-  font-weight: 700;
-  font-variant-numeric: tabular-nums;
+/* -- the delivery chips ---------------------------------------------------- */
+
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--cn-space-2);
 }
 
-.meta {
-  font-size: var(--cn-text-xs);
-  color: var(--cn-text-muted);
-  font-variant-numeric: tabular-nums;
-}
+@media (max-width: 480px) {
+  .tabs {
+    /* Three equal columns: at 390px the tabs would otherwise wrap one per
+       line and push the whole page down by two rows. */
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    width: 100%;
+  }
 
-.unscaled {
-  color: var(--cn-warning);
-  font-weight: 700;
-}
+  .tab {
+    min-width: 0;
+    padding: 8px 10px;
+  }
 
-/* Louder than `unscaled`: stale levels stop alerts entirely, where
-   unscaled bands only make them the wrong size. */
-.stale {
-  color: var(--cn-danger);
-  font-weight: 700;
+  .chips {
+    width: 100%;
+  }
 }

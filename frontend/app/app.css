@@ -194,6 +194,16 @@
   --cn-live: #17b877;
   --cn-stale: #f2a93b;
 
+  /* Trade Buddy level roles. Orange/blue rather than red/green so the pair
+     survives colour-vision deficiency; the role word is always shown too.
+     The weak variants are mixed against the page rather than hard-coded, so
+     one definition serves all five themes — a fixed dark tint would render a
+     near-black chip on `light` and `warm`. */
+  --cn-resistance: #ff9f5a;
+  --cn-resistance-weak: color-mix(in srgb, var(--cn-resistance) 14%, var(--cn-bg));
+  --cn-support: #5eb0ff;
+  --cn-support-weak: color-mix(in srgb, var(--cn-support) 14%, var(--cn-bg));
+
   /* Typography */
   --cn-font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
   --cn-font-mono: 'JetBrains Mono', 'SF Mono', 'Cascadia Mono', Consolas, monospace;
@@ -283,6 +293,10 @@
 }
 
 :root[data-theme='light'] {
+  /* Darker role colours: the role word is text in these, and the
+     dark-theme pair cannot reach 4.5:1 on a pale tint. */
+  --cn-resistance: #b4530f;
+  --cn-support: #1d5fa8;
   --cn-bg: #f7f8fa;
   --cn-surface: #ffffff;
   --cn-surface-raised: #ffffff;
@@ -324,6 +338,10 @@
 
 /* Warm Cream — a light theme with a paper-cream ground and terracotta accent. */
 :root[data-theme='warm'] {
+  /* Darker role colours: the role word is text in these, and the
+     dark-theme pair cannot reach 4.5:1 on a pale tint. */
+  --cn-resistance: #b4530f;
+  --cn-support: #1d5fa8;
   --cn-bg: #f4ede1;
   --cn-surface: #fffdf8;
   --cn-surface-raised: #f9f2e6;

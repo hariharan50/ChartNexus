@@ -1,0 +1,72 @@
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  /* 40px, the secondary-control minimum: these are small status pills, and
+     one of them is a button. */
+  min-height: 40px;
+  padding: 0 12px;
+  border: 1px solid var(--cn-border);
+  border-radius: 999px;
+  background: var(--cn-surface);
+  font-size: var(--cn-text-xs);
+  font-weight: 600;
+  color: var(--cn-text-muted);
+  white-space: nowrap;
+}
+
+.action {
+  cursor: pointer;
+}
+
+.action:hover {
+  background: var(--cn-surface-raised);
+}
+
+.action:focus-visible {
+  outline: 2px solid var(--cn-accent);
+  outline-offset: 1px;
+}
+
+.dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--cn-text-subtle);
+}
+
+.tone_ok {
+  color: var(--cn-live);
+  border-color: color-mix(in srgb, var(--cn-live) 30%, var(--cn-border));
+}
+
+.tone_ok .dot {
+  background: var(--cn-live);
+}
+
+.tone_warn {
+  color: var(--cn-warning);
+  border-color: color-mix(in srgb, var(--cn-warning) 35%, var(--cn-border));
+}
+
+.tone_warn .dot {
+  background: var(--cn-warning);
+}
+
+/* Not-set-up is deliberately the quietest of the three. It is the first-run
+   state, and the Delivery card is already shouting about it; a red pill here
+   would make a new user's page look broken. */
+.tone_off {
+  color: var(--cn-text-subtle);
+}
+
+.numeric {
+  font-family: var(--cn-font-mono);
+  font-variant-numeric: tabular-nums;
+  color: var(--cn-text);
+}
+
+.muted {
+  color: var(--cn-text-subtle);
+  font-weight: 500;
+}

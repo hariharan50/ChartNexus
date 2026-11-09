@@ -1,0 +1,81 @@
+.card {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--cn-space-3);
+  min-width: 15rem;
+  max-width: 24rem;
+  padding: var(--cn-space-3) var(--cn-space-4);
+  border: 1px solid var(--cn-border);
+  border-radius: var(--cn-radius-lg);
+  background: var(--cn-surface);
+}
+
+.dot {
+  flex: none;
+  width: 9px;
+  height: 9px;
+  margin-top: 0.35rem;
+  border-radius: 50%;
+  background: var(--cn-text-subtle);
+  /* A soft ring rather than a bigger dot: the status needs to catch the eye
+     without becoming the loudest thing on a page full of numbers. */
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--cn-text-subtle) 22%, transparent);
+}
+
+.body {
+  min-width: 0;
+}
+
+.label {
+  margin: 0;
+  font-size: var(--cn-text-base);
+  font-weight: 700;
+  color: var(--cn-text);
+}
+
+.detail {
+  margin: 2px 0 0;
+  font-size: var(--cn-text-xs);
+  line-height: 1.5;
+  color: var(--cn-text-muted);
+}
+
+/* The dot tints; the label always states the verdict in words, so the status
+   is never carried by colour alone. */
+.is_live .dot {
+  background: var(--cn-live);
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--cn-live) 22%, transparent);
+}
+
+.is_stale .dot {
+  background: var(--cn-stale);
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--cn-stale) 22%, transparent);
+}
+
+.is_waiting .dot {
+  background: var(--cn-accent);
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--cn-accent) 22%, transparent);
+}
+
+/* Stale is the one verdict that means a problem rather than a phase of the
+   day, so the whole card carries it — a tinted dot alone reads as decoration
+   next to a page of live numbers. */
+.is_stale {
+  border-color: color-mix(in srgb, var(--cn-stale) 35%, var(--cn-border));
+  background: color-mix(in srgb, var(--cn-stale) 7%, var(--cn-surface));
+}
+
+/* The live tick age is the only part of this card that changes every second,
+   so it gets the mono face: proportional digits make a counting number jitter
+   its own width. */
+.is_live .detail {
+  font-family: var(--cn-font-mono);
+  font-variant-numeric: tabular-nums;
+}
+
+@media (max-width: 480px) {
+  .card {
+    max-width: none;
+    width: 100%;
+  }
+}

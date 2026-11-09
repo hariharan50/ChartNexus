@@ -7,9 +7,24 @@
 
 .head {
   display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--cn-space-4);
+}
+
+.headText {
+  display: flex;
   flex-direction: column;
-  gap: var(--cn-space-2);
-  max-width: 720px;
+  gap: 2px;
+  max-width: 44rem;
+}
+
+.crumb {
+  margin: 0;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--cn-text-subtle);
 }
 
 .title {
@@ -25,107 +40,6 @@
   color: var(--cn-text-muted);
   line-height: 1.6;
 }
-
-/* -- status strip ---------------------------------------------------------- */
-
-.strip {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--cn-space-4);
-  padding: var(--cn-space-3) var(--cn-space-4);
-  border: 1px solid var(--cn-border);
-  border-radius: var(--cn-radius-md, 8px);
-  background: var(--cn-surface);
-}
-
-.verdict {
-  display: flex;
-  align-items: flex-start;
-  gap: var(--cn-space-3);
-  min-width: 16rem;
-}
-
-.verdictDot {
-  flex: none;
-  width: 10px;
-  height: 10px;
-  margin-top: 0.3rem;
-  border-radius: 50%;
-  background: var(--cn-text-subtle);
-}
-
-.verdictLabel {
-  margin: 0;
-  font-size: var(--cn-text-base);
-  font-weight: 700;
-  color: var(--cn-text);
-}
-
-.verdictDetail {
-  margin: 0;
-  font-size: var(--cn-text-xs);
-  color: var(--cn-text-muted);
-  line-height: 1.5;
-}
-
-/* The dot tints; the label always states the verdict in words, so the status is
-   never carried by colour alone. */
-.verdict_live .verdictDot {
-  background: var(--cn-call-series);
-}
-
-.verdict_stale .verdictDot {
-  background: var(--cn-danger);
-}
-
-.verdict_waiting .verdictDot {
-  background: var(--cn-warning);
-}
-
-.verdict_closed .verdictDot {
-  background: var(--cn-text-subtle);
-}
-
-.facts {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--cn-space-5, 1.25rem);
-  margin: 0;
-}
-
-.fact {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-}
-
-.fact dt {
-  font-size: var(--cn-text-xs);
-  color: var(--cn-text-subtle);
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-}
-
-.fact dd {
-  margin: 0;
-  font-size: var(--cn-text-sm);
-  color: var(--cn-text);
-  font-variant-numeric: tabular-nums;
-}
-
-.factStrong {
-  font-size: var(--cn-text-lg);
-  font-weight: 700;
-}
-
-.ago {
-  color: var(--cn-text-subtle);
-  font-weight: 400;
-}
-
-/* -- banners --------------------------------------------------------------- */
 
 .banner {
   margin: 0;
