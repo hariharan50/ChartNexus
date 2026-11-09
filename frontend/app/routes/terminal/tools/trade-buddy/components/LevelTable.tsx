@@ -101,8 +101,13 @@ export default function LevelTable({
   const above = price === null ? [] : filled.filter((row) => (rowPrice(row) as number) > price);
   const below = price === null ? [] : filled.filter((row) => (rowPrice(row) as number) <= price);
 
-  // The first editable field, for the empty state's button and for "re-mark".
-  const firstIndex = ordered[0]?.index ?? 0;
+  // The first *slot*, not the first displayed row. Both callers reach for this
+  // ref at a moment when the form is empty — the empty state's button, and
+  // "re-mark" straight after clearing — and when it is empty the display order
+  // is the slot order. Taking `ordered[0]` instead would hand back whichever
+  // row happened to have the highest price before the clear, because the focus
+  // call runs before React has re-rendered the new order.
+  const firstIndex = 0;
 
   return (
     <div className={s.scroller}>

@@ -168,21 +168,22 @@ export default function AlertChannels({
             Telegram
             {telegram?.label && <span className={s.bot}> · {telegram.label}</span>}
           </p>
-          <p className={s.channelDetail}>
-            {telegram?.masked_secret ? (
-              <>
-                <code className={s.code}>{telegram.masked_secret}</code>
-                {telegram.target && (
-                  <>
-                    {' · chat '}
-                    <code className={s.code}>{telegram.target}</code>
-                  </>
-                )}
-              </>
-            ) : (
-              CHANNEL_STEP_COPY[step].detail
-            )}
-          </p>
+          {telegram?.masked_secret && (
+            <p className={s.channelDetail}>
+              <code className={s.code}>{telegram.masked_secret}</code>
+              {telegram.target && (
+                <>
+                  {' · chat '}
+                  <code className={s.code}>{telegram.target}</code>
+                </>
+              )}
+            </p>
+          )}
+          {/* What the step means, whenever it is not simply working. Paused is
+              the case that needs it most: a connected-but-silent channel is
+              the state most easily mistaken for a fault, and the credentials
+              line above says nothing about it. */}
+          {step !== 'ready' && <p className={s.channelDetail}>{CHANNEL_STEP_COPY[step].detail}</p>}
         </div>
       </div>
 
