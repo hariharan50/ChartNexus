@@ -1,8 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { cx } from '$shared/ui/cx';
-import Button from '$shared/ui/Button';
-import Select from '$shared/ui/Select';
 import AlertChannels from './components/AlertChannels';
 import AlertFeed from './components/AlertFeed';
 import AlertSettings from './components/AlertSettings';
@@ -47,12 +45,6 @@ import type { Route } from './+types/route';
 import { useSelectedInstrument } from '$contexts/instrument-catalog/selected-instrument';
 
 export const meta: Route.MetaFunction = () => [{ title: 'Trade Buddy · Tools' }];
-
-const TEST_KINDS: { value: AlertKind; label: string }[] = [
-  { value: 'touched', label: 'Touched (Telegram only)' },
-  { value: 'approaching', label: 'Approaching (Telegram only)' },
-  { value: 'break_confirmed', label: 'Break confirmed (also WhatsApp)' }
-];
 
 /**
  * Trade Buddy — mark the morning's levels, then watch what the engine makes of them.
@@ -346,42 +338,22 @@ export default function TradeBuddy() {
               session, and the answer to "what did I miss". */}
           <AlertFeed symbol={symbol} />
 
-          {/* Temporary home for the test row until the Delivery card takes
-              it: it belongs with the channel it proves, not with the levels. */}
-          <section className={s.panel} aria-labelledby="tb-test">
-            <h2 id="tb-test" className={s.panelTitle}>
-              Test a level alert
-            </h2>
-            <div className={s.testRow}>
-              <Select
-                className={s.testSelect}
-                value={testKind}
-                ariaLabel="Test alert type"
-                options={TEST_KINDS}
-                onChange={setTestKind}
-              />
-              <Button
-                variant="secondary"
-                onClick={() => test.mutate()}
-                loading={test.isPending}
-                disabled={levels.length === 0}
-              >
-                Send test alert
-              </Button>
-            </div>
-            <p className={s.panelNote}>
-              A test goes through the real notifiers and the real channel policy, so a
-              confirmed-break test also spends one WhatsApp message.
-            </p>
-          </section>
-
           <AlertSettings
             settings={settings.data}
             saving={saveSettings.isPending}
             onSave={(overrides) => saveSettings.mutate(overrides)}
           />
           <div ref={deliveryRef}>
-            <AlertChannels />
+            <AlertChannels
+              symbol={symbol}
+              testKind={testKind}
+              onTestKindChange={setTestKind}
+              onTest={() => test.mutate()}
+              testing={test.isPending}
+              canTest={levels.length > 0}
+              whatsappUsed={engine.data?.whatsapp_used}
+              whatsappLimit={engine.data?.whatsapp_limit}
+            />
           </div>
         </div>
       </div>
