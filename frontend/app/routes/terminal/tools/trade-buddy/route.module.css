@@ -1,8 +1,8 @@
 .page {
-  padding: var(--cn-space-6);
   display: flex;
   flex-direction: column;
-  gap: var(--cn-space-4);
+  gap: 20px;
+  padding: var(--cn-space-6);
 }
 
 .head {
@@ -66,21 +66,6 @@
   background: color-mix(in srgb, var(--cn-warning) 8%, var(--cn-bg));
 }
 
-.panelSymbol {
-  color: var(--cn-text-muted);
-  font-weight: 600;
-  font-variant-numeric: tabular-nums;
-}
-
-/* Quiet confirmation, not a status badge: it answers a question that is only
-   asked once a morning, so it must not compete with the live numbers.
-   Deliberately uncoloured — the only green token here is `--cn-bullish`, and
-   on a trading page green reads as "price up", not as "this is fine". */
-.marked {
-  color: var(--cn-text-muted);
-  font-weight: 600;
-}
-
 /* The one green on the page. Allowed here and nowhere else: a banner appears
    in response to something you just did, so "that worked" cannot be misread
    as "price up" the way a green number in a table would be. */
@@ -92,19 +77,29 @@
 
 /* -- layout ---------------------------------------------------------------- */
 
+/* Flex rather than a grid with a media query. The left column asks for every
+   spare pixel (`flex-grow: 999`) while still being allowed to shrink to its
+   40rem basis; when the two bases stop fitting side by side — around 1000px —
+   the right column wraps underneath on its own, at whatever width the content
+   actually needs rather than at a breakpoint guessed in advance. */
 .columns {
-  display: grid;
-  /* The marks panel is a fixed-width form; the live panel takes the rest. One
-     column below 900px, marks first, because that is the order of the day. */
-  grid-template-columns: minmax(18rem, 22rem) minmax(0, 1fr);
-  gap: var(--cn-space-4);
-  align-items: start;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 20px;
+  align-items: flex-start;
 }
 
-@media (max-width: 900px) {
-  .columns {
-    grid-template-columns: minmax(0, 1fr);
-  }
+.main {
+  flex: 999 1 40rem;
+  min-width: 0;
+}
+
+.side {
+  display: flex;
+  flex: 1 1 24rem;
+  flex-direction: column;
+  gap: 20px;
+  min-width: 0;
 }
 
 .panel {
@@ -132,157 +127,6 @@
   line-height: 1.5;
 }
 
-/* -- the marks form -------------------------------------------------------- */
-
-.form {
-  display: flex;
-  flex-direction: column;
-  gap: var(--cn-space-2);
-}
-
-.row {
-  display: grid;
-  grid-template-columns: 2.5rem minmax(0, 1fr) 5.5rem;
-  align-items: center;
-  gap: var(--cn-space-2);
-}
-
-.rowLabel {
-  font-size: var(--cn-text-sm);
-  font-weight: 700;
-  color: var(--cn-text);
-  font-variant-numeric: tabular-nums;
-}
-
-.rowRole {
-  font-size: var(--cn-text-xs);
-  color: var(--cn-text-subtle);
-}
-
-.input {
-  width: 100%;
-  padding: var(--cn-space-2);
-  border: 1px solid var(--cn-border);
-  border-radius: var(--cn-radius-sm, 6px);
-  background: var(--cn-bg);
-  color: var(--cn-text);
-  font-size: var(--cn-text-sm);
-  font-variant-numeric: tabular-nums;
-}
-
-.input:focus-visible {
-  outline: 2px solid var(--cn-accent);
-  outline-offset: 1px;
-  border-color: var(--cn-accent);
-}
-
-.actions {
-  display: flex;
-  gap: var(--cn-space-2);
-}
-
-.hint {
-  margin: 0;
-  font-size: var(--cn-text-xs);
-  color: var(--cn-warning);
-  line-height: 1.5;
-}
-
-.empty {
-  margin: 0;
-  padding: var(--cn-space-4) 0;
-  font-size: var(--cn-text-sm);
-  color: var(--cn-text-muted);
-  line-height: 1.6;
-}
-
-/* -- the live table -------------------------------------------------------- */
-
-.table {
-  width: 100%;
-  border-collapse: collapse;
-  font-size: var(--cn-text-sm);
-}
-
-.table th,
-.table td {
-  padding: var(--cn-space-2);
-  text-align: left;
-  border-bottom: 1px solid var(--cn-border);
-  white-space: nowrap;
-}
-
-.table thead th {
-  font-size: var(--cn-text-xs);
-  font-weight: 600;
-  color: var(--cn-text-subtle);
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-}
-
-.table tbody tr:last-child th,
-.table tbody tr:last-child td {
-  border-bottom: none;
-}
-
-.cellLabel {
-  font-weight: 700;
-  color: var(--cn-text);
-  font-variant-numeric: tabular-nums;
-}
-
-.numeric {
-  text-align: right;
-  font-variant-numeric: tabular-nums;
-}
-
-.roleTag {
-  font-size: var(--cn-text-xs);
-  color: var(--cn-text-muted);
-}
-
-.flip {
-  font-size: var(--cn-text-xs);
-  font-weight: 700;
-  color: var(--cn-warning);
-}
-
-.role_resistance,
-.role_support {
-  /* Role is named in words throughout. It is deliberately *not* tinted: red for
-     resistance and green for support is the one pair the palette validator
-     flags as indistinguishable under deuteranopia (ΔE 5.9), and the word
-     already says it. */
-  color: inherit;
-}
-
-/* State: glyph + word in the markup, tone here. Never colour alone. */
-.state {
-  display: inline-flex;
-  align-items: baseline;
-  gap: 0.35em;
-  font-size: var(--cn-text-sm);
-}
-
-.tone_neutral {
-  color: var(--cn-text-subtle);
-}
-
-.tone_info {
-  color: var(--cn-accent);
-}
-
-.tone_warn {
-  color: var(--cn-warning);
-}
-
-.tone_alert {
-  color: var(--cn-danger);
-  font-weight: 700;
-}
-
-/* -- test alert ------------------------------------------------------------ */
-
 .testRow {
   display: flex;
   flex-wrap: wrap;
@@ -295,16 +139,4 @@
 .testSelect {
   min-width: 15rem;
   flex: 1;
-}
-
-.srOnly {
-  position: absolute;
-  width: 1px;
-  height: 1px;
-  padding: 0;
-  margin: -1px;
-  overflow: hidden;
-  clip: rect(0, 0, 0, 0);
-  white-space: nowrap;
-  border: 0;
 }

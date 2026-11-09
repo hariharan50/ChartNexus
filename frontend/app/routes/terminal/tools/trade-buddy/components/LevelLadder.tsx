@@ -1,75 +1,102 @@
 import { cx } from '$shared/ui/cx';
-import { formatPrice, ladderScale, stateLook, type WatcherState } from '../trade-buddy-data';
+import {
+  ladderScaleX,
+  nearestLevel,
+  stateLook,
+  type ResolvedBands,
+  type WatcherState
+} from '../trade-buddy-data';
 import s from './LevelLadder.module.css';
 
 /**
- * Where price sits among the marked levels, on one shared vertical scale.
+ * Where price sits among the marked levels, on one shared axis.
  *
- * The table beside this says *what* each level is doing; the ladder says *how
- * far away* it is, which a column of numbers cannot. That distance is the whole
+ * The table beside this says *what* each level is doing; the map says *how far
+ * away* it is, which a column of numbers cannot. That distance is the whole
  * reason to look: "R1 touched" and "R1 forty points off" are different
  * decisions, and only one of them is in the state column.
  *
- * Positional, not a chart in the usual sense — one quantitative axis, six marks
- * and a cursor. Deliberately spare: a grid, gradients or a second axis would
- * add ink without adding an answer. State is carried by a text label and a
- * glyph in the table; here it only *weights* a line, so the picture stays
- * readable in greyscale and under colour-vision deficiency.
+ * Horizontal now, not vertical. A tall column fought the table it sits above
+ * for the same vertical space and pushed the levels themselves below the fold;
+ * price on a left-to-right axis costs 80px and reads the way a chart's price
+ * axis does when you turn your head. Low prices on the left, so "price is
+ * nearly at R1" means the cursor is near the right-hand ticks.
+ *
+ * Deliberately spare: one quantitative axis, six ticks, a cursor and one
+ * shaded band. State only *weights* a tick — the word and the glyph are in the
+ * table — so the picture stays readable in greyscale and under colour-vision
+ * deficiency. It is `aria-hidden` in full: every number in it is in the table
+ * below, and a screen reader does not need the same six prices twice.
  */
 interface Props {
   levels: readonly WatcherState[];
   price: number | null;
+  bands: ResolvedBands | undefined;
 }
 
-/** Tall enough that six levels clear each other's labels at ~22px apart. */
-const HEIGHT = 240;
-
-export default function LevelLadder({ levels, price }: Props) {
-  const scale = ladderScale(levels, price);
+export default function LevelLadder({ levels, price, bands }: Props) {
+  const scale = ladderScaleX(levels, price);
 
   // One level and no price is a line with nothing to be relative to. The table
   // already carries every number, so omitting the picture loses nothing.
   if (!scale) return null;
 
-  const ordered = [...levels].sort((a, b) => b.level_price - a.level_price);
-  const priceY = price !== null ? scale(price) * HEIGHT : null;
+  const nearest = nearestLevel(levels, price);
+  const approach = bands?.approach ?? null;
 
   return (
     <figure className={s.figure}>
-      <div className={s.frame} style={{ height: `${HEIGHT}px` }}>
-        {/* The axis spine. Recessive by design — it orients, it is not data. */}
-        <span className={s.spine} aria-hidden="true" />
+      <div className={s.frame} aria-hidden="true">
+        {/* The approach band around the level price is closest to. Shown for
+            one level rather than all six: six overlapping bands on a 500px
+            axis is a wash, and only the nearest one is about to matter. */}
+        {nearest && approach !== null && (
+          <span
+            className={cx(
+              s.zone,
+              nearest.level.role === 'support' ? s.zoneSupport : s.zoneResistance
+            )}
+            style={{
+              left: `${scale(nearest.level.level_price - approach) * 100}%`,
+              right: `${(1 - scale(nearest.level.level_price + approach)) * 100}%`
+            }}
+          />
+        )}
 
-        {ordered.map((level) => {
+        <span className={s.axis} />
+
+        {levels.map((level) => {
           const look = stateLook(level.state);
-          const top = scale(level.level_price) * HEIGHT;
           return (
-            <div
+            <span
               key={level.label}
-              className={cx(s.level, s[`tone_${look.tone}`])}
-              style={{ top: `${top}px` }}
+              className={cx(
+                s.level,
+                level.role === 'support' ? s.support : s.resistance,
+                s[`tone_${look.tone}`]
+              )}
+              style={{ left: `${scale(level.level_price) * 100}%` }}
             >
-              <span className={s.levelLabel}>{level.label}</span>
-              <span className={s.levelLine} aria-hidden="true" />
-              <span className={s.levelPrice}>{formatPrice(level.level_price)}</span>
-            </div>
+              <span className={s.tick} />
+              <span className={s.label}>{level.label}</span>
+              <span className={s.levelPrice}>
+                {level.level_price.toLocaleString('en-IN', { maximumFractionDigits: 0 })}
+              </span>
+            </span>
           );
         })}
 
-        {priceY !== null && (
-          <div className={s.price} style={{ top: `${priceY}px` }}>
-            {/* A 2px surface ring keeps the cursor legible where it crosses a
-                level line, rather than the two merging into one thick mark. */}
-            <span className={s.priceLine} aria-hidden="true" />
-            <span className={s.priceChip}>{formatPrice(price as number)}</span>
-          </div>
+        {price !== null && (
+          <span className={s.cursor} style={{ left: `${scale(price) * 100}%` }}>
+            <span className={s.cursorChip}>
+              {price.toLocaleString('en-IN', { maximumFractionDigits: 0 })}
+            </span>
+            <span className={s.cursorLine} />
+          </span>
         )}
       </div>
 
-      <figcaption className={s.caption}>
-        Marked levels and last price, to scale. Distance is the point — the table below carries each
-        level&apos;s state.
-      </figcaption>
+      <figcaption className={s.caption}>Marked levels and last price, to scale.</figcaption>
     </figure>
   );
 }

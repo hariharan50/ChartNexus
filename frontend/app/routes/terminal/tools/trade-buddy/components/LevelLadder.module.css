@@ -1,147 +1,160 @@
 .figure {
   margin: 0;
-  display: flex;
-  flex-direction: column;
-  gap: var(--cn-space-2);
 }
 
 .frame {
   position: relative;
-  /* Only the left gutter is reserved here. The price sits in the row's own
-     flex flow rather than being absolutely positioned over it — which is what
-     previously drew each line straight through its own number. */
-  padding: 0 0 0 2.5rem;
+  /* Room for a cursor chip above the axis and a label + price below it. */
+  height: 84px;
+  /* The ticks sit at a percentage of this box and their labels are centred on
+     them, so the outer two need somewhere to overhang into. */
+  margin: 0 var(--cn-space-4);
 }
 
-/* -- axis ------------------------------------------------------------------ */
-
-.spine {
+.axis {
   position: absolute;
-  top: 0;
-  bottom: 0;
-  left: 2.5rem;
-  width: 1px;
+  top: 38px;
+  right: 0;
+  left: 0;
+  height: 2px;
   background: var(--cn-border);
 }
 
-/* -- levels ---------------------------------------------------------------- */
+/* -- the approach band ------------------------------------------------------ */
+
+.zone {
+  position: absolute;
+  top: 28px;
+  height: 22px;
+  border-radius: 3px;
+}
+
+.zoneResistance {
+  background: color-mix(in srgb, var(--cn-resistance) 16%, transparent);
+}
+
+.zoneSupport {
+  background: color-mix(in srgb, var(--cn-support) 16%, transparent);
+}
+
+/* -- one level -------------------------------------------------------------- */
 
 .level {
   position: absolute;
-  left: 0;
-  right: 0;
+  top: 30px;
   display: flex;
+  flex-direction: column;
   align-items: center;
-  gap: var(--cn-space-2);
-  /* `top` positions the line, not the text box, so centre it on the value. */
-  transform: translateY(-50%);
+  /* Centred on its own price rather than starting at it. */
+  transform: translateX(-50%);
 }
 
-.levelLabel {
-  width: 2.5rem;
-  flex: none;
-  text-align: right;
-  padding-right: var(--cn-space-2);
-  font-size: var(--cn-text-xs);
-  font-weight: 700;
-  font-variant-numeric: tabular-nums;
-  /* Text tokens, never the state colour: the mark beside it carries the state. */
+.tick {
+  width: 3px;
+  height: 18px;
+  border-radius: 2px;
+  background: var(--cn-text-subtle);
+}
+
+.resistance .tick {
+  background: var(--cn-resistance);
+}
+
+.support .tick {
+  background: var(--cn-support);
+}
+
+.label {
+  margin-top: 4px;
+  font-size: 11px;
+  font-weight: 600;
   color: var(--cn-text-muted);
-}
-
-.levelLine {
-  flex: 1;
-  min-width: 0;
-  height: 2px;
-  border-radius: 1px;
-  background: var(--cn-border-strong);
+  line-height: 1.2;
 }
 
 .levelPrice {
-  /* A flex item, not an overlay: the line ends where this begins. */
-  flex: none;
-  width: 5rem;
-  text-align: right;
-  font-size: var(--cn-text-xs);
+  font-family: var(--cn-font-mono);
+  font-size: 11px;
   font-variant-numeric: tabular-nums;
   color: var(--cn-text-subtle);
+  line-height: 1.3;
 }
 
-/* State weights the line only. Idle stays recessive so the levels that are
-   doing something are the ones that catch the eye. */
-.tone_neutral .levelLine {
-  background: var(--cn-border-strong);
+/* State weights the tick rather than recolouring it: the role colour has to
+   survive, because which side of price a level sits on is the thing this
+   picture exists to show. The word is in the table. */
+.tone_warn .tick,
+.tone_info .tick {
+  height: 26px;
+  margin-top: -8px;
 }
 
-.tone_info .levelLine {
-  background: var(--cn-accent);
+.tone_alert .tick {
+  height: 26px;
+  margin-top: -8px;
+  /* A broken level is still a level, and still at this price — hollowed
+     rather than removed, so the axis does not appear to have lost a mark. */
+  background: repeating-linear-gradient(to bottom, currentcolor 0 3px, transparent 3px 6px);
 }
 
-.tone_warn .levelLine {
-  background: var(--cn-warning);
+.tone_alert.resistance .tick {
+  color: var(--cn-resistance);
 }
 
-.tone_alert .levelLine {
-  background: var(--cn-danger);
+.tone_alert.support .tick {
+  color: var(--cn-support);
 }
 
-/* A broken level is the one worth seeing from across the room. */
-.tone_alert .levelLabel,
-.tone_alert .levelPrice {
+.tone_warn .label,
+.tone_info .label,
+.tone_alert .label {
   color: var(--cn-text);
 }
 
-/* -- the price cursor ------------------------------------------------------ */
+/* -- the price cursor ------------------------------------------------------- */
 
-.price {
+.cursor {
   position: absolute;
-  left: 2.5rem;
-  /* Stops where the level prices start, so the cursor never runs beneath
-     them either. */
-  right: 5rem;
+  top: 0;
   display: flex;
+  flex-direction: column;
   align-items: center;
-  transform: translateY(-50%);
+  transform: translateX(-50%);
 }
 
-.priceLine {
-  flex: 1;
-  height: 2px;
-  background: var(--cn-text);
-  /* The surface ring: where the cursor crosses a level line the two would
-     otherwise merge into a single thicker mark and read as one thing. */
-  box-shadow:
-    0 2px 0 var(--cn-surface),
-    0 -2px 0 var(--cn-surface);
-}
-
-.priceChip {
-  flex: none;
-  margin-left: var(--cn-space-2);
-  padding: 1px var(--cn-space-2);
+.cursorChip {
+  padding: 2px 7px;
   border-radius: 999px;
   background: var(--cn-text);
-  color: var(--cn-surface);
-  font-size: var(--cn-text-xs);
+  color: var(--cn-bg);
+  font-family: var(--cn-font-mono);
+  font-size: 11px;
   font-weight: 700;
   font-variant-numeric: tabular-nums;
   white-space: nowrap;
 }
 
-.caption {
-  font-size: var(--cn-text-xs);
-  color: var(--cn-text-subtle);
-  line-height: 1.5;
+.cursorLine {
+  width: 2px;
+  height: 22px;
+  background: var(--cn-text);
 }
 
-/* Narrow terminals drop the right-hand price column; the table still has every
-   number, so the ladder keeps only the label and the line. */
-@media (max-width: 520px) {
-  .levelPrice {
-    display: none;
+.caption {
+  margin-top: var(--cn-space-2);
+  font-size: var(--cn-text-xs);
+  color: var(--cn-text-subtle);
+}
+
+@media (max-width: 480px) {
+  .frame {
+    height: 76px;
+    margin: 0 var(--cn-space-3);
   }
 
-  .price {
-    right: 0;
+  /* The price under every tick is the first thing to go: at this width the
+     outer labels collide, and the table below carries every number. */
+  .levelPrice {
+    display: none;
   }
 }

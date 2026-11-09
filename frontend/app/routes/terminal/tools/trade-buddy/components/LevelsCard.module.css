@@ -1,0 +1,217 @@
+.card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--cn-space-4);
+  padding: var(--cn-space-4) 0 0;
+  border: 1px solid var(--cn-border);
+  border-radius: var(--cn-radius-lg);
+  background: var(--cn-surface);
+  min-width: 0;
+}
+
+/* -- header ----------------------------------------------------------------- */
+
+.head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--cn-space-3);
+  padding: 0 var(--cn-space-4);
+}
+
+.headMain {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--cn-space-2);
+  min-width: 0;
+}
+
+.title {
+  margin: 0;
+  font-size: var(--cn-text-lg);
+  font-weight: 700;
+  color: var(--cn-text);
+}
+
+.meta {
+  margin: 0;
+  font-size: var(--cn-text-xs);
+  font-weight: 500;
+  color: var(--cn-text-subtle);
+}
+
+/* Said out loud rather than left to the absence of a warning. The question at
+   09:16 is "are today's levels loaded?", and answering it by showing nothing
+   asks the reader to trust that the warning would have appeared — which is
+   exactly the trust a missed alert destroys. */
+.armed {
+  padding: 2px 9px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--cn-live) 12%, var(--cn-bg));
+  color: var(--cn-live);
+  font-size: 11px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.ltp {
+  display: flex;
+  align-items: baseline;
+  gap: var(--cn-space-2);
+}
+
+.ltpLabel {
+  font-size: var(--cn-text-xs);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--cn-text-subtle);
+}
+
+/* The largest thing on the card: every other number here is relative to it. */
+.ltpValue {
+  font-family: var(--cn-font-mono);
+  font-size: 30px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  line-height: 1.1;
+  color: var(--cn-text);
+}
+
+.ltpMissing {
+  color: var(--cn-text-subtle);
+}
+
+/* -- the nearest-level callout ---------------------------------------------- */
+
+.callout {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--cn-space-2);
+  margin: 0 var(--cn-space-4);
+  padding: var(--cn-space-2) var(--cn-space-3);
+  border: 1px solid var(--cn-border);
+  border-radius: var(--cn-radius);
+  font-size: var(--cn-text-sm);
+}
+
+.calloutResistance {
+  border-color: color-mix(in srgb, var(--cn-resistance) 35%, var(--cn-border));
+  background: var(--cn-resistance-weak);
+}
+
+.calloutSupport {
+  border-color: color-mix(in srgb, var(--cn-support) 35%, var(--cn-border));
+  background: var(--cn-support-weak);
+}
+
+.calloutChip {
+  font-family: var(--cn-font-mono);
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--cn-text);
+}
+
+.calloutState {
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: var(--cn-text);
+}
+
+.calloutDetail {
+  font-size: var(--cn-text-xs);
+  font-variant-numeric: tabular-nums;
+  color: var(--cn-text-muted);
+}
+
+/* -- the empty state -------------------------------------------------------- */
+
+.empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--cn-space-2);
+  margin: 0 var(--cn-space-4);
+  padding: var(--cn-space-5) var(--cn-space-4);
+  border: 1px dashed var(--cn-border-strong);
+  border-radius: var(--cn-radius-lg);
+  text-align: center;
+}
+
+.emptyIcon {
+  width: 28px;
+  height: 28px;
+  color: var(--cn-text-subtle);
+}
+
+.emptyTitle {
+  margin: 0;
+  font-size: var(--cn-text-base);
+  font-weight: 700;
+  color: var(--cn-text);
+}
+
+.emptyDetail {
+  max-width: 34rem;
+  margin: 0 0 var(--cn-space-2);
+  font-size: var(--cn-text-sm);
+  line-height: 1.5;
+  color: var(--cn-text-muted);
+}
+
+/* -- footer ----------------------------------------------------------------- */
+
+.foot {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--cn-space-3);
+  padding: var(--cn-space-3) var(--cn-space-4);
+  border-top: 1px solid var(--cn-border);
+  background: color-mix(in srgb, var(--cn-bg) 60%, var(--cn-surface));
+  border-radius: 0 0 var(--cn-radius-lg) var(--cn-radius-lg);
+}
+
+.footRight {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--cn-space-2);
+}
+
+.hint {
+  font-size: var(--cn-text-xs);
+  color: var(--cn-text-muted);
+}
+
+.hintProblem {
+  color: var(--cn-danger);
+  font-weight: 600;
+}
+
+@media (max-width: 480px) {
+  .ltpValue {
+    font-size: 26px;
+  }
+
+  .foot {
+    /* The destructive action and the two it is easy to hit by mistake end up
+       adjacent when these wrap; a full-width row each keeps Clear away from
+       Save. */
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .footRight {
+    flex-direction: row-reverse;
+    justify-content: flex-start;
+  }
+
+  .hint {
+    width: 100%;
+  }
+}

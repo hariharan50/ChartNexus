@@ -6,7 +6,7 @@ import Select from '$shared/ui/Select';
 import AlertChannels from './components/AlertChannels';
 import AlertSettings from './components/AlertSettings';
 import DeliveryChips from './components/DeliveryChips';
-import LevelLadder from './components/LevelLadder';
+import LevelsCard from './components/LevelsCard';
 import SessionCard from './components/SessionCard';
 import StaleBanner from './components/StaleBanner';
 import WatchlistStrip from './components/WatchlistStrip';
@@ -18,19 +18,16 @@ import {
   emptyDraft,
   feedVerdict,
   fireTestAlert,
-  formatPrice,
   getChannels,
   getEngineState,
   getLevels,
   getSettings,
   getWatchlist,
-  hasFlipped,
   REFETCH_MS,
   setLevels,
   setSettings,
   markedNote,
   staleWarning,
-  stateLook,
   toPayload,
   validateDraft,
   watchableOr,
@@ -215,6 +212,16 @@ export default function TradeBuddy() {
     setDraft((rows) => rows.map((row, i) => (i === index ? { ...row, price } : row)));
   }
 
+  // Back to what the server has, not to blank. "Discard" means "forget what I
+  // typed", and a form that cleared itself instead would destroy the saved
+  // marks in the one gesture whose whole promise is that it changes nothing.
+  function discard() {
+    setDraft(draftFrom(marks.data?.levels ?? []));
+    setDirty(false);
+    setError(null);
+    setNotice(null);
+  }
+
   function submit() {
     const problem = validateDraft(draft);
     if (problem) {
@@ -234,7 +241,10 @@ export default function TradeBuddy() {
   const telegram = channels.data?.channels.find((channel) => channel.channel === 'telegram');
   const levels = engine.data?.levels ?? [];
   const validation = useMemo(() => validateDraft(draft), [draft]);
-  const busy = save.isPending || wipe.isPending;
+  // The saved marks in draft shape, so the table can mark an edited row and
+  // Discard has something to restore. Derived from the same query the form is
+  // seeded from, so the two cannot disagree about what "saved" means.
+  const savedDraft = useMemo(() => draftFrom(marks.data?.levels ?? []), [marks.data]);
 
   return (
     <div className={s.page}>
@@ -299,166 +309,76 @@ export default function TradeBuddy() {
       )}
 
       <div className={s.columns}>
-        {/* -- the marks --------------------------------------------------- */}
-        <section className={s.panel} aria-labelledby="tb-marks">
-          <h2 id="tb-marks" className={s.panelTitle}>
-            Today&apos;s levels · <span className={s.panelSymbol}>{symbol}</span>
-          </h2>
-          <p className={s.panelNote}>
-            Leave a row blank to skip it. Saving replaces the marks and resets the live state, so
-            the session starts clean against the new prices.
-          </p>
+        {/* Left: the levels, which is what the page is for. `flex: 999` makes
+            this take every spare pixel while still being allowed to shrink to
+            its 40rem basis — below about 1000px the right column drops under
+            it with no media query, because the basis sum stops fitting. */}
+        <div className={s.main}>
+          <LevelsCard
+            symbol={symbol}
+            draft={draft}
+            saved={savedDraft}
+            live={levels}
+            price={engine.data?.last_price ?? null}
+            bands={engine.data?.bands}
+            markedOn={engine.data?.marked_on}
+            armed={marked !== null}
+            stale={!!engine.data?.levels_stale}
+            dailyCap={settings.data?.daily_alert_cap ?? 3}
+            dirty={dirty}
+            validation={validation}
+            saving={save.isPending}
+            clearing={wipe.isPending}
+            onChange={update}
+            onSave={submit}
+            onDiscard={discard}
+            onClear={() => wipe.mutate()}
+            firstPriceRef={firstPriceRef}
+          />
+        </div>
 
-          <div className={s.form}>
-            {draft.map((row, index) => (
-              <div key={row.label} className={s.row}>
-                <span className={cx(s.rowLabel, s[`role_${row.role}`])}>{row.label}</span>
-                <input
-                  ref={index === 0 ? firstPriceRef : undefined}
-                  className={s.input}
-                  type="number"
-                  inputMode="decimal"
-                  step="0.05"
-                  min="0"
-                  placeholder="—"
-                  aria-label={`${row.label} price`}
-                  value={row.price}
-                  onChange={(event) => update(index, event.target.value)}
-                />
-                <span className={s.rowRole}>{row.role}</span>
-              </div>
-            ))}
-          </div>
-
-          <div className={s.actions}>
-            <Button onClick={submit} loading={save.isPending} disabled={busy || !!validation}>
-              Save levels
-            </Button>
-            <Button variant="ghost" onClick={() => wipe.mutate()} loading={wipe.isPending}>
-              Clear
-            </Button>
-          </div>
-          {validation && dirty && <p className={s.hint}>{validation}</p>}
-        </section>
-
-        {/* -- the live watch ---------------------------------------------- */}
-        <section className={s.panel} aria-labelledby="tb-live">
-          <h2 id="tb-live" className={s.panelTitle}>
-            Live watch · <span className={s.panelSymbol}>{symbol}</span>
-          </h2>
-          {/* Guarded on `bands`, not on `engine.data`. A backend that predates
-              this field answers 200 with a payload that simply lacks it, and
-              reaching through it crashed the whole page — a version skew
-              during a deploy must degrade to a missing line, never to a white
-              screen. */}
-          {marked && (
+        {/* Right: everything that is about the alerts rather than the levels.
+            These were full-width blocks below the fold, which gave the most
+            screen to the two things set up once and never touched again. */}
+        <div className={s.side}>
+          {/* Temporary home for the test row until the Delivery card takes
+              it: it belongs with the channel it proves, not with the levels. */}
+          <section className={s.panel} aria-labelledby="tb-test">
+            <h2 id="tb-test" className={s.panelTitle}>
+              Test a level alert
+            </h2>
+            <div className={s.testRow}>
+              <Select
+                className={s.testSelect}
+                value={testKind}
+                ariaLabel="Test alert type"
+                options={TEST_KINDS}
+                onChange={setTestKind}
+              />
+              <Button
+                variant="secondary"
+                onClick={() => test.mutate()}
+                loading={test.isPending}
+                disabled={levels.length === 0}
+              >
+                Send test alert
+              </Button>
+            </div>
             <p className={s.panelNote}>
-              <span className={s.marked}>{marked}</span>
+              A test goes through the real notifiers and the real channel policy, so a
+              confirmed-break test also spends one WhatsApp message.
             </p>
-          )}
+          </section>
 
-          {engine.data?.bands && (
-            <p className={s.panelNote}>
-              Bands: touch {engine.data.bands.touch} · approach {engine.data.bands.approach} ·
-              buffer {engine.data.bands.break_buffer} pts
-              {engine.data.bands.atr !== null
-                ? ` — scaled from ATR ${engine.data.bands.atr}`
-                : ' — unscaled point defaults'}
-            </p>
-          )}
-
-          {levels.length === 0 ? (
-            <p className={s.empty}>
-              No levels marked yet. Save some on the left and the watcher will pick them up on its
-              next tick.
-            </p>
-          ) : (
-            <>
-              <LevelLadder levels={levels} price={engine.data?.last_price ?? null} />
-
-              <table className={s.table}>
-                <caption className={s.srOnly}>
-                  Each marked level, its current role, and what the watcher has seen
-                </caption>
-                <thead>
-                  <tr>
-                    <th scope="col">Level</th>
-                    <th scope="col">Price</th>
-                    <th scope="col">Acting as</th>
-                    <th scope="col">State</th>
-                    <th scope="col" className={s.numeric}>
-                      Alerts left
-                    </th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {levels.map((level) => {
-                    const look = stateLook(level.state);
-                    const flipped = hasFlipped(level);
-                    return (
-                      <tr key={level.label}>
-                        <th scope="row" className={s.cellLabel}>
-                          {level.label}
-                        </th>
-                        <td className={s.numeric}>{formatPrice(level.level_price)}</td>
-                        <td>
-                          <span className={cx(s.roleTag, s[`role_${level.role}`])}>
-                            {level.role}
-                          </span>
-                          {flipped && <span className={s.flip}> flipped</span>}
-                        </td>
-                        <td>
-                          {/* Glyph + word, never colour alone: this has to survive
-                              greyscale, colour-vision deficiency and forced-colours. */}
-                          <span className={cx(s.state, s[`tone_${look.tone}`])}>
-                            <span aria-hidden="true">{look.glyph}</span> {look.label}
-                          </span>
-                        </td>
-                        <td className={s.numeric}>{level.alerts_remaining}</td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-            </>
-          )}
-
-          <div className={s.testRow}>
-            <Select
-              className={s.testSelect}
-              value={testKind}
-              ariaLabel="Test alert type"
-              options={TEST_KINDS}
-              onChange={setTestKind}
-            />
-            <Button
-              variant="secondary"
-              onClick={() => test.mutate()}
-              loading={test.isPending}
-              disabled={levels.length === 0}
-            >
-              Send test alert
-            </Button>
+          <AlertSettings
+            settings={settings.data}
+            saving={saveSettings.isPending}
+            onSave={(overrides) => saveSettings.mutate(overrides)}
+          />
+          <div ref={deliveryRef}>
+            <AlertChannels />
           </div>
-          <p className={s.panelNote}>
-            A test goes through the real notifiers and the real channel policy, so a confirmed-break
-            test also spends one WhatsApp message.
-          </p>
-        </section>
-      </div>
-
-      {/* Full width, not a second two-column row. Side by side, the six
-          threshold fields were forced into a single tall stack in a ~22rem
-          column while the channel panel sat short and wide beside it — two
-          mismatched heights and a large void. Given the whole width, the
-          fields wrap into rows and both panels end where their content does. */}
-      <AlertSettings
-        settings={settings.data}
-        saving={saveSettings.isPending}
-        onSave={(overrides) => saveSettings.mutate(overrides)}
-      />
-      <div ref={deliveryRef}>
-        <AlertChannels />
+        </div>
       </div>
     </div>
   );

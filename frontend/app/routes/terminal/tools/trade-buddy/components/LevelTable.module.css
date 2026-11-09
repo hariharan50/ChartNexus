@@ -1,0 +1,290 @@
+/* The table keeps its columns rather than collapsing them: every one of the
+   six is a different question, and a stacked card per level would lose the
+   vertical alignment that makes the prices comparable at a glance. On a phone
+   this box scrolls sideways instead — the page itself must not. */
+.scroller {
+  overflow-x: auto;
+  /* Enough for a 44px input and five readable columns. */
+  min-width: 0;
+}
+
+.table {
+  width: 100%;
+  min-width: 640px;
+  border-collapse: collapse;
+  font-size: var(--cn-text-sm);
+}
+
+.table thead th {
+  padding: 0 var(--cn-space-3) var(--cn-space-2);
+  border-bottom: 1px solid var(--cn-border);
+  font-size: var(--cn-text-xs);
+  font-weight: 600;
+  text-align: left;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--cn-text-subtle);
+  white-space: nowrap;
+}
+
+.table tbody td,
+.table tbody th {
+  padding: var(--cn-space-2) var(--cn-space-3);
+  border-bottom: 1px solid color-mix(in srgb, var(--cn-border) 55%, transparent);
+  text-align: left;
+  font-weight: 400;
+  vertical-align: middle;
+}
+
+.table tbody tr:last-child td,
+.table tbody tr:last-child th {
+  border-bottom: none;
+}
+
+.numeric {
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+}
+
+.table thead th.numeric {
+  text-align: right;
+}
+
+/* A level price is at or inside a band. Faint, because several rows can be
+   active at once and a strong fill would make the table look alarmed. */
+.active {
+  background: color-mix(in srgb, var(--cn-warning) 7%, transparent);
+}
+
+/* -- the level chip --------------------------------------------------------- */
+
+.levelCell {
+  white-space: nowrap;
+}
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 40px;
+  height: 26px;
+  padding: 0 8px;
+  border-radius: 6px;
+  font-family: var(--cn-font-mono);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+
+.chipResistance {
+  background: var(--cn-resistance-weak);
+  color: var(--cn-resistance);
+}
+
+.chipSupport {
+  background: var(--cn-support-weak);
+  color: var(--cn-support);
+}
+
+.chipPrice {
+  background: var(--cn-text);
+  color: var(--cn-bg);
+}
+
+.flip {
+  margin-left: 6px;
+  padding: 1px 5px;
+  border-radius: 4px;
+  background: var(--cn-surface-raised);
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--cn-text-muted);
+}
+
+/* -- the editable price ----------------------------------------------------- */
+
+.input {
+  width: 100%;
+  max-width: 10rem;
+  /* 44px: this is the field typed into every morning, on a phone as often as
+     at a desk. */
+  height: 44px;
+  padding: 0 var(--cn-space-3);
+  border: 1px solid var(--cn-field-border);
+  border-radius: var(--cn-radius);
+  background: var(--cn-field-bg);
+  color: var(--cn-text);
+  font-family: var(--cn-font-mono);
+  font-size: 15px;
+  font-variant-numeric: tabular-nums;
+}
+
+.input::placeholder {
+  font-family: var(--cn-font-sans);
+  font-size: var(--cn-text-sm);
+  color: var(--cn-text-subtle);
+}
+
+.input:hover {
+  background: var(--cn-field-bg-hover);
+}
+
+.input:focus-visible {
+  outline: 2px solid var(--cn-accent);
+  outline-offset: 1px;
+}
+
+/* An edited row, so "unsaved changes" in the footer has a visible subject
+   rather than being a claim about the whole form. */
+.inputEdited {
+  border-color: var(--cn-accent);
+}
+
+.distance {
+  font-family: var(--cn-font-mono);
+  font-size: var(--cn-text-sm);
+  color: var(--cn-text-muted);
+}
+
+.muted {
+  color: var(--cn-text-subtle);
+}
+
+/* -- role ------------------------------------------------------------------- */
+
+.role {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  text-transform: capitalize;
+  color: var(--cn-text-muted);
+}
+
+.dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--cn-text-subtle);
+}
+
+.dotResistance {
+  background: var(--cn-resistance);
+}
+
+.dotSupport {
+  background: var(--cn-support);
+}
+
+/* -- state ------------------------------------------------------------------ */
+
+.state {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 9px;
+  border-radius: 999px;
+  font-size: var(--cn-text-xs);
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.tone_neutral {
+  background: var(--cn-surface-raised);
+  color: var(--cn-text-muted);
+}
+
+.tone_info {
+  background: var(--cn-support-weak);
+  color: var(--cn-support);
+}
+
+.tone_warn {
+  background: color-mix(in srgb, var(--cn-warning) 14%, var(--cn-bg));
+  color: var(--cn-warning);
+}
+
+.tone_alert {
+  background: color-mix(in srgb, var(--cn-danger) 14%, var(--cn-bg));
+  color: var(--cn-danger);
+}
+
+/* An unmarked slot is not a state the engine can be in, so it gets no pill
+   fill — it is the absence of a level, not a quiet one. */
+.tone_skipped {
+  padding-left: 0;
+  color: var(--cn-text-subtle);
+  font-weight: 500;
+}
+
+/* -- alerts left ------------------------------------------------------------ */
+
+.bars {
+  display: inline-flex;
+  gap: 3px;
+}
+
+.bar {
+  width: 18px;
+  height: 6px;
+  border-radius: 3px;
+  background: var(--cn-surface-raised);
+  box-shadow: inset 0 0 0 1px var(--cn-border);
+}
+
+.barFilled {
+  background: var(--cn-text-muted);
+  box-shadow: none;
+}
+
+/* -- the LTP divider row ---------------------------------------------------- */
+
+.dividerRow {
+  background: color-mix(in srgb, var(--cn-text) 4%, transparent);
+}
+
+.dividerPrice {
+  font-family: var(--cn-font-mono);
+  font-size: var(--cn-text-base);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: var(--cn-text);
+  white-space: nowrap;
+}
+
+.dividerNote {
+  font-size: var(--cn-text-xs);
+  color: var(--cn-text-subtle);
+  white-space: nowrap;
+}
+
+.rule {
+  display: inline-block;
+  width: 2rem;
+  margin-right: var(--cn-space-2);
+  border-top: 1px dashed var(--cn-border-strong);
+  vertical-align: middle;
+}
+
+.srOnly {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+/* A level with no editable slot: marked through the API with a label this form
+   does not offer, or showing while the levels query lags the state query. The
+   price is shown as text rather than in a disabled input, because a greyed
+   field invites a click that will never do anything. */
+.readOnly {
+  display: inline-block;
+  padding: 0 var(--cn-space-3);
+  font-family: var(--cn-font-mono);
+  font-size: 15px;
+  font-variant-numeric: tabular-nums;
+  color: var(--cn-text-muted);
+}
