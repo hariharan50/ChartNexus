@@ -4,6 +4,7 @@ import { cx } from '$shared/ui/cx';
 import Button from '$shared/ui/Button';
 import Select from '$shared/ui/Select';
 import AlertChannels from './components/AlertChannels';
+import AlertFeed from './components/AlertFeed';
 import AlertSettings from './components/AlertSettings';
 import DeliveryChips from './components/DeliveryChips';
 import LevelsCard from './components/LevelsCard';
@@ -341,6 +342,10 @@ export default function TradeBuddy() {
             These were full-width blocks below the fold, which gave the most
             screen to the two things set up once and never touched again. */}
         <div className={s.side}>
+          {/* First in the column: the only panel here that changes during the
+              session, and the answer to "what did I miss". */}
+          <AlertFeed symbol={symbol} />
+
           {/* Temporary home for the test row until the Delivery card takes
               it: it belongs with the channel it proves, not with the levels. */}
           <section className={s.panel} aria-labelledby="tb-test">

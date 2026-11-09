@@ -1,0 +1,165 @@
+.card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--cn-space-3);
+  padding: var(--cn-space-4);
+  border: 1px solid var(--cn-border);
+  border-radius: var(--cn-radius-lg);
+  background: var(--cn-surface);
+  min-width: 0;
+}
+
+.head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--cn-space-2);
+}
+
+.title {
+  margin: 0;
+  font-size: var(--cn-text-base);
+  font-weight: 700;
+  color: var(--cn-text);
+}
+
+.count {
+  font-size: var(--cn-text-xs);
+  font-variant-numeric: tabular-nums;
+  color: var(--cn-text-subtle);
+}
+
+/* -- the list --------------------------------------------------------------- */
+
+.list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--cn-space-3);
+  /* Tall enough for a busy morning, short enough that the two cards below
+     stay reachable without scrolling past a day of alerts. */
+  max-height: 22rem;
+  margin: 0;
+  padding: 0;
+  overflow-y: auto;
+  list-style: none;
+}
+
+.item {
+  padding-bottom: var(--cn-space-3);
+  border-bottom: 1px solid color-mix(in srgb, var(--cn-border) 55%, transparent);
+}
+
+.item:last-child {
+  padding-bottom: 0;
+  border-bottom: none;
+}
+
+.itemHead {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--cn-space-2);
+}
+
+.time {
+  font-family: var(--cn-font-mono);
+  font-size: var(--cn-text-xs);
+  font-variant-numeric: tabular-nums;
+  color: var(--cn-text-subtle);
+}
+
+.kind {
+  padding: 2px 7px;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  white-space: nowrap;
+}
+
+.level {
+  font-family: var(--cn-font-mono);
+  font-size: var(--cn-text-xs);
+  font-variant-numeric: tabular-nums;
+  color: var(--cn-text);
+}
+
+.detail {
+  margin: 3px 0 0;
+  font-size: var(--cn-text-xs);
+  line-height: 1.5;
+  color: var(--cn-text-muted);
+}
+
+.channels {
+  margin: 1px 0 0;
+  font-size: 11px;
+  color: var(--cn-text-subtle);
+}
+
+/* The engine fired and nothing took it. Not a quiet morning — a fault, and the
+   only place it is visible. */
+.undelivered {
+  color: var(--cn-danger);
+  font-weight: 600;
+}
+
+.tone_neutral {
+  background: var(--cn-surface-raised);
+  color: var(--cn-text-muted);
+}
+
+.tone_info {
+  background: var(--cn-support-weak);
+  color: var(--cn-support);
+}
+
+.tone_warn {
+  background: color-mix(in srgb, var(--cn-warning) 14%, var(--cn-bg));
+  color: var(--cn-warning);
+}
+
+.tone_alert {
+  background: color-mix(in srgb, var(--cn-danger) 14%, var(--cn-bg));
+  color: var(--cn-danger);
+}
+
+/* A reclaim is the one good outcome in the set, and the only green in the
+   list — it reads as "that held" rather than as "price up". */
+.tone_ok {
+  background: color-mix(in srgb, var(--cn-live) 14%, var(--cn-bg));
+  color: var(--cn-live);
+}
+
+/* -- empty ------------------------------------------------------------------ */
+
+.empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--cn-space-1);
+  padding: var(--cn-space-5) var(--cn-space-3);
+  text-align: center;
+}
+
+.emptyIcon {
+  width: 26px;
+  height: 26px;
+  color: var(--cn-text-subtle);
+}
+
+.emptyTitle {
+  margin: 0;
+  font-size: var(--cn-text-sm);
+  font-weight: 700;
+  color: var(--cn-text);
+}
+
+.emptyDetail {
+  max-width: 22rem;
+  margin: 0;
+  font-size: var(--cn-text-xs);
+  line-height: 1.5;
+  color: var(--cn-text-muted);
+}
