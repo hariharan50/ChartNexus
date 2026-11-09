@@ -22,9 +22,23 @@ import {
   validateOverrides,
   watchableOr,
   WATCHABLE,
+  alertLook,
+  describeAlert,
+  describeChannels,
+  detectPreset,
+  formatSessionDate,
+  gapToNextBelow,
+  ladderScaleX,
+  nearestLevel,
+  presetOverrides,
+  PRESET_COPY,
+  resolvedDefaults,
+  signedPoints,
+  type AlertItem,
   type EngineState,
   type ResolvedBands,
   type LevelPayload,
+  type Settings,
   type WatcherState
 } from '../../app/routes/terminal/tools/trade-buddy/trade-buddy-data';
 
@@ -61,6 +75,43 @@ const BANDS: ResolvedBands = {
   atr: 200,
   note: null
 };
+
+function logged(over: Partial<AlertItem> = {}): AlertItem {
+  return {
+    kind: 'touched',
+    label: 'R1',
+    level_price: 24_700,
+    price: 24_703,
+    role_before: 'resistance',
+    role_after: 'resistance',
+    at: TICK,
+    channels: ['telegram'],
+    ...over
+  };
+}
+
+function sensitivity(over: Partial<Settings> = {}): Settings {
+  return {
+    symbol: 'NIFTY',
+    bands: BANDS,
+    cooldown_minutes: 20,
+    daily_alert_cap: 3,
+    defaults: {
+      touch_multiple: 0.03,
+      approach_multiple: 0.125,
+      break_multiple: 0.06,
+      atr_period: 14,
+      confirm_hold_seconds: 20,
+      cooldown_minutes: 20,
+      daily_alert_cap: 3,
+      fallback_touch: 6,
+      fallback_approach: 25,
+      fallback_break_buffer: 12
+    },
+    overrides: EMPTY_OVERRIDES,
+    ...over
+  };
+}
 
 function engine(over: Partial<EngineState> = {}): EngineState {
   return {
@@ -490,5 +541,279 @@ describe('the marked-for note', () => {
   it('says nothing when no levels are marked at all', () => {
     expect(markedNote(engine({ marked_on: null }))).toBeNull();
     expect(markedNote(undefined)).toBeNull();
+  });
+});
+
+describe('the horizontal price map scale', () => {
+  const levels = [{ level_price: 24_900 }, { level_price: 24_400 }];
+
+  it('puts the lowest price on the left and the highest on the right', () => {
+    const scale = ladderScaleX(levels, null);
+    expect(scale).not.toBeNull();
+    expect(scale!(24_400)).toBeLessThan(scale!(24_900));
+  });
+
+  it('keeps every position inside the frame', () => {
+    const scale = ladderScaleX(levels, 24_650)!;
+    for (const value of [24_400, 24_650, 24_900]) {
+      expect(scale(value)).toBeGreaterThanOrEqual(0);
+      expect(scale(value)).toBeLessThanOrEqual(1);
+    }
+  });
+
+  it('mirrors the vertical scale exactly, so the two cannot disagree', () => {
+    // Both pictures place the same cursor against the same ticks; a second
+    // padding constant is the bug this pins shut.
+    const vertical = ladderScale(levels, 24_650)!;
+    const horizontal = ladderScaleX(levels, 24_650)!;
+    expect(horizontal(24_650)).toBeCloseTo(1 - vertical(24_650), 10);
+  });
+
+  it('returns null when there is nothing to scale against', () => {
+    expect(ladderScaleX([{ level_price: 24_700 }], null)).toBeNull();
+  });
+});
+
+describe('naming a session', () => {
+  it('reads as a weekday and a date, which is what makes a stale set obvious', () => {
+    expect(formatSessionDate('2026-11-02')).toBe('Mon 2 Nov');
+  });
+
+  it('reads a full timestamp in IST, not UTC', () => {
+    // 23:00 UTC is already the next day in Kolkata, and the session stamp has
+    // to agree with the market the trader is in.
+    expect(formatSessionDate('2026-11-02T23:00:00Z')).toBe('Tue 3 Nov');
+  });
+
+  it('degrades to a dash rather than "Invalid Date"', () => {
+    expect(formatSessionDate(null)).toBe('—');
+    expect(formatSessionDate(undefined)).toBe('—');
+    expect(formatSessionDate('not a date')).toBe('—');
+  });
+});
+
+describe('the nearest level', () => {
+  const levels: WatcherState[] = [
+    level({ label: 'R2', level_price: 24_800 }),
+    level({ label: 'R1', level_price: 24_700 }),
+    level({ label: 'S1', level_price: 24_600 })
+  ];
+
+  it('picks the closest in either direction', () => {
+    expect(nearestLevel(levels, 24_690)?.level.label).toBe('R1');
+    expect(nearestLevel(levels, 24_610)?.level.label).toBe('S1');
+  });
+
+  it('reports an unsigned distance', () => {
+    // Unsigned on purpose: a signed number in this slot reads as a P&L.
+    expect(nearestLevel(levels, 24_610)?.distance).toBeCloseTo(10);
+    expect(nearestLevel(levels, 24_810)?.distance).toBeCloseTo(10);
+  });
+
+  it('keeps the first of two equally close levels rather than flickering', () => {
+    // Price exactly between R1 and S1. A strict comparison means the earlier
+    // one wins, so the callout does not alternate on every tick.
+    expect(nearestLevel(levels, 24_650)?.level.label).toBe('R1');
+  });
+
+  it('is null before the first tick and when nothing is marked', () => {
+    expect(nearestLevel(levels, null)).toBeNull();
+    expect(nearestLevel([], 24_650)).toBeNull();
+  });
+});
+
+describe('signed points', () => {
+  it('uses a real minus sign so the column stays aligned', () => {
+    expect(signedPoints(-152.4)).toBe('−152.40');
+  });
+
+  it('marks a positive gap explicitly', () => {
+    expect(signedPoints(12.4)).toBe('+12.40');
+  });
+
+  it('treats zero as non-negative', () => {
+    expect(signedPoints(0)).toBe('+0.00');
+  });
+});
+
+describe('the gap to the next level below', () => {
+  it('measures to the nearest lower mark, not the lowest', () => {
+    expect(gapToNextBelow(24_700, [24_900, 24_700, 24_600, 24_400])).toBeCloseTo(100);
+  });
+
+  it('is null for the lowest mark, which has nothing below it', () => {
+    expect(gapToNextBelow(24_400, [24_900, 24_700, 24_400])).toBeNull();
+  });
+
+  it('ignores a mark at the same price', () => {
+    expect(gapToNextBelow(24_700, [24_700])).toBeNull();
+  });
+});
+
+describe('presenting an alert', () => {
+  it('gives every kind a word and a glyph, not just a colour', () => {
+    for (const kind of [
+      'approaching',
+      'touched',
+      'break_confirmed',
+      'wick_rejected',
+      'reclaimed',
+      'gapped_through'
+    ] as const) {
+      const look = alertLook(kind);
+      expect(look.label.length).toBeGreaterThan(0);
+      expect(look.glyph.length).toBeGreaterThan(0);
+    }
+  });
+
+  it('names a log entry in the past tense, so it does not read as a live state', () => {
+    expect(alertLook('break_confirmed').label).toBe('Broke');
+    expect(stateLook('broken').label).toBe('Broken');
+  });
+
+  it('marks a reclaim as a good outcome, which no level state can be', () => {
+    expect(alertLook('reclaimed').tone).toBe('ok');
+  });
+});
+
+describe('describing a logged alert', () => {
+  it('says where price was relative to the level', () => {
+    expect(describeAlert(logged({ price: 24_682.4, level_price: 24_700 }))).toBe(
+      'Price 24,682.40, 17.6 pts below the level'
+    );
+  });
+
+  it('says above when price was through it', () => {
+    expect(describeAlert(logged({ price: 24_712, level_price: 24_700 }))).toContain(
+      '12.0 pts above the level'
+    );
+  });
+
+  it('states the role flip, which is the actionable half of a break', () => {
+    expect(
+      describeAlert(
+        logged({
+          kind: 'break_confirmed',
+          role_before: 'resistance',
+          role_after: 'support'
+        })
+      )
+    ).toContain('now acting as support');
+  });
+
+  it('says nothing about roles when nothing flipped', () => {
+    expect(describeAlert(logged())).not.toContain('acting as');
+  });
+});
+
+describe('describing the channels an alert used', () => {
+  it('names both when both took it', () => {
+    expect(describeChannels(['telegram', 'whatsapp'])).toBe('Telegram · WhatsApp');
+  });
+
+  it('calls out a delivery that did not happen rather than showing a blank', () => {
+    // The engine fired and nothing took it: a different fault from a quiet
+    // morning, and invisible if this rendered as an empty string.
+    expect(describeChannels([])).toBe('Not delivered');
+  });
+});
+
+describe('sensitivity presets', () => {
+  const scaled = sensitivity();
+  const unscaled = sensitivity({
+    bands: { ...sensitivity().bands, source: 'points', atr: null }
+  });
+
+  it('derives the defaults from the multiples and the live ATR', () => {
+    // 0.03 x 200 = 6, 0.125 x 200 = 25, 0.06 x 200 = 12.
+    expect(resolvedDefaults(scaled)).toEqual({ touch: 6, approach: 25, break_buffer: 12 });
+  });
+
+  it('falls back to the point defaults when there is no ATR', () => {
+    expect(resolvedDefaults(unscaled)).toEqual({
+      touch: 6,
+      approach: 25,
+      break_buffer: 12
+    });
+  });
+
+  it('ignores an existing override when computing the defaults', () => {
+    // `bands` has the override folded in already; scaling a preset from it
+    // would compound on every click.
+    const overridden = sensitivity({ bands: { ...sensitivity().bands, touch: 40 } });
+    expect(resolvedDefaults(overridden).touch).toBe(6);
+  });
+
+  it('writes nulls for default, which is what "stop overriding" means', () => {
+    expect(presetOverrides(scaled, 'default')).toEqual({
+      touch: null,
+      approach: null,
+      break_buffer: null
+    });
+  });
+
+  it('tightens all three bands together', () => {
+    expect(presetOverrides(scaled, 'tight')).toEqual({
+      touch: 4.2,
+      approach: 17.5,
+      break_buffer: 8.4
+    });
+  });
+
+  it('widens all three bands together', () => {
+    expect(presetOverrides(scaled, 'wide')).toEqual({
+      touch: 9.6,
+      approach: 40,
+      break_buffer: 19.2
+    });
+  });
+
+  it('keeps touch under approach at every preset, so the states stay ordered', () => {
+    for (const preset of ['tight', 'wide'] as const) {
+      const bands = presetOverrides(scaled, preset);
+      expect(bands.touch!).toBeLessThan(bands.approach!);
+    }
+  });
+
+  it('scales from points when ATR is unavailable, so the buttons still work', () => {
+    expect(presetOverrides(unscaled, 'tight')).toEqual({
+      touch: 4.2,
+      approach: 17.5,
+      break_buffer: 8.4
+    });
+  });
+
+  it('reads an untouched set as default', () => {
+    expect(detectPreset(scaled, EMPTY_OVERRIDES)).toBe('default');
+  });
+
+  it('recognises its own output', () => {
+    for (const preset of ['tight', 'wide'] as const) {
+      const draft = { ...EMPTY_OVERRIDES, ...presetOverrides(scaled, preset) };
+      expect(detectPreset(scaled, draft)).toBe(preset);
+    }
+  });
+
+  it('calls a hand-edited field custom rather than keeping the old label', () => {
+    const draft = { ...EMPTY_OVERRIDES, ...presetOverrides(scaled, 'tight'), touch: 5 };
+    expect(detectPreset(scaled, draft)).toBe('custom');
+  });
+
+  it('calls a partial override custom, not default', () => {
+    expect(detectPreset(scaled, { ...EMPTY_OVERRIDES, approach: 30 })).toBe('custom');
+  });
+
+  it('ignores the throttles, which no preset touches', () => {
+    const draft = { ...EMPTY_OVERRIDES, cooldown_minutes: 5, daily_alert_cap: 9 };
+    expect(detectPreset(scaled, draft)).toBe('default');
+  });
+
+  it('gives every preset a name and a sentence saying what it does', () => {
+    // Including `custom`, which is never clicked but is always displayable:
+    // the control has to be able to show the state it detects.
+    for (const preset of ['tight', 'default', 'wide', 'custom'] as const) {
+      expect(PRESET_COPY[preset].label.length).toBeGreaterThan(0);
+      expect(PRESET_COPY[preset].detail.length).toBeGreaterThan(0);
+    }
   });
 });

@@ -629,3 +629,268 @@ export function ladderScale(
     return pad + fraction * (1 - pad * 2);
   };
 }
+
+/**
+ * A horizontal position: fraction from the left, low prices first.
+ *
+ * Derived from `ladderScale` rather than written again, so the extent and the
+ * 8% padding have one definition. Two copies would drift, and a price map
+ * whose cursor used a different padding from its ticks would put price on the
+ * wrong side of a level — the one error this picture must never make.
+ */
+export function ladderScaleX(
+  levels: readonly { level_price: number }[],
+  price: number | null
+): ((value: number) => number) | null {
+  const vertical = ladderScale(levels, price);
+  if (!vertical) return null;
+  return (value: number) => 1 - vertical(value);
+}
+
+/**
+ * `Mon 2 Nov`, in IST. The session a set of levels belongs to.
+ *
+ * A weekday rather than a bare date, because the question being answered is
+ * "is this today's?" and nobody reads `2026-11-02` and knows. The weekday is
+ * what makes a Friday stamp on a Monday morning obvious at a glance.
+ */
+export function formatSessionDate(iso: string | null | undefined): string {
+  if (!iso) return '—';
+  const parsed = new Date(iso);
+  if (Number.isNaN(parsed.getTime())) return '—';
+  return (
+    parsed
+      .toLocaleDateString('en-IN', {
+        timeZone: 'Asia/Kolkata',
+        weekday: 'short',
+        day: 'numeric',
+        month: 'short'
+      })
+      // `en-IN` renders this as "Mon, 2 Nov". The comma is dropped because
+      // the string is read inline — "marked Mon, 2 Nov" acquires a second
+      // clause it does not need — and because stripping it here keeps the
+      // output the same shape wherever the runtime's CLDR data differs.
+      .replace(',', '')
+  );
+}
+
+export interface NearestLevel {
+  level: WatcherState;
+  /** Unsigned points between price and the level. */
+  distance: number;
+}
+
+/**
+ * The level price is closest to, and how far that is.
+ *
+ * The page's one-line answer to "what should I be watching". Unsigned,
+ * because the direction is already legible from the role and the price map,
+ * and a signed number here would read as a P&L.
+ */
+export function nearestLevel(
+  levels: readonly WatcherState[],
+  price: number | null
+): NearestLevel | null {
+  if (price === null || levels.length === 0) return null;
+  let best = levels[0] as WatcherState;
+  let bestGap = Math.abs(best.level_price - price);
+  for (const level of levels.slice(1)) {
+    const gap = Math.abs(level.level_price - price);
+    if (gap < bestGap) {
+      best = level;
+      bestGap = gap;
+    }
+  }
+  return { level: best, distance: bestGap };
+}
+
+/**
+ * `+12.40` / `−152.40`. A real minus sign, not a hyphen.
+ *
+ * U+2212 rather than a hyphen because these sit in a tabular-nums column
+ * where a hyphen is visibly narrower than the digits around it, and the
+ * column looks ragged wherever the sign changes.
+ */
+export function signedPoints(delta: number): string {
+  const sign = delta < 0 ? '−' : '+';
+  return `${sign}${Math.abs(delta).toFixed(2)}`;
+}
+
+/**
+ * Points from one level down to the next marked level below it, or null.
+ *
+ * Shown in place of the distance from price when there is no price — before
+ * the first tick the useful thing about a set of marks is how far apart they
+ * are, and that is the one question a column of prices cannot answer.
+ */
+export function gapToNextBelow(levelPrice: number, prices: readonly number[]): number | null {
+  const below = prices.filter((price) => price < levelPrice);
+  if (below.length === 0) return null;
+  return levelPrice - Math.max(...below);
+}
+
+// -- the day's alert log ----------------------------------------------------
+
+export interface AlertItem {
+  kind: AlertKind;
+  label: string;
+  level_price: number;
+  /** The price that triggered it, not the level's. */
+  price: number;
+  role_before: LevelRole;
+  role_after: LevelRole;
+  at: string;
+  /** Channels that actually took it. Empty means nothing delivered. */
+  channels: AlertChannelName[];
+}
+
+export interface AlertsResponse {
+  symbol: string;
+  session: string;
+  alerts: AlertItem[];
+}
+
+export function getAlerts(symbol = DEFAULT_SYMBOL): Promise<AlertsResponse> {
+  return apiFetch<AlertsResponse>({ url: '/trade-buddy/alerts', params: { symbol } });
+}
+
+/** The tones an alert can carry. `ok` is a good outcome, which no state has. */
+export type AlertTone = StateLook['tone'] | 'ok';
+
+export interface AlertLook {
+  label: string;
+  tone: AlertTone;
+  glyph: string;
+}
+
+/**
+ * How each alert kind is named in the feed.
+ *
+ * The wording differs from `stateLook` on purpose. A state is a condition
+ * price is in now ("Broken"); an alert is a thing that happened at a moment
+ * ("Broke"), and a log written in the present tense reads as a list of live
+ * conditions rather than as a history.
+ */
+const ALERT_LOOK: Record<AlertKind, AlertLook> = {
+  approaching: { label: 'Approaching', tone: 'warn', glyph: '›' },
+  touched: { label: 'Touched', tone: 'info', glyph: '◆' },
+  break_confirmed: { label: 'Broke', tone: 'alert', glyph: '✕' },
+  gapped_through: { label: 'Gapped through', tone: 'alert', glyph: '⤓' },
+  reclaimed: { label: 'Reclaimed', tone: 'ok', glyph: '↺' },
+  wick_rejected: { label: 'Wick rejected', tone: 'neutral', glyph: '◇' }
+};
+
+export function alertLook(kind: AlertKind): AlertLook {
+  return ALERT_LOOK[kind] ?? ALERT_LOOK.touched;
+}
+
+/**
+ * The detail line under one logged alert.
+ *
+ * Built only from the item's own fields — no live state, no bands. The log
+ * records something that has already happened, and mixing in a number that
+ * has since moved would make an old entry quietly wrong.
+ */
+export function describeAlert(item: AlertItem): string {
+  const gap = item.price - item.level_price;
+  const side = gap < 0 ? 'below' : 'above';
+  const base = `Price ${formatPrice(item.price)}, ${Math.abs(gap).toFixed(1)} pts ${side} the level`;
+  // The flip is the half of a break that says what to do next: "R2 broken"
+  // and "R2 is now support" are the same fact, and only the second is
+  // actionable.
+  if (item.role_after !== item.role_before) {
+    return `${base} — now acting as ${item.role_after}`;
+  }
+  return base;
+}
+
+/** How the channels line reads. Empty is a fault worth naming, not a blank. */
+export function describeChannels(channels: readonly AlertChannelName[]): string {
+  if (channels.length === 0) return 'Not delivered';
+  return channels.map((name) => (name === 'whatsapp' ? 'WhatsApp' : 'Telegram')).join(' · ');
+}
+
+// -- sensitivity presets ----------------------------------------------------
+
+export type BandPreset = 'tight' | 'default' | 'wide' | 'custom';
+
+/** The three band fields a preset writes. The throttles are left alone. */
+export type BandTriple = Pick<Overrides, 'touch' | 'approach' | 'break_buffer'>;
+
+const PRESET_FACTOR: Record<'tight' | 'wide', number> = { tight: 0.7, wide: 1.6 };
+
+/**
+ * What the bands would be with no override at all, in points.
+ *
+ * Computed from the multiples and the live ATR rather than read off
+ * `settings.bands`, because that already has any override folded in — scaling
+ * a preset from it would compound every time the preset was clicked.
+ */
+export function resolvedDefaults(settings: Settings): BandTriple {
+  const { defaults, bands } = settings;
+  const atr = bands.atr;
+  if (atr !== null && atr > 0) {
+    return {
+      touch: round1(defaults.touch_multiple * atr),
+      approach: round1(defaults.approach_multiple * atr),
+      break_buffer: round1(defaults.break_multiple * atr)
+    };
+  }
+  // No ATR: the point fallbacks *are* the defaults, and a preset scales those.
+  return {
+    touch: defaults.fallback_touch,
+    approach: defaults.fallback_approach,
+    break_buffer: defaults.fallback_break_buffer
+  };
+}
+
+/**
+ * The three band overrides a preset implies.
+ *
+ * Relative to the resolved defaults rather than absolute points, which is
+ * what lets one button mean the same thing on NIFTY and on BANKNIFTY — a 0.7x
+ * band transfers between indices, "4 points" does not. `default` writes
+ * nulls, because the whole point of that preset is to stop overriding.
+ */
+export function presetOverrides(settings: Settings, preset: BandPreset): BandTriple {
+  if (preset === 'default' || preset === 'custom') {
+    return { touch: null, approach: null, break_buffer: null };
+  }
+  const base = resolvedDefaults(settings);
+  const factor = PRESET_FACTOR[preset];
+  return {
+    touch: round1((base.touch ?? 0) * factor),
+    approach: round1((base.approach ?? 0) * factor),
+    break_buffer: round1((base.break_buffer ?? 0) * factor)
+  };
+}
+
+/**
+ * Which preset a draft currently matches, or `custom`.
+ *
+ * Derived rather than stored, for the same reason `channelStep` is: the
+ * override values already say it, and a remembered selection would survive a
+ * hand-edited field and go on claiming "Tight" for numbers that are no longer
+ * tight.
+ */
+export function detectPreset(settings: Settings, draft: Overrides): BandPreset {
+  const keys: (keyof BandTriple)[] = ['touch', 'approach', 'break_buffer'];
+  if (keys.every((key) => draft[key] === null)) return 'default';
+  for (const preset of ['tight', 'wide'] as const) {
+    const expected = presetOverrides(settings, preset);
+    if (keys.every((key) => draft[key] === expected[key])) return preset;
+  }
+  return 'custom';
+}
+
+export const PRESET_COPY: Record<BandPreset, { label: string; detail: string }> = {
+  tight: { label: 'Tight', detail: 'Alerts earlier and more often — 0.7x the defaults.' },
+  default: { label: 'Default', detail: 'The ATR-scaled defaults for this index.' },
+  wide: { label: 'Wide', detail: 'Fewer, later alerts — 1.6x the defaults.' },
+  custom: { label: 'Custom', detail: 'Your own numbers, in the fields below.' }
+};
+
+/** One decimal. A band is read off a chart, not computed against. */
+function round1(value: number): number {
+  return Math.round(value * 10) / 10;
+}
