@@ -199,16 +199,18 @@
   }
 
   .foot {
-    /* The destructive action and the two it is easy to hit by mistake end up
-       adjacent when these wrap; a full-width row each keeps Clear away from
-       Save. */
+    /* A row each, so the destructive action never ends up adjacent to Save
+       when the two would otherwise wrap into one line. */
     flex-direction: column;
-    align-items: stretch;
+    align-items: flex-start;
   }
 
   .footRight {
-    flex-direction: row-reverse;
-    justify-content: flex-start;
+    /* Same order as the desktop footer. Reversing it to put the primary
+       under the thumb would mean Save and Discard swap places depending on
+       the width, which is worse than either arrangement. */
+    width: 100%;
+    justify-content: flex-end;
   }
 
   .hint {

@@ -1,5 +1,6 @@
 import AxeBuilder from '@axe-core/playwright';
 import { expect, test, type Page } from '@playwright/test';
+import { stubTradeBuddy } from '../e2e/trade-buddy-fixtures';
 
 /**
  * Automated accessibility checks over the screens that carry real content.
@@ -31,6 +32,14 @@ interface PageCase {
   name: string;
   signedIn: boolean;
   /**
+   * Run before the page loads, for a screen whose content arrives through
+   * client-side queries rather than a server loader.
+   *
+   * Without it such a page is scanned empty — no table rows, no list items,
+   * no populated cards — which is the markup least likely to have a problem.
+   */
+  prepare?: (page: Page) => Promise<void>;
+  /**
    * Remaining colour-contrast nodes.
    *
    * These were inherited from the SvelteKit app and ran to ~105 nodes. Raising
@@ -51,6 +60,23 @@ const PAGES: PageCase[] = [
   { path: '/option-chain', name: 'option chain', signedIn: true, contrastBudget: 9 },
   { path: '/options', name: 'options analytics', signedIn: true, contrastBudget: 2 },
   { path: '/options/open-interest', name: 'open interest', signedIn: true, contrastBudget: 1 },
+  // None of the three come from this page's own markup. One is the terminal
+  // shell's user avatar (white on blue, 3.2:1), which every signed-in page
+  // here carries; the other two are the shared primary `Button` (white on the
+  // brand orange, 3.79:1), which this screen simply uses twice — Save levels
+  // and Save settings. Fixing either means changing the palette or the shared
+  // component, which is a separate pass, so the number is pinned here as the
+  // to-do rather than hidden behind a button style of this page's own.
+  {
+    path: '/tools/trade-buddy',
+    name: 'trade buddy',
+    signedIn: true,
+    contrastBudget: 3,
+    // This page reads everything through react-query in the browser, and the
+    // production build the suite runs has no `/api` proxy — so without the
+    // fixtures it would be scanned with every panel in its empty state.
+    prepare: stubTradeBuddy
+  },
   { path: '/settings/global', name: 'global settings', signedIn: true, contrastBudget: 2 },
   { path: '/settings/profile', name: 'personal info', signedIn: true, contrastBudget: 1 }
 ];
@@ -59,13 +85,14 @@ async function scan(page: Page) {
   return new AxeBuilder({ page }).withTags(STRUCTURAL_TAGS).analyze();
 }
 
-for (const { path, name, signedIn, contrastBudget } of PAGES) {
+for (const { path, name, signedIn, contrastBudget, prepare } of PAGES) {
   test(`${name} is accessible`, async ({ page, context, baseURL }) => {
     if (signedIn) {
       await context.addCookies([
         { name: 'cn_session', value: 'test', url: baseURL ?? 'http://localhost:4173' }
       ]);
     }
+    if (prepare) await prepare(page);
 
     await page.goto(path, { waitUntil: 'networkidle' });
     const { violations } = await scan(page);
