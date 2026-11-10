@@ -13,12 +13,13 @@ import asyncio
 
 import pytest
 
-from chartnexus.contexts.trade_buddy.application.ports import Tick
+from chartnexus.contexts.trade_buddy.application.ports import FeedHealth, Tick
 from chartnexus.contexts.trade_buddy.application.routing import AlertRouter
 from chartnexus.contexts.trade_buddy.application.watch import WatchEngine
 from chartnexus.contexts.trade_buddy.domain.budget import LevelBudget, WhatsAppBudget
 from chartnexus.contexts.trade_buddy.domain.events import AlertKind
 from chartnexus.contexts.trade_buddy.domain.level import LevelMark, LevelRole
+from chartnexus.entrypoints.trade_buddy_runtime import FEED_UNAVAILABLE, HealthGate
 from chartnexus.infrastructure.trade_buddy.clock import FakeClock
 from chartnexus.infrastructure.trade_buddy.manual_feed import ManualFeed
 from tests.unit.trade_buddy.conftest import (
@@ -234,3 +235,103 @@ class TestConcurrentShutdown:
 @pytest.fixture
 def store() -> MemoryLevelStore:
     return MemoryLevelStore()
+
+
+class TestHealthGate:
+    """The guard against an unclearable fault reporting itself every minute.
+
+    The watch loop retries a failed feed once a minute for the whole session.
+    A missing SDK or a revoked token cannot clear on its own, so before this
+    gate existed that retry delivered one identical "Feed problem" message per
+    minute — a phone full of the same sentence, which is indistinguishable from
+    a broken bot and trains the reader to ignore the channel that exists to be
+    impossible to ignore.
+    """
+
+    def health(self, detail: str, *, minute: int, reason: str = FEED_UNAVAILABLE) -> FeedHealth:
+        """One report, stamped ``minute`` minutes into the session.
+
+        Minutes because that is the retry cadence the gate exists to survive.
+        """
+        return FeedHealth(reason=reason, detail=detail, at=at(minute * 60.0))
+
+    async def test_it_sends_the_first_report(self):
+        sink = RecordingSink()
+        gate = HealthGate(sink=sink)
+
+        await gate.deliver_health(self.health("no feed", minute=0))
+
+        assert [h.detail for h in sink.health] == ["no feed"]
+
+    async def test_it_swallows_the_same_report_on_every_retry(self):
+        sink = RecordingSink()
+        gate = HealthGate(sink=sink)
+
+        for minute in range(10):
+            await gate.deliver_health(self.health("no feed", minute=minute))
+
+        assert len(sink.health) == 1
+
+    async def test_it_restates_an_ongoing_fault_once_the_window_passes(self):
+        sink = RecordingSink()
+        gate = HealthGate(sink=sink, repeat_after_seconds=300.0)
+
+        for minute in range(12):
+            await gate.deliver_health(self.health("no feed", minute=minute))
+
+        # Minute 0, then 5 and 10 — stated as ongoing rather than said once and
+        # then never again, because "still down" is worth hearing occasionally.
+        assert [h.at for h in sink.health] == [at(0.0), at(300.0), at(600.0)]
+
+    async def test_different_news_is_not_a_repeat(self):
+        sink = RecordingSink()
+        gate = HealthGate(sink=sink)
+
+        await gate.deliver_health(self.health("token refused", minute=0))
+        await gate.deliver_health(self.health("socket dropped", minute=1))
+
+        assert [h.detail for h in sink.health] == ["token refused", "socket dropped"]
+
+    async def test_the_same_detail_under_a_different_reason_is_not_a_repeat(self):
+        sink = RecordingSink()
+        gate = HealthGate(sink=sink)
+
+        await gate.deliver_health(self.health("gone", minute=0))
+        await gate.deliver_health(self.health("gone", minute=1, reason="disconnected"))
+
+        assert len(sink.health) == 2
+
+    async def test_a_fault_that_returns_after_recovery_is_reported_again(self):
+        """The one case where staying quiet would genuinely mislead."""
+        sink = RecordingSink()
+        gate = HealthGate(sink=sink)
+
+        await gate.deliver_health(self.health("no feed", minute=0))
+        gate.clear()  # the feed came up
+        await gate.deliver_health(self.health("no feed", minute=1))
+
+        assert len(sink.health) == 2
+
+    async def test_level_alerts_pass_straight_through(self, store):
+        """Only health is deduplicated — a price alert is never a repeat."""
+        store.mark(SYMBOL, *MARKS)
+        sink = RecordingSink()
+        gate = HealthGate(sink=sink)
+        engine = WatchEngine(
+            symbol=SYMBOL,
+            policy=policy(),
+            window=window(),
+            store=store,
+            sink=gate,
+            clock=FakeClock(SESSION_START),
+            budget=LevelBudget(),
+        )
+        await engine.load()
+
+        feed = ManualFeed()
+        await feed.subscribe((SYMBOL,))
+        for price, offset in [(24_680.0, 0.0), (24_697.0, 10.0)]:
+            await feed.push(Tick(symbol=SYMBOL, price=price, at=at(offset)))
+        await drain(engine, feed)
+
+        assert sink.events, "level alerts must not be gated"
