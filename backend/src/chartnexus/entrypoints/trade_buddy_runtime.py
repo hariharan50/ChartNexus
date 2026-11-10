@@ -17,10 +17,13 @@ import asyncio
 import contextlib
 from collections.abc import Awaitable, Callable
 from datetime import UTC, datetime
+from typing import Any
 
 from chartnexus.bootstrap.container import Container
 from chartnexus.bootstrap.settings import Settings
+from chartnexus.contexts.trade_buddy.application.ports import FeedHealth
 from chartnexus.contexts.trade_buddy.application.watch import WatchEngine
+from chartnexus.contexts.trade_buddy.domain.level import MarkSet
 from chartnexus.contexts.trade_buddy.domain.schedule import WatchWindow
 from chartnexus.infrastructure.observability.structured_logging import get_logger
 from chartnexus.infrastructure.trade_buddy.build_trade_buddy import (
@@ -40,6 +43,10 @@ _WATCHDOG_INTERVAL_SECONDS = 15.0
 #: Ceiling on the sleep between market-hours checks, so a config change or a
 #: clock correction is picked up within the minute rather than at the next open.
 _MAX_IDLE_SLEEP_SECONDS = 60.0
+
+#: Reported when the feed cannot be built at all — a missing SDK, a bad
+#: credential, anything that leaves the watch with nothing to listen to.
+FEED_UNAVAILABLE = "feed_unavailable"
 
 
 async def run_trade_buddy_loop(
@@ -88,38 +95,41 @@ async def _watch_session(
     router = await build_router(container)
 
     engines: dict[str, WatchEngine] = {}
-
-    async def marked() -> tuple[str, ...]:
-        """The instruments to watch: those with levels marked.
-
-        Derived rather than configured, so adding SENSEX is marking SENSEX
-        levels rather than editing an env var and restarting.
-        """
-        found = []
-        for symbol in symbols:
-            # Truthy when any level is marked. Staleness is the engine's
-            # call, not this one's: an instrument with stale levels is
-            # still watched, so it can say so rather than vanish.
-            if await store.load_marks(symbol):
-                found.append(symbol)
-        return tuple(found)
+    #: The mark set each engine was last loaded with. Held so that replacing
+    #: an instrument's levels mid-session is *noticed*: without it an engine
+    #: kept whatever it read at startup, and the page's own instruction —
+    #: "re-mark them" — could not take effect until the process restarted.
+    loaded: dict[str, MarkSet] = {}
 
     async def reconcile() -> tuple[str, ...]:
-        """Bring engines and the subscription in line with what is marked."""
-        wanted = await marked()
-        fresh = tuple(s for s in wanted if s not in engines)
-        for symbol in fresh:
-            engine = await build_watch_engine(container, symbol, router=router)
-            await engine.load()
-            engines[symbol] = engine
-        if fresh:
-            # `subscribe` is additive and idempotent, so a newly marked
-            # instrument joins mid-session without dropping the socket.
-            await feed.subscribe(fresh)
-            log.info("trade_buddy_watching", symbols=list(fresh))
-        return wanted
+        return await reconcile_engines(
+            symbols=symbols,
+            store=store,
+            feed=feed,
+            engines=engines,
+            loaded=loaded,
+            build=lambda symbol: build_watch_engine(container, symbol, router=router),
+        )
 
-    feed = await build_feed(container, router)
+    try:
+        feed = await build_feed(container, router)
+    except Exception as exc:
+        # Building the feed imports the broker SDK lazily, so a packaging or
+        # credential fault surfaces here rather than at startup. Unhandled it
+        # escapes the session, ends the watch loop and leaves no trace on the
+        # page — the loudest possible failure reported as silence. One health
+        # alert and a retry next pass instead.
+        log.error("trade_buddy_feed_unavailable", error=repr(exc))
+        await router.deliver_health(
+            FeedHealth(
+                reason=FEED_UNAVAILABLE,
+                detail=f"Could not open the market feed: {exc}. No alerts until this clears.",
+                at=datetime.now(UTC),
+            )
+        )
+        await _sleep(stop, _MAX_IDLE_SLEEP_SECONDS)
+        return
+
     if feed is None:
         # No broker connected. Not an error and not a crash loop: the caller
         # sleeps and tries again, so connecting through the UI mid-session is
@@ -158,6 +168,87 @@ async def _watch_session(
                 await task
         with contextlib.suppress(Exception):
             await feed.close()
+
+
+async def reconcile_engines(
+    *,
+    symbols: tuple[str, ...],
+    store: Any,
+    feed: Any,
+    engines: dict[str, WatchEngine],
+    loaded: dict[str, MarkSet],
+    build: Callable[[str], Awaitable[WatchEngine]],
+) -> tuple[str, ...]:
+    """Bring engines and the subscription in line with what is marked.
+
+    Three things can have changed since the last pass, and each used to need a
+    restart:
+
+    **Newly marked.** Build an engine and subscribe. Watching is derived from
+    what is marked rather than configured, so adding SENSEX is marking SENSEX
+    levels rather than editing an env var.
+
+    **Re-marked.** Reload the engine. This is the one that mattered most:
+    levels stamped for an earlier session are not alerted on at all, so an
+    engine that started the morning with stale marks went quiet, said
+    "re-mark them", and then ignored the re-marking for the rest of the day —
+    silence on a real break, which is the failure this feature exists to
+    prevent. A changed set of prices had the same problem more quietly: the
+    watch carried on against the levels it read at startup.
+
+    **Cleared.** Drop the engine, so a deleted level set stops being watched
+    rather than carrying on from memory.
+
+    Staleness itself is the engine's call, not this one's: an instrument with
+    stale levels stays watched so that it can say so rather than vanish from
+    the strip.
+
+    A module-level function taking its collaborators rather than a closure over
+    them, because this is where a missed reload is invisible and it has to be
+    reachable from a test without a container or a socket.
+    """
+    current = {symbol: await store.load_marks(symbol) for symbol in symbols}
+    wanted = tuple(symbol for symbol, marks in current.items() if marks)
+
+    for symbol in [s for s in engines if s not in wanted]:
+        # The subscription is deliberately left in place. Nothing consumes
+        # ticks for an instrument with no engine (`fan_out` skips them), and
+        # keeping it means re-marking later costs no socket traffic.
+        del engines[symbol]
+        loaded.pop(symbol, None)
+        log.info("trade_buddy_unwatched", symbol=symbol, reason="levels_cleared")
+
+    fresh: list[str] = []
+    for symbol in wanted:
+        marks = current[symbol]
+        if symbol in engines and loaded.get(symbol) == marks:
+            continue
+
+        engine = engines.get(symbol)
+        if engine is None:
+            engine = await build(symbol)
+            engines[symbol] = engine
+            fresh.append(symbol)
+        # Reloaded in place rather than rebuilt: a fresh object would lose the
+        # last-tick reading the staleness watchdog measures silence from, and
+        # re-arming that mid-session is a window in which a dead feed raises
+        # nothing.
+        await engine.load()
+        loaded[symbol] = marks
+        if symbol not in fresh:
+            log.info(
+                "trade_buddy_reloaded",
+                symbol=symbol,
+                levels=len(marks),
+                marked_on=marks.marked_on.isoformat() if marks.marked_on else None,
+            )
+
+    if fresh:
+        # `subscribe` is additive and idempotent, so a newly marked instrument
+        # joins mid-session without dropping the socket.
+        await feed.subscribe(tuple(fresh))
+        log.info("trade_buddy_watching", symbols=fresh)
+    return wanted
 
 
 async def _watchdog(

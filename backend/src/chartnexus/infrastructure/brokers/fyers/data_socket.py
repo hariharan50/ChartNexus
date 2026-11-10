@@ -1,9 +1,10 @@
 """The Fyers v3 WebSocket, behind the ``TickFeed`` port.
 
-This is the only module in the repository allowed to import ``fyers_apiv3`` for
-streaming — ``tests/architecture/test_vendor_imports.py`` enforces it — and the
-reason the confinement matters here is that the SDK's shape fights the rest of
-the codebase in three specific ways:
+Streaming is confined to this directory —
+``tests/architecture/test_vendor_imports.py`` enforces it — and the SDK itself
+is reached through :mod:`sdk`, which carries the packaging shim it needs to
+import at all. The reason the confinement matters here is that the SDK's shape
+fights the rest of the codebase in three specific ways:
 
 **It is synchronous and threaded.** ``FyersDataSocket`` runs its own thread and
 invokes ``on_message`` from it. Touching an asyncio primitive from that thread
@@ -31,11 +32,12 @@ from collections.abc import AsyncIterator, Awaitable, Callable
 from datetime import UTC, datetime
 from typing import Any
 
-from fyers_apiv3.FyersWebsocket import data_ws
-
+from chartnexus.contexts.market_data.domain.instruments import InstrumentSymbol
 from chartnexus.contexts.trade_buddy.application.ports import Tick
+from chartnexus.infrastructure.brokers.fyers.sdk import data_ws
 from chartnexus.infrastructure.brokers.fyers.symbol_mapper import (
     from_broker_symbol,
+    to_broker_symbol,
 )
 from chartnexus.infrastructure.brokers.fyers.tick_parsing import (
     extract_price,
@@ -76,9 +78,16 @@ class FyersTickFeed:
         # then deliver a backlog of stale prices, which is worse than a gap.
         self._queue: asyncio.Queue[Tick | None] = asyncio.Queue(maxsize=queue_size)
         self._socket: Any | None = None
-        #: Canonical names, as the engine knows them.
+        #: Canonical names, as the engine knows them. Only the ones actually
+        #: subscribed: a symbol the catalog could not translate never lands
+        #: here, so it cannot be reported as watched.
         self._symbols: tuple[str, ...] = ()
-        #: Broker string -> canonical, for translating inbound frames.
+        #: The broker strings sent to the SDK, in subscription order. Held
+        #: because a reconnect has to re-send exactly these — the SDK does not
+        #: restore subscriptions, and it has never heard a canonical name.
+        self._broker_symbols: tuple[str, ...] = ()
+        #: Upper-cased broker string -> canonical, for translating inbound
+        #: frames without a catalog scan per tick.
         self._broker_to_canonical: dict[str, str] = {}
         self._closed = False
         self._dropped = 0
@@ -86,19 +95,89 @@ class FyersTickFeed:
     # -- the async side -----------------------------------------------------
 
     async def subscribe(self, symbols: tuple[str, ...]) -> None:
-        """Connect (if needed) and subscribe. Idempotent per symbol set."""
+        """Connect (if needed) and subscribe. Idempotent per symbol set.
+
+        ``symbols`` arrive canonical (``BANKNIFTY``) because that is what every
+        layer above speaks. The SDK only understands the exchange's own strings
+        (``NSE:NIFTYBANK-INDEX``), and the index root is not derivable from the
+        canonical name, so each one goes through the catalog here — this is the
+        boundary where that translation belongs, and the only place in the
+        repository where a broker symbol is spoken out loud.
+
+        Translation happens *before* the socket is opened. A subscription the
+        broker cannot parse yields no ticks and no error, which is the one
+        failure this feed must never produce silently, so an untranslatable
+        symbol is announced through the health reporter and left unsubscribed
+        rather than passed down as-is.
+        """
         self._loop = asyncio.get_running_loop()
+        new = tuple(s for s in symbols if s not in self._symbols)
+        if not new:
+            return
+
+        resolved: list[tuple[str, str]] = []
+        unresolved: list[str] = []
+        for canonical in new:
+            broker = self._broker_symbol(canonical)
+            if broker is None:
+                unresolved.append(canonical)
+            else:
+                resolved.append((canonical, broker))
+
+        if unresolved:
+            await self._announce(
+                "feed_symbol_unmapped",
+                f"No broker symbol for {', '.join(unresolved)} — not subscribed, "
+                "so no alerts will be sent for it. The instrument catalog may "
+                "not be loaded.",
+            )
+        if not resolved:
+            # Nothing to listen to. Opening a socket now would connect, sit
+            # subscribed to nothing, and look healthy while delivering nothing.
+            return
+
         if self._socket is None:
             self._socket = self._build()
             # `connect()` spawns the SDK's own thread and returns; it does not
             # block, so there is nothing to await here.
             await asyncio.to_thread(self._socket.connect)
-        new = tuple(s for s in symbols if s not in self._symbols)
-        if not new:
+
+        for canonical, broker in resolved:
+            self._broker_to_canonical[broker.strip().upper()] = canonical
+        self._symbols += tuple(canonical for canonical, _ in resolved)
+        self._broker_symbols += tuple(broker for _, broker in resolved)
+
+        wire = [broker for _, broker in resolved]
+        await asyncio.to_thread(self._socket.subscribe, symbols=wire, data_type="SymbolUpdate")
+        log.info(
+            "fyers_socket_subscribed",
+            symbols=[canonical for canonical, _ in resolved],
+            broker_symbols=wire,
+            litemode=self._litemode,
+        )
+
+    def _broker_symbol(self, canonical: str) -> str | None:
+        """The broker's string for one canonical name, or ``None``.
+
+        A catalog miss returns ``None`` rather than raising: one unmappable
+        instrument must not stop the others from being watched, and the caller
+        reports it.
+        """
+        try:
+            return to_broker_symbol(InstrumentSymbol(canonical))
+        except Exception as exc:
+            log.error("fyers_socket_symbol_unmapped", symbol=canonical, error=repr(exc))
+            return None
+
+    async def _announce(self, reason: str, detail: str) -> None:
+        """Report a health event from the async side, defensively."""
+        reporter = self._on_health
+        if reporter is None:
             return
-        self._symbols += new
-        await asyncio.to_thread(self._socket.subscribe, symbols=list(new), data_type="SymbolUpdate")
-        log.info("fyers_socket_subscribed", symbols=list(new), litemode=self._litemode)
+        try:
+            await reporter(reason, detail)
+        except Exception as exc:
+            log.error("fyers_health_report_failed", error=repr(exc))
 
     async def ticks(self) -> AsyncIterator[Tick]:
         while True:
@@ -157,7 +236,7 @@ class FyersTickFeed:
         compare the wrong price against the wrong levels.
         """
         if raw:
-            mapped = self._broker_to_canonical.get(raw)
+            mapped = self._broker_to_canonical.get(raw.strip().upper())
             if mapped:
                 return mapped
             resolved = from_broker_symbol(raw)
@@ -187,15 +266,26 @@ class FyersTickFeed:
 
     def _on_connect(self) -> None:
         log.info("fyers_socket_connected")
-        if self._symbols:
-            # A reconnect does not restore subscriptions; re-sending them is
-            # what keeps a mid-session drop from going permanently quiet.
-            socket = self._socket
-            if socket is not None:
-                with contextlib.suppress(Exception):
-                    socket.subscribe(
-                        symbols=list(self._broker_to_canonical), data_type="SymbolUpdate"
-                    )
+        socket = self._socket
+        if not self._broker_symbols or socket is None:
+            return
+        # A reconnect does not restore subscriptions; re-sending them is what
+        # keeps a mid-session drop from going permanently quiet. It has to be
+        # the broker strings — the SDK has never heard a canonical name.
+        wire = list(self._broker_symbols)
+        try:
+            socket.subscribe(symbols=wire, data_type="SymbolUpdate")
+        except Exception as exc:
+            # A re-subscribe that fails leaves a connected socket delivering
+            # nothing, which looks exactly like a quiet market. Saying so is
+            # the whole reason these callbacks report health at all.
+            log.error("fyers_socket_resubscribe_failed", symbols=wire, error=repr(exc))
+            self._report(
+                "feed_resubscribe_failed",
+                f"Reconnected to Fyers but could not re-subscribe to {', '.join(wire)}: {exc}",
+            )
+        else:
+            log.info("fyers_socket_resubscribed", broker_symbols=wire)
 
     def _on_close(self, message: Any = None) -> None:
         log.warning("fyers_socket_closed", detail=str(message))
