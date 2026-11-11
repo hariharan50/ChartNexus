@@ -7,8 +7,7 @@ import { useSignOut } from '$contexts/identity/use-session';
 import { isApiError } from '$shared/api/errors';
 import { createQueryClient } from '$shared/api/query-client';
 import { createServerFetch } from '$shared/api/server-fetch';
-import { RealtimeProvider, useRealtimeStatus } from '$shared/realtime/RealtimeProvider';
-import RealtimeIndicator from '$shared/realtime/RealtimeIndicator';
+import { RealtimeProvider } from '$shared/realtime/RealtimeProvider';
 import { cx } from '$shared/ui/cx';
 import IconBolt from '$shared/ui/icons/IconBolt';
 import IconChart from '$shared/ui/icons/IconChart';
@@ -206,18 +205,6 @@ const nav: NavItem[] = [
     ]
   }
 ];
-
-/**
- * The live-stream dot in the header.
- *
- * Its own component so a state change on the socket re-renders this and not the
- * whole terminal shell — a flapping connection would otherwise re-render every
- * menu in the header on each retry.
- */
-function RealtimeStatusBadge() {
-  const { state, lastEventAt } = useRealtimeStatus();
-  return <RealtimeIndicator state={state} lastEventAt={lastEventAt} />;
-}
 
 function TerminalShell({ user }: { user: User }) {
   const location = useLocation();
@@ -422,8 +409,6 @@ function TerminalShell({ user }: { user: User }) {
 
         <div className={s.navRight}>
           <SymbolSearch />
-
-          <RealtimeStatusBadge />
 
           <button
             type="button"
