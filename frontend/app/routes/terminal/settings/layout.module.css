@@ -61,9 +61,9 @@
   color: var(--cn-text-muted);
   text-decoration: none;
   transition:
-    background var(--cn-duration-fast) ease,
-    color var(--cn-duration-fast) ease,
-    border-color var(--cn-duration-fast) ease;
+    background var(--dur-xquick) var(--ease-standard),
+    color var(--dur-xquick) var(--ease-standard),
+    border-color var(--dur-xquick) var(--ease-standard);
 }
 
 @media (hover: hover) {

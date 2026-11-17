@@ -72,7 +72,7 @@
 .caret {
   display: inline-flex;
   color: var(--cn-text-subtle);
-  transition: transform var(--cn-duration-fast) var(--cn-ease);
+  transition: transform var(--dur-quick) var(--ease-standard);
 }
 
 .caret-open {

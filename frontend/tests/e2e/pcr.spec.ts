@@ -110,21 +110,27 @@ test('Day-wise PCR is shown but inert', async ({ page }) => {
   await expect(button).toBeDisabled();
 });
 
-test('Replay sweeps the charts and hands them back', async ({ page }) => {
-  // The sweep takes ~15s by design, so this one needs more than the default.
-  test.setTimeout(60_000);
+test.describe('replay', () => {
+  // This one is *about* the animated sweep, which reduced motion (the suite
+  // default, see playwright.config.ts) deliberately skips.
+  test.use({ contextOptions: { reducedMotion: 'no-preference' } });
 
-  const replay = page.getByRole('checkbox', { name: 'Replay' });
-  // The input is visually hidden behind its switch, so click the label — which
-  // is what a person does anyway.
-  const label = page.getByText('Replay', { exact: true });
+  test('Replay sweeps the charts and hands them back', async ({ page }) => {
+    // The sweep takes ~15s by design, so this one needs more than the default.
+    test.setTimeout(60_000);
 
-  await expect(replay).not.toBeChecked();
-  await label.click();
-  await expect(replay).toBeChecked();
+    const replay = page.getByRole('checkbox', { name: 'Replay' });
+    // The input is visually hidden behind its switch, so click the label — which
+    // is what a person does anyway.
+    const label = page.getByText('Replay', { exact: true });
 
-  // The sweep finishes on its own and releases the charts back to live.
-  await expect(replay).not.toBeChecked({ timeout: 30_000 });
+    await expect(replay).not.toBeChecked();
+    await label.click();
+    await expect(replay).toBeChecked();
+
+    // The sweep finishes on its own and releases the charts back to live.
+    await expect(replay).not.toBeChecked({ timeout: 30_000 });
+  });
 });
 
 test('hiding a side marks its legend entry off', async ({ page }) => {

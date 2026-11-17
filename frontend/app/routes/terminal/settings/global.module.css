@@ -53,7 +53,7 @@
   border-radius: 999px;
   background: var(--cn-border-strong);
   cursor: pointer;
-  transition: background var(--cn-duration-fast) var(--cn-ease);
+  transition: background var(--dur-xquick) var(--ease-standard);
 }
 
 .switch.on {
@@ -68,7 +68,7 @@
   height: 1.125rem;
   border-radius: 50%;
   background: #fff;
-  transition: transform var(--cn-duration-fast) var(--cn-ease);
+  transition: transform var(--dur-quick) var(--ease-standard);
 }
 
 .switch.on .knob {
@@ -96,8 +96,8 @@
   text-align: left;
   cursor: pointer;
   transition:
-    border-color var(--cn-duration-fast) ease,
-    background var(--cn-duration-fast) ease;
+    border-color var(--dur-xquick) var(--ease-standard),
+    background var(--dur-xquick) var(--ease-standard);
 }
 
 @media (hover: hover) {

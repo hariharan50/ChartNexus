@@ -21,7 +21,7 @@
   font-weight: 600;
   color: var(--cn-live);
   opacity: 0;
-  transition: opacity var(--cn-duration) var(--cn-ease);
+  transition: opacity var(--dur-quick) var(--ease-standard);
 }
 
 .saved.visible {
@@ -57,7 +57,7 @@
   padding: var(--cn-space-5) var(--cn-space-4);
   border-top: 1.5px solid var(--cn-border-strong);
   border-radius: var(--cn-radius);
-  transition: background var(--cn-duration-fast) var(--cn-ease);
+  transition: background var(--dur-xquick) var(--ease-standard);
 }
 
 @media (hover: hover) {
@@ -98,7 +98,7 @@
   border-radius: 999px;
   background: var(--cn-border-strong);
   cursor: pointer;
-  transition: background var(--cn-duration-fast) var(--cn-ease);
+  transition: background var(--dur-xquick) var(--ease-standard);
 }
 
 .switch.on {
@@ -113,7 +113,7 @@
   height: 1.125rem;
   border-radius: 50%;
   background: #fff;
-  transition: transform var(--cn-duration-fast) var(--cn-ease);
+  transition: transform var(--dur-quick) var(--ease-standard);
 }
 
 .switch.on .knob {

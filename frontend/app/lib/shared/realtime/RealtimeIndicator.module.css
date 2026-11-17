@@ -47,7 +47,7 @@
 }
 
 .pulse {
-  animation: cn-pulse var(--cn-duration-pulse) ease-in-out infinite;
+  animation: global(cn-pulse) var(--cn-duration-pulse) ease-in-out infinite;
 }
 
 /* Honours a reader who asked for less motion; the colour already carries the

@@ -59,6 +59,9 @@
   border-radius: var(--cn-radius-lg);
   background: var(--cn-surface);
   box-shadow: var(--cn-shadow-lg, var(--cn-shadow));
+  /* Mounts on open, so the entrance replays every time it opens. */
+  animation: global(cn-drop) var(--dur-moderate) var(--ease-standard);
+  transform-origin: top center;
 }
 
 .list {

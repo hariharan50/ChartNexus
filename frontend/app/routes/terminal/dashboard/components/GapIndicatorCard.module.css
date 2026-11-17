@@ -169,7 +169,7 @@
 .skelPill,
 .skelRow {
   border-radius: var(--cn-radius);
-  background: var(--cn-surface-raised);
+  animation: global(cn-skeleton) 1.6s ease-in-out infinite alternate;
 }
 
 .skelPill {

@@ -27,6 +27,14 @@
   background: var(--cn-surface);
   box-shadow: var(--cn-shadow-lg, var(--cn-shadow));
 }
+/* Inside a <details>: the closed content is never unmounted (Chromium hides it
+   with content-visibility), so an animation on the panel itself would play
+   once at page load and never again. Keyed on `[open]`, it replays on every
+   open. */
+:global(details[open]) > .mega {
+  animation: global(cn-drop) var(--dur-moderate) var(--ease-standard);
+  transform-origin: top center;
+}
 
 .mega-head {
   padding-bottom: var(--cn-space-4);

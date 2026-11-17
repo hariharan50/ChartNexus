@@ -23,8 +23,8 @@
   font-variant-numeric: tabular-nums;
   cursor: pointer;
   transition:
-    background 0.12s ease,
-    color 0.12s ease;
+    background var(--dur-xquick) var(--ease-standard),
+    color var(--dur-xquick) var(--ease-standard);
 }
 
 @media (hover: hover) {

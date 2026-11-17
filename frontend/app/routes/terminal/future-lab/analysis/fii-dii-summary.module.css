@@ -191,7 +191,7 @@
   width: 0.75rem;
   color: var(--cn-text-subtle);
   transform: rotate(-90deg);
-  transition: transform var(--cn-duration-fast) var(--cn-ease);
+  transition: transform var(--dur-quick) var(--ease-standard);
 }
 
 .caret-open {
@@ -409,8 +409,8 @@
   font-weight: 700;
   cursor: pointer;
   transition:
-    color var(--cn-duration-fast) ease,
-    border-color var(--cn-duration-fast) ease;
+    color var(--dur-xquick) var(--ease-standard),
+    border-color var(--dur-xquick) var(--ease-standard);
 }
 
 @media (hover: hover) {

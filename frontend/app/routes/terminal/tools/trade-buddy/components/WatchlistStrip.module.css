@@ -29,7 +29,7 @@
   background: none;
   text-align: left;
   cursor: pointer;
-  transition: background var(--cn-duration-fast) var(--cn-ease);
+  transition: background var(--dur-xquick) var(--ease-standard);
 }
 
 .tab:hover {

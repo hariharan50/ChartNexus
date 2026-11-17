@@ -63,7 +63,7 @@
 .caret {
   display: inline-flex;
   color: var(--cn-text-subtle);
-  transition: transform var(--cn-duration-fast) var(--cn-ease);
+  transition: transform var(--dur-quick) var(--ease-standard);
 }
 
 .caretOpen {
@@ -95,6 +95,7 @@
   max-width: min(20rem, 90vw);
   max-height: 18rem;
   overflow-y: auto;
+  overscroll-behavior: contain;
   margin: 0;
   padding: var(--cn-space-1);
   list-style: none;
@@ -102,6 +103,9 @@
   border-radius: var(--cn-radius);
   background: var(--cn-surface-raised);
   box-shadow: var(--cn-shadow, 0 8px 24px rgb(0 0 0 / 35%));
+  /* Mounts on open, so the entrance replays every time it opens. */
+  animation: global(cn-drop) var(--dur-moderate) var(--ease-standard);
+  transform-origin: top center;
 }
 
 /* For a control near the viewport edge: a list that grows rightwards off

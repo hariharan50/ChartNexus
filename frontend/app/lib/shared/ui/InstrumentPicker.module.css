@@ -59,7 +59,7 @@
   background: var(--cn-surface);
   color: var(--cn-text-muted);
   cursor: pointer;
-  transition: color var(--cn-duration-fast) var(--cn-ease);
+  transition: color var(--dur-xquick) var(--ease-standard);
 }
 
 @media (hover: hover) {
@@ -90,6 +90,9 @@
   border-radius: var(--cn-radius-lg);
   background: var(--cn-surface);
   box-shadow: var(--cn-shadow-lg, var(--cn-shadow));
+  /* Mounts on open, so the entrance replays every time it opens. */
+  animation: global(cn-drop) var(--dur-moderate) var(--ease-standard);
+  transform-origin: top center;
 }
 
 .search {
@@ -121,6 +124,7 @@
      visible without scrolling; the rest scrolls. */
   max-height: 20rem;
   overflow-y: auto;
+  overscroll-behavior: contain;
 }
 
 /* Sticky so the reader still knows which group they are in after scrolling

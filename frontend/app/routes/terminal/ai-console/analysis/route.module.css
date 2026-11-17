@@ -61,7 +61,7 @@
   text-align: center;
   color: var(--cn-text-muted);
   font-size: var(--cn-text-sm);
-  animation: cn-pulse var(--cn-duration-pulse) ease-in-out infinite;
+  animation: global(cn-pulse) var(--cn-duration-pulse) ease-in-out infinite;
 }
 
 /* -- Guidance hero --------------------------------------------------------- */
@@ -279,8 +279,8 @@
   cursor: pointer;
   color: var(--cn-text-muted);
   transition:
-    background var(--cn-duration-fast) ease,
-    color var(--cn-duration-fast) ease;
+    background var(--dur-xquick) var(--ease-standard),
+    color var(--dur-xquick) var(--ease-standard);
 }
 
 @media (hover: hover) {
@@ -786,7 +786,7 @@
      A gradient meter is one of the few honest reasons to animate a layout
      property; it is one element, off the hot path, and it animates on a
      user-initiated update rather than on every tick. */
-  transition: width var(--cn-duration-slow) var(--cn-ease);
+  transition: width var(--dur-gentle) var(--ease-decelerate);
 }
 
 .certaintyFill.buy {

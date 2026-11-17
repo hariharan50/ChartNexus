@@ -210,7 +210,7 @@
    Honoured only when the visitor allows motion. */
 @media (prefers-reduced-motion: no-preference) {
   .page-enter {
-    animation: cn-rise var(--cn-duration-slow) var(--cn-ease-out) both;
+    animation: global(cn-rise) var(--cn-duration-slow) var(--cn-ease-out) both;
   }
 }
 

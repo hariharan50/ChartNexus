@@ -81,11 +81,11 @@ export default function ToolbarMenu({ anchorRef, open, className, children }: Pr
 
     // The bar's own horizontal scroll, or a window resize, moves the trigger
     // out from under a panel that only read its position once on open.
-    window.addEventListener('scroll', schedule, true);
-    window.addEventListener('resize', schedule);
+    window.addEventListener('scroll', schedule, { capture: true, passive: true });
+    window.addEventListener('resize', schedule, { passive: true });
     return () => {
       if (frame) window.cancelAnimationFrame(frame);
-      window.removeEventListener('scroll', schedule, true);
+      window.removeEventListener('scroll', schedule, { capture: true });
       window.removeEventListener('resize', schedule);
     };
     // `mounted` is listed so this runs a second time the moment the panel is on

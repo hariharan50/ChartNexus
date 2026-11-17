@@ -16,8 +16,8 @@
   font-weight: 600;
   cursor: pointer;
   transition:
-    border-color,
-    background var(--cn-duration-fast) var(--cn-ease);
+    border-color var(--dur-xquick) var(--ease-standard),
+    background var(--dur-xquick) var(--ease-standard);
 }
 
 @media (hover: hover) {

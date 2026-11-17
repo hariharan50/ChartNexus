@@ -82,6 +82,29 @@ for (const file of files) {
   }
 }
 
+// A second trap, same root cause. CSS Modules also renames every keyframe name
+// in an `animation` value, so `animation: cn-pulse 1s` in a module compiles to
+// `_cn-pulse_ab12c_1` — a keyframe that does not exist — and the element simply
+// never animates, with no error anywhere. The shared `cn-*` keyframes live in
+// app.css and must be referenced as `global(cn-pulse)`.
+const keyframeProblems = [];
+for (const file of files) {
+  const lines = readFileSync(new URL(`../${file}`, import.meta.url), 'utf8').split('\n');
+  lines.forEach((text, i) => {
+    if (/animation(-name)?\s*:[^;]*(?<![\w(-])cn-[a-z-]+/.test(text.replace(/\/\*.*?\*\//g, ''))) {
+      keyframeProblems.push(`  ${file}:${i + 1}  ${text.trim()}`);
+    }
+  });
+}
+if (keyframeProblems.length > 0) {
+  console.error('Shared keyframes referenced without global() in CSS Modules:\n');
+  console.error(keyframeProblems.join('\n'));
+  console.error(
+    '\nWrite `animation: global(cn-pulse) …` — a bare name is renamed and never runs.\n'
+  );
+  process.exit(1);
+}
+
 if (problems.length > 0) {
   console.error('Bare element selectors found in CSS Modules:\n');
   for (const { file, line, selector } of problems) {

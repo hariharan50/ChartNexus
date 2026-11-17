@@ -221,7 +221,7 @@
   border-radius: 999px;
   background: color-mix(in srgb, var(--cn-text-muted) 22%, transparent);
   cursor: pointer;
-  transition: background var(--cn-duration-fast) var(--cn-ease);
+  transition: background var(--dur-xquick) var(--ease-standard);
   padding: 0;
 }
 
@@ -244,7 +244,7 @@
   border-radius: 50%;
   background: #fff;
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.25);
-  transition: transform var(--cn-duration-fast) var(--cn-ease);
+  transition: transform var(--dur-quick) var(--ease-standard);
 }
 
 .switchOn .knob {

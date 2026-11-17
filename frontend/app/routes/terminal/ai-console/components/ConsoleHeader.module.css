@@ -81,9 +81,9 @@
   line-height: 1;
   cursor: pointer;
   transition:
-    background var(--cn-duration-fast) ease,
-    color var(--cn-duration-fast) ease,
-    transform var(--cn-duration-fast) ease;
+    background var(--dur-quick) var(--ease-standard),
+    color var(--dur-quick) var(--ease-standard),
+    transform var(--dur-quick) var(--ease-standard);
 }
 
 @media (hover: hover) {
@@ -116,8 +116,8 @@
   letter-spacing: 0.02em;
   cursor: pointer;
   transition:
-    color var(--cn-duration-fast) ease,
-    background var(--cn-duration-fast) ease;
+    color var(--dur-xquick) var(--ease-standard),
+    background var(--dur-xquick) var(--ease-standard);
 }
 
 @media (hover: hover) {

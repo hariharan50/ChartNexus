@@ -147,7 +147,7 @@
   height: 1.125rem;
   border-radius: 999px;
   background: var(--cn-field-border);
-  transition: background var(--cn-duration-fast);
+  transition: background var(--dur-xquick) var(--ease-standard);
 }
 
 .knob {
@@ -158,7 +158,7 @@
   height: 0.75rem;
   border-radius: 50%;
   background: var(--cn-surface);
-  transition: transform var(--cn-duration-fast);
+  transition: transform var(--dur-quick) var(--ease-standard);
 }
 
 .switch input:checked + .track {
@@ -221,7 +221,7 @@
 }
 
 .dot.pulse {
-  animation: cn-pulse var(--cn-duration-pulse) ease-in-out infinite;
+  animation: global(cn-pulse) var(--cn-duration-pulse) ease-in-out infinite;
 }
 
 @media (prefers-reduced-motion: reduce) {

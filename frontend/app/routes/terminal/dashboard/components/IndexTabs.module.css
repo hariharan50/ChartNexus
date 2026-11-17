@@ -18,8 +18,8 @@
   letter-spacing: 0.02em;
   cursor: pointer;
   transition:
-    background var(--cn-duration-fast) ease,
-    color var(--cn-duration-fast) ease;
+    background var(--dur-xquick) var(--ease-standard),
+    color var(--dur-xquick) var(--ease-standard);
 }
 
 @media (hover: hover) {

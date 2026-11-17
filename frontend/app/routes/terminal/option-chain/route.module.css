@@ -140,6 +140,14 @@
   background: var(--cn-surface);
   box-shadow: var(--cn-shadow);
 }
+/* Inside a <details>: the closed content is never unmounted (Chromium hides it
+   with content-visibility), so an animation on the panel itself would play
+   once at page load and never again. Keyed on `[open]`, it replays on every
+   open. */
+.expiry[open] > .expiry-menu {
+  animation: global(cn-drop) var(--dur-moderate) var(--ease-standard);
+  transform-origin: top center;
+}
 
 .expiry-item {
   display: flex;
@@ -240,7 +248,7 @@
 }
 
 .dot.pulse {
-  animation: cn-pulse var(--cn-duration-pulse) ease-in-out infinite;
+  animation: global(cn-pulse) var(--cn-duration-pulse) ease-in-out infinite;
 }
 
 /* --- strike toggles + summary chips ----------------------------------- */
@@ -540,23 +548,7 @@
   height: 2.25rem;
   width: 100%;
   border-radius: var(--cn-radius);
-  background: linear-gradient(
-    90deg,
-    var(--cn-surface-raised) 25%,
-    color-mix(in srgb, var(--cn-surface-raised) 60%, var(--cn-border)) 37%,
-    var(--cn-surface-raised) 63%
-  );
-  background-size: 400% 100%;
-  animation: shimmer 1.4s ease infinite;
-}
-
-@keyframes shimmer {
-  0% {
-    background-position: 100% 0;
-  }
-  100% {
-    background-position: 0 0;
-  }
+  animation: global(cn-skeleton) 1.6s ease-in-out infinite alternate;
 }
 
 .empty {

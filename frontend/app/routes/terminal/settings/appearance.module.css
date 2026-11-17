@@ -47,8 +47,8 @@
   text-align: left;
   cursor: pointer;
   transition:
-    border-color var(--cn-duration-fast) ease,
-    box-shadow var(--cn-duration-fast) ease;
+    border-color var(--dur-quick) var(--ease-standard),
+    box-shadow var(--dur-quick) var(--ease-standard);
 }
 
 @media (hover: hover) {

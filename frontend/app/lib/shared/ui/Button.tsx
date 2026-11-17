@@ -23,13 +23,16 @@ export default function Button({
   return (
     <button
       type={type}
-      className={cx(s.btn, s[variant], full && s.full)}
+      className={cx(s.btn, s[variant], full && s.full, loading && s.busy)}
       disabled={disabled || loading}
       aria-busy={loading}
       {...rest}
     >
+      {/* The label stays in the flow (only hidden) while the spinner overlays
+          it, so the button keeps its exact width and nothing beside it
+          reflows when an async action starts or ends. */}
+      <span className={cx(s.label, loading && s.labelHidden)}>{children}</span>
       {loading ? <span className={s.spinner} aria-hidden="true" /> : null}
-      {children}
     </button>
   );
 }

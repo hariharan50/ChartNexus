@@ -28,7 +28,15 @@ export default defineConfig({
     screenshot: 'only-on-failure',
     video: 'retain-on-failure',
     timezoneId: 'Asia/Kolkata',
-    locale: 'en-IN'
+    locale: 'en-IN',
+    // Functional specs assert behaviour, not motion. With the app's ambient
+    // loops (live-dot pulses, skeleton pulses, route fades) actually running,
+    // headless Chromium's software compositor keeps rendering frames for every
+    // open page, and across parallel workers that CPU cost pushed navigation
+    // assertions past their 5s timeout on slower machines. Reduced motion makes
+    // every animation finish in 0.01ms (see the block at the end of app.css),
+    // so specs run against the same DOM without paying for frames.
+    contextOptions: { reducedMotion: 'reduce' }
   },
 
   projects: [
