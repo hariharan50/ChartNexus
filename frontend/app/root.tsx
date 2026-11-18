@@ -152,15 +152,28 @@ export function ErrorBoundary() {
 
   const status = errorStatus(error);
 
+  // The API did not answer (stopped, restarting, unreachable). Retrying is
+  // the useful action here, and the dashboard link would fail the same way.
+  const unreachable = status === 503;
+
   // Mirrors `handleServerError`: a 4xx message is safe to show, a 5xx is not.
-  const detail =
-    status < 500 ? (asDetail(error) ?? 'Something went wrong.') : 'An unexpected error occurred.';
+  const detail = unreachable
+    ? 'ChartNexus could not reach its server. It may be restarting — try again in a moment.'
+    : status < 500
+      ? (asDetail(error) ?? 'Something went wrong.')
+      : 'An unexpected error occurred.';
   const requestId = rootData?.requestId;
 
   return (
     <section className={errorStyles.error}>
       <p className={`${errorStyles.status} cn-numeric`}>{status}</p>
-      <h1>{status === 404 ? 'Page not found' : 'Something went wrong'}</h1>
+      <h1>
+        {status === 404
+          ? 'Page not found'
+          : unreachable
+            ? "Can't reach the server"
+            : 'Something went wrong'}
+      </h1>
       <p className={errorStyles.detail}>{detail}</p>
 
       {requestId ? (
@@ -169,7 +182,17 @@ export function ErrorBoundary() {
         </p>
       ) : null}
 
-      <a href="/dashboard">Back to dashboard</a>
+      {unreachable ? (
+        <button
+          type="button"
+          className={errorStyles.retry}
+          onClick={() => window.location.reload()}
+        >
+          Try again
+        </button>
+      ) : (
+        <a href="/dashboard">Back to dashboard</a>
+      )}
     </section>
   );
 }

@@ -70,6 +70,16 @@ export function presentAuthError(error: unknown): Presented {
     };
   }
 
+  // 502/503/504 come from whatever sits in front of the API (Vite's proxy in
+  // development, nginx in production) when the API itself is down or
+  // restarting. "The server returned 502" tells nobody what to do.
+  if (error.status >= 502 && error.status <= 504) {
+    return {
+      message:
+        "Can't reach the ChartNexus server right now. It may be restarting — try again in a moment."
+    };
+  }
+
   const override = OVERRIDES[error.code];
   if (override) return override;
 

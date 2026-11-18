@@ -1,6 +1,6 @@
 import { QueryClientProvider } from '@tanstack/react-query';
 import { useCallback, useEffect, useRef, useState, type ComponentType } from 'react';
-import { Link, Outlet, redirect, useLocation } from 'react-router';
+import { data, Link, Outlet, redirect, useLocation } from 'react-router';
 import { currentUser } from '$contexts/identity/api';
 import type { User } from '$contexts/identity/types';
 import { useSignOut } from '$contexts/identity/use-session';
@@ -39,6 +39,9 @@ import type { Route } from './+types/layout';
  * authorises every request on its own. Its job is to send a signed-out visitor
  * to the sign-in page instead of showing them an empty shell full of 401s.
  */
+/** The 503 body the root error page recognises. */
+export const API_UNREACHABLE = 'api_unreachable';
+
 export async function loader({ request, context }: Route.LoaderArgs) {
   // SvelteKit's load-scoped `fetch` forwarded cookies during SSR for free;
   // `createServerFetch` is what replaces that.
@@ -50,6 +53,13 @@ export async function loader({ request, context }: Route.LoaderArgs) {
     if (isApiError(error) && (error.status === 401 || error.status === 403)) {
       const url = new URL(request.url);
       throw redirect(`/login?next=${encodeURIComponent(url.pathname + url.search)}`, 303);
+    }
+    if (!isApiError(error) || error.status >= 502) {
+      // No answer at all (fetch failed: the API is down or restarting) or a
+      // gateway saying the same. Not a bug on this page, and not worth a
+      // generic 500 — say what is actually wrong, as a 503 the error page
+      // knows how to explain.
+      throw data(API_UNREACHABLE, { status: 503, statusText: 'Service Unavailable' });
     }
     throw error;
   }

@@ -32,3 +32,23 @@
   font-size: var(--cn-text-xs);
   color: var(--cn-text-subtle);
 }
+
+.retry {
+  padding: 0.5rem 1rem;
+  border: 1px solid var(--cn-border-strong);
+  border-radius: var(--cn-radius);
+  background: var(--cn-surface);
+  color: var(--cn-text);
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.retry:hover {
+  background: var(--cn-surface-raised);
+}
+
+.retry:focus-visible {
+  outline: 2px solid var(--cn-brand);
+  outline-offset: 2px;
+}
