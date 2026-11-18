@@ -43,6 +43,7 @@ from chartnexus.contexts.trade_buddy.application.use_cases import (
     GetAlerts,
     GetLevels,
     GetOverrides,
+    ResetDay,
     SetLevels,
     SetLevelsCommand,
     SetOverrides,
@@ -144,6 +145,7 @@ class TradeBuddyServices:
     get_levels: GetLevels
     set_levels: SetLevels
     clear_levels: ClearLevels
+    reset_day: ResetDay
     get_alerts: GetAlerts
     fire_test: FireTestAlert
     get_overrides: GetOverrides
@@ -607,6 +609,7 @@ async def build_trade_buddy_services(request: Request) -> TradeBuddyServices:
         get_levels=GetLevels(store=store),
         set_levels=SetLevels(store=store, window=build_window(container), clock=clock),
         clear_levels=ClearLevels(store=store),
+        reset_day=ResetDay(store=store),
         get_alerts=GetAlerts(store=store, window=build_window(container), clock=clock),
         fire_test=FireTestAlert(sink=router, clock=clock, store=store),
         get_overrides=GetOverrides(store=store),

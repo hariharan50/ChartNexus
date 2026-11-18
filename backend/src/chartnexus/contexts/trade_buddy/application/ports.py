@@ -194,6 +194,16 @@ class LevelStore(Protocol):
         """Drop the marks and any saved state for ``symbol``."""
         ...
 
+    async def reset_day(self, symbol: str) -> None:
+        """Start the day over for ``symbol``: no levels, no alerts, full allowances.
+
+        Drops the marks, the live states, the alert history and the per-level
+        alert counters. Keeps the instrument's overrides — a reset is about
+        today's levels, not about how sensitive the watcher should be — and the
+        WhatsApp send window, which the provider counts whether or not we do.
+        """
+        ...
+
     async def load_watchers(self, symbol: str) -> tuple[LevelWatcher, ...]:
         """Resume the saved watcher states, or empty if this is a fresh session."""
         ...

@@ -37,9 +37,11 @@ from chartnexus.contexts.trade_buddy.application.use_cases import (
     GetAlerts,
     GetLevels,
     GetOverrides,
+    ResetDay,
     SetLevels,
     SetOverrides,
 )
+from chartnexus.contexts.trade_buddy.domain.bands import AlertOverrides
 from chartnexus.contexts.trade_buddy.domain.budget import WhatsAppBudget
 from chartnexus.contexts.trade_buddy.domain.events import AlertKind
 from chartnexus.contexts.trade_buddy.domain.level import LevelMark, LevelRole
@@ -86,6 +88,7 @@ def _services(store: MemoryLevelStore) -> TradeBuddyServices:
         get_levels=GetLevels(store=store),
         set_levels=SetLevels(store=store, window=win, clock=clock),
         clear_levels=ClearLevels(store=store),
+        reset_day=ResetDay(store=store),
         get_alerts=GetAlerts(store=store, window=win, clock=clock),
         fire_test=None,  # type: ignore[arg-type]
         get_overrides=GetOverrides(store=store),
@@ -123,6 +126,49 @@ def client(marks_store: MemoryLevelStore) -> TestClient:
         )
     )
     return TestClient(app)
+
+
+class TestQuickReset:
+    """`POST /reset`: the levels and today's alerts go, the settings stay."""
+
+    def test_it_clears_levels_and_todays_alerts(self, client, marks_store):
+        marks_store.mark("NIFTY", *MARKS)
+        marks_store.alerts["NIFTY"] = [
+            AlertRecord(
+                kind=AlertKind.TOUCHED,
+                label="R1",
+                level_price=24_700.0,
+                price=24_703.0,
+                role_before=LevelRole.RESISTANCE,
+                role_after=LevelRole.RESISTANCE,
+                at=SESSION_START,
+                session=SESSION,
+                channels=("telegram",),
+            )
+        ]
+        marks_store.overrides["NIFTY"] = AlertOverrides(cooldown_minutes=5)
+
+        response = client.post("/api/v1/trade-buddy/reset", params={"symbol": "NIFTY"})
+
+        assert response.status_code == 204
+        levels = client.get("/api/v1/trade-buddy/levels", params={"symbol": "NIFTY"}).json()
+        assert levels["levels"] == []
+        alerts = client.get("/api/v1/trade-buddy/alerts", params={"symbol": "NIFTY"}).json()
+        assert alerts["alerts"] == []
+        assert marks_store.overrides["NIFTY"].cooldown_minutes == 5
+
+    def test_it_only_touches_the_named_index(self, client, marks_store):
+        marks_store.mark("NIFTY", *MARKS)
+        marks_store.mark("BANKNIFTY", *MARKS)
+
+        client.post("/api/v1/trade-buddy/reset", params={"symbol": "NIFTY"})
+
+        banknifty = client.get("/api/v1/trade-buddy/levels", params={"symbol": "BANKNIFTY"}).json()
+        assert len(banknifty["levels"]) == 2
+
+    def test_an_unwatched_symbol_is_refused(self, client):
+        response = client.post("/api/v1/trade-buddy/reset", params={"symbol": "RELIANCE"})
+        assert response.status_code == 422
 
 
 class TestTheStaleFlagReachesTheClient:

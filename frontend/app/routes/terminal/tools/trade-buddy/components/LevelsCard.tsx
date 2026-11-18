@@ -3,10 +3,13 @@ import Button from '$shared/ui/Button';
 import { cx } from '$shared/ui/cx';
 import LevelLadder from './LevelLadder';
 import LevelTable from './LevelTable';
+import QuickReset from './QuickReset';
 import {
+  formatBand,
   formatPrice,
   formatSessionDate,
   nearestLevel,
+  priceVsLevel,
   stateLook,
   type DraftLevel,
   type ResolvedBands,
@@ -45,11 +48,12 @@ interface Props {
   dirty: boolean;
   validation: string | null;
   saving: boolean;
-  clearing: boolean;
+  resetting: boolean;
   onChange: (index: number, price: string) => void;
   onSave: () => void;
   onDiscard: () => void;
-  onClear: () => void;
+  /** Quick Reset: levels and today's alerts for this index. */
+  onReset: () => void;
   firstPriceRef: RefObject<HTMLInputElement | null>;
 }
 
@@ -67,11 +71,11 @@ export default function LevelsCard({
   dirty,
   validation,
   saving,
-  clearing,
+  resetting,
   onChange,
   onSave,
   onDiscard,
-  onClear,
+  onReset,
   firstPriceRef
 }: Props) {
   const nearest = nearestLevel(live, price);
@@ -118,11 +122,19 @@ export default function LevelsCard({
           )}
         >
           <span className={s.calloutChip}>{callout.level.label}</span>
-          <strong className={s.calloutState}>
-            {stateLook(callout.level.state).label} {formatPrice(callout.level.level_price)}
-          </strong>
+          <strong className={s.calloutState}>{formatPrice(callout.level.level_price)}</strong>
+          {/* Which side of the level price is, in words. "18 pts away" left
+              the reader to work that out from two numbers. */}
           <span className={s.calloutDetail}>
-            {callout.distance.toFixed(0)} pts away · touch at ±{bands?.touch}
+            {priceVsLevel(price as number, callout.level.level_price)} · touch zone ±
+            {formatBand(bands?.touch ?? 0)}
+          </span>
+          {/* The watcher's state, labelled as such: it is what this level has
+              done, not where price is now — "Touched" beside "18 pts below"
+              read as a contradiction when it sat in the headline. */}
+          <span className={s.calloutTag}>
+            <span aria-hidden="true">{stateLook(callout.level.state).glyph}</span>{' '}
+            {stateLook(callout.level.state).label}
           </span>
         </p>
       )}
@@ -178,9 +190,10 @@ export default function LevelsCard({
       />
 
       <footer className={s.foot}>
-        <Button variant="ghost" onClick={onClear} loading={clearing} disabled={empty}>
-          Clear all
-        </Button>
+        {/* Replaces "Clear all", which deleted the instrument's whole state
+            file — the sensitivity overrides with it — and left today's
+            alerts describing levels that no longer existed. */}
+        <QuickReset symbol={symbol} resetting={resetting} onReset={onReset} />
 
         <div className={s.footRight}>
           <span className={cx(s.hint, validation && dirty && s.hintProblem)}>
@@ -193,7 +206,7 @@ export default function LevelsCard({
           <Button variant="secondary" onClick={onDiscard} disabled={!dirty}>
             Discard
           </Button>
-          <Button onClick={onSave} loading={saving} disabled={!dirty || !!validation || clearing}>
+          <Button onClick={onSave} loading={saving} disabled={!dirty || !!validation || resetting}>
             Save levels
           </Button>
         </div>

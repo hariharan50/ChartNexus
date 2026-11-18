@@ -8,7 +8,7 @@ would otherwise make the suite slow or non-deterministic.
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 from datetime import date, datetime, timedelta
 
 import pytest
@@ -71,6 +71,14 @@ class MemoryLevelStore:
         self.runtime.pop(symbol, None)
         self.overrides.pop(symbol, None)
         self.alerts.pop(symbol, None)
+
+    async def reset_day(self, symbol: str) -> None:
+        # Mirrors the JSON store: overrides and the WhatsApp window survive.
+        self.marks.pop(symbol, None)
+        self.watchers.pop(symbol, None)
+        self.alerts.pop(symbol, None)
+        if symbol in self.runtime:
+            self.runtime[symbol] = replace(self.runtime[symbol], level_budget={})
 
     async def append_alert(self, symbol: str, record: AlertRecord) -> None:
         # Prunes on the incoming record's session, exactly as the JSON store

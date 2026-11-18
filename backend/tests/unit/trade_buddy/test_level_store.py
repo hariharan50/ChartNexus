@@ -12,7 +12,8 @@ from datetime import timedelta
 
 import pytest
 
-from chartnexus.contexts.trade_buddy.application.ports import AlertRecord
+from chartnexus.contexts.trade_buddy.application.ports import AlertRecord, RuntimeState
+from chartnexus.contexts.trade_buddy.domain.bands import AlertOverrides, BandOverrides
 from chartnexus.contexts.trade_buddy.domain.events import AlertKind
 from chartnexus.contexts.trade_buddy.domain.level import LevelMark, LevelRole
 from chartnexus.contexts.trade_buddy.domain.state import LevelState, LevelWatcher
@@ -344,3 +345,77 @@ class TestAlertHistory:
         path.write_text(json.dumps(data), encoding="utf-8")
 
         assert [r.label for r in await store.load_alerts(SYMBOL, SESSION)] == ["R1"]
+
+
+class TestQuickReset:
+    """`reset_day`: today's levels and alerts go; the reader's settings stay."""
+
+    def _record(self) -> AlertRecord:
+        return AlertRecord(
+            kind=AlertKind.TOUCHED,
+            label="R1",
+            level_price=24_700.0,
+            price=24_703.0,
+            role_before=LevelRole.RESISTANCE,
+            role_after=LevelRole.RESISTANCE,
+            at=SESSION_START,
+            session=SESSION,
+            channels=("telegram",),
+        )
+
+    async def _filled(self, store: JsonLevelStore) -> None:
+        await store.save_marks(SYMBOL, MARKS, SESSION)
+        await store.save_watchers(
+            SYMBOL, tuple(LevelWatcher(symbol=SYMBOL, mark=m, bands=bands()) for m in MARKS)
+        )
+        await store.append_alert(SYMBOL, self._record())
+        await store.save_overrides(
+            SYMBOL, AlertOverrides(bands=BandOverrides(touch=9.0), cooldown_minutes=5)
+        )
+        await store.save_runtime(
+            SYMBOL,
+            RuntimeState(
+                last_tick_at=SESSION_START,
+                last_price=24_690.0,
+                atr=210.0,
+                session=SESSION,
+                level_budget={"day": SESSION.isoformat(), "sent_today": {"R1": 2}},
+                whatsapp_sends=(SESSION_START.isoformat(),),
+            ),
+        )
+
+    async def test_levels_states_and_alerts_are_gone(self, store):
+        await self._filled(store)
+
+        await store.reset_day(SYMBOL)
+
+        marked = await store.load_marks(SYMBOL)
+        assert marked.marks == ()
+        assert marked.marked_on is None
+        assert await store.load_watchers(SYMBOL) == ()
+        assert await store.load_alerts(SYMBOL, SESSION) == ()
+
+    async def test_alerts_left_starts_full_again(self, store):
+        await self._filled(store)
+
+        await store.reset_day(SYMBOL)
+
+        assert (await store.load_runtime(SYMBOL)).level_budget == {}
+
+    async def test_sensitivity_and_the_whatsapp_window_survive(self, store):
+        """Unlike `clear`, which deletes the file and the overrides with it."""
+        await self._filled(store)
+
+        await store.reset_day(SYMBOL)
+
+        overrides = await store.load_overrides(SYMBOL)
+        assert overrides.bands.touch == 9.0
+        assert overrides.cooldown_minutes == 5
+        runtime = await store.load_runtime(SYMBOL)
+        assert runtime.whatsapp_sends == (SESSION_START.isoformat(),)
+        assert runtime.atr == 210.0
+        assert runtime.last_price == 24_690.0
+
+    async def test_an_untouched_symbol_resets_without_error(self, store):
+        await store.reset_day(SYMBOL)
+        assert (await store.load_marks(SYMBOL)).marks == ()

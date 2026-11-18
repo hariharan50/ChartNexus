@@ -1,0 +1,90 @@
+/* Orange by request, and tinted rather than solid so it never reads as the
+   card's primary action: Save levels is the solid brand button in the same
+   footer. The confirm step goes solid, because that click is the decision. */
+.reset {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4375rem;
+  height: var(--cn-control-h-sm, 2rem);
+  padding: 0 0.875rem;
+  border: 1px solid color-mix(in srgb, var(--cn-brand) 70%, transparent);
+  border-radius: var(--cn-radius);
+  background: color-mix(in srgb, var(--cn-brand) 14%, transparent);
+  color: var(--cn-brand);
+  font: inherit;
+  font-size: var(--cn-text-sm);
+  font-weight: 700;
+  white-space: nowrap;
+  cursor: pointer;
+  transition:
+    background var(--cn-duration-fast) var(--cn-ease),
+    border-color var(--cn-duration-fast) var(--cn-ease);
+}
+
+.reset:hover:not(:disabled) {
+  border-color: var(--cn-brand);
+  background: color-mix(in srgb, var(--cn-brand) 22%, transparent);
+}
+
+.reset:focus-visible,
+.cancel:focus-visible {
+  outline: 2px solid var(--cn-brand);
+  outline-offset: 2px;
+}
+
+.reset:disabled {
+  opacity: 0.6;
+  cursor: progress;
+}
+
+.solid {
+  border-color: var(--cn-brand);
+  background: var(--cn-brand);
+  color: var(--cn-on-brand, #fff);
+}
+
+.solid:hover:not(:disabled) {
+  border-color: var(--cn-brand-hover);
+  background: var(--cn-brand-hover);
+}
+
+.icon {
+  width: 0.9375rem;
+  height: 0.9375rem;
+}
+
+.confirm {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--cn-space-2);
+}
+
+.question {
+  font-size: var(--cn-text-sm);
+  font-weight: 600;
+  color: var(--cn-text);
+}
+
+.cancel {
+  height: var(--cn-control-h-sm, 2rem);
+  padding: 0 0.75rem;
+  border: 1px solid var(--cn-border-strong);
+  border-radius: var(--cn-radius);
+  background: transparent;
+  color: var(--cn-text-muted);
+  font: inherit;
+  font-size: var(--cn-text-sm);
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.cancel:hover {
+  color: var(--cn-text);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .reset {
+    transition: none;
+  }
+}

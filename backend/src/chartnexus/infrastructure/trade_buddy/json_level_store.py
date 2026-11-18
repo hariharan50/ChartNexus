@@ -130,6 +130,19 @@ class JsonLevelStore:
             if path.exists():
                 await asyncio.to_thread(path.unlink)
 
+    async def reset_day(self, symbol: str) -> None:
+        async with self._lock:
+            data = await self._read(symbol)
+            for key in ("marks", "marked_on", "watchers", "alerts"):
+                data.pop(key, None)
+            runtime = data.get("runtime")
+            if isinstance(runtime, dict):
+                # Fresh "alerts left" for every level marked after this. The
+                # rest of the runtime — last tick, ATR, the WhatsApp window —
+                # describes the feed and the provider, not the levels.
+                runtime["level_budget"] = {}
+            await self._write(symbol, data)
+
     # -- live state ---------------------------------------------------------
 
     async def load_watchers(self, symbol: str) -> tuple[LevelWatcher, ...]:

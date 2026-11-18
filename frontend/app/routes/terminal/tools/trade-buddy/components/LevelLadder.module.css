@@ -1,5 +1,7 @@
 .figure {
-  margin: 0;
+  /* The card has no side padding of its own; every row in it brings its own.
+     The frame and the caption share this one, so they line up with the rest. */
+  margin: 0 var(--cn-space-4);
 }
 
 .frame {
@@ -7,8 +9,8 @@
   /* Room for a cursor chip above the axis and a label + price below it. */
   height: 84px;
   /* The ticks sit at a percentage of this box and their labels are centred on
-     them, so the outer two need somewhere to overhang into. */
-  margin: 0 var(--cn-space-4);
+     them; the 8% scale padding gives the outer two room to overhang. */
+  margin: 0;
 }
 
 .axis {
@@ -142,6 +144,7 @@
 
 .caption {
   margin-top: var(--cn-space-2);
+  line-height: 1.5;
   font-size: var(--cn-text-xs);
   color: var(--cn-text-subtle);
 }
@@ -149,7 +152,6 @@
 @media (max-width: 480px) {
   .frame {
     height: 76px;
-    margin: 0 var(--cn-space-3);
   }
 
   /* The price under every tick is the first thing to go: at this width the

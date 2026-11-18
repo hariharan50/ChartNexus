@@ -136,6 +136,26 @@ async def clear_levels(
     await services.clear_levels(symbol)
 
 
+@router.post(
+    "/reset",
+    status_code=status.HTTP_204_NO_CONTENT,
+    summary="Quick Reset: clear today's levels and today's alerts",
+)
+async def reset_day(
+    services: Services,
+    _: CurrentPrincipal,
+    symbol: WatchedSymbol,
+) -> None:
+    """Start the day over for one instrument.
+
+    Clears the marked levels, their live states, today's alert history and the
+    per-level "alerts left" counters. Keeps the instrument's sensitivity
+    overrides and the WhatsApp send window. The worker stops watching the
+    instrument on its next reconcile, within about 15 seconds.
+    """
+    await services.reset_day(symbol)
+
+
 @router.get(
     "/state",
     response_model=EngineStateResponse,

@@ -98,6 +98,22 @@ class ClearLevels:
         await self.store.clear(symbol)
 
 
+@dataclass(slots=True)
+class ResetDay:
+    """Quick Reset: today's levels and today's alerts, gone, for one instrument.
+
+    Narrower than :class:`ClearLevels`, which deletes everything the store holds
+    for the instrument — including the sensitivity overrides the reader set on
+    purpose. Once the marks are gone the worker drops the instrument on its next
+    reconcile (within 15 s), and marking new levels starts a fresh watch.
+    """
+
+    store: LevelStore
+
+    async def __call__(self, symbol: str) -> None:
+        await self.store.reset_day(symbol)
+
+
 @dataclass(frozen=True, slots=True)
 class SetOverridesCommand:
     symbol: str

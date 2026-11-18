@@ -11,7 +11,6 @@ import StaleBanner from './components/StaleBanner';
 import WatchlistStrip from './components/WatchlistStrip';
 import {
   bandWarning,
-  clearLevels,
   DEFAULT_SYMBOL,
   draftFrom,
   emptyDraft,
@@ -23,6 +22,7 @@ import {
   getSettings,
   getWatchlist,
   REFETCH_MS,
+  resetDay,
   setLevels,
   setSettings,
   markedNote,
@@ -45,6 +45,9 @@ import type { Route } from './+types/route';
 import { useSelectedInstrument } from '$contexts/instrument-catalog/selected-instrument';
 
 export const meta: Route.MetaFunction = () => [{ title: 'Trade Buddy · Tools' }];
+
+/** How long a success notice stays up. Long enough to read a test alert's text. */
+const NOTICE_MS = 6_000;
 
 /**
  * Trade Buddy — mark the morning's levels, then watch what the engine makes of them.
@@ -75,6 +78,15 @@ export default function TradeBuddy() {
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
   const [testKind, setTestKind] = useState<AlertKind>('touched');
+
+  // A confirmation is read once. Left up, "Saved 1 level." sat above the
+  // levels for the rest of the session, pushing them down and looking like a
+  // status. Errors are not cleared this way — they stay until dealt with.
+  useEffect(() => {
+    if (!notice) return;
+    const id = setTimeout(() => setNotice(null), NOTICE_MS);
+    return () => clearTimeout(id);
+  }, [notice]);
 
   // The delivery chip is a shortcut to the card that can fix it. Scrolling
   // rather than opening a dialog: the card is on this page, and a modal would
@@ -168,14 +180,19 @@ export default function TradeBuddy() {
     onError: (cause: Error) => setError(cause.message)
   });
 
-  const wipe = useMutation({
-    mutationFn: () => clearLevels(symbol),
+  // Quick Reset, then straight into marking: the reason to wipe the day's
+  // levels is almost always to put new ones in, so the page lands there with
+  // the cursor in the first price field rather than on an empty card.
+  const reset = useMutation({
+    mutationFn: () => resetDay(symbol),
     onSuccess: async () => {
       setDraft(emptyDraft());
       setDirty(false);
       setError(null);
-      setNotice('Levels cleared.');
+      setNotice(`${symbol} reset — levels and today's alerts cleared. Enter new levels below.`);
       await queryClient.invalidateQueries({ queryKey: ['trade-buddy'] });
+      // Focusing scrolls the field into view on its own.
+      firstPriceRef.current?.focus();
     },
     onError: (cause: Error) => setError(cause.message)
   });
@@ -321,11 +338,11 @@ export default function TradeBuddy() {
             dirty={dirty}
             validation={validation}
             saving={save.isPending}
-            clearing={wipe.isPending}
+            resetting={reset.isPending}
             onChange={update}
             onSave={submit}
             onDiscard={discard}
-            onClear={() => wipe.mutate()}
+            onReset={() => reset.mutate()}
             firstPriceRef={firstPriceRef}
           />
         </div>

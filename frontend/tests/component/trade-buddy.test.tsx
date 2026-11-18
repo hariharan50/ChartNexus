@@ -21,6 +21,7 @@ const getLevels = vi.fn();
 const getEngineState = vi.fn();
 const setLevels = vi.fn();
 const clearLevels = vi.fn();
+const resetDay = vi.fn();
 const fireTestAlert = vi.fn();
 const getWatchlist = vi.fn();
 const getSettings = vi.fn();
@@ -38,6 +39,7 @@ vi.mock('../../app/routes/terminal/tools/trade-buddy/trade-buddy-data', async ()
     getEngineState: (...args: unknown[]) => getEngineState(...args),
     setLevels: (...args: unknown[]) => setLevels(...args),
     clearLevels: (...args: unknown[]) => clearLevels(...args),
+    resetDay: (...args: unknown[]) => resetDay(...args),
     fireTestAlert: (...args: unknown[]) => fireTestAlert(...args),
     getWatchlist: (...args: unknown[]) => getWatchlist(...args),
     getSettings: (...args: unknown[]) => getSettings(...args),
@@ -232,6 +234,74 @@ beforeEach(() => {
   getAlerts.mockResolvedValue({ symbol: 'NIFTY', session: '2026-11-02', alerts: [] });
 });
 
+describe('Quick Reset', () => {
+  it('asks first, then clears levels and alerts and returns to marking', async () => {
+    const user = userEvent.setup();
+    resetDay.mockResolvedValue(undefined);
+    renderPage();
+    await levelsTable();
+
+    await user.click(screen.getByRole('button', { name: /Quick Reset/ }));
+    // Nothing has happened yet: the first click only asks.
+    expect(resetDay).not.toHaveBeenCalled();
+    expect(screen.getByText(/Clear NIFTY levels and today's alerts\?/)).toBeInTheDocument();
+
+    // After the reset the server has nothing, so the page must not re-seed
+    // the old marks from a cached answer.
+    getLevels.mockResolvedValue({ symbol: 'NIFTY', levels: [], marked_on: null });
+    getEngineState.mockResolvedValue(state({ levels: [], marked_on: null }));
+    getAlerts.mockResolvedValue({ symbol: 'NIFTY', session: '2026-11-02', alerts: [] });
+
+    await user.click(screen.getByRole('button', { name: 'Yes, reset NIFTY' }));
+
+    expect(resetDay).toHaveBeenCalledWith('NIFTY');
+    expect(
+      await screen.findByText(/NIFTY reset — levels and today's alerts cleared/)
+    ).toBeInTheDocument();
+    await waitFor(() => expect(screen.getByLabelText('R1 price')).toHaveValue(null));
+    // "Configure levels": the cursor is waiting in the first price field.
+    await waitFor(() => expect(screen.getByLabelText('R3 price')).toHaveFocus());
+  });
+
+  it('does nothing when cancelled', async () => {
+    const user = userEvent.setup();
+    renderPage();
+    await levelsTable();
+
+    await user.click(screen.getByRole('button', { name: /Quick Reset/ }));
+    await user.click(screen.getByRole('button', { name: 'Cancel' }));
+
+    expect(resetDay).not.toHaveBeenCalled();
+    expect(screen.getByLabelText('R1 price')).toHaveValue(24_700);
+    expect(screen.getByRole('button', { name: /Quick Reset/ })).toBeInTheDocument();
+  });
+
+  it('backs out on Escape', async () => {
+    const user = userEvent.setup();
+    renderPage();
+    await levelsTable();
+
+    await user.click(screen.getByRole('button', { name: /Quick Reset/ }));
+    await user.keyboard('{Escape}');
+
+    expect(screen.queryByRole('button', { name: 'Yes, reset NIFTY' })).not.toBeInTheDocument();
+    expect(resetDay).not.toHaveBeenCalled();
+  });
+
+  it('says why when the reset fails, and keeps the levels', async () => {
+    const user = userEvent.setup();
+    resetDay.mockRejectedValue(new Error('Server unavailable'));
+    renderPage();
+    await levelsTable();
+
+    await user.click(screen.getByRole('button', { name: /Quick Reset/ }));
+    await user.click(screen.getByRole('button', { name: 'Yes, reset NIFTY' }));
+
+    expect(await screen.findByText('Server unavailable')).toBeInTheDocument();
+    expect(screen.getByLabelText('R1 price')).toHaveValue(24_700);
+  });
+});
+
 describe('the page shell', () => {
   it('names itself and offers the six fixed slots', async () => {
     renderPage();
@@ -312,7 +382,7 @@ describe('the levels card header', () => {
     // nothing to watch yet; a permanent callout would be furniture.
     renderPage();
     await levelsTable();
-    expect(screen.queryByText(/pts away · touch at/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/touch zone ±/)).not.toBeInTheDocument();
 
     getEngineState.mockResolvedValue(
       state({
@@ -329,7 +399,7 @@ describe('the levels card header', () => {
       })
     );
     renderPage();
-    expect(await screen.findByText(/10 pts away · touch at ±6/)).toBeInTheDocument();
+    expect(await screen.findByText(/LTP 10 pts below · touch zone ±6/)).toBeInTheDocument();
   });
 });
 
@@ -391,8 +461,8 @@ describe('the levels table', () => {
     const table = await levelsTable();
 
     // A real minus sign, so the column stays aligned under tabular numerals.
-    expect(await within(table).findByText('+50.00')).toBeInTheDocument();
-    expect(within(table).getByText('−50.00')).toBeInTheDocument();
+    expect(await within(table).findByText('50.00 above')).toBeInTheDocument();
+    expect(within(table).getByText('50.00 below')).toBeInTheDocument();
   });
 
   it('measures the gap to the level below when there is no price yet', async () => {
@@ -1076,7 +1146,7 @@ describe('surviving a backend version skew', () => {
     expect(await screen.findByRole('heading', { name: 'Trade Buddy' })).toBeInTheDocument();
     expect(await screen.findByRole('table')).toBeInTheDocument();
     // The callout needs a band to compare against, so it is simply absent.
-    expect(screen.queryByText(/pts away · touch at/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/touch zone ±/)).not.toBeInTheDocument();
   });
 
   it('renders when the watchlist endpoint is missing entirely', async () => {

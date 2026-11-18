@@ -4,7 +4,7 @@ import {
   formatPrice,
   gapToNextBelow,
   hasFlipped,
-  signedPoints,
+  levelVsPrice,
   stateLook,
   type DraftLevel,
   type LevelRole,
@@ -121,7 +121,7 @@ export default function LevelTable({
             <th scope="col">Level</th>
             <th scope="col">Price</th>
             <th scope="col" className={s.numeric}>
-              {price === null ? 'Gap below' : 'From LTP'}
+              {price === null ? 'Gap below' : 'vs LTP'}
             </th>
             <th scope="col">Acting as</th>
             <th scope="col">State</th>
@@ -305,18 +305,24 @@ function Divider({
 /**
  * Observation alerts left for this level today, as bars.
  *
- * A bar per alert rather than a number, because the useful reading is "nearly
- * out" and that is a shape, not an arithmetic comparison against a cap the
- * reader would have to remember. Confirmed breaks ignore the cap entirely,
+ * Bars for the shape ("nearly out") and the number beside them, because bars
+ * alone did not say what they counted or out of how many. Confirmed breaks ignore the cap entirely,
  * which is why an empty row is not the same as "this level has gone silent".
  */
 function AlertBars({ remaining, cap }: { remaining: number; cap: number }) {
   const total = Math.max(cap, remaining, 3);
   return (
-    <span className={s.bars} aria-label={`${remaining} of ${cap} alerts left`} role="img">
-      {Array.from({ length: total }, (_, i) => (
-        <span key={i} className={cx(s.bar, i < remaining && s.barFilled)} aria-hidden="true" />
-      ))}
+    <span className={s.alertsLeft}>
+      <span className={s.bars} aria-hidden="true">
+        {Array.from({ length: total }, (_, i) => (
+          <span key={i} className={cx(s.bar, i < remaining && s.barFilled)} />
+        ))}
+      </span>
+      {/* The count as well as the shape: three unlabelled bars did not say
+          what they were counting, or out of how many. */}
+      <span className={s.alertsCount}>
+        {remaining}/{cap}
+      </span>
     </span>
   );
 }
@@ -347,7 +353,7 @@ function rowPrice(row: Row): number | null {
  */
 function distance(level: number | null, price: number | null, prices: readonly number[]): string {
   if (level === null) return '—';
-  if (price !== null) return signedPoints(level - price);
+  if (price !== null) return levelVsPrice(level, price);
   const gap = gapToNextBelow(level, prices);
   return gap === null ? '—' : `${gap.toFixed(0)} pts`;
 }

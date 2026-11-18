@@ -207,6 +207,18 @@ export function clearLevels(symbol = DEFAULT_SYMBOL): Promise<void> {
   });
 }
 
+/**
+ * Quick Reset: clear one index's levels, live states, today's alerts and its
+ * "alerts left" counters. Sensitivity settings and the WhatsApp window stay.
+ */
+export function resetDay(symbol = DEFAULT_SYMBOL): Promise<void> {
+  return apiFetch<void>({
+    url: '/trade-buddy/reset',
+    method: 'POST',
+    params: { symbol }
+  });
+}
+
 export function getEngineState(symbol = DEFAULT_SYMBOL): Promise<EngineState> {
   return apiFetch<EngineState>({ url: '/trade-buddy/state', params: { symbol } });
 }
@@ -610,14 +622,18 @@ export const FEED_COPY: Record<FeedVerdict, { label: string; detail: string }> =
  */
 export function ladderScale(
   levels: readonly { level_price: number }[],
-  price: number | null
+  price: number | null,
+  extent: readonly number[] = []
 ): ((value: number) => number) | null {
   const values = levels.map((l) => l.level_price);
   if (price !== null) values.push(price);
   if (values.length < 2) return null;
 
-  const min = Math.min(...values);
-  const max = Math.max(...values);
+  // `extent` widens the axis without counting as a point of its own — the
+  // edges of a band drawn on it. Left out, a band wider than the gap between
+  // price and the level mapped far outside the frame and ran across the page.
+  const min = Math.min(...values, ...extent);
+  const max = Math.max(...values, ...extent);
   const span = max - min;
   if (span <= 0) return null;
 
@@ -640,9 +656,10 @@ export function ladderScale(
  */
 export function ladderScaleX(
   levels: readonly { level_price: number }[],
-  price: number | null
+  price: number | null,
+  extent: readonly number[] = []
 ): ((value: number) => number) | null {
-  const vertical = ladderScale(levels, price);
+  const vertical = ladderScale(levels, price, extent);
   if (!vertical) return null;
   return (value: number) => 1 - vertical(value);
 }
@@ -714,6 +731,36 @@ export function nearestLevel(
 export function signedPoints(delta: number): string {
   const sign = delta < 0 ? '−' : '+';
   return `${sign}${Math.abs(delta).toFixed(2)}`;
+}
+
+/**
+ * Where a level sits relative to the last price, in words: `18.15 above`.
+ *
+ * Replaces a signed `+18.15` in the table. The sign was level minus price, so
+ * "+" meant "the level is above price" — and read, at a glance, as "price is
+ * up 18". Words cannot be read backwards.
+ */
+export function levelVsPrice(level: number, price: number): string {
+  const delta = level - price;
+  if (Math.abs(delta) < 0.005) return 'at LTP';
+  return `${Math.abs(delta).toFixed(2)} ${delta > 0 ? 'above' : 'below'}`;
+}
+
+/**
+ * Where price sits relative to a level, for the callout: `LTP 18 pts below`.
+ *
+ * The mirror of `levelVsPrice`, because the callout is about the level and the
+ * question it answers is "which side of it is price, and how far".
+ */
+export function priceVsLevel(price: number, level: number): string {
+  const delta = price - level;
+  if (Math.abs(delta) < 0.5) return 'LTP at the level';
+  return `LTP ${Math.abs(delta).toFixed(0)} pts ${delta > 0 ? 'above' : 'below'}`;
+}
+
+/** `8.8` — a band width as people read it, not `8.823529`. */
+export function formatBand(points: number): string {
+  return Number.isInteger(points) ? String(points) : points.toFixed(1);
 }
 
 /**

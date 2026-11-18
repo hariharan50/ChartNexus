@@ -121,6 +121,17 @@
   color: var(--cn-text);
 }
 
+.calloutTag {
+  margin-left: auto;
+  padding: 1px 8px;
+  border: 1px solid var(--cn-border-strong);
+  border-radius: 999px;
+  font-size: var(--cn-text-xs);
+  font-weight: 600;
+  color: var(--cn-text);
+  white-space: nowrap;
+}
+
 .calloutDetail {
   font-size: var(--cn-text-xs);
   font-variant-numeric: tabular-nums;

@@ -220,6 +220,19 @@
 
 /* -- alerts left ------------------------------------------------------------ */
 
+.alertsLeft {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--cn-space-2);
+}
+
+.alertsCount {
+  font-family: var(--cn-font-mono);
+  font-size: var(--cn-text-xs);
+  font-variant-numeric: tabular-nums;
+  color: var(--cn-text-muted);
+}
+
 .bars {
   display: inline-flex;
   gap: 3px;

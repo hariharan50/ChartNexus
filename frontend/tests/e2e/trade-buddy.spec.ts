@@ -30,7 +30,9 @@ test('puts the whole live picture above the fold on a laptop', async ({ page }) 
     page.getByText('24,692.00').first(),
     page.getByRole('button', { name: /telegram ready/i }),
     page.getByText('2/20'),
-    page.getByText('Touched 24,700.00')
+    // The nearest level, which side of it price is, and what it has done.
+    page.getByText('LTP 8 pts below'),
+    page.getByText('24,700.00').first()
   ]) {
     await expect(item).toBeInViewport();
   }

@@ -29,6 +29,9 @@ import {
   formatSessionDate,
   gapToNextBelow,
   ladderScaleX,
+  levelVsPrice,
+  priceVsLevel,
+  formatBand,
   nearestLevel,
   presetOverrides,
   PRESET_COPY,
@@ -815,5 +818,55 @@ describe('sensitivity presets', () => {
       expect(PRESET_COPY[preset].label.length).toBeGreaterThan(0);
       expect(PRESET_COPY[preset].detail.length).toBeGreaterThan(0);
     }
+  });
+});
+
+describe('the ladder axis includes a band drawn on it', () => {
+  // The bug: with S1 at 25,188, price at 25,170 and a ±30 approach zone, the
+  // zone's edges mapped far outside 0..1 and the shading ran across the page.
+  const levels = [{ level_price: 25_188 }];
+  const price = 25_170;
+  const zone = [25_188 - 30, 25_188 + 30];
+
+  it('keeps the zone edges inside the frame', () => {
+    const scale = ladderScaleX(levels, price, zone)!;
+    for (const edge of zone) {
+      expect(scale(edge)).toBeGreaterThanOrEqual(0);
+      expect(scale(edge)).toBeLessThanOrEqual(1);
+    }
+  });
+
+  it('still puts price on the correct side of the level', () => {
+    const scale = ladderScaleX(levels, price, zone)!;
+    expect(scale(price)).toBeLessThan(scale(25_188));
+  });
+
+  it('changes nothing when no band is given', () => {
+    const plain = ladderScaleX([{ level_price: 24_800 }, { level_price: 24_600 }], 24_700)!;
+    const empty = ladderScaleX([{ level_price: 24_800 }, { level_price: 24_600 }], 24_700, [])!;
+    expect(empty(24_650)).toBe(plain(24_650));
+  });
+
+  it('does not let a band alone make a ladder out of one level', () => {
+    expect(ladderScaleX([{ level_price: 24_700 }], null, [24_680, 24_720])).toBeNull();
+  });
+});
+
+describe('distances in words', () => {
+  it('says which side of LTP a level is', () => {
+    expect(levelVsPrice(25_188, 25_169.85)).toBe('18.15 above');
+    expect(levelVsPrice(25_100, 25_169.85)).toBe('69.85 below');
+    expect(levelVsPrice(25_000, 25_000)).toBe('at LTP');
+  });
+
+  it('says which side of a level price is', () => {
+    expect(priceVsLevel(25_169.85, 25_188)).toBe('LTP 18 pts below');
+    expect(priceVsLevel(25_210, 25_188)).toBe('LTP 22 pts above');
+    expect(priceVsLevel(25_188.2, 25_188)).toBe('LTP at the level');
+  });
+
+  it('rounds a band to something readable', () => {
+    expect(formatBand(8.823529)).toBe('8.8');
+    expect(formatBand(6)).toBe('6');
   });
 });

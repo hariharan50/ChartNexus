@@ -1,5 +1,6 @@
 import { cx } from '$shared/ui/cx';
 import {
+  formatBand,
   ladderScaleX,
   nearestLevel,
   stateLook,
@@ -35,14 +36,22 @@ interface Props {
 }
 
 export default function LevelLadder({ levels, price, bands }: Props) {
-  const scale = ladderScaleX(levels, price);
+  const nearest = nearestLevel(levels, price);
+  const approach = bands?.approach ?? null;
+  const zone =
+    nearest && approach !== null
+      ? [nearest.level.level_price - approach, nearest.level.level_price + approach]
+      : [];
+  // The zone's edges are part of the axis, so it is always drawn inside it.
+  const scale = ladderScaleX(levels, price, zone);
 
   // One level and no price is a line with nothing to be relative to. The table
   // already carries every number, so omitting the picture loses nothing.
   if (!scale) return null;
 
-  const nearest = nearestLevel(levels, price);
-  const approach = bands?.approach ?? null;
+  // Belt and braces: whatever the scale says, a fraction outside 0..1 would
+  // paint outside the card.
+  const at = (value: number) => Math.min(1, Math.max(0, scale(value)));
 
   return (
     <figure className={s.figure}>
@@ -57,8 +66,8 @@ export default function LevelLadder({ levels, price, bands }: Props) {
               nearest.level.role === 'support' ? s.zoneSupport : s.zoneResistance
             )}
             style={{
-              left: `${scale(nearest.level.level_price - approach) * 100}%`,
-              right: `${(1 - scale(nearest.level.level_price + approach)) * 100}%`
+              left: `${at(nearest.level.level_price - approach) * 100}%`,
+              right: `${(1 - at(nearest.level.level_price + approach)) * 100}%`
             }}
           />
         )}
@@ -75,7 +84,7 @@ export default function LevelLadder({ levels, price, bands }: Props) {
                 level.role === 'support' ? s.support : s.resistance,
                 s[`tone_${look.tone}`]
               )}
-              style={{ left: `${scale(level.level_price) * 100}%` }}
+              style={{ left: `${at(level.level_price) * 100}%` }}
             >
               <span className={s.tick} />
               <span className={s.label}>{level.label}</span>
@@ -87,7 +96,7 @@ export default function LevelLadder({ levels, price, bands }: Props) {
         })}
 
         {price !== null && (
-          <span className={s.cursor} style={{ left: `${scale(price) * 100}%` }}>
+          <span className={s.cursor} style={{ left: `${at(price) * 100}%` }}>
             <span className={s.cursorChip}>
               {price.toLocaleString('en-IN', { maximumFractionDigits: 0 })}
             </span>
@@ -96,7 +105,12 @@ export default function LevelLadder({ levels, price, bands }: Props) {
         )}
       </div>
 
-      <figcaption className={s.caption}>Marked levels and last price, to scale.</figcaption>
+      <figcaption className={s.caption}>
+        Levels and last price, to scale.
+        {nearest && approach !== null
+          ? ` Shaded: ${nearest.level.label}'s approach zone, ±${formatBand(approach)} pts — alerts start inside it.`
+          : ''}
+      </figcaption>
     </figure>
   );
 }
