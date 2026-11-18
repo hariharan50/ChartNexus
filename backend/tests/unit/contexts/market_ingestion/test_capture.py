@@ -102,6 +102,15 @@ class FakeWriter:
             for s in self.saved
         )
 
+    async def delete_session(self, symbol: str, session_date: date, source: str) -> int:
+        doomed = [
+            s
+            for s in self.saved
+            if s.symbol == symbol and s.session_date == session_date and s.source == source
+        ]
+        self.saved = [s for s in self.saved if s not in doomed]
+        return len(doomed)
+
 
 def _observation(
     symbol: str, *, source: str = "live", rows: bool = True, oi: int = 200
@@ -287,6 +296,50 @@ async def test_mock_never_follows_live_within_a_session() -> None:
 
     assert result.skipped_mock == ("NIFTY",)
     assert [s.source for s in writer.saved] == ["live"]
+
+
+async def test_live_arriving_mid_session_discards_the_simulated_morning() -> None:
+    """A broker connected after the open must not inherit a fabricated morning.
+
+    The mirror of the guard above: mock frames followed by live ones draw a
+    single line whose first half is invented. The first live capture of the
+    day removes the symbol's mock frames, leaving an honest gap before it.
+    """
+    writer = FakeWriter()
+    source = FakeSource(
+        {
+            "NIFTY": _observation("NIFTY", source="mock"),
+            "BANKNIFTY": _observation("BANKNIFTY", source="mock"),
+        }
+    )
+    capture = CaptureChainSnapshots(
+        source=source,
+        writer=writer,
+        calendar=FakeCalendar(open_=True),
+        clock=FakeClock(CAPTURED_AT),
+        symbols=("NIFTY", "BANKNIFTY"),
+        allow_mock=True,
+    )
+    await capture()
+    source.set("NIFTY", _observation("NIFTY", source="mock", oi=333_333))
+    await capture()
+
+    # The broker comes online — but only for NIFTY.
+    source.set("NIFTY", _observation("NIFTY", source="live", oi=444_444))
+    result = await capture()
+
+    assert result.purged_mock == ("NIFTY",)
+    assert result.written == ("NIFTY",)  # BANKNIFTY's book did not change
+    nifty = [s.source for s in writer.saved if s.symbol == "NIFTY"]
+    assert nifty == ["live"]
+    # A symbol the broker still cannot serve keeps its simulated timeline.
+    assert [s.source for s in writer.saved if s.symbol == "BANKNIFTY"] == ["mock"]
+
+    # Later live ticks have nothing left to purge.
+    source.set("NIFTY", _observation("NIFTY", source="live", oi=555_555))
+    later = await capture()
+    assert later.purged_mock == ()
+    assert [s.source for s in writer.saved if s.symbol == "NIFTY"] == ["live", "live"]
 
 
 async def test_mock_is_still_written_on_a_day_with_no_live_capture() -> None:

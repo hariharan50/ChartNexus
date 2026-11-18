@@ -109,6 +109,10 @@ class SnapshotWriter(Protocol):
         """Whether any capture of that provenance exists for the symbol-day."""
         ...
 
+    async def delete_session(self, symbol: str, session_date: date, source: str) -> int:
+        """Remove one symbol-day of one provenance. Returns snapshots deleted."""
+        ...
+
 
 @runtime_checkable
 class SnapshotPruner(Protocol):

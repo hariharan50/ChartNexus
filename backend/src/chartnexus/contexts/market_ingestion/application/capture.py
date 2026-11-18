@@ -78,11 +78,15 @@ class CaptureResult:
     #: The same writes as ``written``, structured. Empty on a tick that wrote
     #: nothing, so a caller can publish without checking anything else.
     committed: tuple[CommittedSnapshot, ...] = ()
+    #: Symbols whose simulated frames for the day were discarded because the
+    #: broker came online and this tick wrote their first live capture.
+    purged_mock: tuple[str, ...] = ()
 
 
 @dataclass
 class _Acc:
     written: list[str] = field(default_factory=list)
+    purged_mock: list[str] = field(default_factory=list)
     skipped_mock: list[str] = field(default_factory=list)
     skipped_empty: list[str] = field(default_factory=list)
     skipped_unchanged: list[str] = field(default_factory=list)
@@ -138,6 +142,7 @@ class CaptureChainSnapshots:
             skipped_unchanged=tuple(acc.skipped_unchanged),
             failed=tuple(acc.failed),
             committed=tuple(acc.committed),
+            purged_mock=tuple(acc.purged_mock),
         )
 
     async def _capture_one(self, symbol: str, acc: _Acc) -> None:
@@ -216,6 +221,19 @@ class CaptureChainSnapshots:
             # honest gap is recoverable; a seam is not.
             acc.skipped_mock.append(symbol)
             return False
+
+        if observation.source == _LIVE and await self._writer.has_source(
+            snapshot.symbol, snapshot.session_date, _MOCK
+        ):
+            # The mirror of the guard above: the broker came online mid-session
+            # (connected after the open, or recovered from an outage) after the
+            # simulator had been filling in. Keeping those frames would splice a
+            # fabricated morning onto a real afternoon — the same seam, the
+            # other way round. Drop them so the day reads as an honest gap
+            # followed by real data. Only ``mock`` rows are touched.
+            await self._writer.delete_session(snapshot.symbol, snapshot.session_date, _MOCK)
+            if snapshot.symbol not in acc.purged_mock:
+                acc.purged_mock.append(snapshot.symbol)
 
         if await self._is_unchanged(snapshot):
             # The tape is frozen — a holiday the calendar does not know about,

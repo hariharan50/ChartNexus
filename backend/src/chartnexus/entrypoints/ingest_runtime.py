@@ -107,6 +107,7 @@ async def capture_tick(container: Container, settings: Settings, *, allow_mock: 
     log.info(
         "ingest_tick",
         written=list(result.written),
+        purged_mock=list(result.purged_mock),
         skipped_mock=list(result.skipped_mock),
         skipped_empty=list(result.skipped_empty),
         skipped_unchanged=list(result.skipped_unchanged),
