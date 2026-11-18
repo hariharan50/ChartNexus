@@ -314,14 +314,18 @@ class SecretCipher(Protocol):
 
 @runtime_checkable
 class AlertChannelRepository(Protocol):
-    """Persistence for the per-(user, channel) alert connection."""
+    """Persistence for the per-(user, channel) alert connection.
+
+    Every method is scoped to one user. There is no cross-user read.
+    """
 
     async def find(self, user_id: UserId, channel: AlertChannel) -> AlertConnection | None: ...
 
     async def find_all(self, user_id: UserId) -> tuple[AlertConnection, ...]: ...
 
-    async def find_any_ready(self, channel: AlertChannel) -> AlertConnection | None:
-        """For the watcher, which has no request and therefore no user."""
+    async def find_ready(self, user_id: UserId) -> tuple[AlertConnection, ...]:
+        """This user's channels that can deliver now — for the watcher, which
+        sends each user's alerts to that user's own channels and nobody else's."""
         ...
 
     async def upsert(self, connection: AlertConnection) -> None: ...

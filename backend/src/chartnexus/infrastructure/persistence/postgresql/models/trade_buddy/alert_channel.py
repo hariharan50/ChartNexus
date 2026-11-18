@@ -6,16 +6,20 @@ silenced on the phone without silencing the other. Sharing the messaging table
 would have meant widening its ``unique(user, channel)`` invariant and changing
 a context MME100, HUGIN and the daily report all depend on.
 
-Same column shape as its neighbour, and for the same reasons — the secret is
-AES-256-GCM ciphertext bound to its (user, channel, column) slot, never
-plaintext.
+Both halves of a connection are AES-256-GCM ciphertext, each bound to its
+(user, channel, column) slot: the secret (bot token, CallMeBot key) *and* the
+target (Telegram chat id, WhatsApp phone number). The phone number is personal
+data, and the chat id is what a stolen token would need to be useful, so
+neither is ever stored in plaintext.
+
+Rows belong to a user and go with them: ``ON DELETE CASCADE``.
 """
 
 from __future__ import annotations
 
 import uuid
 
-from sqlalchemy import Boolean, CheckConstraint, Index, String, Text, text
+from sqlalchemy import Boolean, CheckConstraint, ForeignKey, Index, String, Text, text
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column
 
@@ -30,15 +34,19 @@ from chartnexus.infrastructure.persistence.postgresql.base import (
 class AlertChannelRecord(UUIDPrimaryKeyMixin, TimestampMixin, TenantScopedMixin, Base):
     __tablename__ = "trade_buddy_channels"
 
-    user_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), nullable=False)
+    user_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("users.id", ondelete="CASCADE"),
+        nullable=False,
+    )
     channel: Mapped[str] = mapped_column(String(32), nullable=False)
 
     # Text, not String(n): the AES-GCM envelope adds a nonce, tag and key id on
     # top of base64 expansion, and a key-length change must not need a migration.
     secret_enc: Mapped[str | None] = mapped_column(Text, nullable=True)
 
-    #: Telegram chat id, or the WhatsApp phone number. Null until linked.
-    target: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    #: Telegram chat id, or the WhatsApp phone number, encrypted. Null until linked.
+    target_enc: Mapped[str | None] = mapped_column(Text, nullable=True)
     #: Display label, e.g. the bot's @username. Never a secret.
     label: Mapped[str | None] = mapped_column(String(128), nullable=True)
 
