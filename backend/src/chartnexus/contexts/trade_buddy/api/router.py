@@ -19,6 +19,7 @@ from chartnexus.contexts.trade_buddy.api.schemas import (
     ChannelResponse,
     ChannelsResponse,
     ConnectChannelRequest,
+    ConnectWhatsAppRequest,
     DefaultsResponse,
     EngineStateResponse,
     LevelPayload,
@@ -36,7 +37,10 @@ from chartnexus.contexts.trade_buddy.api.schemas import (
     WatchlistResponse,
     WatchRowResponse,
 )
-from chartnexus.contexts.trade_buddy.application.channels import ConnectCommand
+from chartnexus.contexts.trade_buddy.application.channels import (
+    ConnectCommand,
+    ConnectWhatsAppCommand,
+)
 from chartnexus.contexts.trade_buddy.application.routing import render
 from chartnexus.contexts.trade_buddy.application.use_cases import (
     SetLevelsCommand,
@@ -337,10 +341,11 @@ async def set_settings(
 
 # -- alert channels ---------------------------------------------------------
 #
-# Trade Buddy's own bot, separate from the one under Settings -> Channels. Two
-# bots rather than one because a level break mid-trade and a once-a-morning
-# briefing want different notification settings on a phone, and silencing one
-# must not silence the other.
+# Each user's own Telegram bot and WhatsApp number — per user, encrypted at
+# rest, never returned in full. Separate from the bot under Settings ->
+# Channels because a level break mid-trade and a once-a-morning briefing want
+# different notification settings on a phone, and silencing one must not
+# silence the other.
 
 
 @router.get(
@@ -427,6 +432,42 @@ async def test_telegram(services: Services, principal: CurrentPrincipal) -> None
     proves the token, the chat id and the formatting — not just that a row
     exists."""
     await services.test_channel(principal.user_id, AlertChannel.TELEGRAM)
+
+
+@router.put(
+    "/channels/whatsapp",
+    response_model=ChannelResponse,
+    summary="Connect your WhatsApp (CallMeBot) for alerts",
+    responses={422: {"description": "Invalid number, or CallMeBot did not accept it"}},
+)
+async def connect_whatsapp(
+    request: ConnectWhatsAppRequest,
+    services: Services,
+    principal: CurrentPrincipal,
+) -> ChannelResponse:
+    """Validate the number, send a welcome message, then store both encrypted.
+
+    CallMeBot has no verify call, so the welcome message *is* the check: if it
+    is not accepted, nothing is stored. The response shows the number masked.
+    """
+    connection = await services.connect_whatsapp(
+        ConnectWhatsAppCommand(
+            user_id=principal.user_id,
+            tenant_id=principal.tenant_id,
+            phone=request.phone,
+            api_key=request.api_key,
+        )
+    )
+    return ChannelResponse.of(connection)
+
+
+@router.post(
+    "/channels/whatsapp/test",
+    status_code=status.HTTP_204_NO_CONTENT,
+    summary="Send a WhatsApp message to prove the channel works",
+)
+async def test_whatsapp(services: Services, principal: CurrentPrincipal) -> None:
+    await services.test_channel(principal.user_id, AlertChannel.WHATSAPP)
 
 
 @router.patch(

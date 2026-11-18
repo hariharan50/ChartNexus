@@ -542,15 +542,16 @@ class TradeBuddySettings(_Section):
     litemode: bool = True
 
     # -- channels -----------------------------------------------------------
-    telegram_bot_token: SecretStr = SecretStr("")
-    telegram_chat_id: str = ""
+    # There are no channel credentials here. Every user connects their own
+    # Telegram bot and WhatsApp number in the app, stored encrypted per user
+    # (`trade_buddy_channels`). The old server-wide
+    # CN_TRADE_BUDDY_TELEGRAM_BOT_TOKEN / _CHAT_ID / _WHATSAPP_PHONE / _API_KEY
+    # are ignored, and the worker warns at startup if they are still set.
     #: Optional deep link for the inline "Open chart" button.
     chart_url: str = ""
-    whatsapp_phone: str = ""
-    whatsapp_api_key: SecretStr = SecretStr("")
-    #: Set below CallMeBot's real ~25/4h ceiling. Exceeding it does not reject a
-    #: message, it makes delivery unreliable — and a channel you cannot trust is
-    #: worse than one you know is off.
+    #: Per user. Set below CallMeBot's real ~25/4h ceiling. Exceeding it does
+    #: not reject a message, it makes delivery unreliable — and a channel you
+    #: cannot trust is worse than one you know is off.
     whatsapp_limit_per_window: int = Field(default=20, ge=0)
     whatsapp_window_hours: int = Field(default=4, ge=1)
 
@@ -558,10 +559,14 @@ class TradeBuddySettings(_Section):
     send_backoff_seconds: float = Field(default=0.5, ge=0)
     request_timeout_seconds: float = Field(default=10.0, gt=0)
 
-    #: Where the marks and the live watcher states are kept. A file, not a
-    #: table: six numbers per instrument per day, one writer, worthless by
-    #: tomorrow. Persisted so a restart mid-session resumes rather than
-    #: re-firing alerts for ground already covered.
+    #: How often the worker writes watcher states and counters that have not
+    #: meaningfully changed (only the last-tick time and price). Anything that
+    #: matters across a restart — a state change, an alert counter — is written
+    #: at once regardless. Bounds DB writes to users x instruments / interval.
+    persist_interval_seconds: float = Field(default=5.0, ge=0.5, le=60.0)
+
+    #: Where a single-operator install kept its JSON state files. Read only by
+    #: `chartnexus-trade-buddy import-legacy`; per-user state lives in Postgres.
     state_directory: str = "var/trade_buddy"
 
     @field_validator("watch_close")

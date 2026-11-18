@@ -95,19 +95,15 @@ x-backend-env: &backend-env
   # is no server key to set.
   CN_LLM_AGENT_DISCLAIMER: "true"
 
-  # Trade Buddy's alert channels. This block is an explicit list — nothing in
-  # .env.production reaches a container unless it is named here — so without
-  # these the watcher runs but can never alert. Blank disables a channel, the
-  # same as the setting's own default. Its broker is the one connected in the
-  # app; every band and threshold keeps its default (CN_TRADE_BUDDY_* in
-  # backend/.env.example) unless added here.
+  # Trade Buddy. Alert channels are per user — each user connects their own
+  # Telegram bot and WhatsApp number in the app, stored encrypted — so no
+  # channel credentials belong here. Only operator-level settings pass
+  # through; every band and threshold keeps its default (CN_TRADE_BUDDY_* in
+  # backend/.env.example) unless added here. This block is an explicit list:
+  # nothing in .env.production reaches a container unless it is named here.
   CN_TRADE_BUDDY_SYMBOLS: ${CN_TRADE_BUDDY_SYMBOLS:-["NIFTY","BANKNIFTY","SENSEX"]}
   CN_TRADE_BUDDY_HOLIDAYS: ${CN_TRADE_BUDDY_HOLIDAYS:-}
-  CN_TRADE_BUDDY_TELEGRAM_BOT_TOKEN: ${CN_TRADE_BUDDY_TELEGRAM_BOT_TOKEN:-}
-  CN_TRADE_BUDDY_TELEGRAM_CHAT_ID: ${CN_TRADE_BUDDY_TELEGRAM_CHAT_ID:-}
   CN_TRADE_BUDDY_CHART_URL: ${CN_TRADE_BUDDY_CHART_URL:-}
-  CN_TRADE_BUDDY_WHATSAPP_PHONE: ${CN_TRADE_BUDDY_WHATSAPP_PHONE:-}
-  CN_TRADE_BUDDY_WHATSAPP_API_KEY: ${CN_TRADE_BUDDY_WHATSAPP_API_KEY:-}
 
 # Every worker shares this: no published ports, restarts on failure, and waits
 # for the schema and the catalog before it opens a session.
@@ -280,15 +276,8 @@ services:
       - --no-access-log
     expose:
       - "8000"
-    # Trade Buddy keeps its marks and live watcher state in a file under
-    # /app/var, not a table (see TradeBuddySettings.state_directory). The API
-    # writes the marks the user saves and reads the state back for the page;
-    # the `trade-buddy` worker reads those marks to know what to subscribe to.
-    # Both ends therefore need the same volume -- without it the API writes to
-    # its own container filesystem, the worker never sees a mark, never
-    # subscribes, and the page sits on "Awaiting first tick" forever.
-    volumes:
-      - trade-buddy-state:/app/var
+    # No volume: Trade Buddy's per-user state lives in Postgres
+    # (`trade_buddy_watch_states`), which the API and the worker share.
     depends_on:
       postgres: { condition: service_healthy }
       redis: { condition: service_healthy }
@@ -447,22 +436,23 @@ services:
     <<: *worker
     command: ["python", "-m", "chartnexus.entrypoints.main_report"]
 
-  # The level watcher: one Fyers socket held through the session, comparing
-  # live price against the morning's marked levels. Its own process for the
+  # The level watcher, for every user: one market-feed socket held through the
+  # session, each tick compared against every user's own marked levels, each
+  # alert sent to that user's own Telegram/WhatsApp. Its own process for the
   # same reason as the rest — but with an extra edge here, because this one is
   # stateful within the day. An API redeploy at 11:00 would otherwise be a gap
   # in the watch, and a gap is indistinguishable from a quiet market.
   #
-  # Needs the `fyers-stream` extra in the image (see backend.Dockerfile); the
-  # Fyers credentials come from the broker connection in Postgres, not from
-  # the environment.
+  # Needs the `fyers-stream` extra in the image (see backend.Dockerfile). Broker
+  # credentials, levels and alert channels all come from Postgres, not from the
+  # environment.
   trade-buddy:
     <<: *worker
     command: ["python", "-m", "chartnexus.entrypoints.main_trade_buddy"]
     volumes:
-      # The marked levels and live watcher state. A named volume rather than
-      # the image: it has to survive a redeploy, or every deploy re-fires the
-      # alerts the session already sent.
+      # Only the old single-operator JSON files, for a one-off
+      # `python -m chartnexus.entrypoints.main_trade_buddy import-legacy
+      # --email <user>`. Live state is in Postgres.
       - trade-buddy-state:/app/var
 
 volumes:

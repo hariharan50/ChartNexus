@@ -133,6 +133,18 @@ class AlertConnection:
             return None
         return _mask(self.secret)
 
+    @property
+    def masked_target(self) -> str | None:
+        """For display: the last four characters only.
+
+        A WhatsApp phone number is personal data, and a Telegram chat id is half
+        of what a stolen bot token needs. Enough to recognise your own
+        ("…4321"), never enough to reuse.
+        """
+        if not self.target:
+            return None
+        return f"…{self.target[-_MASK_KEEP:]}" if len(self.target) > _MASK_KEEP else "…"
+
 
 def _mask(value: str, *, keep: int = _MASK_KEEP) -> str:
     if len(value) <= keep * 2:
@@ -149,3 +161,23 @@ _CHAT_ID = re.compile(r"^(-?\d{1,20}|@[A-Za-z][A-Za-z0-9_]{4,31})$")
 
 def is_valid_chat_id(value: str) -> bool:
     return bool(_CHAT_ID.match(value.strip()))
+
+
+#: E.164: a country code and subscriber number, 8 to 15 digits, no leading
+#: zero. CallMeBot wants it with the `+`.
+_PHONE = re.compile(r"^\+[1-9]\d{7,14}$")
+_PHONE_NOISE = re.compile(r"[\s\-().]")
+
+
+def normalise_phone(value: str) -> str | None:
+    """The number in the ``+<digits>`` form CallMeBot takes, or ``None``.
+
+    Spaces, dashes, dots and brackets are dropped and a leading ``00`` becomes
+    ``+``, because that is how numbers get pasted. A number without a country
+    code is refused rather than guessed: sending to the wrong country's
+    subscriber is worse than asking again.
+    """
+    cleaned = _PHONE_NOISE.sub("", value.strip())
+    if cleaned.startswith("00"):
+        cleaned = f"+{cleaned[2:]}"
+    return cleaned if _PHONE.match(cleaned) else None

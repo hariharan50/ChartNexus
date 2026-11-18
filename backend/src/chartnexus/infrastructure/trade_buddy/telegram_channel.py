@@ -108,12 +108,17 @@ class TelegramAlertSender:
                 {"inline_keyboard": [[{"text": "Open chart", "url": self._chart_url}]]}
             )
 
-        # The token is a path segment in the Bot API, so the URL is never logged.
-        response = await self._http.post(
-            f"{self._api_base}/bot{secret}/sendMessage",
-            json=payload,
-            timeout=self._timeout,
-        )
+        # The token is a path segment in the Bot API, so the URL is never logged
+        # — and a transport error, whose text and `.request` carry that URL, is
+        # replaced by one that names only its type (`from None` drops the chain).
+        try:
+            response = await self._http.post(
+                f"{self._api_base}/bot{secret}/sendMessage",
+                json=payload,
+                timeout=self._timeout,
+            )
+        except httpx.HTTPError as exc:
+            raise httpx.HTTPError(f"Telegram request failed ({type(exc).__name__})") from None
         if response.status_code >= httpx.codes.BAD_REQUEST:
             description = _description(response)
             log.warning(

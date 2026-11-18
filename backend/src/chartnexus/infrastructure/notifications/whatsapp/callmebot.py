@@ -65,21 +65,25 @@ class CallMeBotNotifier(Notifier):
         URL is where an alert turns into a 400 nobody notices.
         """
         body = text if len(text) <= _MAX_TEXT else f"{text[: _MAX_TEXT - 1]}…"
-        response = await self._client.get(
-            self._endpoint,
-            params={"phone": self._phone, "text": body, "apikey": self._api_key},
-            timeout=self._timeout,
-        )
+        # CallMeBot authenticates with the key *in the query string*, and an
+        # httpx error's text carries the request URL. Left alone, a failed send
+        # would put the user's API key and phone number into the log line the
+        # router writes, and into the error a connect attempt returns to the
+        # browser. Every error leaving this method is therefore rebuilt from
+        # the status alone, with the original detached (`from None`).
+        try:
+            response = await self._client.get(
+                self._endpoint,
+                params={"phone": self._phone, "text": body, "apikey": self._api_key},
+                timeout=self._timeout,
+            )
+        except httpx.HTTPError as exc:
+            raise httpx.HTTPError(f"CallMeBot request failed ({type(exc).__name__})") from None
         # CallMeBot answers 200 with an HTML error page for a bad key or an
         # unapproved number, so the status alone is not proof of acceptance.
         if response.status_code >= httpx.codes.BAD_REQUEST:
-            log.warning(
-                "callmebot_rejected",
-                status=response.status_code,
-                # Never the key or the phone number.
-                body=response.text[:200],
-            )
-            response.raise_for_status()
+            log.warning("callmebot_rejected", status=response.status_code)
+            raise httpx.HTTPError(f"CallMeBot returned HTTP {response.status_code}") from None
         lowered = response.text.lower()
         if "apikey" in lowered and "error" in lowered:
             raise httpx.HTTPError("CallMeBot rejected the API key or phone number")

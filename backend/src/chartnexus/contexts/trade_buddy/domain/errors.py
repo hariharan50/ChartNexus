@@ -48,6 +48,20 @@ class ChannelVerificationError(ValidationError):
         self.provider = provider
 
 
+class InvalidPhoneNumberError(ValidationError):
+    """A WhatsApp number that is not in international form.
+
+    Never echoes the number back: the message is read in logs and problem
+    responses, and the number is personal data.
+    """
+
+    def __init__(self) -> None:
+        super().__init__(
+            "Enter the WhatsApp number in international form with its country "
+            "code, e.g. +91 98765 43210."
+        )
+
+
 class ChannelNotReadyError(ValidationError):
     """A send was asked for on a channel that cannot deliver yet.
 

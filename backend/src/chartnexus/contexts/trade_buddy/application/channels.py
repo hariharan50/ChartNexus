@@ -12,17 +12,23 @@ silence the other.
 
 from __future__ import annotations
 
-from dataclasses import dataclass
+from collections.abc import Mapping
+from dataclasses import dataclass, field
 
 from chartnexus.contexts.trade_buddy.application.ports import (
     AlertChannelRepository,
     AlertSenderPort,
     Clock,
 )
-from chartnexus.contexts.trade_buddy.domain.channel import AlertChannel, AlertConnection
+from chartnexus.contexts.trade_buddy.domain.channel import (
+    AlertChannel,
+    AlertConnection,
+    normalise_phone,
+)
 from chartnexus.contexts.trade_buddy.domain.errors import (
     ChannelNotReadyError,
     ChannelVerificationError,
+    InvalidPhoneNumberError,
 )
 from chartnexus.shared_kernel.types.identifiers import TenantId, UserId
 
@@ -125,6 +131,81 @@ class LinkChat:
         return connection
 
 
+@dataclass(frozen=True, slots=True)
+class ConnectWhatsAppCommand:
+    user_id: UserId
+    tenant_id: TenantId
+    phone: str
+    api_key: str
+
+
+#: Plain text: WhatsApp via CallMeBot shows no formatting.
+WHATSAPP_WELCOME = (
+    "Trade Buddy is connected. Confirmed level breaks, reclaims and gaps will "
+    "arrive here during market hours, 09:15-15:20 IST."
+)
+
+#: Shown as the connection's label. Deliberately not the number: labels are
+#: stored and returned in plaintext, and the number is personal data.
+WHATSAPP_LABEL = "WhatsApp (CallMeBot)"
+
+
+@dataclass(slots=True)
+class ConnectWhatsApp:
+    """Connect a user's WhatsApp in one step: validate, prove, then store.
+
+    CallMeBot has no "verify this key" call — the only proof a key and number
+    work together is a message arriving. So connecting *sends* the welcome
+    message first, and stores nothing unless it was accepted. The same rule as
+    :class:`LinkChat`, for the same reason: a stored connection that cannot
+    deliver shows "Ready" and drops the first real break.
+
+    Both halves are encrypted at rest by the repository, and neither is ever
+    returned: the page sees the last four digits of the number and a masked key.
+    """
+
+    repository: AlertChannelRepository
+    sender: AlertSenderPort
+    clock: Clock
+
+    async def __call__(self, command: ConnectWhatsAppCommand) -> AlertConnection:
+        phone = normalise_phone(command.phone)
+        if phone is None:
+            raise InvalidPhoneNumberError
+        api_key = command.api_key.strip()
+        if not api_key:
+            raise ChannelVerificationError("an API key is required", provider="whatsapp")
+
+        try:
+            await self.sender.send(api_key, phone, WHATSAPP_WELCOME)
+        except Exception as exc:
+            # The sender's errors carry no key or number (see CallMeBotNotifier),
+            # so this text is safe to return.
+            raise ChannelVerificationError(
+                f"could not deliver the welcome message ({exc}). Check the number "
+                "and that you have activated CallMeBot for it",
+                provider="whatsapp",
+            ) from exc
+
+        now = self.clock.now()
+        existing = await self.repository.find(command.user_id, AlertChannel.WHATSAPP)
+        if existing is None:
+            connection = AlertConnection.create(
+                user_id=command.user_id,
+                tenant_id=command.tenant_id,
+                channel=AlertChannel.WHATSAPP,
+                secret=api_key,
+                label=WHATSAPP_LABEL,
+                now=now,
+            )
+        else:
+            connection = existing
+            connection.update_credentials(secret=api_key, label=WHATSAPP_LABEL, now=now)
+        connection.link_target(phone, now)
+        await self.repository.upsert(connection)
+        return connection
+
+
 @dataclass(slots=True)
 class SetChannelEnabled:
     """The on/off switch. Keeps the token and the chat, so switching back on
@@ -161,18 +242,28 @@ class SendChannelTest:
 
     repository: AlertChannelRepository
     sender: AlertSenderPort
+    #: Per-channel senders, when more than one channel is wired. A channel
+    #: missing here falls back to ``sender``.
+    senders: Mapping[AlertChannel, AlertSenderPort] = field(default_factory=dict)
 
     async def __call__(self, user_id: UserId, channel: AlertChannel) -> None:
         connection = await _require(self.repository, user_id, channel)
         if not connection.ready:
             raise ChannelNotReadyError(channel.value)
         assert connection.target is not None  # noqa: S101 — guarded by `ready`
-        await self.sender.send(
-            connection.secret,
-            connection.target,
-            "<b>Trade Buddy</b> is connected.\n"
-            "<i>Level alerts will arrive here during market hours.</i>",
-        )
+        sender = self.senders.get(channel, self.sender)
+        await sender.send(connection.secret, connection.target, _TEST_MESSAGE[channel])
+
+
+#: WhatsApp via CallMeBot renders no markup, so it gets the plain version.
+_TEST_MESSAGE = {
+    AlertChannel.TELEGRAM: (
+        "<b>Trade Buddy</b> is connected.\n<i>Level alerts will arrive here during market hours.</i>"
+    ),
+    AlertChannel.WHATSAPP: (
+        "Trade Buddy is connected. Confirmed level alerts will arrive here during market hours."
+    ),
+}
 
 
 @dataclass(slots=True)

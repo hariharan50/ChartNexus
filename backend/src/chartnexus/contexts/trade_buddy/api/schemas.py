@@ -293,7 +293,9 @@ class ChannelResponse(BaseModel):
     enabled: bool
     #: The bot's @username, so two bots are tellable apart at a glance.
     label: str | None
-    #: The linked chat id. Not a secret.
+    #: Where alerts go — chat id or WhatsApp number — **masked**: last four
+    #: characters only ("…4321"). Stored encrypted; never returned in full, not
+    #: even to the person who entered it.
     target: str | None
     #: First and last four characters only. A bot token is a bearer
     #: credential and never goes back over the wire in full.
@@ -308,7 +310,7 @@ class ChannelResponse(BaseModel):
             verified=connection.verified,
             enabled=connection.enabled,
             label=connection.label,
-            target=connection.target,
+            target=connection.masked_target,
             masked_secret=connection.masked_secret,
         )
 
@@ -337,6 +339,17 @@ class ConnectChannelRequest(BaseModel):
     #: The bot token from @BotFather. Verified against Telegram before it is
     #: stored, so a token that cannot work never reaches the database.
     secret: str = Field(min_length=10, max_length=512)
+
+
+class ConnectWhatsAppRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    #: In international form with the country code, e.g. +91 98765 43210.
+    #: Spaces and dashes are fine; the number is normalised and validated
+    #: server-side, and stored encrypted.
+    phone: str = Field(min_length=8, max_length=24)
+    #: The key CallMeBot sends you once you message it from this number.
+    api_key: str = Field(min_length=4, max_length=128)
 
 
 class LinkChatRequest(BaseModel):

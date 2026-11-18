@@ -65,11 +65,16 @@ class TelegramNotifier(Notifier):
 
         # The token is a path segment in the Bot API, so it must never be logged
         # — `_safe_url` exists purely so an error message can name the endpoint.
-        response = await self._client.post(
-            f"{self._api_base}/bot{self._token}/sendMessage",
-            json=payload,
-            timeout=self._timeout,
-        )
+        # A transport error's text and `.request` carry that URL, so it is
+        # replaced by one naming only its type (`from None` drops the chain).
+        try:
+            response = await self._client.post(
+                f"{self._api_base}/bot{self._token}/sendMessage",
+                json=payload,
+                timeout=self._timeout,
+            )
+        except httpx.HTTPError as exc:
+            raise httpx.HTTPError(f"Telegram request failed ({type(exc).__name__})") from None
         if response.status_code >= httpx.codes.BAD_REQUEST:
             log.warning(
                 "telegram_alert_rejected",
