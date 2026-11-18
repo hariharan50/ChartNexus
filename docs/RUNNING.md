@@ -125,27 +125,53 @@ detected later. On a machine with no broker, seed instead (below).
 
 ## 3c. Trade Buddy watcher
 
-Trade Buddy watches the six levels (S1–S3, R1–R3) you mark each morning and
+Trade Buddy watches the levels (S1–S3, R1–R3) each user marks each morning and
 alerts on approaches, touches, breaks, rejections, reclaims and opening gaps —
 to Telegram always, and to WhatsApp (CallMeBot) for the events worth it.
 
-Local dev runs it inside the API (`CN_TRADE_BUDDY_IN_PROCESS=true`), so normally
-you need nothing. Standalone, with the in-process copy turned off:
+**It is per user.** Every user marks their own levels and connects their own
+alert channels in **Trade Buddy → Delivery**:
+
+- **Telegram** — paste a bot token from @BotFather, then link the chat.
+- **WhatsApp** — activate your number with CallMeBot, then enter the number and
+  the API key it sends you. Connecting sends a welcome message; nothing is stored
+  unless it arrives.
+
+Both are encrypted at rest (AES-256-GCM, bound to the user — the bot token, the
+chat id, the phone number and the API key alike) and are never returned in
+full: the page shows the last four characters. There are no alert credentials
+in `.env`; the old `CN_TRADE_BUDDY_TELEGRAM_*` / `…_WHATSAPP_*` variables are
+ignored, and the watcher logs a warning if they are still set.
+
+Local dev runs the watcher inside the API (`CN_TRADE_BUDDY_IN_PROCESS=true`), so
+normally you need nothing. Standalone, with the in-process copy turned off:
 
     cd backend
     uv run --extra fyers-stream chartnexus-trade-buddy
 
-It takes its broker from the connection made in **Settings → Broker** (Kite
-first, then FYERS) — a Kite connection streams over the Kite ticker, a FYERS one
-over the FYERS socket, which needs the `fyers-stream` extra. Alerts need
-`CN_TRADE_BUDDY_TELEGRAM_BOT_TOKEN` and `CN_TRADE_BUDDY_TELEGRAM_CHAT_ID` in
-`backend/.env`; every band and threshold is a `CN_TRADE_BUDDY_*` setting (see
-`backend/.env.example`). Marked levels and watcher state are JSON files in
-`var/trade_buddy/`, relative to where the process starts — `backend/var/trade_buddy/`
-for the commands above (`CN_TRADE_BUDDY_STATE_DIRECTORY`). **Quick Reset** on the
-page (`POST /api/v1/trade-buddy/reset`) starts one instrument's day over: it
-clears the marked levels, their live states and today's alerts, but keeps that
-instrument's sensitivity overrides. The watcher drops it within ~15 seconds.
+One market-feed socket serves every user: it takes its broker from the
+connection made in **Settings → Broker** (Kite first, then FYERS — a Kite
+connection streams over the Kite ticker, a FYERS one over the FYERS socket,
+which needs the `fyers-stream` extra), subscribes to the union of the indices
+anyone has marked, and sends each tick to every user's watcher for that index.
+ATR is fetched once per index per day, however many users watch it. Marking
+levels or connecting a channel mid-session is picked up within ~15 seconds.
+
+Each user's levels, watcher state and alert history are a row per index in
+Postgres (`trade_buddy_watch_states`), so they are in the database backup and go
+with the user if the account is deleted. Every band and threshold default is a
+`CN_TRADE_BUDDY_*` setting (see `backend/.env.example`); per-index overrides are
+per user. **Quick Reset** (`POST /api/v1/trade-buddy/reset`) starts one index's
+day over for *you*: it clears your marked levels, their live states and today's
+alerts, but keeps your sensitivity overrides.
+
+Upgrading from the single-operator version, which kept its state in JSON files
+under `var/trade_buddy/`: copy them into one account, once —
+
+    cd backend
+    uv run chartnexus-trade-buddy import-legacy --email you@example.com
+
+It refuses to overwrite an index that account already has unless `--force`.
 
 ## 3d. Realtime websocket — port 8001
 

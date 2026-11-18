@@ -35,7 +35,7 @@ direction dependency inversion requires. It may not import `bootstrap/` or
 | `futures_analytics` | futures heatmap, intraday, and market-movers analytics |
 | `market_breadth` | advance/decline, index contributors and weightage, sector rotation (RRG), FII/DII flows |
 | `global_markets` | the global-markets view and the GIFT Nifty handoff |
-| `trade_buddy` | the morning-levels watcher: six marked levels, live alerts, Quick Reset |
+| `trade_buddy` | the morning-levels watcher, per user: each user's marked levels, live alerts on their own encrypted Telegram/WhatsApp, Quick Reset |
 | `signals` | Nifty analysis / guidance (calibrated multi-horizon ensemble) |
 | `outcomes` | signal outcome tracking and grading |
 | `content_intelligence` | market content/news intelligence |

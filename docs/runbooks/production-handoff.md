@@ -222,9 +222,10 @@ Merging them to "remove duplication" republishes Postgres and Redis to the host.
   `.env.production` reaches a container only if `compose.prod.yml` names it.
   This bit twice: `CN_KITE_REDIRECT_URI` was missing, so it fell back to an
   http default that `assert_deployment_safe()` rejects and nothing started; and
-  no `CN_TRADE_BUDDY_*` setting was passed, so Trade Buddy could not alert. Both
-  are now there. When adding a setting the deployer must be able to change, add
-  it to that block *and* to `.env.production.example`.
+  no `CN_TRADE_BUDDY_*` setting was passed, so Trade Buddy could not alert.
+  The first is fixed; the second went away when alert channels became per user
+  and moved into the app. When adding a setting the deployer must be able to
+  change, add it to that block *and* to `.env.production.example`.
 - **`CN_BROKER_PROVIDER` must be `fyers` or `kite`.** `assert_deployment_safe()`
   refuses to start with `mock` outside local, by design — a chart from generated
   numbers is pixel-identical to one from the exchange, and only
@@ -240,8 +241,11 @@ Merging them to "remove duplication" republishes Postgres and Redis to the host.
   `futures-history`, `hugin`, `mme100`, `report`, `trade-buddy`. Stop one and a
   part of the product goes quietly blank rather than erroring. The table in
   [vps-deployment.md](vps-deployment.md#what-the-workers-do) says what each one
-  owns. `trade-buddy` keeps state in the `trade-buddy-state` volume — do not
-  drop it on redeploy, or alerts already sent that day fire again.
+  owns. `trade-buddy` is **per user**: one socket serves every user, each
+  user's levels and alert counters are Postgres rows (in the backup, gone with
+  the user), and each user's Telegram/WhatsApp are connected in the app and
+  stored encrypted. The `d3e8a1f5c9b2` migration encrypts existing chat ids in
+  place, so it needs `CN_SECURITY_ENCRYPTION_KEY` — the `migrate` task has it.
 - **`migrate` and `catalog-sync` are release tasks.** They run to completion and
   exit on every deploy. `exited (0)` in `docker compose ps` is correct, not a
   failure. `catalog-sync` exists so a first deploy comes up usable instead of

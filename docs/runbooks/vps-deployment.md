@@ -28,11 +28,11 @@ tasks (`migrate`, `catalog-sync`). The workers are not optional — see
 
 > **`x-backend-env` in `compose.prod.yml` is an explicit list.** A value in
 > `.env.production` reaches the containers only if that block names it. The
-> broker redirect URIs are derived from `CN_DOMAIN` there, and the Trade Buddy
-> alert settings (`CN_TRADE_BUDDY_TELEGRAM_*`, `…_WHATSAPP_*`, `…_SYMBOLS`,
-> `…_HOLIDAYS`, `…_CHART_URL`) are passed through. Any *other*
-> `CN_TRADE_BUDDY_*` tuning has to be added to that block before it takes
-> effect.
+> broker redirect URIs are derived from `CN_DOMAIN` there, and the operator-level
+> Trade Buddy settings (`CN_TRADE_BUDDY_SYMBOLS`, `…_HOLIDAYS`, `…_CHART_URL`) are
+> passed through. Any *other* `CN_TRADE_BUDDY_*` tuning has to be added to that
+> block before it takes effect. Alert channels are not settings at all — each
+> user connects their own in the app.
 
 ## 1. Prepare the server
 
@@ -100,9 +100,10 @@ file — each tenant connects their own FYERS or Kite application in the app.
 Both broker redirect URIs must be `https://` when deployed; `compose.prod.yml`
 derives them from `CN_DOMAIN`.
 
-**Trade Buddy alerts.** Fill in `CN_TRADE_BUDDY_TELEGRAM_BOT_TOKEN` and
-`CN_TRADE_BUDDY_TELEGRAM_CHAT_ID` (and optionally the WhatsApp pair) if you
-use Trade Buddy. Left blank, the watcher runs but sends nothing.
+**Trade Buddy alerts are per user.** Nothing to configure here: each user
+connects their own Telegram bot and WhatsApp number in **Trade Buddy →
+Delivery**, encrypted with `CN_SECURITY_ENCRYPTION_KEY`. A user with no channel
+connected still has their levels watched; they are just not messaged.
 
 ## 4. First deploy
 
@@ -240,7 +241,7 @@ one and a part of the product goes quietly blank rather than erroring.
 | `hugin`           | HUGIN stops accumulating graded market memory.                   |
 | `mme100`          | No morning pre-market briefing.                                  |
 | `report`          | No daily PDF for enrolled tenants.                               |
-| `trade-buddy`     | Marked levels are not watched and no level alerts go out. Holds a broker tick socket all session; its state lives in the `trade-buddy-state` volume so a redeploy does not re-send alerts already sent. |
+| `trade-buddy`     | Nobody's marked levels are watched and no level alerts go out. One broker tick socket for all users, all session; each user's state is a Postgres row, so a redeploy resumes the watch and does not re-send alerts already sent. (The `trade-buddy-state` volume now only holds old single-operator files for `import-legacy`.) |
 
 `realtime` is not a loop worker but a websocket server on 8001 (nginx proxies
 `/ws` to it). Without it the browser's live indicator stays on *Reconnecting*
