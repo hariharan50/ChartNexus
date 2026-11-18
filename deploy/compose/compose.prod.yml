@@ -72,12 +72,17 @@ x-backend-env: &backend-env
   CN_GOOGLE_CLIENT_SECRET: ${CN_GOOGLE_CLIENT_SECRET:-}
   CN_GOOGLE_REDIRECT_URI: https://${CN_DOMAIN}/auth/google/callback
 
-  # 'fyers' is required: assert_deployment_safe() rejects 'mock' outside local,
-  # because a chart drawn from generated numbers is indistinguishable from one
-  # drawn from the exchange. Broker credentials are per-tenant, entered in the
-  # app under Settings -> Broker, so there is nothing to put here.
+  # 'fyers' or 'kite' is required: assert_deployment_safe() rejects 'mock'
+  # outside local, because a chart drawn from generated numbers is
+  # indistinguishable from one drawn from the exchange. Broker credentials are
+  # per-tenant, entered in the app under Settings -> Broker, so there is
+  # nothing to put here.
   CN_BROKER_PROVIDER: ${CN_BROKER_PROVIDER:-fyers}
+  # Both redirect URIs must be https when deployed, or assert_deployment_safe()
+  # refuses to start. Each must match, character for character, the URL
+  # registered on that broker's developer console.
   CN_BROKER_FYERS_REDIRECT_URI: https://${CN_DOMAIN}/settings/broker/callback
+  CN_KITE_REDIRECT_URI: https://${CN_DOMAIN}/settings/broker/kite/callback
 
   # Every chart that reads the archive believes it, so mock frames must never
   # be written here. This is already the default; it is stated to make the
