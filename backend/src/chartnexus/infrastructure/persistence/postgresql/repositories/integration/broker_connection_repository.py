@@ -14,7 +14,7 @@ from __future__ import annotations
 
 from datetime import UTC, datetime
 
-from sqlalchemy import case, select
+from sqlalchemy import case, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from chartnexus.contexts.broker_connections.application.ports import TokenCipher
@@ -74,14 +74,28 @@ class SqlAlchemyBrokerConnectionRepository:
         )
         return [self._to_domain(record) for record in result.scalars()]
 
-    async def find_market_feed(self) -> BrokerConnection | None:
+    async def find_market_feed(self, now: datetime | None = None) -> BrokerConnection | None:
         # Kite first: one quote call carries OI for up to 500 instruments,
         # where FYERS needs a depth call per contract. Newest connection next,
         # because it is the one most likely to still hold a working token.
+        #
+        # A connection past its known expiry is skipped. A Kite token dies at
+        # 06:00 IST but its row stays `active` until someone reconnects, and
+        # without this filter that dead row outranked a working FYERS one, so
+        # every shared job sat on mock data until the morning reconnect. FYERS
+        # publishes no expiry (`expires_at` is NULL), so it is never skipped
+        # here; its expiry is still found by the broker refusing the token.
+        moment = now or datetime.now(UTC)
         kite_first = case((BrokerConnectionRecord.broker == BrokerName.KITE.value, 0), else_=1)
         result = await self._session.execute(
             select(BrokerConnectionRecord)
-            .where(BrokerConnectionRecord.status == ConnectionStatus.ACTIVE.value)
+            .where(
+                BrokerConnectionRecord.status == ConnectionStatus.ACTIVE.value,
+                or_(
+                    BrokerConnectionRecord.expires_at.is_(None),
+                    BrokerConnectionRecord.expires_at > moment,
+                ),
+            )
             .order_by(kite_first, BrokerConnectionRecord.connected_at.desc().nulls_last())
             .limit(1)
         )

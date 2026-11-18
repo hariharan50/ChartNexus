@@ -34,12 +34,16 @@ class BrokerConnectionRepository(Protocol):
         """The tenant's connections with every broker except ``broker``."""
         ...
 
-    async def find_market_feed(self) -> BrokerConnection | None:
-        """Any tenant's active connection, preferring Kite.
+    async def find_market_feed(self, now: datetime | None = None) -> BrokerConnection | None:
+        """Any tenant's active, unexpired connection, preferring Kite.
 
         For background jobs that capture market-wide data. Kite is preferred
         because its quote endpoint returns open interest for up to five hundred
         instruments per call, where FYERS needs one depth call per contract.
+
+        A connection whose known expiry has passed (``now``, default the current
+        time) is skipped, so a Kite token that lapsed at 06:00 IST gives way to
+        a working FYERS connection instead of shadowing it.
         """
         ...
 
