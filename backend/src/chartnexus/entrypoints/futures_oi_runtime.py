@@ -21,6 +21,12 @@ That trade is sound rather than merely cheap: open interest is a daily
 aggregate that moves in minutes, so a reading a few minutes old classifies a
 build-up just as well as a fresh one.
 
+**Market hours only.** It also stops moving when the market shuts, so the loop
+sweeps only during the session — plus one sweep just after the close, whose
+readings are kept until the next open so the evening board still has its
+build-up columns. It used to run around the clock, which on FYERS was ~54,000
+of its ~73,500 daily calls spent re-reading figures that could not change.
+
 **Paced, not raced.** The broker allows eight requests a second, shared with
 every user request and every other worker. The sweep deliberately takes a small
 slice of that, so filling a background column never makes someone's page slow.
@@ -55,28 +61,109 @@ from chartnexus.infrastructure.observability.structured_logging import get_logge
 from chartnexus.infrastructure.persistence.postgresql.repositories.integration.broker_connection_repository import (
     SqlAlchemyBrokerConnectionRepository,
 )
+from chartnexus.infrastructure.time.market_calendar import ExchangeCalendar
 
 log = get_logger(__name__)
 
 
-async def sweep_once(container: Container, settings: Settings) -> int:
+#: Claimed by the one post-close sweep of a closed period; expires at the next
+#: session open. Shared through Redis so a restart, or the API's in-process
+#: copy beside a standalone worker, does not repeat it.
+_CLOSED_SWEEP_MARKER = ("futures-oi", "closed-sweep")
+
+#: Floor on any TTL derived from the time to the next open, so a sweep that
+#: lands a moment before the bell still writes a usable expiry.
+_MIN_TTL_SECONDS = 60
+
+
+async def sweep_once(
+    container: Container,
+    settings: Settings,
+    *,
+    now: datetime | None = None,
+    force: bool = False,
+) -> int:
     """One pass over the universe. Never propagates — the loop must survive it.
 
     Returns how many contracts were priced, so a caller can tell a quiet sweep
-    from a broken one.
+    from a broken one. ``force`` sweeps even when the market-hours gate would
+    skip — for an operator's explicit ``--once``, never for the loop.
     """
     try:
-        return await _sweep(container, settings)
+        return await _sweep(container, settings, now or datetime.now(UTC), force=force) or 0
     except Exception as exc:
         log.error("futures_oi_sweep_failed", error=repr(exc))
         return 0
 
 
-async def _sweep(container: Container, settings: Settings) -> int:
+def _calendar(settings: Settings) -> ExchangeCalendar:
+    """The same session the option-chain ingest and the board capture gate on."""
+    return ExchangeCalendar(
+        timezone=settings.market.timezone,
+        session_open=settings.market.session_open,
+        session_close=settings.market.session_close,
+    )
+
+
+async def _sweep(
+    container: Container, settings: Settings, now: datetime, *, force: bool = False
+) -> int | None:
+    """Sweep while the market trades; outside it, once, then not until the bell.
+
+    Open interest only moves during the session. Sweeping around the clock
+    cost ~444 broker calls every eight minutes overnight — about 54,000 a day
+    on FYERS, where each contract is its own request — to re-read figures that
+    could not change.
+
+    Outside the session there is exactly one sweep, right after the close, to
+    capture the day's final open interest. Its readings are kept until the
+    next open, plus one normal TTL — as before, so the first in-session sweep
+    replaces them without a blank gap — and the evening board keeps its
+    build-up columns. The sweep is *claimed* in Redis before it starts, so two
+    processes cannot both run it, and a sweep that dies half way is not
+    retried every interval all night.
+    """
+    calendar = _calendar(settings)
+    if calendar.is_open(now):
+        return await _sweep_universe(
+            container, settings, ttl_seconds=settings.futures_oi.ttl_seconds
+        )
+
+    next_open = calendar.next_open(now)
+    until_open = max(int((next_open - now).total_seconds()), _MIN_TTL_SECONDS)
+    closed_ttl = until_open + settings.futures_oi.ttl_seconds
+    if force:
+        # An operator asked. Sweep, keep the readings to the open like the
+        # closing sweep does, and leave the claim alone either way.
+        return await _sweep_universe(container, settings, ttl_seconds=closed_ttl)
+
+    marker = container.redis.key(*_CLOSED_SWEEP_MARKER)
+    claimed = await container.redis.client.set(marker, "1", ex=until_open, nx=True)
+    if not claimed:
+        log.debug("futures_oi_sweep_skipped", reason="market_closed")
+        return 0
+
+    priced = await _sweep_universe(container, settings, ttl_seconds=closed_ttl)
+    if priced is None:
+        # Nothing was asked of a broker — none connected, or no catalog yet.
+        # Release the claim so the closing sweep still happens once one is
+        # (connecting Kite at 20:00 should not leave the board bare until the
+        # morning). Retrying costs nothing while there is no broker to call.
+        await container.redis.client.delete(marker)
+        return None
+
+    log.info("futures_oi_closing_sweep", priced=priced, next_open=next_open.isoformat())
+    return priced
+
+
+async def _sweep_universe(
+    container: Container, settings: Settings, *, ttl_seconds: int
+) -> int | None:
+    """Sweep every series once and cache it. ``None`` when no broker was called."""
     instruments = registry.current().symbols()
     if not instruments:
         log.warning("futures_oi_sweep_skipped", reason="empty_catalog")
-        return 0
+        return None
 
     async with container.database.read_session() as session:
         connections = SqlAlchemyBrokerConnectionRepository(session, container.token_cipher)
@@ -85,7 +172,7 @@ async def _sweep(container: Container, settings: Settings) -> int:
         connection = await connections.find_market_feed()
         if connection is None:
             log.info("futures_oi_sweep_skipped", reason="no_connected_broker")
-            return 0
+            return None
 
         resolver = build_provider_resolver(container, connections)
         provider = await resolver.resolve(connection.tenant_id)
@@ -132,7 +219,7 @@ async def _sweep(container: Container, settings: Settings) -> int:
                     await asyncio.sleep(delay)
             by_series[series] = readings
 
-    cache = RedisOpenInterestCache(container.redis, ttl_seconds=settings.futures_oi.ttl_seconds)
+    cache = RedisOpenInterestCache(container.redis, ttl_seconds=ttl_seconds)
     for series, readings in by_series.items():
         await cache.write_all(readings, series)
 

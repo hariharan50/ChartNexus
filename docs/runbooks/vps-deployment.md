@@ -235,7 +235,7 @@ one and a part of the product goes quietly blank rather than erroring.
 | ----------------- | --------------------------------------------------------------- |
 | `catalog`         | Nothing resolves at all. It owns the F&O universe and the lot sizes, which NSE revises by circular several times a year. |
 | `ingest`          | The Options Lab charts lose their intraday history and fall back to a two-point "open vs now" estimate; Gamma and Vega show nothing. |
-| `futures-oi`      | The Future Lab build-up columns go empty.                        |
+| `futures-oi`      | The Future Lab build-up columns go empty. Sweeps only 09:15–15:40 IST, plus one closing sweep (`futures_oi_closing_sweep` in its log) whose readings last until the next open — so it sitting idle overnight and at weekends is correct. `--once` forces a sweep at any hour. |
 | `futures-history` | Future Lab's intraday charts and Replay have no frames.          |
 | `hugin`           | HUGIN stops accumulating graded market memory.                   |
 | `mme100`          | No morning pre-market briefing.                                  |

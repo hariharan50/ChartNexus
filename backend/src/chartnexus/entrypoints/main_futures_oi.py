@@ -7,7 +7,9 @@ business occupying an API worker. The loop lives in
 task so the two cannot drift.
 
 ``--once`` runs a single sweep and exits — for a release job, or for checking
-the broker actually returns open interest before trusting the board.
+the broker actually returns open interest before trusting the board. Being an
+explicit request, it sweeps even outside market hours, where the loop would
+skip after its one closing sweep.
 """
 
 from __future__ import annotations
@@ -41,7 +43,7 @@ async def _run(settings: Settings, *, once: bool) -> None:
 
     try:
         if once:
-            await sweep_once(container, settings)
+            await sweep_once(container, settings, force=True)
         else:
             async with registry_kept_current(container, settings, stop=stop):
                 await run_futures_oi_loop(container, settings, stop=stop)

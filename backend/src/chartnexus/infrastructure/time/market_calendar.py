@@ -13,7 +13,7 @@ limitation rather than a hidden one.
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from datetime import date, datetime, time
+from datetime import date, datetime, time, timedelta
 from zoneinfo import ZoneInfo
 
 _SATURDAY = 5
@@ -45,6 +45,22 @@ class ExchangeCalendar:
             return False
 
         return self._parse(self.session_open) <= local.time() <= self._parse(self.session_close)
+
+    def next_open(self, moment: datetime) -> datetime:
+        """The next session open strictly after ``moment``, exchange-local.
+
+        Skips weekends and the injected holidays. With no holiday list, a
+        weekday holiday counts as a trading day — the same known limitation as
+        ``is_open``.
+        """
+        local = self._to_exchange_time(moment)
+        opens = self._parse(self.session_open)
+        day = local.date()
+        if local.time() >= opens:
+            day += timedelta(days=1)
+        while day.weekday() >= _SATURDAY or day in self.holidays:
+            day += timedelta(days=1)
+        return datetime.combine(day, opens, tzinfo=local.tzinfo)
 
     def _to_exchange_time(self, moment: datetime) -> datetime:
         """Interpret a naive datetime as already exchange-local."""
