@@ -363,15 +363,18 @@ async def test_the_database_allows_one_active_broker_per_tenant(client: TestClie
                     {"app_id": KITE.app_id},
                 )
             ).scalar_one()
-            with pytest.raises(sa.exc.IntegrityError, match="uq_broker_connections_one_active"):
-                async with connection.begin():
-                    await connection.execute(
-                        sa.text(
-                            "update broker_connections set status = 'active' "
-                            "where tenant_id = :tenant"
-                        ),
-                        {"tenant": tenant},
-                    )
+
+        # A fresh connection, so the SELECT's autobegun transaction is not in
+        # the way; the update is rolled back by the failure either way.
+        with pytest.raises(sa.exc.IntegrityError, match="uq_broker_connections_one_active"):
+            async with engine.begin() as connection:
+                await connection.execute(
+                    sa.text(
+                        "update broker_connections set status = 'active', access_token_enc = 'placeholder' "
+                        "where tenant_id = :tenant"
+                    ),
+                    {"tenant": tenant},
+                )
     finally:
         await engine.dispose()
 
