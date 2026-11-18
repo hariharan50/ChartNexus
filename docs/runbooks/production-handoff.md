@@ -7,6 +7,15 @@ the procedure; this is the context behind it.
 Read [Do not undo these](#do-not-undo-these) before touching the deployment
 files. Four of them look wrong and are not.
 
+> **Status as of 2026-11-18.** The sections up to *Do not undo these* record the
+> original hardening work (October 2026) and are kept as written — counts there
+> are from that time. Since then the app has gained the Zerodha Kite broker
+> (ADR 0002), the realtime websocket, and the Trade Buddy worker. *What a
+> deployer needs to know* and *Not done* below are kept current. Three
+> production problems found on 2026-11-18 — a startup blocker, Trade Buddy
+> unable to alert, and expired Kite tokens shadowing FYERS — are fixed (commits
+> `5a34d55`, `f906c62`, `482fea2`).
+
 **Starting point.** The application code was already sound — 1299 unit and
 architecture tests passing, 61 integration tests, mypy clean across 589 files,
 ruff clean, all three import contracts kept. What did not exist was any way to
@@ -209,17 +218,30 @@ Merging them to "remove duplication" republishes Postgres and Redis to the host.
 
 ## What a deployer needs to know
 
-- **`CN_BROKER_PROVIDER` must be `fyers`.** `assert_deployment_safe()` refuses
-  to start with `mock` outside local, by design — a chart from generated numbers
-  is pixel-identical to one from the exchange, and only `provenance.source`
-  separates them. There is no way to run a production environment on mock data,
-  and that is deliberate. No FYERS app credentials go in `.env.production`;
-  each tenant connects their own in-app.
-- **Seven workers, none optional.** `catalog`, `ingest`, `futures-oi`,
-  `futures-history`, `hugin`, `mme100`, `report`. Stop one and a part of the
-  product goes quietly blank rather than erroring. The table in
+- **`x-backend-env` is an explicit list, with no `env_file`.** A setting in
+  `.env.production` reaches a container only if `compose.prod.yml` names it.
+  This bit twice: `CN_KITE_REDIRECT_URI` was missing, so it fell back to an
+  http default that `assert_deployment_safe()` rejects and nothing started; and
+  no `CN_TRADE_BUDDY_*` setting was passed, so Trade Buddy could not alert. Both
+  are now there. When adding a setting the deployer must be able to change, add
+  it to that block *and* to `.env.production.example`.
+- **`CN_BROKER_PROVIDER` must be `fyers` or `kite`.** `assert_deployment_safe()`
+  refuses to start with `mock` outside local, by design — a chart from generated
+  numbers is pixel-identical to one from the exchange, and only
+  `provenance.source` separates them. There is no way to run a production
+  environment on mock data, and that is deliberate. No broker app credentials go
+  in `.env.production`; each tenant connects their own FYERS or Kite app in-app.
+  Market-wide jobs use any active Kite connection first, then FYERS.
+- **Kite needs a reconnect every morning.** Its token ends at 06:00 IST by
+  Zerodha's rule. `find_market_feed()` skips a connection past its expiry, so
+  until someone reconnects the shared jobs run on any connected FYERS account —
+  or, with none, get no live data.
+- **Eight workers, none optional.** `catalog`, `ingest`, `futures-oi`,
+  `futures-history`, `hugin`, `mme100`, `report`, `trade-buddy`. Stop one and a
+  part of the product goes quietly blank rather than erroring. The table in
   [vps-deployment.md](vps-deployment.md#what-the-workers-do) says what each one
-  owns.
+  owns. `trade-buddy` keeps state in the `trade-buddy-state` volume — do not
+  drop it on redeploy, or alerts already sent that day fire again.
 - **`migrate` and `catalog-sync` are release tasks.** They run to completion and
   exit on every deploy. `exited (0)` in `docker compose ps` is correct, not a
   failure. `catalog-sync` exists so a first deploy comes up usable instead of
@@ -283,9 +305,18 @@ Done locally against Docker, with the whole stack up:
 What was **not** verified, because it needs a real server: Let's Encrypt
 issuance (no public DNS here), and the FYERS integration (no broker account).
 
+Later, on the development machine (2026-11-18): a real **Kite** account was
+connected and live option chains were captured through the ingest loop. The
+FYERS integration is still unverified against a live account, and none of the
+Kite, realtime or Trade Buddy additions have been through a production deploy.
+
 ---
 
 ## Not done — decide before or soon after launch
+
+- **Trading holidays.** `ExchangeCalendar` accepts a holiday set but nothing
+  fills it for the market-wide jobs, so on an unlisted exchange holiday they
+  still poll the broker; ingest just stores nothing because the tape is frozen.
 
 - **Off-site backups.** `backups/` is a bind mount on the same disk as the
   database. The dump script and the cron line exist; copying them off the VPS

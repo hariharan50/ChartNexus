@@ -1,8 +1,16 @@
 # ADR 0001 — FYERS broker integration
 
-- **Status:** accepted
+- **Status:** accepted — §1's uniqueness rule amended by
+  [ADR 0002](0002-kite-broker-integration.md) §4 (2026-11-18)
 - **Date:** 2026-08-01
 - **Scope:** market data and OAuth only. No order placement, positions, or funds.
+
+> **Since this was written.** FYERS is no longer the only broker: ADR 0002 adds
+> Zerodha Kite Connect. A tenant can hold keys for both, but only **one**
+> connection may be active, so the per-`(tenant_id, broker)` index in §1 was
+> replaced by `uq_broker_connections_one_active (tenant_id) WHERE status =
+> 'active'`. Market-wide jobs prefer Kite over FYERS. Everything else below
+> still holds.
 
 ## Context
 
@@ -58,6 +66,12 @@ shape in `rest_client.py` and testing the mappers against recorded fixtures.
 **Note.** `tests/architecture/test_vendor_imports.py` still confines
 `fyers_apiv3` to `infrastructure/brokers/fyers`. The entry is kept deliberately:
 it guards this decision if anyone adds the SDK later.
+
+**Later exception.** The SDK *was* later added — but only as the optional
+`fyers-stream` extra (`uv sync --extra fyers-stream`), for the one thing the REST
+API cannot do: the Trade Buddy watcher's live tick socket
+(`fyers/data_socket.py`). It is imported lazily there and nowhere else, so REST
+remains SDK-free and an install without the extra never loads it.
 
 ---
 
@@ -142,7 +156,13 @@ rejected identically, so the endpoint reveals nothing.
 - Endpoint paths were verified against secondary sources; FYERS' own
   documentation is a JavaScript application and could not be read directly.
   They need confirming against a live account.
-- Streaming (the periodic poller and websocket fan-out) is deliberately not
-  built yet — the data shape should settle first.
-- Trading-holiday awareness is missing from `ExchangeCalendar`; it knows
-  weekends and session hours only.
+- ~~Streaming is deliberately not built yet.~~ **Done.** The ingest loop
+  publishes each committed snapshot to Redis, and the `realtime` process
+  (`main_realtime.py`, port 8001, `/ws`) fans it out to browsers as a
+  "refetch" prompt; the payload itself still travels over REST. Trade Buddy
+  streams ticks over the FYERS socket (or the Kite ticker).
+- Trading-holiday awareness: `ExchangeCalendar` now *accepts* a holiday set,
+  but nothing populates it for the market-wide jobs yet — they still know only
+  weekends and session hours. Ingest is protected on an unlisted holiday by its
+  frozen-tape check (identical books are not stored). Trade Buddy has its own
+  list, `CN_TRADE_BUDDY_HOLIDAYS`.

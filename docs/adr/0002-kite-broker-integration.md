@@ -138,11 +138,31 @@ every Kite connect and every morning.
 
 ## Open items
 
-- **Verify on a live account.** Fixtures in `backend/tests/fixtures/kite/` follow
-  the documented Kite Connect v3 shapes; they are not recordings. Check
-  `/quote`, `/instruments/historical` per-interval range limits
-  (60/100/200/400/2000 days assumed), the 06:00 IST logout, the `INDICES` rows
-  in the dump, the ticker packet layouts (8/28/32/44/184) and the API key/secret
-  formats against a paid Kite Connect app.
-- `deploy/compose/compose.prod.yml` needs
-  `CN_KITE_REDIRECT_URI: https://${CN_DOMAIN}/settings/broker/kite/callback`.
+- **Verify on a live account — in progress.** A real Kite Connect app was
+  connected on 2026-11-18. The login, token exchange, catalog sync and live
+  option-chain capture work: that afternoon's ingest stored live chains for
+  NIFTY, BANKNIFTY, FINNIFTY, MIDCPNIFTY, NIFTYNXT50, SENSEX and BANKEX.
+  Fixtures in `backend/tests/fixtures/kite/` are still the documented v3 shapes,
+  not recordings. Still to check against the live account: the
+  `/instruments/historical` per-interval range limits (60/100/200/400/2000 days
+  assumed), the 06:00 IST logout, the ticker packet layouts (8/28/32/44/184),
+  and that live values match Kite's own terminal.
+- **Indices Kite does not list.** `FOCIT` and `NIFTYFPI` are in the catalog
+  (from the FYERS symbol master) but have no Kite chain, so under Kite they fall
+  back to mock data every tick.
+- ~~`compose.prod.yml` needs `CN_KITE_REDIRECT_URI`.~~ **Done** (`5a34d55`).
+  Without it production failed `assert_deployment_safe()` and did not start.
+
+## Amendments
+
+- **§5, 2026-11-18 (`482fea2`).** `find_market_feed()` now skips a connection
+  whose `expires_at` has passed. Before, a Kite row stayed `active` after its
+  06:00 IST expiry and still outranked a working FYERS connection, leaving the
+  shared jobs on mock data until the morning reconnect. FYERS has no
+  `expires_at`, so it is never skipped on that basis.
+
+## Related
+
+- Mid-session broker changes in the snapshot archive: a symbol-day is never
+  stored part-mock, part-live. Live after mock purges that day's mock frames;
+  mock after live is skipped. (`market_ingestion/application/capture.py`.)

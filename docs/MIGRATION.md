@@ -8,6 +8,11 @@ touched.
 The last SvelteKit commit is **7a3144b**. Check it out beside the repo to
 compare anything by hand — see [Parity](#parity-how-identical-was-verified).
 
+> **Historical record.** This describes the migration as it landed. Counts
+> (components, routes, tests) are from that time — today `pnpm test` runs
+> 1,437 tests in 86 files. Where a later change contradicts something below,
+> it is marked **Since then**.
+
 ## Stack delta
 
 | Concern | Was | Now |
@@ -173,6 +178,11 @@ Everything else is byte-for-byte behaviour. These are not:
 - **WebSockets.** `app/lib/shared/realtime/{client,protocol,query-cache-sync}.ts`
   were 0-byte files and remain so. There is no WS code and no message contract to
   port. Polling stays at `refetchInterval: 15_000`.
+  **Since then:** built after the migration. `app/lib/shared/realtime/` now
+  holds the client, protocol, query-cache sync, a `RealtimeProvider` and the
+  live indicator, against the `realtime` backend process on port 8001 (`/ws`,
+  ticket-authenticated). A socket message prompts a refetch over REST; polling
+  remains the fallback when the socket is down.
 - **Zod.** Declared but imported nowhere. Introducing runtime validation is new
   behaviour, not a port.
 - **Container queries.** The spec asked for them, but the app is already
@@ -245,3 +255,7 @@ fixing them means changing the palette.
 
 CI is Taskfile-only. Every `.github/workflows/*.yml` in this repo is a 0-byte
 placeholder, so there is no GitHub Actions pipeline to update.
+
+**Since then:** five workflows were filled in (`backend-ci`, `frontend-ci`,
+`architecture-check`, `migration-check`, `security-scan`); four remain 0-byte
+placeholders — see [production-handoff.md](runbooks/production-handoff.md).

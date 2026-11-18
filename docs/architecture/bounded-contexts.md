@@ -27,12 +27,15 @@ direction dependency inversion requires. It may not import `bootstrap/` or
 | `billing` | subscriptions and billing |
 | `preferences` | per-user workspace and display preferences |
 | `instrument_catalog` | the tradeable F&O universe — symbols, lot sizes, strike steps, broker symbols |
-| `broker_connections` | a tenant's broker API credentials and OAuth token lifecycle |
+| `broker_connections` | a tenant's broker credentials (FYERS and Kite) and OAuth token lifecycle; one active broker per tenant |
 | `ai_settings` | a user's own LLM provider, API key (encrypted at rest), and model |
-| `market_ingestion` | snapshot capture and archival for the market feed |
+| `market_ingestion` | snapshot capture and archival for the market feed, retention, and the daily IV roll-up |
 | `market_data` | canonical quotes, option chains, expiries, and data provenance |
 | `options_analytics` | OI, PCR, max-pain, gamma, vega, smart-OI analytics |
 | `futures_analytics` | futures heatmap, intraday, and market-movers analytics |
+| `market_breadth` | advance/decline, index contributors and weightage, sector rotation (RRG), FII/DII flows |
+| `global_markets` | the global-markets view and the GIFT Nifty handoff |
+| `trade_buddy` | the morning-levels watcher: six marked levels, live alerts, Quick Reset |
 | `signals` | Nifty analysis / guidance (calibrated multi-horizon ensemble) |
 | `outcomes` | signal outcome tracking and grading |
 | `content_intelligence` | market content/news intelligence |
@@ -66,9 +69,38 @@ wiring imports only a sanctioned bridge in infrastructure —
 `agent/langgraph/build.py` and `build_stryx.py` — which reads the
 `market_data`/`options_analytics` services and loads the caller's key from
 `ai_settings` (via `agent/langgraph/user_llm.py`, decrypting with the
-per-purpose cipher), then returns an `AgentPort`. Those bridge edges are the two
-`ignore_imports` entries on the independence contract. LLM keys are per-user:
-with none saved, the agent's `available` is false and the tab is offline.
+per-purpose cipher), then returns an `AgentPort`. LLM keys are per-user: with
+none saved, the agent's `available` is false and the tab is offline.
+
+Every context that needs services it does not own follows this pattern: its
+`api/dependencies.py` imports exactly one `build_*` bridge in infrastructure, and
+that single edge is an `ignore_imports` entry on the independence contract.
+
+| Context | Its only bridge |
+| --- | --- |
+| `copilot` | `infrastructure/agent/langgraph/build.py` |
+| `stryx` | `infrastructure/agent/langgraph/build_stryx.py` |
+| `hugin` | `infrastructure/hugin/build_hugin.py` |
+| `mme100` | `infrastructure/mme100/build_mme100.py` |
+| `messaging` | `infrastructure/messaging/build_messaging.py` |
+| `futures_analytics` | `infrastructure/futures/build_futures.py` |
+| `market_breadth` | `infrastructure/breadth/build_breadth.py` |
+| `report` | `infrastructure/report/build_report.py` |
+| `global_markets` | `infrastructure/global_markets/build_global.py` |
+| `trade_buddy` | `infrastructure/trade_buddy/build_trade_buddy.py` |
+
+A new edge belongs in that list only if it is the *one* bridge for its context.
+
+### Which broker a market-wide job uses
+
+Jobs that serve every tenant at once — option-chain ingest, the futures OI
+sweep, the futures board and Trade Buddy — resolve their broker with
+`find_market_feed()` on the broker repository: any tenant's active, unexpired
+**Kite** connection, else any active **FYERS** one, else the mock provider. A
+Kite connection past its 06:00 IST expiry is skipped even though its row is
+still `active`.
+Per-request reads resolve the *caller's own* connection instead. See
+[ADR 0002](../adr/0002-kite-broker-integration.md) §5.
 
 **2. Domain events**, once the message bus is in use.
 
@@ -106,12 +138,20 @@ What the tests enforce:
 | `test_context_boundaries` | no context imports another context |
 | `test_vendor_imports` | a vendor SDK is importable only from its own adapter directory |
 | `test_entrypoint_boundaries` | infrastructure imports neither entrypoints nor the container |
+| `test_kite_read_only` | no order, portfolio, margin or GTT path appears anywhere in the Kite adapter |
+
+(`test_port_implementations.py` exists but is an empty placeholder.)
 
 ## Adding a context
 
 1. Create `domain/`, `application/`, `api/` with `__init__.py` in each.
-2. Add the module to the `independence` contract in `backend/pyproject.toml`.
+2. Add the module to the `independence` contract in `backend/pyproject.toml`,
+   and a row to the table above.
 3. Declare ports in `application/ports.py` as `Protocol` classes; implement them
-   under `infrastructure/`.
+   under `infrastructure/`. If the context needs another context's services,
+   add one `build_*` bridge and its `ignore_imports` edge.
 4. Register the router in `bootstrap/route_registry.py`.
-5. Run the two commands above before committing.
+5. If it has a background loop, put it in `entrypoints/<name>_runtime.py` so the
+   standalone `main_<name>.py` and the API's local in-process task share it,
+   and give it a `CN_<NAME>_IN_PROCESS` switch.
+6. Run the two commands above before committing.

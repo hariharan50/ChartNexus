@@ -26,6 +26,14 @@ process so a slow broker call can never occupy an API worker.
 
 Postgres is on 5433, Redis on 6381 (see backend/.env).
 
+> **On Windows, run the API and the web app on the host, not in containers.**
+> The dev compose file's `web` service never hot-reloads host edits (file
+> events do not cross the Windows bind mount, and Vite is not set to poll), so
+> it silently serves stale code. If the `web` or `api` containers are up, stop
+> them first — `docker compose stop web api` — or `localhost:5173` / `:8000`
+> can reach *two different* servers depending on IPv4/IPv6 preference, which
+> shows up as random 502s and lost sessions.
+
 ## 2. Backend API — port 8000
 
     cd backend
@@ -61,9 +69,15 @@ In local dev you can **skip this**: the API runs the same capture loop in-proces
 
 It writes one option-chain snapshot per configured symbol every interval during
 market hours (09:15–15:40 IST), building the intraday archive the charts plot.
-`CN_MARKET_INGEST_ALLOW_MOCK=true` lets it archive the mock feed on a machine
-with no live FYERS connection — without it, mock ticks are skipped and nothing is
-ever written. (The API's in-process loop forces this on for local.)
+By default the symbols are every **index** in the instrument catalog;
+`CN_MARKET_INGEST_SYMBOLS` overrides that (`["*"]` means the whole F&O universe).
+
+The chain comes from whichever broker is connected — **Kite first, then FYERS**
+(any tenant's active connection; see [ADR 0002](adr/0002-kite-broker-integration.md)) —
+and falls back to the mock feed when neither is, or when the broker cannot serve
+a symbol. `CN_MARKET_INGEST_ALLOW_MOCK=true` lets it archive that mock feed —
+without it, mock ticks are skipped and nothing is written. (The API's
+in-process loop forces this on for local.)
 
     cd backend
     CN_MARKET_INGEST_ALLOW_MOCK=true CN_MARKET_SNAPSHOT_INTERVAL_SECONDS=60 uv run chartnexus-ingest
@@ -71,6 +85,21 @@ ever written. (The API's in-process loop forces this on for local.)
 Either writer: the charts leave the two-point estimate and show real curves once
 two snapshots have landed for the day (~2 minutes after start, during market
 hours).
+
+**A symbol-day is never part real, part simulated.** Every `ingest_tick` log
+line says what happened to each symbol:
+
+| Log field | Meaning |
+| --- | --- |
+| `written` | stored a new snapshot |
+| `purged_mock` | the broker came online mid-session; that day's mock frames for the symbol were deleted, so the day reads as a gap followed by real data |
+| `skipped_mock` | mock data, and either mock is not allowed or the day already has a live capture (the broker dropped out — a gap is left rather than a simulated afternoon) |
+| `skipped_unchanged` | identical to the previous snapshot — a frozen tape |
+| `skipped_empty` / `failed` | no strikes came back / the fetch raised (`failure_reasons` says why) |
+
+Outside 09:15–15:40 IST every tick logs `ingest_tick_skipped reason=market_closed`,
+which is normal. Indices the connected broker does not list (e.g. `FOCIT` and
+`NIFTYFPI` under Kite) stay on mock data all day.
 
 ## 3b. Futures board capture — the Future Lab archive
 
@@ -86,7 +115,7 @@ do not both write):
     cd backend
     uv run chartnexus-futures-history
 
-It captures every 60s. **Live boards only** — with no FYERS connection the board
+It captures every 60s. **Live boards only** — with no broker connection the board
 degrades to generated numbers, and those are deliberately never archived: a
 stored frame outlives the process that wrote it, and a mislabelled one cannot be
 detected later. On a machine with no broker, seed instead (below).
@@ -94,11 +123,52 @@ detected later. On a machine with no broker, seed instead (below).
     uv run chartnexus-futures-history --once     # one frame, then exit
     uv run chartnexus-futures-history --prune    # drop past the retention window
 
+## 3c. Trade Buddy watcher
+
+Trade Buddy watches the six levels (S1–S3, R1–R3) you mark each morning and
+alerts on approaches, touches, breaks, rejections, reclaims and opening gaps —
+to Telegram always, and to WhatsApp (CallMeBot) for the events worth it.
+
+Local dev runs it inside the API (`CN_TRADE_BUDDY_IN_PROCESS=true`), so normally
+you need nothing. Standalone, with the in-process copy turned off:
+
+    cd backend
+    uv run --extra fyers-stream chartnexus-trade-buddy
+
+It takes its broker from the connection made in **Settings → Broker** (Kite
+first, then FYERS) — a Kite connection streams over the Kite ticker, a FYERS one
+over the FYERS socket, which needs the `fyers-stream` extra. Alerts need
+`CN_TRADE_BUDDY_TELEGRAM_BOT_TOKEN` and `CN_TRADE_BUDDY_TELEGRAM_CHAT_ID` in
+`backend/.env`; every band and threshold is a `CN_TRADE_BUDDY_*` setting (see
+`backend/.env.example`). Marked levels and watcher state are JSON files in
+`var/trade_buddy/`, relative to where the process starts — `backend/var/trade_buddy/`
+for the commands above (`CN_TRADE_BUDDY_STATE_DIRECTORY`). **Quick Reset** on the
+page (`POST /api/v1/trade-buddy/reset`) starts one instrument's day over: it
+clears the marked levels, their live states and today's alerts, but keeps that
+instrument's sensitivity overrides. The watcher drops it within ~15 seconds.
+
+## 3d. Realtime websocket — port 8001
+
+The browser's `/ws` connection (the live indicator, and instant refetch when a
+snapshot lands) is served by a separate process. Without it the app still works:
+the client sits in *Reconnecting* and falls back to 15-second polling.
+
+    docker compose --profile full up -d realtime     # container
+    # or, on the host:
+    cd backend && uv run chartnexus-realtime
+
+It reads only the Redis channel the ingest loop publishes to; Vite proxies `/ws`
+to `127.0.0.1:8001`.
+
 ## 4. Frontend — port 5173
 
     cd frontend
     pnpm run dev
     # ➜  Local:   http://localhost:5173/
+
+`vite.config.ts` sets `strictPort: true`, so if 5173 is taken it fails instead of
+moving to 5174. The holder is almost always the `chartnexus-web-1` container —
+`docker compose stop web`.
 
 ## Seeing history immediately (optional)
 
@@ -127,6 +197,20 @@ badge says so rather than passing them off as captured.
 
 ## One command for all of the above
 
-If you have [go-task](https://taskfile.dev) installed, `task dev` runs the API and
-the ingest worker together (with mock archiving enabled), and `task oi:seed --
---replace` seeds. See `Taskfile.yml`.
+If you have [go-task](https://taskfile.dev) installed, `task dev` starts Postgres
+and Redis, then runs the API (with its in-process ingest turned off) and the
+ingest worker together, with mock archiving enabled. Run `task dev:web` for the
+frontend, and `task oi:seed -- --replace` to seed. See `Taskfile.yml`.
+
+## Checking it is all up
+
+| What | URL / command | Healthy answer |
+| --- | --- | --- |
+| Web app | <http://localhost:5173> | the login page |
+| API liveness | <http://localhost:8000/health/live> | `{"status":"ok",…}` |
+| API readiness | <http://localhost:8000/health/ready> | `postgres: ok, redis: ok` |
+| API docs | <http://localhost:8000/docs> | Swagger UI (local only) |
+| Realtime | `ws://localhost:8001/ws` | reached through `/ws` on 5173 |
+| Ingest | its log | `ingest_tick` (or `market_closed` outside hours) |
+
+API paths are all under `/api/v1/…`; plain `/health` is a 404.

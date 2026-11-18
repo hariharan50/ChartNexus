@@ -1,6 +1,8 @@
 # Running ChartNexus locally
 
-Everything below assumes the repository root, `C:\Users\sriha\Documents\vscode\ChartNexus`.
+Everything below assumes the repository root, `C:\Users\sriha\Documents\ProductionVPS\ChartNexus`.
+[RUNNING.md](../RUNNING.md) covers the background workers (ingest, futures board,
+Trade Buddy, realtime) in more depth.
 
 ## 1. Prerequisites
 
@@ -61,24 +63,45 @@ pnpm dev
 
 Then open <http://localhost:5173>.
 
+In `local`, the API also runs every background loop in-process — catalog, option-
+chain ingest, futures OI, futures board, HUGIN, MME100, report and Trade Buddy —
+so these three terminals are the whole app. Each loop has its own
+`CN_*_IN_PROCESS` switch for when you run that worker standalone instead (as
+`task dev` does for ingest).
+
+Optional fourth piece — the realtime websocket (live indicator, instant
+refetch). Without it the app falls back to polling:
+
+```bash
+docker compose --profile full up -d realtime
+```
+
+**Run the API and web app on the host, not in the `api`/`web` containers.** On
+Windows the container's Vite never sees host edits (no hot reload), and if a
+container and a host process both hold 5173 or 8000, `localhost` reaches either
+one depending on IPv4/IPv6 — random 502s and lost sessions. If they are up:
+`docker compose stop web api`.
+
 ## 4. Ports
 
 Host ports are deliberately shifted so other projects on this machine keep working.
 
 | Service    | Host port | Notes                                                  |
 | ---------- | --------- | ------------------------------------------------------ |
-| Web app    | 5173      | `pnpm dev --port 5174` if something else has 5173       |
+| Web app    | 5173      | `strictPort` — fails rather than moving if 5173 is taken |
 | API        | 8000      | docs at <http://localhost:8000/docs>                    |
+| Realtime   | 8001      | websocket; the web app proxies `/ws` to it              |
 | Postgres   | 5433      | container listens on 5432 internally                    |
 | Redis      | 6381      | container listens on 6379 internally                    |
 
 Change the database and cache ports in the root `.env` (`POSTGRES_PORT`,
 `REDIS_PORT`), and keep `backend/.env` (`CN_DB_URL`, `CN_REDIS_URL`) in step.
 
-**If you run the web app on a port other than 5173**, update both OAuth
-redirect URIs — `CN_GOOGLE_REDIRECT_URI` and `CN_BROKER_FYERS_REDIRECT_URI` in
-`backend/.env` — and the matching entries in the Google console and the FYERS
-dashboard. Both providers require an exact string match.
+**If you run the web app on a port other than 5173** (`pnpm dev --port 5174`),
+update all three OAuth redirect URIs — `CN_GOOGLE_REDIRECT_URI`,
+`CN_BROKER_FYERS_REDIRECT_URI` and `CN_KITE_REDIRECT_URI` in `backend/.env` —
+and the matching entries in the Google console, the FYERS dashboard and the Kite
+developer console. All three providers require an exact string match.
 
 ## 5. Confirm it works
 
@@ -116,13 +139,44 @@ CN_GOOGLE_REDIRECT_URI=http://localhost:5173/auth/google/callback
 
 5. Restart the API.
 
-## 7. Optional: connect a FYERS broker account
+## 7. Optional: connect a broker (Kite or FYERS)
 
-Also optional. Without it the app serves a deterministic mock feed, labelled
+Also optional. Without one the app serves a deterministic mock feed, labelled
 `source: "mock"` in every response and shown as **Simulated** in the UI.
 
 Each tenant connects their own broker application — there is no shared
-system-wide account.
+system-wide account. You can save keys for **both** brokers, but only one
+connection is active at a time: connecting one disconnects the other (its keys
+are kept). Market-wide jobs — ingest, the futures OI sweep, the futures board
+and Trade Buddy — use Kite when any tenant has it active, then FYERS, then mock.
+
+### 7a. Zerodha Kite Connect
+
+1. Create an app at <https://developers.kite.trade> (a paid Kite Connect app).
+2. Set its redirect URL to **exactly**
+   `http://localhost:5173/settings/broker/kite/callback`.
+3. In ChartNexus, **Settings → Broker**, under **Zerodha Kite**: paste the
+   **API key** and **API secret**. Optionally add your **Zerodha Client ID** —
+   then a login as any other Zerodha account is refused and that session is
+   revoked.
+4. Click **Connect with Zerodha Kite** and log in at Zerodha.
+
+Things specific to Kite:
+
+- **The token dies at 06:00 IST every day.** That is Zerodha's rule, not a
+  fault: reconnect each morning. The status shows *expired* without making a
+  network call.
+- The connection is **read-only by construction** — the code has no order,
+  position, holding, margin or GTT path at all (an architecture test enforces
+  it), even though a Kite token could trade.
+- Disconnecting also logs the session out at Zerodha.
+- Connecting triggers an instrument-catalog sync into `kite_instruments`, and a
+  morning run at 08:35 IST captures yesterday's OI so OI-change columns work.
+  Without that morning capture, OI change shows as blank rather than zero.
+
+Design: [ADR 0002](../adr/0002-kite-broker-integration.md).
+
+### 7b. FYERS
 
 1. Create an app at <https://myapi.fyers.in/dashboard>.
 2. Set its redirect URI to **exactly**
@@ -159,7 +213,7 @@ Notes:
 The design decisions behind this flow are recorded in
 [ADR 0001](../adr/0001-fyers-broker-integration.md).
 
-## 7b. Optional: enable the AI Console (Hella / STRYX)
+## 7c. Optional: enable the AI Console (Hella / STRYX)
 
 The AI Console runs on a **per-user** LLM key — there is no shared server key.
 
@@ -180,12 +234,16 @@ value in `CN_SECURITY_PREVIOUS_ENCRYPTION_KEYS` when rotating.
 
 ## 8. Everything in containers
 
-An alternative to terminals 2 and 3, at the cost of slower reloads:
+An alternative to terminals 2 and 3 — **not recommended on Windows**, where the
+`web` container never hot-reloads host edits (see section 3):
 
 ```bash
-docker compose up --build          # postgres, redis, api, web
-docker compose --profile full up   # also ingest, score, realtime
+docker compose up --build          # postgres, redis, api, web, ingest
+docker compose --profile full up   # also score and realtime
 ```
+
+`ingest` has no profile on purpose — it is the only writer of the option-chain
+archive. `score` is an empty placeholder; `realtime` is the websocket.
 
 ## 9. Common commands
 
@@ -200,7 +258,7 @@ cd frontend && pnpm test:e2e                                 # playwright
 cd backend  && uv run ruff check --fix . && uv run ruff format .
 cd backend  && uv run mypy
 cd backend  && uv run lint-imports          # architecture contracts
-cd frontend && pnpm lint && pnpm check
+cd frontend && pnpm lint && pnpm typecheck
 
 # Database
 cd backend && uv run alembic upgrade head
@@ -211,18 +269,42 @@ cd backend && uv run alembic revision --autogenerate -m "message" \
 ```
 
 With [go-task](https://taskfile.dev) installed (`winget install Task.Task`), the
-`Taskfile.yml` wraps these: `task setup`, `task up`, `task dev`, `task check`,
-`task db:migrate`.
+`Taskfile.yml` wraps these: `task setup`, `task up`, `task dev`, `task dev:web`,
+`task check` (lint + types + unit tests, both sides), `task test:integration`,
+`task arch`, `task db:migrate`.
+
+**Integration tests use your dev database** (`localhost:5433/chartnexus`). They
+create throwaway users and uniquely-named symbols, so they do not touch your
+data, but they do leave those rows behind. On Windows a few may report
+`PytestUnraisableExceptionWarning … unclosed transport` — an asyncio socket
+warning the suite promotes to an error, not an application failure; re-run the
+file to confirm.
 
 ## 10. Troubleshooting
 
 **`Port 5173 is already in use`**
-Another dev server has it. `pnpm dev --port 5174`, and see the port note above
-about the Google redirect URI.
+Almost always the `chartnexus-web-1` container, not a stale Vite —
+`docker compose stop web`. If it really is another project, `pnpm dev --port
+5174` and see the port note above about the OAuth redirect URIs.
 
 **`error while attempting to bind on address ('127.0.0.1', 8000)`**
-An API instance is already running. Find it with
-`netstat -ano | findstr :8000`, then `taskkill /PID <pid> /F`.
+An API instance is already running — often the `chartnexus-api-1` container
+(`docker compose stop api`). Otherwise find it with
+`netstat -ano | findstr :8000`, then `taskkill /PID <pid> /F`. If `netstat` shows
+`com.docker.backend` owning the port, a container holds it.
+
+**Random 502s on login, or a session that "forgets" you**
+Two backends on one port — a container on `0.0.0.0:8000` and a host uvicorn on
+`127.0.0.1:8000`. Windows lets both bind, and `localhost` picks one by IPv4/IPv6
+preference. Stop the container: `docker compose stop api web`.
+
+**"Can't reach the server" page**
+The web app is up but the API is not answering. Start the API (section 3) and
+reload.
+
+**Kite shows *expired* every morning**
+Expected — Kite tokens end at 06:00 IST daily. Reconnect from
+**Settings → Broker**.
 
 **`Bind for 0.0.0.0:5433 failed: port is already allocated`**
 Another project's container has the port. Change `POSTGRES_PORT` in `.env`,
@@ -268,6 +350,12 @@ States are single-use by design. Start the connection again from
 **Frontend loads but every API call is 401**
 The Vite proxy targets `http://localhost:8000`. If the API is on another port,
 set `API_PROXY_TARGET` in `frontend/.env`.
+
+**The Options Lab / Open Interest charts are flat or empty**
+Nothing has written today's snapshot archive yet, or the market is closed. Check
+the API log (or the ingest worker's) for `ingest_tick` lines; outside 09:15–15:40
+IST they read `market_closed`. To get history now, seed one — see
+[RUNNING.md](../RUNNING.md#seeing-history-immediately-optional).
 
 ## 11. Resetting
 

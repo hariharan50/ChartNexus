@@ -21,9 +21,18 @@ ignore it.
 | DNS     | An A record            | Pointing at the VPS **before** step 5        |
 | Ports   | 80 and 443 inbound     | Open at the provider's firewall too          |
 
-Fifteen containers run: Postgres, Redis, nginx, certbot, the API, the web app,
-and seven workers. The workers are not optional — see
+Fifteen long-running containers: Postgres, Redis, nginx, certbot, the API, the
+web app, the realtime websocket, and eight workers — plus two one-shot release
+tasks (`migrate`, `catalog-sync`). The workers are not optional — see
 [What the workers do](#what-the-workers-do).
+
+> **`x-backend-env` in `compose.prod.yml` is an explicit list.** A value in
+> `.env.production` reaches the containers only if that block names it. The
+> broker redirect URIs are derived from `CN_DOMAIN` there, and the Trade Buddy
+> alert settings (`CN_TRADE_BUDDY_TELEGRAM_*`, `…_WHATSAPP_*`, `…_SYMBOLS`,
+> `…_HOLIDAYS`, `…_CHART_URL`) are passed through. Any *other*
+> `CN_TRADE_BUDDY_*` tuning has to be added to that block before it takes
+> effect.
 
 ## 1. Prepare the server
 
@@ -83,11 +92,17 @@ not this VPS before the first user connects a broker account.
 `REDIS_PASSWORD` to URL-safe characters; `token_urlsafe` already is. A `@` or
 `/` in a password produces a DSN that parses into the wrong host.
 
-**`CN_BROKER_PROVIDER` must be `fyers`.** The process refuses to start in a
-deployed environment with `mock`, by design: a chart drawn from generated
-numbers is pixel-identical to one drawn from the exchange, and only
-`provenance.source` distinguishes them. No FYERS credentials go in this file —
-each tenant connects their own broker application in the app.
+**`CN_BROKER_PROVIDER` must be `fyers` or `kite`, never `mock`.** The process
+refuses to start in a deployed environment with `mock`, by design: a chart drawn
+from generated numbers is pixel-identical to one drawn from the exchange, and
+only `provenance.source` distinguishes them. No broker credentials go in this
+file — each tenant connects their own FYERS or Kite application in the app.
+Both broker redirect URIs must be `https://` when deployed; `compose.prod.yml`
+derives them from `CN_DOMAIN`.
+
+**Trade Buddy alerts.** Fill in `CN_TRADE_BUDDY_TELEGRAM_BOT_TOKEN` and
+`CN_TRADE_BUDDY_TELEGRAM_CHAT_ID` (and optionally the WhatsApp pair) if you
+use Trade Buddy. Left blank, the watcher runs but sends nothing.
 
 ## 4. First deploy
 
@@ -141,7 +156,12 @@ docker compose --env-file .env.production -f deploy/compose/compose.prod.yml up 
 
 Then, in the app:
 
-- **Settings → Broker** — connect a FYERS account, or the market data stays empty
+- **Settings → Broker** — connect Kite or FYERS, or the market data stays empty.
+  Register the redirect URL on the broker's side exactly:
+  `https://<domain>/settings/broker/kite/callback` (Kite) or
+  `https://<domain>/settings/broker/callback` (FYERS). A Kite token ends at
+  06:00 IST daily, so Kite needs reconnecting every morning before the open —
+  until then the archive gets nothing.
 - **Settings → AI** — paste your own Anthropic key to switch the AI Console on.
   Keys are per-user and stored encrypted; there is no server key.
 
@@ -220,6 +240,12 @@ one and a part of the product goes quietly blank rather than erroring.
 | `hugin`           | HUGIN stops accumulating graded market memory.                   |
 | `mme100`          | No morning pre-market briefing.                                  |
 | `report`          | No daily PDF for enrolled tenants.                               |
+| `trade-buddy`     | Marked levels are not watched and no level alerts go out. Holds a broker tick socket all session; its state lives in the `trade-buddy-state` volume so a redeploy does not re-send alerts already sent. |
+
+`realtime` is not a loop worker but a websocket server on 8001 (nginx proxies
+`/ws` to it). Without it the browser's live indicator stays on *Reconnecting*
+and pages poll every 15 seconds — degraded, not broken. Unlike the workers it
+keeps a healthcheck, against its own `/health/live` on 8001.
 
 `catalog-sync` and `migrate` are one-shot release tasks, not workers — they run
 to completion on each deploy and exit. A `docker compose ps` showing them as
@@ -239,7 +265,7 @@ to completion on each deploy and exit. A `docker compose ps` showing them as
 The instrument catalog is empty, so nothing resolves. Check it:
 
 ```bash
-cnx exec postgres psql -U chartnexus chartnexus -c "select count(*) from instrument_catalog;"
+cnx exec postgres psql -U chartnexus chartnexus -c "select count(*) from instruments where is_active;"
 ```
 
 Zero means the symbol-master download has not succeeded. Run it in the
@@ -289,8 +315,18 @@ to a broken worker:
 cnx logs --tail=50 ingest
 ```
 
-`skipped_mock` on every tick means no FYERS account is connected — the archive
-stays empty by design until one is. Connect it under **Settings → Broker**.
+`skipped_mock` on every tick means no live broker is available — none is
+connected, or the only one is a Kite connection whose token expired at 06:00
+IST. (An expired Kite connection is skipped, so a connected FYERS account
+carries the jobs until Kite is reconnected.) The archive stays empty by design
+until one is live. Connect under **Settings → Broker**. One or two
+symbols in `skipped_mock` while the rest are `written` means the broker does not
+list those indices (e.g. `FOCIT`, `NIFTYFPI` under Kite).
+
+If a broker connects mid-session, that tick's log shows `purged_mock` for symbols
+that had mock frames earlier in the day — they are deleted so the day never
+mixes real and simulated data. In production mock is never written, so this
+only appears where `CN_MARKET_INGEST_ALLOW_MOCK=true`.
 
 ### Sign-in fails with no error in the API log
 
@@ -333,6 +369,9 @@ What the stack does:
 - API docs and the OpenAPI schema are disabled when deployed.
 - Broker credentials and per-user LLM keys are encrypted at rest with
   AES-256-GCM; passwords are Argon2id.
+- Broker access is read-only by construction. A Kite token *can* trade, so the
+  Kite adapter contains no order, position, margin or GTT path at all, and an
+  architecture test fails the build if one appears.
 
 What it does not do, and you may want:
 
