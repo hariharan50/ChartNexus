@@ -171,6 +171,10 @@ export interface AlertChannelView {
   enabled: boolean;
   /** The bot's @username — what tells two bots apart. */
   label: string | null;
+  /**
+   * Where alerts go — chat id or WhatsApp number — masked to its last four
+   * characters ("…4321"). Stored encrypted; never sent back in full.
+   */
   target: string | null;
   masked_secret: string | null;
 }
@@ -246,6 +250,22 @@ export function linkTelegramChat(target: string | null): Promise<AlertChannelVie
 
 export function testChannel(): Promise<void> {
   return apiFetch<void>({ url: '/trade-buddy/channels/telegram/test', method: 'POST' });
+}
+
+/**
+ * Connect your own WhatsApp via CallMeBot. The server validates the number,
+ * sends a welcome message, and stores both encrypted only if it was accepted.
+ */
+export function connectWhatsApp(phone: string, apiKey: string): Promise<AlertChannelView> {
+  return apiFetch<AlertChannelView>({
+    url: '/trade-buddy/channels/whatsapp',
+    method: 'PUT',
+    body: JSON.stringify({ phone, api_key: apiKey })
+  });
+}
+
+export function testWhatsApp(): Promise<void> {
+  return apiFetch<void>({ url: '/trade-buddy/channels/whatsapp/test', method: 'POST' });
 }
 
 export function setChannelEnabled(

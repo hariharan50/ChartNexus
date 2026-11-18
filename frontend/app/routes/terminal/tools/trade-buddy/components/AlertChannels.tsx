@@ -19,10 +19,13 @@ import {
   type ChannelsResponse
 } from '../trade-buddy-data';
 import s from './AlertChannels.module.css';
+import WhatsAppChannel from './WhatsAppChannel';
 
 /**
- * Where the alerts go — Trade Buddy's own Telegram bot, deliberately not the
- * one under Settings → Channels.
+ * Where *your* alerts go — your own Telegram bot and your own WhatsApp, per
+ * user and stored encrypted, deliberately not the bot under Settings →
+ * Channels. Nothing here is shared with any other account, and neither a
+ * token, a chat id nor a phone number is ever sent back in full.
  *
  * Two bots rather than one because the two message kinds want different
  * treatment on a phone: a level break arrives mid-trade and should buzz, a
@@ -84,6 +87,9 @@ export default function AlertChannels({
 
   const telegram: AlertChannelView | undefined = channels.data?.channels.find(
     (c) => c.channel === 'telegram'
+  );
+  const whatsapp: AlertChannelView | undefined = channels.data?.channels.find(
+    (c) => c.channel === 'whatsapp'
   );
   const step = channelStep(telegram);
 
@@ -276,6 +282,9 @@ export default function AlertChannels({
         </div>
       )}
 
+      {/* -- WhatsApp: confirmed facts only, within an allowance ----------- */}
+      <WhatsAppChannel whatsapp={whatsapp} />
+
       {/* -- the level-alert test ------------------------------------------ */}
       <div className={s.step}>
         <p className={s.stepTitle}>Test a level alert</p>
@@ -321,7 +330,8 @@ export default function AlertChannels({
       )}
 
       <p className={s.footNote}>
-        Separate from Settings → Channels so level alerts can have their own notification sound.
+        Yours alone, stored encrypted. Separate from Settings → Channels so level alerts can have
+        their own notification sound.
       </p>
     </section>
   );
