@@ -42,10 +42,10 @@ from datetime import UTC, datetime
 from chartnexus.bootstrap.container import Container
 from chartnexus.bootstrap.settings import Settings
 from chartnexus.contexts.broker_connections.domain.value_objects import BrokerName
+from chartnexus.contexts.market_data.application.ports import MarketDataProvider
 from chartnexus.contexts.market_data.domain.instruments import InstrumentSymbol
 from chartnexus.infrastructure.brokers.futures_contract import MAX_SERIES
-from chartnexus.infrastructure.brokers.fyers.quota_manager import QuotaPolicy
-from chartnexus.infrastructure.brokers.provider_resolver import TenantProviderResolver
+from chartnexus.infrastructure.brokers.provider_resolver import build_provider_resolver
 from chartnexus.infrastructure.catalog import registry
 from chartnexus.infrastructure.futures.oi_cache import (
     CachedOpenInterest,
@@ -82,12 +82,12 @@ async def _sweep(container: Container, settings: Settings) -> int:
         connections = SqlAlchemyBrokerConnectionRepository(session, container.token_cipher)
         # Open interest is a fact about the market, not about a tenant, so any
         # working connection can fetch it and one sweep serves everybody.
-        connection = await connections.find_any_active(BrokerName.FYERS)
+        connection = await connections.find_market_feed()
         if connection is None:
             log.info("futures_oi_sweep_skipped", reason="no_connected_broker")
             return 0
 
-        resolver = _resolver(container, settings, connections)
+        resolver = build_provider_resolver(container, connections)
         provider = await resolver.resolve(connection.tenant_id)
 
         delay = 1.0 / max(settings.futures_oi.requests_per_second, 0.1)
@@ -99,7 +99,12 @@ async def _sweep(container: Container, settings: Settings) -> int:
         # series is written to its own cache the moment it completes, for the
         # same reason: a slow far month must not hold back the near one.
         by_series: dict[int, dict[str, CachedOpenInterest]] = {}
-        for series in range(depth):
+        # Kite's /quote carries OI for up to 500 contracts at once, so a whole
+        # series is one request instead of a paced per-contract walk.
+        batched = connection.broker == BrokerName.KITE
+        for series in range(depth if batched else 0):
+            by_series[series] = await _board_series(provider, instruments, series)
+        for series in range(0 if batched else depth):
             readings: dict[str, CachedOpenInterest] = {}
             for symbol in instruments:
                 try:
@@ -142,24 +147,26 @@ async def _sweep(container: Container, settings: Settings) -> int:
     return priced
 
 
-def _resolver(
-    container: Container,
-    settings: Settings,
-    connections: SqlAlchemyBrokerConnectionRepository,
-) -> TenantProviderResolver:
-    return TenantProviderResolver(
-        connections=connections,
-        http=container.http,
-        redis=container.redis,
-        rest_base_url=settings.broker.rest_base_url,
-        quota=QuotaPolicy(
-            requests_per_second=settings.broker.quota_requests_per_second,
-            requests_per_day=settings.broker.quota_requests_per_day,
-        ),
-        request_timeout_seconds=settings.broker.request_timeout_seconds,
-        circuit_breaker_failure_threshold=settings.broker.circuit_breaker_failure_threshold,
-        circuit_breaker_reset_seconds=settings.broker.circuit_breaker_reset_seconds,
-    )
+async def _board_series(
+    provider: MarketDataProvider, instruments: tuple[str, ...], series: int
+) -> dict[str, CachedOpenInterest]:
+    """One series' open interest from a single board read. Never raises."""
+    try:
+        board = await provider.get_futures_board(
+            [InstrumentSymbol(symbol) for symbol in instruments], series=series
+        )
+    except Exception as exc:
+        log.warning("futures_oi_board_failed", series=series, error=repr(exc))
+        return {}
+    return {
+        instrument.value: CachedOpenInterest(
+            open_interest=quote.open_interest,
+            previous_open_interest=quote.previous_open_interest,
+            observed_at=quote.provenance.fetched_at,
+        )
+        for instrument, quote in board.items()
+        if quote.open_interest is not None
+    }
 
 
 async def run_futures_oi_loop(

@@ -83,6 +83,24 @@ class BrokerUnavailableError(UpstreamError):
         super().__init__(broker, "The broker is not responding. Try again shortly.")
 
 
+class BrokerAccountMismatchError(ConflictError):
+    """The broker logged in a different account from the one the user named.
+
+    Brokers authorise instantly when the browser already holds a session, so
+    without this check whichever account that browser last used — a family
+    member's, an old one — would be connected silently. Nothing is stored when
+    this is raised.
+    """
+
+    code = "broker_account_mismatch"
+
+    def __init__(self, *, expected: str, actual: str) -> None:
+        super().__init__(
+            f"You logged in as {actual}, but your saved Client ID is {expected}. "
+            "Log out at the broker and connect again, or update the Client ID."
+        )
+
+
 class AlreadyConnectedError(ConflictError):
     code = "broker_already_connected"
 

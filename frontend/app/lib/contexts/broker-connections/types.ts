@@ -5,8 +5,13 @@
 
 export type ConnectionStatus = 'pending' | 'active' | 'expired' | 'revoked';
 
+/** The brokers the API knows (`BrokerName` in the backend). */
+export type BrokerName = 'fyers' | 'kite';
+
+export const BROKERS: readonly BrokerName[] = ['fyers', 'kite'];
+
 export interface BrokerConnection {
-  broker: string;
+  broker: BrokerName;
   status: ConnectionStatus;
   /** Credentials are stored, so Connect can be offered. */
   configured: boolean;
@@ -19,6 +24,16 @@ export interface BrokerConnection {
   connected_at: string | null;
   last_validated_at: string | null;
   last_error: string | null;
+  /** When the token stops working, if the broker says. Kite: 06:00 IST daily. */
+  expires_at?: string | null;
+  /** The broker login ID this connection is pinned to, if one was saved. */
+  client_id?: string | null;
+}
+
+/** Every broker for the tenant, and which one (at most one) serves data. */
+export interface BrokerConnections {
+  active_broker: BrokerName | null;
+  connections: BrokerConnection[];
 }
 
 export interface BrokerAuthorization {

@@ -58,9 +58,48 @@ def test_production_accepts_a_fully_configured_environment() -> None:
             encryption_key="a-real-encryption-key",
         ),
         auth={"jwt_signing_key": "a-real-jwt-signing-key-of-sufficient-length"},
-        broker={"provider": "fyers"},
+        broker={
+            "provider": "fyers",
+            "fyers_redirect_uri": "https://app.example.com/settings/broker/callback",
+        },
+        kite={"redirect_uri": "https://app.example.com/settings/broker/kite/callback"},
     )
     settings.assert_deployment_safe()
+
+
+@pytest.mark.parametrize(
+    ("override", "message"),
+    [
+        (
+            {"broker": {"provider": "fyers", "fyers_redirect_uri": "http://app.example.com/cb"}},
+            "FYERS_REDIRECT_URI",
+        ),
+        ({"kite": {"redirect_uri": "http://app.example.com/cb"}}, "KITE_REDIRECT_URI"),
+    ],
+)
+def test_production_refuses_a_plain_http_broker_redirect(
+    override: dict[str, dict[str, str]], message: str
+) -> None:
+    """The authorization code rides in the redirect's query string."""
+    config: dict[str, object] = {
+        "auth": {"jwt_signing_key": "a-real-jwt-signing-key-of-sufficient-length"},
+        "broker": {
+            "provider": "fyers",
+            "fyers_redirect_uri": "https://app.example.com/settings/broker/callback",
+        },
+        "kite": {"redirect_uri": "https://app.example.com/settings/broker/kite/callback"},
+    }
+    config.update(override)
+    settings = Settings(
+        environment=Environment.PRODUCTION,
+        security=SecuritySettings(
+            secret_key="a-real-secret",
+            encryption_key="a-real-encryption-key",
+        ),
+        **config,  # type: ignore[arg-type]
+    )
+    with pytest.raises(RuntimeError, match=message):
+        settings.assert_deployment_safe()
 
 
 def test_production_requires_an_explicit_jwt_signing_key() -> None:

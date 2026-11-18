@@ -15,6 +15,7 @@ from typing import Any
 import pytest
 
 import chartnexus.infrastructure.trade_buddy.broker_credentials as credentials_module
+from chartnexus.contexts.broker_connections.domain.value_objects import BrokerName
 from chartnexus.contexts.trade_buddy.application.ports import (
     BrokerCredentials,
     BrokerCredentialsSource,
@@ -38,6 +39,7 @@ class FakeConnection:
     is_connected: bool = True
     status: str = "active"
     credentials: FakeStoredCredentials | None = None
+    broker: BrokerName = BrokerName.FYERS
 
     def __post_init__(self) -> None:
         if self.credentials is None:
@@ -48,7 +50,7 @@ class FakeRepository:
     def __init__(self, connection: FakeConnection | None) -> None:
         self._connection = connection
 
-    async def find_any_active(self, broker: Any) -> FakeConnection | None:
+    async def find_market_feed(self) -> FakeConnection | None:
         return self._connection
 
 
@@ -217,6 +219,14 @@ class TestPortConformance:
 
 
 class TestResolvedLate:
+    async def test_a_kite_connection_is_reported_as_kite(self, patched_repository):
+        """The watcher picks its socket and history endpoint from this field."""
+        patched_repository(FakeConnection(broker=BrokerName.KITE))
+        source = ConnectedBrokerCredentials(container_with(None))
+        resolved = await source.fetch()
+        assert resolved is not None
+        assert resolved.broker == "kite"
+
     async def test_every_fetch_re_reads_rather_than_caching(self, monkeypatch):
         """The property the daily expiry demands.
 
@@ -229,7 +239,7 @@ class TestResolvedLate:
             def __init__(self, session: Any, cipher: Any) -> None:
                 pass
 
-            async def find_any_active(self, broker: Any) -> FakeConnection:
+            async def find_market_feed(self) -> FakeConnection:
                 calls["n"] += 1
                 return FakeConnection(access_token=f"tok{calls['n']}")
 

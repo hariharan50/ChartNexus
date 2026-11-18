@@ -24,13 +24,22 @@ class SaveCredentialsRequest(_Schema):
     app_id: str = Field(
         min_length=6,
         max_length=32,
-        examples=["ABCDE123XY-100"],
-        description="The App ID from your broker API dashboard.",
+        examples=["ABCDE123XY-100", "abcd1234efgh5678"],
+        description="FYERS: the App ID. Kite: the API key. From your broker's developer console.",
     )
     secret_id: str = Field(
         min_length=5,
         max_length=64,
-        description="The Secret ID. Stored encrypted and never returned.",
+        description="FYERS: the Secret ID. Kite: the API secret. Stored encrypted, never returned.",
+    )
+    client_id: str | None = Field(
+        default=None,
+        max_length=16,
+        examples=["AB1234"],
+        description=(
+            "Optional. The broker login ID you intend to connect as. When set, a "
+            "login as any other account is refused and nothing is stored."
+        ),
     )
 
 
@@ -61,6 +70,8 @@ class ConnectionResponse(_Schema):
     connected_at: datetime | None
     last_validated_at: datetime | None
     last_error: str | None
+    expires_at: datetime | None = None
+    client_id: str | None = None
 
     @classmethod
     def of(cls, view: ConnectionView) -> ConnectionResponse:
@@ -76,7 +87,16 @@ class ConnectionResponse(_Schema):
             connected_at=view.connected_at,
             last_validated_at=view.last_validated_at,
             last_error=view.last_error,
+            expires_at=view.expires_at,
+            client_id=view.client_id,
         )
+
+
+class ConnectionsResponse(_Schema):
+    """Every broker for the caller's tenant, and which one serves their data."""
+
+    active_broker: str | None
+    connections: list[ConnectionResponse]
 
 
 class AuthorizationResponse(_Schema):

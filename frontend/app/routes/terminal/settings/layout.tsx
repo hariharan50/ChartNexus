@@ -47,7 +47,7 @@ const nav: NavItem[] = [
   },
   {
     label: 'Broker Integration',
-    desc: 'Live market data via Fyers',
+    desc: 'Kite or FYERS live data',
     href: '/settings/broker',
     icon: IconBank
   },

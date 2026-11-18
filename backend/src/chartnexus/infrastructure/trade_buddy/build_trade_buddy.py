@@ -67,7 +67,7 @@ from chartnexus.infrastructure.notifications.whatsapp.callmebot import CallMeBot
 from chartnexus.infrastructure.persistence.postgresql.repositories.trade_buddy.alert_channel_repository import (
     SqlAlchemyAlertChannelRepository,
 )
-from chartnexus.infrastructure.trade_buddy.atr_source import FyersAtrSource
+from chartnexus.infrastructure.trade_buddy.atr_source import FyersAtrSource, KiteDailyCandles
 from chartnexus.infrastructure.trade_buddy.broker_credentials import (
     ConfiguredCredentials,
     ConnectedBrokerCredentials,
@@ -374,6 +374,40 @@ def build_atr_source(container: Any) -> FyersAtrSource:
     return FyersAtrSource(
         FyersRestClient(container.http, timeout_seconds=tb.request_timeout_seconds),
         build_credentials(container),
+        kite=_build_kite_candles(container),
+    )
+
+
+def _kite_token_resolver(container: Any) -> Any:
+    """Canonical symbol → Kite spot ``instrument_token``, via the synced dump."""
+    from chartnexus.infrastructure.brokers.kite.catalog import (  # noqa: PLC0415
+        KiteInstrumentIndex,
+    )
+
+    database = getattr(container, "database", None)
+    if database is None:
+
+        async def unresolved(_symbol: str) -> int | None:
+            return None
+
+        return unresolved
+    return KiteInstrumentIndex(database).spot_token
+
+
+def _build_kite_candles(container: Any) -> KiteDailyCandles:
+    from chartnexus.infrastructure.brokers.kite.rest_client import (  # noqa: PLC0415
+        KiteEndpoints,
+        KiteRestClient,
+    )
+
+    kite = container.settings.kite
+    return KiteDailyCandles(
+        KiteRestClient(
+            container.http,
+            endpoints=KiteEndpoints(api_base=kite.api_base, login_url=kite.login_url),
+            timeout_seconds=kite.request_timeout_seconds,
+        ),
+        _kite_token_resolver(container),
     )
 
 
@@ -507,7 +541,9 @@ async def build_watch_engine(
 
 
 async def build_feed(container: Any, sink: AlertSink) -> Any:
-    """The live Fyers feed, wired to report its own health through the sink.
+    """The live feed of the connected broker, wired to report its own health.
+
+    Kite when the market feed connection is Kite (ADR 0002), else Fyers.
 
     Reports to the sink rather than to an engine because one socket now serves
     every watched instrument: a dropped connection is a fact about the feed,
@@ -517,13 +553,6 @@ async def build_feed(container: Any, sink: AlertSink) -> Any:
     Imported lazily so that neither the API process nor the unit tests need the
     Fyers SDK present merely to build the rest of Trade Buddy.
     """
-    # Deliberately lazy: hoisting this would make `fyers-apiv3` a hard import
-    # requirement for the API process and for every unit test, when only the
-    # background watcher ever opens a socket.
-    from chartnexus.infrastructure.brokers.fyers.data_socket import (  # noqa: PLC0415
-        FyersTickFeed,
-    )
-
     tb = _settings(container)
     credentials = await build_credentials(container).fetch()
     if credentials is None:
@@ -536,6 +565,26 @@ async def build_feed(container: Any, sink: AlertSink) -> Any:
 
     async def report(reason: str, detail: str) -> None:
         await sink.deliver_health(FeedHealth(reason=reason, detail=detail, at=clock.now()))
+
+    if credentials.broker == "kite":
+        from chartnexus.infrastructure.brokers.kite.ticker import (  # noqa: PLC0415
+            KiteTickFeed,
+        )
+
+        return KiteTickFeed(
+            api_key=credentials.app_id,
+            access_token=credentials.access_token,
+            resolve_token=_kite_token_resolver(container),
+            on_health=report,
+            ws_url=container.settings.kite.ws_url,
+        )
+
+    # Deliberately lazy: hoisting this would make `fyers-apiv3` a hard import
+    # requirement for the API process and for every unit test, when only the
+    # background watcher ever opens a socket.
+    from chartnexus.infrastructure.brokers.fyers.data_socket import (  # noqa: PLC0415
+        FyersTickFeed,
+    )
 
     return FyersTickFeed(
         access_token=credentials.joined,

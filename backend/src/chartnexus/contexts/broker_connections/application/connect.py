@@ -16,8 +16,11 @@ anyone who can reach the endpoint can attach a broker account to it.
 
 from __future__ import annotations
 
+import logging
 import secrets
+from collections.abc import Mapping
 from dataclasses import dataclass
+from datetime import datetime
 
 from chartnexus.contexts.broker_connections.application.dto import (
     AuthorizationView,
@@ -34,14 +37,19 @@ from chartnexus.contexts.broker_connections.application.ports import (
 )
 from chartnexus.contexts.broker_connections.domain.connection import BrokerConnection
 from chartnexus.contexts.broker_connections.domain.errors import (
+    BrokerAccountMismatchError,
     CredentialsMissingError,
     OAuthStateError,
 )
 from chartnexus.contexts.broker_connections.domain.value_objects import (
     BrokerCredentials,
     BrokerName,
+    ConnectionStatus,
+    parse_client_id,
 )
 from chartnexus.shared_kernel.types.identifiers import TenantId, UserId
+
+log = logging.getLogger(__name__)
 
 _STATE_BYTES = 32
 
@@ -58,6 +66,7 @@ class SaveCredentialsCommand:
     app_id: str
     secret: str
     broker: BrokerName = BrokerName.FYERS
+    client_id: str | None = None
 
 
 @dataclass(frozen=True, slots=True)
@@ -92,7 +101,8 @@ class SaveCredentials:
         self._cache = cache
 
     async def __call__(self, command: SaveCredentialsCommand) -> ConnectionView:
-        credentials = BrokerCredentials.parse(command.app_id, command.secret)
+        credentials = BrokerCredentials.parse(command.app_id, command.secret, command.broker)
+        client_id = parse_client_id(command.client_id)
         now = self._clock.now()
 
         connection = await self._connections.find(command.tenant_id, command.broker)
@@ -101,11 +111,12 @@ class SaveCredentials:
                 tenant_id=command.tenant_id,
                 broker=command.broker,
                 credentials=credentials,
+                client_id=client_id,
                 now=now,
             )
             await self._connections.add(connection)
         else:
-            connection.replace_credentials(credentials, now)
+            connection.replace_credentials(credentials, now, client_id=client_id)
             await self._connections.update(connection)
 
         await self._uow.commit()
@@ -169,7 +180,11 @@ class CompleteConnect:
         uow: UnitOfWork,
         policy: ConnectPolicy,
         cache: ConnectionCacheInvalidator,
+        revokers: Mapping[BrokerName, BrokerOAuthClient] | None = None,
     ) -> None:
+        """``revokers`` ends a displaced broker's session at that broker, where
+        the broker supports it. Optional: without it a displaced token is only
+        dropped locally, which is all FYERS allows anyway."""
         self._connections = connections
         self._oauth = oauth
         self._states = states
@@ -177,6 +192,7 @@ class CompleteConnect:
         self._uow = uow
         self._policy = policy
         self._cache = cache
+        self._revokers = revokers or {}
 
     async def __call__(self, command: CompleteConnectCommand) -> ConnectionView:
         pending = await self._states.consume(command.state)
@@ -205,19 +221,65 @@ class CompleteConnect:
         )
 
         now = self._clock.now()
-        connection.complete_connect(
-            access_token=tokens.access_token,
-            refresh_token=tokens.refresh_token,
-            profile=profile,
-            expires_at=tokens.expires_at,
-            connected_by=pending.user_id,
-            now=now,
-        )
+        try:
+            connection.complete_connect(
+                access_token=tokens.access_token,
+                refresh_token=tokens.refresh_token,
+                profile=profile,
+                expires_at=tokens.expires_at,
+                connected_by=pending.user_id,
+                now=now,
+            )
+        except BrokerAccountMismatchError:
+            # Nothing is stored, but the broker did mint a session for the
+            # wrong account. End it there too rather than leave it live.
+            await revoke_quietly(self._oauth, credentials, tokens.access_token, pending.broker)
+            raise
+
+        # One active broker per tenant. Any other is disconnected — its keys
+        # kept, so switching back is one click — and written first, so the
+        # partial unique index on "one active row per tenant" never sees two.
+        displaced = await self._deactivate_others(pending.tenant_id, pending.broker, now)
+
         await self._connections.update(connection)
         await self._uow.commit()
         await self._cache.invalidate(pending.tenant_id, pending.broker)
+        for other in displaced:
+            await self._cache.invalidate(pending.tenant_id, other)
 
         return ConnectionView.of(connection, redirect_uri=self._policy.redirect_uri)
+
+    async def _deactivate_others(
+        self, tenant_id: TenantId, broker: BrokerName, now: datetime
+    ) -> list[BrokerName]:
+        displaced: list[BrokerName] = []
+        for other in await self._connections.find_others(tenant_id, broker):
+            if other.status is not ConnectionStatus.ACTIVE:
+                continue
+            token = other.access_token
+            other.disconnect(now)
+            await self._connections.update(other)
+            displaced.append(other.broker)
+            log.info("broker_switched from=%s to=%s", other.broker.value, broker.value)
+            revoker = self._revokers.get(other.broker)
+            if revoker is not None and other.credentials is not None and token:
+                await revoke_quietly(revoker, other.credentials, token, other.broker)
+        return displaced
+
+
+async def revoke_quietly(
+    oauth: BrokerOAuthClient,
+    credentials: BrokerCredentials,
+    access_token: str,
+    broker: BrokerName,
+) -> None:
+    """Best-effort remote logout. The local drop happens regardless."""
+    try:
+        await oauth.revoke_token(credentials=credentials, access_token=access_token)
+    except Exception as exc:  # a remote failure must never undo a local drop
+        log.warning(
+            "broker_remote_revoke_failed broker=%s error=%s", broker.value, type(exc).__name__
+        )
 
 
 def _safe_redirect(target: str | None) -> str | None:

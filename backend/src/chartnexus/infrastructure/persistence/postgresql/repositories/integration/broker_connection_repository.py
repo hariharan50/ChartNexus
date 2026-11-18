@@ -14,7 +14,7 @@ from __future__ import annotations
 
 from datetime import UTC, datetime
 
-from sqlalchemy import select
+from sqlalchemy import case, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from chartnexus.contexts.broker_connections.application.ports import TokenCipher
@@ -29,6 +29,7 @@ from chartnexus.infrastructure.persistence.postgresql.models.integration.broker_
     BrokerConnectionRecord,
 )
 from chartnexus.infrastructure.security.encryption import DecryptionError
+from chartnexus.shared_kernel.domain.errors import ValidationError
 from chartnexus.shared_kernel.types.identifiers import BrokerConnectionId, TenantId
 
 
@@ -45,6 +46,44 @@ class SqlAlchemyBrokerConnectionRepository:
                 BrokerConnectionRecord.tenant_id == tenant_id,
                 BrokerConnectionRecord.broker == broker.value,
             )
+        )
+        record = result.scalar_one_or_none()
+        return self._to_domain(record) if record else None
+
+    async def find_active(self, tenant_id: TenantId) -> BrokerConnection | None:
+        result = await self._session.execute(
+            select(BrokerConnectionRecord)
+            .where(
+                BrokerConnectionRecord.tenant_id == tenant_id,
+                BrokerConnectionRecord.status == ConnectionStatus.ACTIVE.value,
+            )
+            # The partial unique index allows only one, but a defensive order
+            # keeps the answer deterministic if that index is ever missing.
+            .order_by(BrokerConnectionRecord.connected_at.desc().nulls_last())
+            .limit(1)
+        )
+        record = result.scalar_one_or_none()
+        return self._to_domain(record) if record else None
+
+    async def find_others(self, tenant_id: TenantId, broker: BrokerName) -> list[BrokerConnection]:
+        result = await self._session.execute(
+            select(BrokerConnectionRecord).where(
+                BrokerConnectionRecord.tenant_id == tenant_id,
+                BrokerConnectionRecord.broker != broker.value,
+            )
+        )
+        return [self._to_domain(record) for record in result.scalars()]
+
+    async def find_market_feed(self) -> BrokerConnection | None:
+        # Kite first: one quote call carries OI for up to 500 instruments,
+        # where FYERS needs a depth call per contract. Newest connection next,
+        # because it is the one most likely to still hold a working token.
+        kite_first = case((BrokerConnectionRecord.broker == BrokerName.KITE.value, 0), else_=1)
+        result = await self._session.execute(
+            select(BrokerConnectionRecord)
+            .where(BrokerConnectionRecord.status == ConnectionStatus.ACTIVE.value)
+            .order_by(kite_first, BrokerConnectionRecord.connected_at.desc().nulls_last())
+            .limit(1)
         )
         record = result.scalar_one_or_none()
         return self._to_domain(record) if record else None
@@ -69,6 +108,7 @@ class SqlAlchemyBrokerConnectionRepository:
                 tenant_id=connection.tenant_id,
                 broker=connection.broker.value,
                 app_id=connection.credentials.app_id if connection.credentials else None,
+                client_id=connection.client_id,
                 app_secret_enc=self._encrypt(
                     connection.credentials.secret if connection.credentials else None,
                     connection=connection,
@@ -98,6 +138,7 @@ class SqlAlchemyBrokerConnectionRepository:
             raise LookupError(msg)
 
         record.app_id = connection.credentials.app_id if connection.credentials else None
+        record.client_id = connection.client_id
         record.app_secret_enc = self._encrypt(
             connection.credentials.secret if connection.credentials else None,
             connection=connection,
@@ -151,12 +192,9 @@ class SqlAlchemyBrokerConnectionRepository:
             return None
 
     def _to_domain(self, record: BrokerConnectionRecord) -> BrokerConnection:
+        broker = BrokerName(record.broker)
         secret = self._decrypt(record.app_secret_enc, record=record, field="app_secret")
-        credentials = (
-            BrokerCredentials(app_id=record.app_id, secret=secret)
-            if record.app_id and secret
-            else None
-        )
+        credentials = _credentials(broker, record.app_id, secret)
 
         access_token = self._decrypt(record.access_token_enc, record=record, field="access_token")
         status = ConnectionStatus(record.status)
@@ -189,12 +227,30 @@ class SqlAlchemyBrokerConnectionRepository:
             expires_at=_aware(record.expires_at),
             last_validated_at=_aware(record.last_validated_at),
             last_error=record.last_error,
+            client_id=record.client_id,
             # Not persisted: who clicked connect is an audit fact and belongs
             # in the audit context, not on this row.
             connected_by=None,
             created_at=_aware(record.created_at),
             updated_at=_aware(record.updated_at),
         )
+
+
+def _credentials(
+    broker: BrokerName, app_id: str | None, secret: str | None
+) -> BrokerCredentials | None:
+    """Rebuild stored credentials, or report them absent.
+
+    A row written before a validation rule tightened must not take the whole
+    connection down with a 500: it reads as "not configured" and the user
+    re-enters their keys.
+    """
+    if not app_id or not secret:
+        return None
+    try:
+        return BrokerCredentials(app_id=app_id, secret=secret, broker=broker)
+    except ValidationError:
+        return None
 
 
 def _aad(tenant_id: TenantId, broker: BrokerName, field: str) -> str:

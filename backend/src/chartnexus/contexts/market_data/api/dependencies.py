@@ -17,9 +17,8 @@ from chartnexus.contexts.market_data.application.queries import (
     GetSessionGap,
     GetSpotPrice,
 )
-from chartnexus.infrastructure.brokers.fyers.quota_manager import QuotaPolicy
 from chartnexus.infrastructure.brokers.mock.provider import MockMarketDataProvider
-from chartnexus.infrastructure.brokers.provider_resolver import TenantProviderResolver
+from chartnexus.infrastructure.brokers.provider_resolver import build_provider_resolver
 from chartnexus.infrastructure.cache.redis.iv_history import RedisIvHistoryRecorder
 from chartnexus.infrastructure.cache.redis.session_gap import RedisSessionGapStore
 from chartnexus.infrastructure.persistence.postgresql.repositories.integration.broker_connection_repository import (
@@ -64,18 +63,8 @@ def build_market_services_from(container: Any, session: AsyncSession) -> MarketS
     settings = container.settings
     clock = SystemClock()
 
-    resolver = TenantProviderResolver(
-        connections=SqlAlchemyBrokerConnectionRepository(session, container.token_cipher),
-        http=container.http,
-        redis=container.redis,
-        rest_base_url=settings.broker.rest_base_url,
-        quota=QuotaPolicy(
-            requests_per_second=settings.broker.quota_requests_per_second,
-            requests_per_day=settings.broker.quota_requests_per_day,
-        ),
-        request_timeout_seconds=settings.broker.request_timeout_seconds,
-        circuit_breaker_failure_threshold=settings.broker.circuit_breaker_failure_threshold,
-        circuit_breaker_reset_seconds=settings.broker.circuit_breaker_reset_seconds,
+    resolver = build_provider_resolver(
+        container, SqlAlchemyBrokerConnectionRepository(session, container.token_cipher)
     )
     fallback = MockMarketDataProvider(clock)
     calendar = ExchangeCalendar(

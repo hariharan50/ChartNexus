@@ -29,6 +29,7 @@ from chartnexus.contexts.instrument_catalog.application.ports import CatalogSync
 from chartnexus.contexts.instrument_catalog.application.use_cases import SyncInstrumentCatalog
 from chartnexus.contexts.instrument_catalog.domain.instrument import Instrument
 from chartnexus.contexts.mme100.domain.schedule import next_briefing_wake, parse_hhmm
+from chartnexus.infrastructure.brokers.kite import sync as kite_sync
 from chartnexus.infrastructure.catalog import registry
 from chartnexus.infrastructure.catalog.fyers_symbol_master import FyersSymbolMaster
 from chartnexus.infrastructure.observability.structured_logging import get_logger
@@ -173,6 +174,9 @@ async def run_catalog_loop(
     if catalog.sync_on_start:
         await ensure_registry(container, stop=stop)
 
+    # The Kite dump has its own, later schedule: Zerodha publishes it around
+    # 08:30, an hour after the exchange masters this loop reads.
+    kite_loop = asyncio.create_task(run_kite_catalog_loop(container, settings, stop=stop))
     try:
         while not stop.is_set():
             now = datetime.now(UTC)
@@ -184,7 +188,31 @@ async def run_catalog_loop(
                 break
             await sync_once(container)
     finally:
+        kite_loop.cancel()
+        with contextlib.suppress(asyncio.CancelledError):
+            await kite_loop
         log.info("catalog_loop_stopping")
+
+
+async def run_kite_catalog_loop(
+    container: Container, settings: Settings, *, stop: asyncio.Event
+) -> None:
+    """Refresh the Kite instrument catalog each morning, then capture prior OI.
+
+    A no-op on any day no tenant has an active Kite connection.
+    """
+    sync_time = parse_hhmm(settings.kite.catalog_sync_time_ist)
+    while not stop.is_set():
+        now = datetime.now(UTC)
+        wake = next_briefing_wake(now, sync_time)
+        with contextlib.suppress(TimeoutError):
+            await asyncio.wait_for(stop.wait(), timeout=max(1.0, (wake - now).total_seconds()))
+        if stop.is_set():
+            return
+        try:
+            await kite_sync.morning_sync(container)
+        except Exception as exc:  # the loop must outlive a bad morning
+            log.error("kite_morning_sync_failed", error=repr(exc))
 
 
 async def run_registry_refresh_loop(

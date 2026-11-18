@@ -655,6 +655,25 @@ function historyView(symbol, interval, days) {
   };
 }
 
+function brokerConnection(broker, connected = false) {
+  const callback = broker === 'kite' ? 'broker/kite/callback' : 'broker/callback';
+  return {
+    broker,
+    status: connected ? 'active' : 'pending',
+    configured: connected,
+    connected,
+    masked_app_id: connected ? 'abc1******89' : null,
+    broker_user_id: connected ? 'AB1234' : null,
+    display_name: connected ? 'Test Trader' : null,
+    connected_at: null,
+    last_validated_at: null,
+    last_error: null,
+    expires_at: null,
+    client_id: null,
+    redirect_uri: `http://localhost:5173/settings/${callback}`
+  };
+}
+
 function send(res, status, body) {
   const payload = body === null ? '' : JSON.stringify(body);
   res.writeHead(status, {
@@ -786,18 +805,22 @@ const server = createServer((req, res) => {
     return send(res, 200, openInterestView(symbol));
   }
 
-  if (url.pathname === '/api/v1/broker/fyers/status') {
+  if (url.pathname === '/api/v1/broker/connections') {
     return send(res, 200, {
-      status: 'pending',
-      configured: false,
-      connected: false,
-      masked_app_id: null,
-      broker_user_id: null,
-      display_name: null,
-      last_validated_at: null,
-      last_error: null,
-      redirect_uri: 'http://localhost:5173/settings/broker/callback'
+      active_broker: null,
+      connections: [brokerConnection('fyers'), brokerConnection('kite')]
     });
+  }
+
+  const brokerRoute = url.pathname.match(
+    /^\/api\/v1\/broker\/(fyers|kite)\/(status|callback|connection|credentials)$/
+  );
+  if (brokerRoute) {
+    const [, broker, action] = brokerRoute;
+    // A completed Kite login reads back as connected, so the callback test can
+    // see where it lands. Nothing is remembered between requests.
+    const connected = action === 'callback' && req.method === 'POST';
+    return send(res, 200, brokerConnection(broker, connected));
   }
 
   if (url.pathname === '/api/v1/instruments') {

@@ -14,6 +14,7 @@ from dataclasses import dataclass, field
 from datetime import datetime
 
 from chartnexus.contexts.broker_connections.domain.errors import (
+    BrokerAccountMismatchError,
     ConnectionExpiredError,
     CredentialsMissingError,
     NotConnectedError,
@@ -48,6 +49,12 @@ class BrokerConnection:
     last_validated_at: datetime | None = None
     last_error: str | None = None
     connected_by: UserId | None = None
+    client_id: str | None = None
+    """The broker login id the user means to connect as, if they named one.
+
+    Checked against the profile the broker returns after login, so a browser
+    that already holds a session for some other account cannot silently
+    connect that account instead."""
     created_at: datetime | None = None
     updated_at: datetime | None = None
     _events: list[str] = field(default_factory=list, repr=False)
@@ -62,6 +69,7 @@ class BrokerConnection:
         broker: BrokerName,
         credentials: BrokerCredentials,
         now: datetime,
+        client_id: str | None = None,
     ) -> BrokerConnection:
         """Create a connection holding credentials but no token yet."""
         return cls(
@@ -70,6 +78,7 @@ class BrokerConnection:
             broker=broker,
             status=ConnectionStatus.PENDING,
             credentials=credentials,
+            client_id=client_id,
             created_at=now,
             updated_at=now,
         )
@@ -86,23 +95,32 @@ class BrokerConnection:
 
     @property
     def masked_app_id(self) -> str | None:
-        if self.credentials is None:
-            return None
-        app_id = self.credentials.app_id
-        # The suffix after the dash identifies the app; the prefix is the part
-        # worth obscuring.
-        head, _, tail = app_id.partition("-")
-        visible = head[:4]
-        return f"{visible}{'*' * max(0, len(head) - 4)}-{tail}" if tail else visible
+        return self.credentials.masked_app_id if self.credentials is not None else None
+
+    def has_lapsed(self, now: datetime) -> bool:
+        """The token's known expiry has passed.
+
+        Kite tokens die at 06:00 IST every day, and the time is known at login,
+        so an expired token can be recognised without asking the broker. FYERS
+        does not publish an expiry, so ``expires_at`` stays empty there and this
+        is always false — its expiry is still discovered by the broker refusing.
+        """
+        return self.expires_at is not None and now >= self.expires_at
 
     def require_credentials(self) -> BrokerCredentials:
         if self.credentials is None:
             raise CredentialsMissingError
         return self.credentials
 
-    def require_access_token(self) -> str:
-        """Return the token, or explain precisely why there isn't one."""
+    def require_access_token(self, now: datetime | None = None) -> str:
+        """Return the token, or explain precisely why there isn't one.
+
+        With ``now``, a token past its known expiry is refused as expired
+        without a network call.
+        """
         if self.status is ConnectionStatus.EXPIRED:
+            raise ConnectionExpiredError
+        if now is not None and self.has_lapsed(now):
             raise ConnectionExpiredError
         if self.access_token is None or self.status is not ConnectionStatus.ACTIVE:
             raise NotConnectedError
@@ -110,7 +128,13 @@ class BrokerConnection:
 
     # -- behaviour ----------------------------------------------------------
 
-    def replace_credentials(self, credentials: BrokerCredentials, now: datetime) -> None:
+    def replace_credentials(
+        self,
+        credentials: BrokerCredentials,
+        now: datetime,
+        *,
+        client_id: str | None = None,
+    ) -> None:
         """Save new API application keys.
 
         Changing the application invalidates any token issued under the old one,
@@ -119,6 +143,7 @@ class BrokerConnection:
         """
         changed = self.credentials is None or self.credentials.app_id != credentials.app_id
         self.credentials = credentials
+        self.client_id = client_id
         if changed and self.status is ConnectionStatus.ACTIVE:
             self.access_token = None
             self.refresh_token = None
@@ -141,6 +166,7 @@ class BrokerConnection:
         if not access_token:
             msg = "cannot complete a connection without an access token"
             raise ValueError(msg)
+        self.verify_account(profile)
 
         self.access_token = access_token
         self.refresh_token = refresh_token
@@ -153,6 +179,22 @@ class BrokerConnection:
         self.last_error = None
         self.connected_by = connected_by
         self.updated_at = now
+
+    def verify_account(self, profile: BrokerProfile | None) -> None:
+        """Refuse a login as anyone other than the account the user named.
+
+        A no-op when no Client ID was saved. Raises before any state changes,
+        so a refused login leaves the connection exactly as it was.
+        """
+        if not self.client_id:
+            return
+        actual = (profile.broker_user_id if profile else "").strip().upper()
+        if actual != self.client_id:
+            raise BrokerAccountMismatchError(expected=self.client_id, actual=actual or "unknown")
+
+    def record_expired(self, now: datetime) -> None:
+        """The token's known lifetime ran out. Same outcome as a rejection."""
+        self.record_rejected("The broker session expired.", now)
 
     def record_validated(self, profile: BrokerProfile | None, now: datetime) -> None:
         """The broker confirmed the token still works."""

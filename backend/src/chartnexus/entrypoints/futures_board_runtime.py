@@ -43,14 +43,12 @@ from datetime import UTC, date, datetime, timedelta, timezone
 
 from chartnexus.bootstrap.container import Container
 from chartnexus.bootstrap.settings import Settings
-from chartnexus.contexts.broker_connections.domain.value_objects import BrokerName
 from chartnexus.contexts.futures_analytics.application.ports import (
     BoardFrame,
     BoardSnapshot,
 )
-from chartnexus.infrastructure.brokers.fyers.quota_manager import QuotaPolicy
 from chartnexus.infrastructure.brokers.mock.provider import MockMarketDataProvider
-from chartnexus.infrastructure.brokers.provider_resolver import TenantProviderResolver
+from chartnexus.infrastructure.brokers.provider_resolver import build_provider_resolver
 from chartnexus.infrastructure.futures.board_source import CatalogFuturesBoardSource
 from chartnexus.infrastructure.futures.oi_cache import RedisOpenInterestCache
 from chartnexus.infrastructure.observability.structured_logging import get_logger
@@ -99,13 +97,13 @@ async def _capture(container: Container, settings: Settings) -> int:
         connections = SqlAlchemyBrokerConnectionRepository(session, container.token_cipher)
         # The board is a fact about the market, not about a tenant, so any
         # working connection can read it and one capture serves everybody.
-        connection = await connections.find_any_active(BrokerName.FYERS)
+        connection = await connections.find_market_feed()
         if connection is None:
             log.info("futures_board_capture_skipped", reason="no_connected_broker")
             return 0
 
         source = CatalogFuturesBoardSource(
-            _resolver(container, settings, connections),
+            build_provider_resolver(container, connections),
             MockMarketDataProvider(SystemClock()),
             oi_cache=RedisOpenInterestCache(
                 container.redis, ttl_seconds=settings.futures_oi.ttl_seconds
@@ -198,26 +196,6 @@ def _calendar(settings: Settings) -> ExchangeCalendar:
         timezone=settings.market.timezone,
         session_open=settings.market.session_open,
         session_close=settings.market.session_close,
-    )
-
-
-def _resolver(
-    container: Container,
-    settings: Settings,
-    connections: SqlAlchemyBrokerConnectionRepository,
-) -> TenantProviderResolver:
-    return TenantProviderResolver(
-        connections=connections,
-        http=container.http,
-        redis=container.redis,
-        rest_base_url=settings.broker.rest_base_url,
-        quota=QuotaPolicy(
-            requests_per_second=settings.broker.quota_requests_per_second,
-            requests_per_day=settings.broker.quota_requests_per_day,
-        ),
-        request_timeout_seconds=settings.broker.request_timeout_seconds,
-        circuit_breaker_failure_threshold=settings.broker.circuit_breaker_failure_threshold,
-        circuit_breaker_reset_seconds=settings.broker.circuit_breaker_reset_seconds,
     )
 
 

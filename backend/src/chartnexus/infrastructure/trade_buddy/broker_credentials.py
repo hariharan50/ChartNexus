@@ -24,7 +24,6 @@ from __future__ import annotations
 
 from typing import Any
 
-from chartnexus.contexts.broker_connections.domain.value_objects import BrokerName
 from chartnexus.contexts.trade_buddy.application.ports import BrokerCredentials
 from chartnexus.infrastructure.observability.structured_logging import get_logger
 from chartnexus.infrastructure.persistence.postgresql.repositories.integration.broker_connection_repository import (
@@ -81,7 +80,9 @@ class ConnectedBrokerCredentials:
                 repository = SqlAlchemyBrokerConnectionRepository(
                     session, self._container.token_cipher
                 )
-                connection = await repository.find_any_active(BrokerName.FYERS)
+                # Kite preferred, then FYERS: the same choice every market-wide
+                # job makes (ADR 0002).
+                connection = await repository.find_market_feed()
         except Exception as exc:
             log.warning("trade_buddy_credentials_read_failed", error=repr(exc))
             return None
@@ -105,4 +106,8 @@ class ConnectedBrokerCredentials:
             log.warning("trade_buddy_broker_missing_app_id")
             return None
 
-        return BrokerCredentials(app_id=app_id, access_token=connection.access_token)
+        return BrokerCredentials(
+            app_id=app_id,
+            access_token=connection.access_token,
+            broker=connection.broker.value,
+        )

@@ -4,7 +4,10 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-from chartnexus.contexts.broker_connections.application.connect import ConnectPolicy
+from chartnexus.contexts.broker_connections.application.connect import (
+    ConnectPolicy,
+    revoke_quietly,
+)
 from chartnexus.contexts.broker_connections.application.dto import ConnectionView
 from chartnexus.contexts.broker_connections.application.ports import (
     BrokerConnectionRepository,
@@ -17,7 +20,10 @@ from chartnexus.contexts.broker_connections.domain.errors import (
     BrokerRejectedError,
     BrokerUnavailableError,
 )
-from chartnexus.contexts.broker_connections.domain.value_objects import BrokerName
+from chartnexus.contexts.broker_connections.domain.value_objects import (
+    BrokerCredentials,
+    BrokerName,
+)
 from chartnexus.shared_kernel.types.identifiers import TenantId
 
 
@@ -53,10 +59,21 @@ class GetConnectionStatus:
     async def __call__(self, query: ConnectionQuery, *, verify: bool = True) -> ConnectionView:
         connection = await self._connections.find(query.tenant_id, query.broker)
         if connection is None or not connection.is_connected or not verify:
-            return ConnectionView.of(connection, redirect_uri=self._policy.redirect_uri)
+            return ConnectionView.of(
+                connection, redirect_uri=self._policy.redirect_uri, broker=query.broker
+            )
 
         credentials = connection.require_credentials()
         now = self._clock.now()
+        if connection.has_lapsed(now):
+            # The token's known lifetime is over (Kite: 06:00 IST). Asking the
+            # broker would only spend a request to hear the same answer.
+            connection.record_expired(now)
+            await self._connections.update(connection)
+            await self._uow.commit()
+            return ConnectionView.of(
+                connection, redirect_uri=self._policy.redirect_uri, broker=query.broker
+            )
         try:
             profile = await self._oauth.fetch_profile(
                 credentials=credentials, access_token=connection.access_token or ""
@@ -74,7 +91,9 @@ class GetConnectionStatus:
             await self._connections.update(connection)
             await self._uow.commit()
 
-        return ConnectionView.of(connection, redirect_uri=self._policy.redirect_uri)
+        return ConnectionView.of(
+            connection, redirect_uri=self._policy.redirect_uri, broker=query.broker
+        )
 
 
 class DisconnectBroker:
@@ -88,26 +107,34 @@ class DisconnectBroker:
         uow: UnitOfWork,
         policy: ConnectPolicy,
         cache: ConnectionCacheInvalidator,
+        oauth: BrokerOAuthClient | None = None,
     ) -> None:
         self._connections = connections
         self._clock = clock
         self._uow = uow
         self._policy = policy
         self._cache = cache
+        self._oauth = oauth
 
     async def __call__(self, query: ConnectionQuery) -> ConnectionView:
         connection = await self._connections.find(query.tenant_id, query.broker)
         if connection is None:
             # Already disconnected. Idempotent: there is nothing to report as
             # an error, and saying so leaks nothing useful.
-            return ConnectionView.of(None, redirect_uri=self._policy.redirect_uri)
+            return ConnectionView.of(
+                None, redirect_uri=self._policy.redirect_uri, broker=query.broker
+            )
 
+        token, credentials = connection.access_token, connection.credentials
         connection.disconnect(self._clock.now())
         await self._connections.update(connection)
         await self._uow.commit()
         await self._cache.invalidate(query.tenant_id, query.broker)
+        await _end_remote_session(self._oauth, credentials, token, query.broker)
 
-        return ConnectionView.of(connection, redirect_uri=self._policy.redirect_uri)
+        return ConnectionView.of(
+            connection, redirect_uri=self._policy.redirect_uri, broker=query.broker
+        )
 
 
 class RevokeBrokerCredentials:
@@ -124,21 +151,45 @@ class RevokeBrokerCredentials:
         uow: UnitOfWork,
         policy: ConnectPolicy,
         cache: ConnectionCacheInvalidator,
+        oauth: BrokerOAuthClient | None = None,
     ) -> None:
         self._connections = connections
         self._clock = clock
         self._uow = uow
         self._policy = policy
         self._cache = cache
+        self._oauth = oauth
 
     async def __call__(self, query: ConnectionQuery) -> ConnectionView:
         connection = await self._connections.find(query.tenant_id, query.broker)
         if connection is None:
-            return ConnectionView.of(None, redirect_uri=self._policy.redirect_uri)
+            return ConnectionView.of(
+                None, redirect_uri=self._policy.redirect_uri, broker=query.broker
+            )
 
+        token, credentials = connection.access_token, connection.credentials
         connection.revoke(self._clock.now())
         await self._connections.update(connection)
         await self._uow.commit()
         await self._cache.invalidate(query.tenant_id, query.broker)
+        await _end_remote_session(self._oauth, credentials, token, query.broker)
 
-        return ConnectionView.of(connection, redirect_uri=self._policy.redirect_uri)
+        return ConnectionView.of(
+            connection, redirect_uri=self._policy.redirect_uri, broker=query.broker
+        )
+
+
+async def _end_remote_session(
+    oauth: BrokerOAuthClient | None,
+    credentials: BrokerCredentials | None,
+    token: str | None,
+    broker: BrokerName,
+) -> None:
+    """After the local drop is committed, ask the broker to end the session too.
+
+    Ordering is deliberate: the local state is authoritative and is saved
+    first, so a slow or failing broker can never leave the token live here.
+    """
+    if oauth is None or credentials is None or not token:
+        return
+    await revoke_quietly(oauth, credentials, token, broker)

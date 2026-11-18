@@ -21,6 +21,28 @@ class BrokerConnectionRepository(Protocol):
         """The tenant's connection for a broker, in any status."""
         ...
 
+    async def find_active(self, tenant_id: TenantId) -> BrokerConnection | None:
+        """The tenant's one active connection, whichever broker it is with.
+
+        A tenant has at most one active broker at a time — enforced by the
+        aggregate's use cases and by a partial unique index — so this is the
+        connection that serves the tenant's market data.
+        """
+        ...
+
+    async def find_others(self, tenant_id: TenantId, broker: BrokerName) -> list[BrokerConnection]:
+        """The tenant's connections with every broker except ``broker``."""
+        ...
+
+    async def find_market_feed(self) -> BrokerConnection | None:
+        """Any tenant's active connection, preferring Kite.
+
+        For background jobs that capture market-wide data. Kite is preferred
+        because its quote endpoint returns open interest for up to five hundred
+        instruments per call, where FYERS needs one depth call per contract.
+        """
+        ...
+
     async def find_any_active(self, broker: BrokerName) -> BrokerConnection | None:
         """Any one tenant's active connection for a broker.
 
@@ -94,6 +116,14 @@ class BrokerOAuthClient(Protocol):
         """Prove a token works by using it.
 
         Token presence is not connection: this is what makes status honest.
+        """
+        ...
+
+    async def revoke_token(self, *, credentials: BrokerCredentials, access_token: str) -> None:
+        """Ask the broker to invalidate a token, where the broker supports it.
+
+        Best-effort: callers drop the token locally whatever happens here. A
+        broker with no revocation endpoint implements this as a no-op.
         """
         ...
 

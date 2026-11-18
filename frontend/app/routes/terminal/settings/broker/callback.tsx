@@ -52,7 +52,7 @@ export default function BrokerCallback() {
 
       try {
         await broker.completeConnect(code, state);
-        await navigate('/settings/broker?connected=1', { replace: true });
+        await navigate('/settings/broker?broker=fyers&connected=1', { replace: true });
         // `invalidateAll` — the connection state the terminal loader saw is stale.
         void revalidator.revalidate();
       } catch (caught) {
@@ -74,7 +74,7 @@ export default function BrokerCallback() {
           <p>{error.message}</p>
           <Button
             variant="secondary"
-            onClick={() => void navigate('/settings/broker', { replace: true })}
+            onClick={() => void navigate('/settings/broker?broker=fyers', { replace: true })}
           >
             Back to broker settings
           </Button>

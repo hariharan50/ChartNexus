@@ -269,3 +269,25 @@ def test_the_error_reveals_nothing_about_the_failure() -> None:
 def test_mask_keeps_only_the_edges() -> None:
     assert mask("ABCDEFGHIJKL") == "ABCD******IJKL"
     assert "SECRET" not in mask("SECRET")
+
+
+def test_a_kite_ciphertext_moved_into_the_fyers_row_does_not_decrypt() -> None:
+    """ADR 0002: both brokers' secrets share one table and one key. The
+    repository binds each to its broker, so a swap between rows fails."""
+    from chartnexus.contexts.broker_connections.domain.value_objects import (  # noqa: PLC0415
+        BrokerName,
+    )
+    from chartnexus.infrastructure.persistence.postgresql.repositories.integration.broker_connection_repository import (  # noqa: PLC0415
+        _aad,
+    )
+    from chartnexus.shared_kernel.types.identifiers import TenantId, new_id  # noqa: PLC0415
+
+    tenant = TenantId(new_id())
+    cipher = _cipher()
+    sealed = cipher.encrypt("kite-api-secret", aad=_aad(tenant, BrokerName.KITE, "app_secret"))
+
+    assert cipher.decrypt(sealed, aad=_aad(tenant, BrokerName.KITE, "app_secret")) == (
+        "kite-api-secret"
+    )
+    with pytest.raises(DecryptionError):
+        cipher.decrypt(sealed, aad=_aad(tenant, BrokerName.FYERS, "app_secret"))

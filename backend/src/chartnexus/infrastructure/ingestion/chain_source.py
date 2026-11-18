@@ -14,7 +14,6 @@ decides whether that is worth persisting.
 
 from __future__ import annotations
 
-from chartnexus.contexts.broker_connections.domain.value_objects import BrokerName
 from chartnexus.contexts.market_data.application.ports import (
     MarketDataProvider,
     ProviderResolver,
@@ -31,9 +30,8 @@ from chartnexus.contexts.market_ingestion.application.ports import (
     ChainObservation,
     ChainRowToWrite,
 )
-from chartnexus.infrastructure.brokers.fyers.quota_manager import QuotaPolicy
 from chartnexus.infrastructure.brokers.mock.provider import MockMarketDataProvider
-from chartnexus.infrastructure.brokers.provider_resolver import TenantProviderResolver
+from chartnexus.infrastructure.brokers.provider_resolver import build_provider_resolver
 from chartnexus.infrastructure.persistence.postgresql.repositories.integration.broker_connection_repository import (
     SqlAlchemyBrokerConnectionRepository,
 )
@@ -103,7 +101,7 @@ class ProviderChainSource:
         return _to_observation(symbol, chain)
 
     async def _resolve_provider(self) -> MarketDataProvider:
-        connection = await self._connections.find_any_active(BrokerName.FYERS)
+        connection = await self._connections.find_market_feed()
         if connection is None:
             return self._fallback
         return await self._resolver.resolve(TenantId(connection.tenant_id))
@@ -176,19 +174,7 @@ def build_ingest_service(
         session,  # type: ignore[arg-type]
         container.token_cipher,  # type: ignore[attr-defined]
     )
-    resolver = TenantProviderResolver(
-        connections=connections,
-        http=container.http,  # type: ignore[attr-defined]
-        redis=container.redis,  # type: ignore[attr-defined]
-        rest_base_url=settings.broker.rest_base_url,
-        quota=QuotaPolicy(
-            requests_per_second=settings.broker.quota_requests_per_second,
-            requests_per_day=settings.broker.quota_requests_per_day,
-        ),
-        request_timeout_seconds=settings.broker.request_timeout_seconds,
-        circuit_breaker_failure_threshold=settings.broker.circuit_breaker_failure_threshold,
-        circuit_breaker_reset_seconds=settings.broker.circuit_breaker_reset_seconds,
-    )
+    resolver = build_provider_resolver(container, connections)
     fallback = MockMarketDataProvider(clock)
     source = ProviderChainSource(
         resolver=resolver,

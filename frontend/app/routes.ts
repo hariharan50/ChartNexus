@@ -143,6 +143,8 @@ export default [
       route('help', 'routes/terminal/settings/help.tsx'),
       route('broker', 'routes/terminal/settings/broker/route.tsx'),
       route('broker/callback', 'routes/terminal/settings/broker/callback.tsx'),
+      // Zerodha returns here (CN_KITE_REDIRECT_URI; registered on the Kite app).
+      route('broker/kite/callback', 'routes/terminal/settings/broker/kite-callback.tsx'),
       route('ai', 'routes/terminal/settings/ai/route.tsx'),
       route('power-agents', 'routes/terminal/settings/power-agents/route.tsx'),
       route('channels', 'routes/terminal/settings/channels/route.tsx')

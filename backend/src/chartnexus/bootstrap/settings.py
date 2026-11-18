@@ -195,7 +195,7 @@ class GoogleOAuthSettings(_Section):
 class BrokerSettings(_Section):
     model_config = _section_config("BROKER_")
 
-    provider: Literal["fyers", "mock"] = "mock"
+    provider: Literal["fyers", "kite", "mock"] = "mock"
     fyers_app_id: str = ""
     fyers_secret_id: SecretStr = SecretStr("")
     fyers_redirect_uri: str = "http://localhost:5173/settings/broker/callback"
@@ -205,6 +205,40 @@ class BrokerSettings(_Section):
     request_timeout_seconds: float = Field(default=10.0, gt=0)
     circuit_breaker_failure_threshold: int = Field(default=5, ge=1)
     circuit_breaker_reset_seconds: float = Field(default=30.0, gt=0)
+
+
+class KiteSettings(_Section):
+    """Zerodha Kite Connect v3 (ADR 0002). Market data only — no order paths.
+
+    ``redirect_uri`` is informational: Kite always returns to the redirect URL
+    registered on the app at developers.kite.trade, so this is the value the
+    Settings page tells the user to register there.
+    """
+
+    model_config = _section_config("KITE_")
+
+    redirect_uri: str = "http://localhost:5173/settings/broker/kite/callback"
+    api_base: str = "https://api.kite.trade"
+    login_url: str = "https://kite.zerodha.com/connect/login"
+    ws_url: str = "wss://ws.kite.trade"
+    request_timeout_seconds: float = Field(default=10.0, gt=0)
+
+    # Zerodha's published per-API-key limits. Enforced here first so a busy
+    # page degrades to cached data instead of collecting 429s.
+    quote_requests_per_second: int = Field(default=1, ge=1)
+    historical_requests_per_second: int = Field(default=3, ge=1)
+    other_requests_per_second: int = Field(default=10, ge=1)
+    requests_per_day: int = Field(default=200_000, ge=1)
+
+    #: Strikes either side of at-the-money in a composed option chain.
+    strikes_each_side: int = Field(default=20, ge=1, le=60)
+    #: How long a quote is served from cache before /quote is asked again.
+    quote_cache_seconds: float = Field(default=1.5, gt=0)
+    #: A symbol requested within this window rides along on the next /quote.
+    hot_set_seconds: float = Field(default=10.0, gt=0)
+    #: Daily instrument-dump refresh. Zerodha regenerates it around 08:30 IST;
+    #: before 09:15 the same run also captures previous-session OI.
+    catalog_sync_time_ist: str = "08:35"
 
 
 class LLMSettings(_Section):
@@ -698,6 +732,7 @@ class Settings(BaseSettings):
     auth: AuthSettings = Field(default_factory=AuthSettings)
     google: GoogleOAuthSettings = Field(default_factory=GoogleOAuthSettings)
     broker: BrokerSettings = Field(default_factory=BrokerSettings)
+    kite: KiteSettings = Field(default_factory=KiteSettings)
     llm: LLMSettings = Field(default_factory=LLMSettings)
     observability: ObservabilitySettings = Field(default_factory=ObservabilitySettings)
     market: MarketSettings = Field(default_factory=MarketSettings)
@@ -729,6 +764,12 @@ class Settings(BaseSettings):
             problems.append("CN_SECURITY_COOKIE_SECURE must be true when deployed")
         if self.broker.provider == "mock":
             problems.append("CN_BROKER_PROVIDER is 'mock' in a deployed environment")
+        # A broker returns the authorization code to these URLs in the query
+        # string. Over plain http it crosses the network readable.
+        if not self.broker.fyers_redirect_uri.startswith("https://"):
+            problems.append("CN_BROKER_FYERS_REDIRECT_URI must use https when deployed")
+        if not self.kite.redirect_uri.startswith("https://"):
+            problems.append("CN_KITE_REDIRECT_URI must use https when deployed")
         if self.auth.jwt_algorithm == "HS256" and not self.auth.jwt_signing_key.get_secret_value():
             problems.append(
                 "CN_AUTH_JWT_SIGNING_KEY must be set explicitly when deployed "

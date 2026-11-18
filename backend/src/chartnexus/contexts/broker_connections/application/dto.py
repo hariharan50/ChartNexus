@@ -10,6 +10,7 @@ from dataclasses import dataclass
 from datetime import datetime
 
 from chartnexus.contexts.broker_connections.domain.connection import BrokerConnection
+from chartnexus.contexts.broker_connections.domain.value_objects import BrokerName
 
 
 @dataclass(frozen=True, slots=True)
@@ -29,12 +30,23 @@ class ConnectionView:
     connected_at: datetime | None
     last_validated_at: datetime | None
     last_error: str | None
+    expires_at: datetime | None = None
+    """When the token stops working, where the broker publishes it (Kite)."""
+
+    client_id: str | None = None
+    """The broker login id this connection is bound to, if one was saved."""
 
     @classmethod
-    def of(cls, connection: BrokerConnection | None, *, redirect_uri: str) -> ConnectionView:
+    def of(
+        cls,
+        connection: BrokerConnection | None,
+        *,
+        redirect_uri: str,
+        broker: BrokerName = BrokerName.FYERS,
+    ) -> ConnectionView:
         if connection is None:
             return cls(
-                broker="fyers",
+                broker=broker.value,
                 status="pending",
                 configured=False,
                 connected=False,
@@ -59,6 +71,8 @@ class ConnectionView:
             connected_at=connection.connected_at,
             last_validated_at=connection.last_validated_at,
             last_error=connection.last_error,
+            expires_at=connection.expires_at,
+            client_id=connection.client_id,
         )
 
 

@@ -2,6 +2,8 @@ import { apiFetch } from '$shared/api/client';
 import type {
   BrokerAuthorization,
   BrokerConnection,
+  BrokerConnections,
+  BrokerName,
   ExpiryList,
   FuturesQuote,
   MarketStatus,
@@ -9,42 +11,64 @@ import type {
   Quote
 } from './types';
 
-/** Broker connection management. */
+/**
+ * Broker connection management. Every call names its broker; FYERS is the
+ * default so existing callers keep working.
+ */
 
-export function getConnection(fetcher?: typeof fetch): Promise<BrokerConnection> {
-  return apiFetch<BrokerConnection>({ url: '/broker/fyers/status', fetcher });
+export function listConnections(fetcher?: typeof fetch): Promise<BrokerConnections> {
+  return apiFetch<BrokerConnections>({ url: '/broker/connections', fetcher });
 }
 
-export function saveCredentials(appId: string, secretId: string): Promise<BrokerConnection> {
+export function getConnection(
+  broker: BrokerName = 'fyers',
+  fetcher?: typeof fetch
+): Promise<BrokerConnection> {
+  return apiFetch<BrokerConnection>({ url: `/broker/${broker}/status`, fetcher });
+}
+
+export function saveCredentials(
+  appId: string,
+  secretId: string,
+  broker: BrokerName = 'fyers',
+  clientId?: string
+): Promise<BrokerConnection> {
   return apiFetch<BrokerConnection>({
-    url: '/broker/fyers/credentials',
+    url: `/broker/${broker}/credentials`,
     method: 'POST',
-    body: JSON.stringify({ app_id: appId, secret_id: secretId })
+    body: JSON.stringify({ app_id: appId, secret_id: secretId, client_id: clientId || null })
   });
 }
 
-export function startConnect(redirectTo?: string): Promise<BrokerAuthorization> {
+export function startConnect(
+  redirectTo?: string,
+  broker: BrokerName = 'fyers'
+): Promise<BrokerAuthorization> {
   return apiFetch<BrokerAuthorization>({
-    url: '/broker/fyers/connect',
+    url: `/broker/${broker}/connect`,
     method: 'POST',
     body: JSON.stringify({ redirect_to: redirectTo ?? null })
   });
 }
 
-export function completeConnect(authCode: string, state: string): Promise<BrokerConnection> {
+export function completeConnect(
+  authCode: string,
+  state: string,
+  broker: BrokerName = 'fyers'
+): Promise<BrokerConnection> {
   return apiFetch<BrokerConnection>({
-    url: '/broker/fyers/callback',
+    url: `/broker/${broker}/callback`,
     method: 'POST',
     body: JSON.stringify({ auth_code: authCode, state })
   });
 }
 
-export function disconnect(): Promise<BrokerConnection> {
-  return apiFetch<BrokerConnection>({ url: '/broker/fyers/connection', method: 'DELETE' });
+export function disconnect(broker: BrokerName = 'fyers'): Promise<BrokerConnection> {
+  return apiFetch<BrokerConnection>({ url: `/broker/${broker}/connection`, method: 'DELETE' });
 }
 
-export function revokeCredentials(): Promise<BrokerConnection> {
-  return apiFetch<BrokerConnection>({ url: '/broker/fyers/credentials', method: 'DELETE' });
+export function revokeCredentials(broker: BrokerName = 'fyers'): Promise<BrokerConnection> {
+  return apiFetch<BrokerConnection>({ url: `/broker/${broker}/credentials`, method: 'DELETE' });
 }
 
 /** Market data. */

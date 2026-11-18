@@ -249,6 +249,8 @@ class BrokerCredentials:
 
     app_id: str
     access_token: str
+    broker: str = "fyers"
+    """``fyers`` or ``kite`` — which socket and history endpoint to use."""
 
     @property
     def joined(self) -> str:

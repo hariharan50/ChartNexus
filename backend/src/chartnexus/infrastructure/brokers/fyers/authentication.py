@@ -66,6 +66,16 @@ class FyersOAuthClient:
         )
         return _to_profile(payload)
 
+    async def revoke_token(
+        self,
+        *,
+        credentials: BrokerCredentials,  # noqa: ARG002 — part of the port
+        access_token: str,  # noqa: ARG002 — part of the port
+    ) -> None:
+        """FYERS v3 publishes no token-revocation endpoint. The token is dropped
+        locally by the caller and lapses at the end of the trading day."""
+        return
+
 
 def _to_profile(payload: dict[str, Any]) -> BrokerProfile:
     """Extract only the fields worth showing a user.

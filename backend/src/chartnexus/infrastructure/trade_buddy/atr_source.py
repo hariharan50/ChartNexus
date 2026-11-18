@@ -24,11 +24,15 @@ wearing a different hat.
 
 from __future__ import annotations
 
+from collections.abc import Awaitable, Callable
 from datetime import UTC, datetime, timedelta
-from typing import Any
+from typing import Any, Protocol
 
 from chartnexus.contexts.market_data.domain.instruments import InstrumentSymbol
-from chartnexus.contexts.trade_buddy.application.ports import BrokerCredentialsSource
+from chartnexus.contexts.trade_buddy.application.ports import (
+    BrokerCredentials,
+    BrokerCredentialsSource,
+)
 from chartnexus.infrastructure.brokers.fyers.rest_client import FyersRestClient
 from chartnexus.infrastructure.brokers.fyers.symbol_mapper import to_broker_symbol
 from chartnexus.infrastructure.observability.structured_logging import get_logger
@@ -45,22 +49,79 @@ _DAILY = "D"
 #: cost of over-asking is a slightly larger payload, once a day.
 _LOOKBACK_DAYS = 90
 
+#: Kite's interval name for daily candles.
+_KITE_DAILY = "day"
+
+#: Both brokers return ``[time, open, high, low, close, volume(, oi)]`` rows.
 _ROW_LENGTH = 6
 _HIGH, _LOW, _CLOSE = 2, 3, 4
 
 
+class KiteHistorical(Protocol):
+    """The slice of ``KiteRestClient`` this needs."""
+
+    async def fetch_historical(
+        self,
+        *,
+        api_key: str,
+        access_token: str,
+        instrument_token: int,
+        interval: str,
+        start: datetime,
+        end: datetime,
+        continuous: bool = False,
+        oi: bool = False,
+    ) -> list[list[Any]]: ...
+
+
+class KiteDailyCandles:
+    """Daily candles from Kite, addressed by the spot's instrument token."""
+
+    def __init__(
+        self,
+        client: KiteHistorical,
+        resolve_token: Callable[[str], Awaitable[int | None]],
+    ) -> None:
+        self._client = client
+        self._resolve = resolve_token
+
+    async def fetch(
+        self, symbol: str, credentials: BrokerCredentials, start: datetime, end: datetime
+    ) -> dict[str, Any]:
+        token = await self._resolve(symbol)
+        if token is None:
+            raise LookupError(f"no Kite instrument for {symbol}")
+        candles = await self._client.fetch_historical(
+            api_key=credentials.app_id,
+            access_token=credentials.access_token,
+            instrument_token=token,
+            interval=_KITE_DAILY,
+            start=start,
+            end=end,
+        )
+        return {"candles": candles}
+
+
 class FyersAtrSource:
-    """Implements the ``AtrSource`` port against the Fyers history endpoint."""
+    """Implements the ``AtrSource`` port against the connected broker's history.
+
+    Named for its first broker; a Kite connection is served by ``kite`` when
+    one is wired (ADR 0002). Which path runs is decided per call by the
+    credentials' ``broker``, because the connected broker can change while the
+    watcher is running.
+    """
 
     def __init__(
         self,
         client: FyersRestClient,
         credentials: BrokerCredentialsSource,
         *,
+        kite: KiteDailyCandles | None = None,
         lookback_days: int = _LOOKBACK_DAYS,
     ) -> None:
         self._client = client
         self._credentials = credentials
+        self._kite = kite
         self._lookback_days = lookback_days
 
     async def atr(self, symbol: str, *, period: int = 14) -> float | None:
@@ -71,23 +132,14 @@ class FyersAtrSource:
             return None
 
         try:
-            broker_symbol = self._broker_symbol(symbol)
+            payload = await self._history(symbol, credentials)
         except Exception as exc:
-            log.warning("trade_buddy_atr_unknown_symbol", symbol=symbol, error=repr(exc))
-            return None
-
-        today = datetime.now(UTC).date()
-        try:
-            payload = await self._client.fetch_history(
-                app_id=credentials.app_id,
-                access_token=credentials.access_token,
-                symbol=broker_symbol,
-                resolution=_DAILY,
-                range_from=(today - timedelta(days=self._lookback_days)).isoformat(),
-                range_to=today.isoformat(),
+            log.warning(
+                "trade_buddy_atr_fetch_failed",
+                symbol=symbol,
+                broker=credentials.broker,
+                error=repr(exc),
             )
-        except Exception as exc:
-            log.warning("trade_buddy_atr_fetch_failed", symbol=symbol, error=repr(exc))
             return None
 
         highs, lows, closes = _columns(payload)
@@ -107,6 +159,26 @@ class FyersAtrSource:
 
         log.info("trade_buddy_atr", symbol=symbol, atr=round(value, 2), bars=len(highs))
         return value
+
+    async def _history(self, symbol: str, credentials: BrokerCredentials) -> Any:
+        now = datetime.now(UTC)
+        if credentials.broker == "kite":
+            if self._kite is None:
+                raise LookupError("Kite history is not wired")
+            # Kite's timestamps are exchange-local; a date window is all ATR needs.
+            end = now.replace(tzinfo=None)
+            return await self._kite.fetch(
+                symbol, credentials, end - timedelta(days=self._lookback_days), end
+            )
+        today = now.date()
+        return await self._client.fetch_history(
+            app_id=credentials.app_id,
+            access_token=credentials.access_token,
+            symbol=self._broker_symbol(symbol),
+            resolution=_DAILY,
+            range_from=(today - timedelta(days=self._lookback_days)).isoformat(),
+            range_to=today.isoformat(),
+        )
 
     def _broker_symbol(self, symbol: str) -> str:
         """Canonical name to the broker's string, via the instrument catalog.

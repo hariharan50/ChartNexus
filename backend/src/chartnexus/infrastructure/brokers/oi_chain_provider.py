@@ -29,9 +29,8 @@ from chartnexus.contexts.options_analytics.application.ports import (
     ProviderChain,
 )
 from chartnexus.contexts.options_analytics.domain.oi_math import ChainRow
-from chartnexus.infrastructure.brokers.fyers.quota_manager import QuotaPolicy
 from chartnexus.infrastructure.brokers.mock.provider import MockMarketDataProvider
-from chartnexus.infrastructure.brokers.provider_resolver import TenantProviderResolver
+from chartnexus.infrastructure.brokers.provider_resolver import build_provider_resolver
 from chartnexus.infrastructure.persistence.postgresql.repositories.integration.broker_connection_repository import (
     SqlAlchemyBrokerConnectionRepository,
 )
@@ -160,22 +159,9 @@ def _ist_date(moment: datetime) -> date:
 
 def _build_resolver(*, session: AsyncSession, container: object) -> ProviderResolver:
     """The tenant provider resolver, wired the way the market-data routes wire theirs."""
-    settings = container.settings  # type: ignore[attr-defined]
-    return TenantProviderResolver(
-        connections=SqlAlchemyBrokerConnectionRepository(
-            session,
-            container.token_cipher,  # type: ignore[attr-defined]
-        ),
-        http=container.http,  # type: ignore[attr-defined]
-        redis=container.redis,  # type: ignore[attr-defined]
-        rest_base_url=settings.broker.rest_base_url,
-        quota=QuotaPolicy(
-            requests_per_second=settings.broker.quota_requests_per_second,
-            requests_per_day=settings.broker.quota_requests_per_day,
-        ),
-        request_timeout_seconds=settings.broker.request_timeout_seconds,
-        circuit_breaker_failure_threshold=settings.broker.circuit_breaker_failure_threshold,
-        circuit_breaker_reset_seconds=settings.broker.circuit_breaker_reset_seconds,
+    return build_provider_resolver(
+        container,
+        SqlAlchemyBrokerConnectionRepository(session, container.token_cipher),  # type: ignore[attr-defined]
     )
 
 
