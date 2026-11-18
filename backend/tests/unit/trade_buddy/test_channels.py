@@ -56,8 +56,8 @@ class MemoryChannels:
     async def find_all(self, user_id):  # type: ignore[no-untyped-def]
         return tuple(v for (u, _), v in self.rows.items() if u == user_id)
 
-    async def find_any_ready(self, channel):  # type: ignore[no-untyped-def]
-        return next((v for (_, c), v in self.rows.items() if c == channel and v.ready), None)
+    async def find_ready(self, user_id):  # type: ignore[no-untyped-def]
+        return tuple(v for (u, _), v in self.rows.items() if u == user_id and v.ready)
 
     async def upsert(self, connection):  # type: ignore[no-untyped-def]
         self.rows[(connection.user_id, connection.channel)] = connection
@@ -242,7 +242,7 @@ class TestReadyState:
             USER, AlertChannel.TELEGRAM, enabled=False
         )
 
-        assert await repo.find_any_ready(AlertChannel.TELEGRAM) is None
+        assert await repo.find_ready(USER) == ()
 
     async def test_disconnecting_forgets_everything(self):
         repo, snd, clock = build()

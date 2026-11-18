@@ -17,13 +17,13 @@ from __future__ import annotations
 from collections.abc import Sequence
 from dataclasses import dataclass
 from datetime import date, datetime, timedelta
-from pathlib import Path
 from typing import Any
 
 from fastapi import Request
 
 from chartnexus.contexts.trade_buddy.application.channels import (
     ConnectChannel,
+    ConnectWhatsApp,
     DisconnectChannel,
     GetChannels,
     LinkChat,
@@ -31,7 +31,9 @@ from chartnexus.contexts.trade_buddy.application.channels import (
     SetChannelEnabled,
 )
 from chartnexus.contexts.trade_buddy.application.ports import (
+    AlertSenderPort,
     AlertSink,
+    AtrSource,
     Clock,
     FeedHealth,
     LevelStore,
@@ -68,16 +70,20 @@ from chartnexus.infrastructure.notifications.whatsapp.callmebot import CallMeBot
 from chartnexus.infrastructure.persistence.postgresql.repositories.trade_buddy.alert_channel_repository import (
     SqlAlchemyAlertChannelRepository,
 )
+from chartnexus.infrastructure.persistence.postgresql.repositories.trade_buddy.watch_state_repository import (
+    PostgresLevelStore,
+)
 from chartnexus.infrastructure.trade_buddy.atr_source import FyersAtrSource, KiteDailyCandles
 from chartnexus.infrastructure.trade_buddy.broker_credentials import (
     ConfiguredCredentials,
     ConnectedBrokerCredentials,
 )
 from chartnexus.infrastructure.trade_buddy.clock import SystemTradeBuddyClock
-from chartnexus.infrastructure.trade_buddy.json_level_store import JsonLevelStore
 from chartnexus.infrastructure.trade_buddy.telegram_channel import TelegramAlertSender
 from chartnexus.infrastructure.trade_buddy.telegram_notifier import TelegramNotifier
+from chartnexus.infrastructure.trade_buddy.whatsapp_channel import WhatsAppAlertSender
 from chartnexus.infrastructure.transport.http.dependencies import get_container
+from chartnexus.shared_kernel.types.identifiers import TenantId, UserId
 
 
 @dataclass(frozen=True, slots=True)
@@ -152,6 +158,7 @@ class TradeBuddyServices:
     set_overrides: SetOverrides
     get_channels: GetChannels
     connect_channel: ConnectChannel
+    connect_whatsapp: ConnectWhatsApp
     link_chat: LinkChat
     test_channel: SendChannelTest
     set_channel_enabled: SetChannelEnabled
@@ -352,6 +359,21 @@ def build_alert_sender(container: Any) -> TelegramAlertSender:
     )
 
 
+def build_whatsapp_sender(container: Any) -> WhatsAppAlertSender:
+    """Connect/test/send for a user's own CallMeBot WhatsApp."""
+    return WhatsAppAlertSender(
+        container.http, timeout_seconds=_settings(container).request_timeout_seconds
+    )
+
+
+def build_senders(container: Any) -> dict[AlertChannel, AlertSenderPort]:
+    """One sender per channel, for the channel-generic use cases."""
+    return {
+        AlertChannel.TELEGRAM: build_alert_sender(container),
+        AlertChannel.WHATSAPP: build_whatsapp_sender(container),
+    }
+
+
 def build_credentials(container: Any) -> ConnectedBrokerCredentials:
     """Fyers credentials: the broker connected in the app, else the env pair.
 
@@ -422,67 +444,58 @@ def build_window(container: Any) -> WatchWindow:
     )
 
 
-def build_store(container: Any) -> JsonLevelStore:
-    tb = _settings(container)
-    return JsonLevelStore(
-        directory=Path(tb.state_directory),
-        # A placeholder shape for rebuilding watchers off disk; the engine
+def build_store(container: Any, *, user_id: UserId, tenant_id: TenantId) -> PostgresLevelStore:
+    """One user's Trade Buddy state. Every read and write is scoped to them."""
+    return PostgresLevelStore(
+        database=container.database,
+        user_id=user_id,
+        tenant_id=tenant_id,
+        # A placeholder shape for rebuilding watchers off storage; the engine
         # overwrites it with the session's resolved bands on load.
         bands=build_fallback_bands(container),
     )
 
 
-async def build_notifiers(container: Any) -> tuple[Notifier | None, Notifier | None]:
-    """Telegram and WhatsApp, or ``None`` for whichever is unconfigured.
+async def build_notifiers(
+    container: Any, user_id: UserId
+) -> tuple[Notifier | None, Notifier | None]:
+    """This user's Telegram and WhatsApp, or ``None`` for whichever is not ready.
 
-    Absent credentials disable a channel rather than failing startup: running
-    with Telegram only is a perfectly good configuration, and refusing to boot
-    because WhatsApp is unset would make the optional channel mandatory.
+    Only ever the user's *own* connections, decrypted for this one build. A
+    user with neither still has their levels watched — the page updates and the
+    history records that nothing was delivered — they simply are not messaged.
     """
     tb = _settings(container)
     telegram: Notifier | None = None
     whatsapp: Notifier | None = None
-
-    # The bot connected in the Trade Buddy panel wins. The env pair stays as
-    # an override for a deployment with no UI — the same arrangement as the
-    # broker credentials, and for the same reason: a token managed in two
-    # places goes stale in one of them.
-    connected = await build_channel_repository(container).find_any_ready(AlertChannel.TELEGRAM)
-    if connected is not None and connected.target is not None:
-        telegram = TelegramNotifier(
-            container.http,
-            bot_token=connected.secret,
-            chat_id=connected.target,
-            api_base=container.settings.messaging.telegram_api_base,
-            timeout_seconds=tb.request_timeout_seconds,
-            chart_url=tb.chart_url or None,
-        )
-    else:
-        token = tb.telegram_bot_token.get_secret_value() if tb.telegram_bot_token else ""
-        if token and tb.telegram_chat_id:
+    for connection in await build_channel_repository(container).find_ready(user_id):
+        if connection.target is None:
+            continue
+        if connection.channel is AlertChannel.TELEGRAM:
             telegram = TelegramNotifier(
                 container.http,
-                bot_token=token,
-                chat_id=tb.telegram_chat_id,
+                bot_token=connection.secret,
+                chat_id=connection.target,
                 api_base=container.settings.messaging.telegram_api_base,
                 timeout_seconds=tb.request_timeout_seconds,
                 chart_url=tb.chart_url or None,
             )
-
-    api_key = tb.whatsapp_api_key.get_secret_value() if tb.whatsapp_api_key else ""
-    if api_key and tb.whatsapp_phone:
-        whatsapp = CallMeBotNotifier(
-            container.http,
-            phone=tb.whatsapp_phone,
-            api_key=api_key,
-            timeout_seconds=tb.request_timeout_seconds,
-        )
+        elif connection.channel is AlertChannel.WHATSAPP:
+            whatsapp = CallMeBotNotifier(
+                container.http,
+                phone=connection.target,
+                api_key=connection.secret,
+                timeout_seconds=tb.request_timeout_seconds,
+            )
     return telegram, whatsapp
 
 
-async def build_router(container: Any, *, clock: Clock | None = None) -> AlertRouter:
+async def build_router(
+    container: Any, user_id: UserId, *, clock: Clock | None = None
+) -> AlertRouter:
+    """One user's alert router: their channels, their own WhatsApp allowance."""
     tb = _settings(container)
-    telegram, whatsapp = await build_notifiers(container)
+    telegram, whatsapp = await build_notifiers(container, user_id)
     return AlertRouter(
         telegram=telegram,
         whatsapp=whatsapp,
@@ -513,25 +526,28 @@ async def build_watch_engine(
     container: Any,
     symbol: str,
     *,
+    store: LevelStore,
+    router: AlertRouter,
     sink: AlertSink | None = None,
-    router: AlertRouter | None = None,
+    atr_source: AtrSource | None = None,
 ) -> WatchEngine:
-    """The worker-side engine for one instrument.
+    """The worker-side engine for one user's instrument.
 
-    `router` is passed in when several instruments are watched at once: the
-    WhatsApp budget is a per-account ceiling, not a per-instrument one, so
-    three engines each holding their own would let the real send rate reach
-    three times the configured limit.
+    ``store`` and ``router`` are that user's: their state row and their
+    channels. One router serves all of a user's instruments, because the
+    WhatsApp budget is a per-account ceiling, not a per-instrument one — three
+    engines each holding their own would let the real send rate reach three
+    times the configured limit. ``atr_source`` is shared across *users* by the
+    worker (see ``SessionAtrCache``): ATR is a fact about the market.
     """
     tb = _settings(container)
     clock = SystemTradeBuddyClock()
-    router = router or await build_router(container, clock=clock)
     return WatchEngine(
         symbol=symbol,
         policy=build_policy(container),
-        atr_source=build_atr_source(container),
+        atr_source=atr_source or build_atr_source(container),
         window=build_window(container),
-        store=build_store(container),
+        store=store,
         sink=sink or router,
         clock=clock,
         budget=build_level_budget(container),
@@ -598,13 +614,17 @@ async def build_feed(container: Any, sink: AlertSink) -> Any:
 # -- the request side --------------------------------------------------------
 
 
-async def build_trade_buddy_services(request: Request) -> TradeBuddyServices:
+async def build_trade_buddy_services(
+    request: Request, *, user_id: UserId, tenant_id: TenantId
+) -> TradeBuddyServices:
+    """The request side, built for one user: their state, their channels."""
     container = get_container(request)
     clock = SystemTradeBuddyClock()
-    store = build_store(container)
+    store = build_store(container, user_id=user_id, tenant_id=tenant_id)
     channels = build_channel_repository(container)
-    sender = build_alert_sender(container)
-    router = await build_router(container, clock=clock)
+    senders = build_senders(container)
+    sender = senders[AlertChannel.TELEGRAM]
+    router = await build_router(container, user_id, clock=clock)
     return TradeBuddyServices(
         get_levels=GetLevels(store=store),
         set_levels=SetLevels(store=store, window=build_window(container), clock=clock),
@@ -616,8 +636,11 @@ async def build_trade_buddy_services(request: Request) -> TradeBuddyServices:
         set_overrides=SetOverrides(store=store),
         get_channels=GetChannels(repository=channels),
         connect_channel=ConnectChannel(repository=channels, sender=sender, clock=clock),
+        connect_whatsapp=ConnectWhatsApp(
+            repository=channels, sender=senders[AlertChannel.WHATSAPP], clock=clock
+        ),
         link_chat=LinkChat(repository=channels, sender=sender, clock=clock),
-        test_channel=SendChannelTest(repository=channels, sender=sender),
+        test_channel=SendChannelTest(repository=channels, sender=sender, senders=senders),
         set_channel_enabled=SetChannelEnabled(repository=channels, clock=clock),
         disconnect_channel=DisconnectChannel(repository=channels),
         _store=store,

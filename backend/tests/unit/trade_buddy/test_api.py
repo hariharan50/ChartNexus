@@ -95,6 +95,7 @@ def _services(store: MemoryLevelStore) -> TradeBuddyServices:
         set_overrides=SetOverrides(store=store),
         get_channels=None,  # type: ignore[arg-type]
         connect_channel=None,  # type: ignore[arg-type]
+        connect_whatsapp=None,  # type: ignore[arg-type]
         link_chat=None,  # type: ignore[arg-type]
         test_channel=None,  # type: ignore[arg-type]
         set_channel_enabled=None,  # type: ignore[arg-type]
@@ -401,3 +402,30 @@ class TestTheAlertLogReachesTheClient:
 
         assert body["symbol"] == "NIFTY"
         assert len(body["alerts"]) == 1
+
+
+class TestServicesAreScopedToTheCaller:
+    """Per-user: the services every route uses are built for whoever is asking.
+
+    The dependency takes the principal itself, so no route can reach a store or
+    a channel set that is not bound to the authenticated user — not by
+    forgetting to pass it, and not by passing someone else's.
+    """
+
+    async def test_the_dependency_builds_for_the_authenticated_user(self, monkeypatch):
+        from chartnexus.contexts.trade_buddy.api import dependencies  # noqa: PLC0415
+
+        seen: dict[str, object] = {}
+
+        async def fake_build(request, *, user_id, tenant_id):  # type: ignore[no-untyped-def]
+            seen.update(user_id=user_id, tenant_id=tenant_id)
+            return "services"
+
+        monkeypatch.setattr(dependencies, "build_trade_buddy_services", fake_build)
+        user, tenant = UserId(uuid.uuid4()), TenantId(uuid.uuid4())
+        principal = Principal(claims=_Claims(subject=user, tenant_id=tenant))  # type: ignore[arg-type]
+
+        result = await dependencies.build_services(object(), principal)  # type: ignore[arg-type]
+
+        assert result == "services"
+        assert seen == {"user_id": user, "tenant_id": tenant}

@@ -16,14 +16,20 @@ from chartnexus.infrastructure.trade_buddy.build_trade_buddy import (
     TradeBuddyServices,
     build_trade_buddy_services,
 )
+from chartnexus.infrastructure.transport.http.dependencies import CurrentPrincipal
 
 __all__ = ["Services", "TradeBuddyServices", "build_services"]
 
 
-async def build_services(request: Request) -> TradeBuddyServices:
-    # Async because assembling the services reads the connected alert bot
-    # from the database; FastAPI awaits an async dependency as-is.
-    return await build_trade_buddy_services(request)
+async def build_services(request: Request, principal: CurrentPrincipal) -> TradeBuddyServices:
+    # Trade Buddy is per-user: the services are built *for* the caller, with a
+    # state store and channel set bound to their user id. Taking the principal
+    # here, rather than leaving each route to pass it, means no route can reach
+    # a store that is not scoped to whoever is asking. FastAPI resolves the
+    # principal once per request, so routes that also declare it pay nothing.
+    return await build_trade_buddy_services(
+        request, user_id=principal.user_id, tenant_id=principal.tenant_id
+    )
 
 
 Services = Annotated[TradeBuddyServices, Depends(build_services)]

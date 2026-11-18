@@ -88,9 +88,12 @@ class Harness:
     built: list[str]
 
     async def reconcile(self) -> tuple[str, ...]:
+        # Keyed by symbol alone: one user. The per-user loop keys by
+        # (user, symbol) through the same function — see TestManyUsers.
         return await reconcile_engines(
-            symbols=OFFERED,
-            store=self.store,
+            targets=OFFERED,
+            load_marks=self.store.load_marks,
+            symbol_of=lambda symbol: symbol,
             feed=self.feed,
             engines=self.engines,
             loaded=self.loaded,
@@ -308,3 +311,111 @@ class TestClearedMarks:
         await harness.reconcile()
 
         assert harness.feed.calls == [(NIFTY,)]
+
+
+# -- many users, one feed -----------------------------------------------------
+
+ALICE = "alice"
+BOB = "bob"
+
+#: Bob's levels for the same index — a different person, different marks.
+BOB_NIFTY = (
+    LevelMark(label="R1", price=24_900.0, role=LevelRole.RESISTANCE),
+    LevelMark(label="S1", price=24_400.0, role=LevelRole.SUPPORT),
+)
+
+
+@dataclass(slots=True)
+class ManyUsers:
+    """The per-user loop's reconcile: keys are (user, symbol), one store each."""
+
+    stores: dict[str, MemoryLevelStore]
+    sinks: dict[str, RecordingSink]
+    feed: RecordingFeed = field(default_factory=RecordingFeed)
+    engines: dict[tuple[str, str], WatchEngine] = field(default_factory=dict)
+    loaded: dict[tuple[str, str], MarkSet] = field(default_factory=dict)
+
+    async def reconcile(self) -> tuple[tuple[str, str], ...]:
+        targets = tuple((user, symbol) for user in self.stores for symbol in OFFERED)
+        return await reconcile_engines(
+            targets=targets,
+            load_marks=lambda key: self.stores[key[0]].load_marks(key[1]),
+            symbol_of=lambda key: key[1],
+            feed=self.feed,
+            engines=self.engines,
+            loaded=self.loaded,
+            build=self._build,
+        )
+
+    async def _build(self, key: tuple[str, str]) -> WatchEngine:
+        user, symbol = key
+        return WatchEngine(
+            symbol=symbol,
+            policy=policy(),
+            window=window(),
+            store=self.stores[user],
+            sink=self.sinks[user],
+            clock=FakeClock(SESSION_START),
+        )
+
+    def marks_of(self, user: str, symbol: str) -> tuple[LevelMark, ...]:
+        return tuple(w.mark for w in self.engines[(user, symbol)].watchers)
+
+
+@pytest.fixture
+def many() -> ManyUsers:
+    return ManyUsers(
+        stores={ALICE: MemoryLevelStore(), BOB: MemoryLevelStore()},
+        sinks={ALICE: RecordingSink(), BOB: RecordingSink()},
+    )
+
+
+class TestManyUsers:
+    async def test_two_users_on_one_index_each_watch_their_own_levels(self, many):
+        many.stores[ALICE].mark(NIFTY, *MORNING)
+        many.stores[BOB].mark(NIFTY, *BOB_NIFTY)
+
+        wanted = await many.reconcile()
+
+        assert set(wanted) == {(ALICE, NIFTY), (BOB, NIFTY)}
+        assert many.marks_of(ALICE, NIFTY) == MORNING
+        assert many.marks_of(BOB, NIFTY) == BOB_NIFTY
+
+    async def test_one_subscription_serves_every_user_of_an_index(self, many):
+        many.stores[ALICE].mark(NIFTY, *MORNING)
+        many.stores[BOB].mark(NIFTY, *BOB_NIFTY)
+
+        await many.reconcile()
+
+        assert many.feed.calls == [(NIFTY,)]
+
+    async def test_each_engine_alerts_its_own_user_only(self, many):
+        many.stores[ALICE].mark(NIFTY, *MORNING)
+        many.stores[BOB].mark(NIFTY, *BOB_NIFTY)
+        await many.reconcile()
+
+        assert many.engines[(ALICE, NIFTY)].sink is many.sinks[ALICE]
+        assert many.engines[(BOB, NIFTY)].sink is many.sinks[BOB]
+
+    async def test_one_user_clearing_leaves_the_other_watching(self, many):
+        many.stores[ALICE].mark(NIFTY, *MORNING)
+        many.stores[BOB].mark(NIFTY, *BOB_NIFTY)
+        await many.reconcile()
+
+        await many.stores[ALICE].clear(NIFTY)
+        wanted = await many.reconcile()
+
+        assert wanted == ((BOB, NIFTY),)
+        assert many.marks_of(BOB, NIFTY) == BOB_NIFTY
+
+    async def test_a_second_user_joining_does_not_re_subscribe(self, many):
+        many.stores[ALICE].mark(NIFTY, *MORNING)
+        await many.reconcile()
+
+        many.stores[BOB].mark(NIFTY, *BOB_NIFTY)
+        await many.reconcile()
+
+        # Bob's engine is new, but NIFTY is already on the socket — and
+        # `subscribe` is idempotent, so naming it again costs nothing either way.
+        assert (BOB, NIFTY) in many.engines
+        assert all(call == (NIFTY,) for call in many.feed.calls)
