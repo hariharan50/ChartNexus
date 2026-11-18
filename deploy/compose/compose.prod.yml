@@ -95,6 +95,20 @@ x-backend-env: &backend-env
   # is no server key to set.
   CN_LLM_AGENT_DISCLAIMER: "true"
 
+  # Trade Buddy's alert channels. This block is an explicit list — nothing in
+  # .env.production reaches a container unless it is named here — so without
+  # these the watcher runs but can never alert. Blank disables a channel, the
+  # same as the setting's own default. Its broker is the one connected in the
+  # app; every band and threshold keeps its default (CN_TRADE_BUDDY_* in
+  # backend/.env.example) unless added here.
+  CN_TRADE_BUDDY_SYMBOLS: ${CN_TRADE_BUDDY_SYMBOLS:-["NIFTY","BANKNIFTY","SENSEX"]}
+  CN_TRADE_BUDDY_HOLIDAYS: ${CN_TRADE_BUDDY_HOLIDAYS:-}
+  CN_TRADE_BUDDY_TELEGRAM_BOT_TOKEN: ${CN_TRADE_BUDDY_TELEGRAM_BOT_TOKEN:-}
+  CN_TRADE_BUDDY_TELEGRAM_CHAT_ID: ${CN_TRADE_BUDDY_TELEGRAM_CHAT_ID:-}
+  CN_TRADE_BUDDY_CHART_URL: ${CN_TRADE_BUDDY_CHART_URL:-}
+  CN_TRADE_BUDDY_WHATSAPP_PHONE: ${CN_TRADE_BUDDY_WHATSAPP_PHONE:-}
+  CN_TRADE_BUDDY_WHATSAPP_API_KEY: ${CN_TRADE_BUDDY_WHATSAPP_API_KEY:-}
+
 # Every worker shares this: no published ports, restarts on failure, and waits
 # for the schema and the catalog before it opens a session.
 x-worker: &worker
