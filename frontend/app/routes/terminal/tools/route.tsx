@@ -1,5 +1,6 @@
 import { Link } from 'react-router';
 import { TOOLS } from './catalog';
+import { ToolIcon } from './ToolIcon';
 import s from './tools.module.css';
 import type { Route } from './+types/route';
 
@@ -25,7 +26,7 @@ export default function Tools() {
         {TOOLS.map((tool) => (
           <Link key={tool.slug} to={`/tools/${tool.slug}`} className={s.box}>
             <span className={`${s.badge} ${s[tool.tone]}`} aria-hidden="true">
-              {tool.code}
+              <ToolIcon slug={tool.slug} fallback={tool.code} />
             </span>
             <span className={s.boxName}>{tool.name}</span>
             <span className={s.boxDesc}>{tool.description}</span>
