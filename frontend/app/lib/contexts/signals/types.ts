@@ -21,6 +21,16 @@ export interface HorizonCall {
   confidence: number;
   /** Features that moved this call most, strongest first. */
   drivers: string[];
+  /** Signed impact of the strongest features; positive pushes p(up) higher.
+   *  Absent on payloads cached before the field existed. */
+  factors?: DriverFactor[];
+  /** Half-width of the HOLD band around 0.5 (BUY above 0.5 + band). */
+  band?: number | null;
+}
+
+export interface DriverFactor {
+  name: string;
+  impact: number;
 }
 
 export interface Levels {
@@ -66,6 +76,8 @@ export interface Guidance {
   context: MarketContext;
   levels: Levels;
   scaffold: Scaffold;
+  /** Share of model inputs that had data, 0-1. Thin data caps confidence. */
+  coverage?: number | null;
 }
 
 export interface AskResponse {

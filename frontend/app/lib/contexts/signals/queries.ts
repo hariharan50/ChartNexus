@@ -11,10 +11,17 @@ import {
   askAgent,
   getAgentAvailability,
   getGuidance,
+  getGuidanceHistory,
   getStryxAvailability,
   getStryxJournalToday
 } from './api';
-import type { AgentAvailability, AskResponse, Guidance, StryxJournalToday } from './types';
+import type {
+  AgentAvailability,
+  AskResponse,
+  Guidance,
+  GuidanceHistory,
+  StryxJournalToday
+} from './types';
 
 const REFETCH_MS = 15_000;
 // Availability only changes with server config (an LLM key), so a long stale
@@ -26,6 +33,15 @@ export function useGuidanceQuery(symbol: string) {
     queryKey: queryKeys.signals({ symbol }),
     queryFn: () => getGuidance(symbol),
     refetchInterval: REFETCH_MS
+  });
+}
+
+/** Recorded decision changes, newest first. Changes are rare, so a slow poll. */
+export function useGuidanceHistoryQuery(symbol: string, limit = 20) {
+  return useQuery<GuidanceHistory>({
+    queryKey: ['signals', 'history', symbol, limit],
+    queryFn: () => getGuidanceHistory(symbol, limit),
+    refetchInterval: 60_000
   });
 }
 

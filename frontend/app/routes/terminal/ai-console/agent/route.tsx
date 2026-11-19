@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, type MutableRefObject, type ReactNode } from 'react';
-import { Link } from 'react-router';
+import { Link, useSearchParams } from 'react-router';
 import { streamAgent, type AgentStreamEvent } from '$contexts/signals/api';
 import { loadChat, saveChat } from '$contexts/signals/chat-store';
 import { useAgentAvailabilityQuery } from '$contexts/signals/queries';
@@ -20,7 +20,16 @@ export const meta: Route.MetaFunction = () => [
 const AGENT_NAME = 'Hella';
 
 export default function AiAnalysisAgent() {
-  const [instIdx, setInstIdx] = useState(0);
+  // Market Analysis links here with `?symbol=NIFTY&q=…`: open on that instrument
+  // with the question typed in, but leave sending it to the user.
+  const [params] = useSearchParams();
+  const [instIdx, setInstIdx] = useState(() =>
+    Math.max(
+      0,
+      INSTRUMENTS.findIndex((inst) => inst.symbol === params.get('symbol')?.toUpperCase())
+    )
+  );
+  const prefill = params.get('q')?.slice(0, 500) ?? '';
   const [infoOpen, setInfoOpen] = useState(false);
   const instrument = INSTRUMENTS[instIdx] ?? INSTRUMENTS[0];
   const availability = useAgentAvailabilityQuery();
@@ -65,6 +74,7 @@ export default function AiAnalysisAgent() {
             key={`${userId}:${instrument.symbol}`}
             userId={userId}
             symbol={instrument.symbol}
+            prefill={prefill}
           />
         )}
       </div>
@@ -72,11 +82,19 @@ export default function AiAnalysisAgent() {
   );
 }
 
-function ChatPanel({ userId, symbol }: { userId: string; symbol: string }) {
+function ChatPanel({
+  userId,
+  symbol,
+  prefill = ''
+}: {
+  userId: string;
+  symbol: string;
+  prefill?: string;
+}) {
   // Rehydrate today's conversation for this user+instrument (empty if none).
   const [restored] = useState(() => loadChat(userId, symbol));
   const [messages, setMessages] = useState<ChatMessage[]>(restored.messages);
-  const [input, setInput] = useState('');
+  const [input, setInput] = useState(prefill);
   const [busy, setBusy] = useState(false);
   // A ref, not state: the id must be readable inside the stream closure without
   // re-running it, and it never needs to trigger a render.

@@ -194,22 +194,11 @@
   text-transform: uppercase;
 }
 
-.provRow {
-  position: relative;
-}
-
 .rationale {
   position: relative;
   font-size: var(--cn-text-sm);
   color: var(--cn-text-base, var(--cn-text));
   line-height: 1.55;
-  margin: 0;
-}
-
-.warning {
-  position: relative;
-  font-size: var(--cn-text-xs);
-  color: var(--cn-bearish, #dc2626);
   margin: 0;
 }
 
@@ -220,9 +209,7 @@
   line-height: 1.5;
   border-top: 1px dashed var(--cn-border);
   padding-top: var(--cn-space-3);
-  /* Pinned to the bottom of the (stretched) hero card, so its lower edge lines
-     up with the Levels/Scaffold column beside it. */
-  margin: auto 0 0;
+  margin: var(--cn-space-2) 0 0;
 }
 
 /* -- Regime + horizon switcher --------------------------------------------- */
@@ -407,15 +394,6 @@
   margin-top: 22px;
 }
 
-.posFill {
-  position: absolute;
-  left: 0;
-  top: 0;
-  bottom: 0;
-  border-radius: 999px;
-  background: transparent;
-}
-
 .posSpot {
   position: absolute;
   top: 50%;
@@ -454,54 +432,6 @@
   left: auto;
   right: 0;
   transform: translateX(0);
-}
-
-.chipsRow {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: var(--cn-space-2);
-}
-
-.levelChip {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--cn-space-2);
-  padding: 8px 10px;
-  border-radius: var(--cn-radius);
-  background: var(--cn-surface);
-  border: 1px solid var(--cn-border);
-}
-
-.levelKey {
-  font-size: var(--cn-text-xs);
-  color: var(--cn-text-muted);
-}
-
-.levelVal {
-  font-size: var(--cn-text-sm);
-  font-weight: 700;
-  color: var(--cn-text);
-  font-variant-numeric: tabular-nums;
-}
-
-/* Simple key/value row fallback (used when no bracket) */
-.row {
-  display: flex;
-  justify-content: space-between;
-  gap: var(--cn-space-3);
-  font-size: var(--cn-text-sm);
-  padding: 6px 0 var(--cn-space-3);
-}
-
-.rowKey {
-  color: var(--cn-text-muted);
-}
-
-.rowVal {
-  color: var(--cn-text);
-  font-weight: 700;
-  font-variant-numeric: tabular-nums;
 }
 
 /* -- Scaffold stat tiles --------------------------------------------------- */
@@ -675,18 +605,6 @@
   border-color: rgba(255, 255, 255, 0.4);
 }
 
-.tinted .certaintyLabel {
-  color: rgba(255, 255, 255, 0.82);
-}
-
-.tinted .certaintyTrack {
-  background: rgba(255, 255, 255, 0.25);
-}
-
-.tinted .certaintyFill {
-  background: #fff;
-}
-
 .cardTitle {
   font-size: var(--cn-text-xs);
   font-weight: 600;
@@ -700,14 +618,6 @@
   line-height: 1.05;
   color: var(--cn-text);
   font-variant-numeric: tabular-nums;
-}
-
-.cardBig.buy {
-  color: var(--cn-bullish, #16a34a);
-}
-
-.cardBig.sell {
-  color: var(--cn-bearish, #dc2626);
 }
 
 .cardRegime {
@@ -753,48 +663,6 @@
   color: var(--cn-text-muted);
   background: var(--cn-surface);
   border: 1px solid var(--cn-border);
-}
-
-.certainty {
-  margin-top: 4px;
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
-
-.certaintyLabel {
-  font-size: 11px;
-  color: var(--cn-text-subtle);
-}
-
-.certaintyTrack {
-  height: 6px;
-  border-radius: 3px;
-  background: var(--cn-border);
-  overflow: hidden;
-}
-
-.certaintyFill {
-  display: block;
-  height: 100%;
-  border-radius: 3px;
-  background: linear-gradient(90deg, var(--cn-accent, #8b5cf6), #a78bfa);
-  /* `width`, and deliberately not `transform: scaleX()`.
-     The fill carries a gradient across its own length, so scaling a
-     full-width bar down would compress the colour ramp instead of revealing
-     part of it — the bar would end up a different colour at 30% than at 90%.
-     A gradient meter is one of the few honest reasons to animate a layout
-     property; it is one element, off the hot path, and it animates on a
-     user-initiated update rather than on every tick. */
-  transition: width var(--dur-gentle) var(--ease-decelerate);
-}
-
-.certaintyFill.buy {
-  background: linear-gradient(90deg, var(--cn-bullish, #16a34a), #22c55e);
-}
-
-.certaintyFill.sell {
-  background: linear-gradient(90deg, var(--cn-bearish, #dc2626), #ef4444);
 }
 
 .statusBar {
@@ -843,5 +711,676 @@
 @media (max-width: 560px) {
   .statusCenter {
     display: none;
+  }
+}
+
+/* ========================================================================== */
+/* Market Analysis upgrade                                                    */
+/* ========================================================================== */
+
+.srOnly {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+.num {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+/* -- Freshness (in the header) --------------------------------------------- */
+.freshness {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--cn-space-2);
+}
+
+.freshText {
+  font-size: var(--cn-text-xs);
+  color: var(--cn-text-subtle);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.refresh {
+  width: 30px;
+  height: 30px;
+  border: 1px solid var(--cn-border);
+  border-radius: var(--cn-radius);
+  background: var(--cn-surface);
+  color: var(--cn-text-muted);
+  font-size: 1rem;
+  cursor: pointer;
+}
+
+.refresh:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+.refresh:focus-visible,
+.askChip:focus-visible,
+.linkButton:focus-visible {
+  outline: 2px solid var(--cn-accent);
+  outline-offset: 2px;
+}
+
+.linkButton {
+  border: 0;
+  background: none;
+  padding: 0;
+  font: inherit;
+  color: var(--cn-accent);
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+/* -- Skeleton -------------------------------------------------------------- */
+.skeleton {
+  display: flex;
+  flex-direction: column;
+  gap: var(--cn-space-5, 1.25rem);
+}
+
+.skeletonBlock {
+  min-height: 150px;
+  background: linear-gradient(
+    90deg,
+    var(--cn-surface) 0%,
+    var(--cn-surface-raised, var(--cn-border)) 50%,
+    var(--cn-surface) 100%
+  );
+  background-size: 200% 100%;
+  animation: global(cn-pulse) var(--cn-duration-pulse) ease-in-out infinite;
+}
+
+.skeletonTall {
+  min-height: 420px;
+}
+
+/* -- Consensus card -------------------------------------------------------- */
+.voteRow {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 6px;
+  margin-top: 2px;
+}
+
+.vote {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  padding: 5px 8px;
+  border-radius: var(--cn-radius-sm, 6px);
+  background: rgba(255, 255, 255, 0.16);
+  border: 1px solid rgba(255, 255, 255, 0.28);
+}
+
+.voteLabel {
+  font-size: 10px;
+  color: rgba(255, 255, 255, 0.8);
+  white-space: nowrap;
+}
+
+.voteValue {
+  font-size: var(--cn-text-sm);
+  font-weight: 800;
+  color: #fff;
+  letter-spacing: 0.03em;
+}
+
+/* -- Horizon strip (richer tabs) ------------------------------------------- */
+.switchBtn {
+  align-items: stretch;
+  text-align: left;
+  gap: 4px;
+  padding: 8px 10px;
+}
+
+.switchBtn:focus-visible {
+  outline: 2px solid var(--cn-accent);
+  outline-offset: 1px;
+}
+
+.switchHead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+}
+
+.miniChip {
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  padding: 1px 7px;
+  border-radius: 999px;
+  color: #fff;
+  background: var(--cn-text-subtle, #6b7280);
+}
+
+.miniChip.buy {
+  background: var(--cn-bullish, #16a34a);
+}
+
+.miniChip.sell {
+  background: var(--cn-bearish, #dc2626);
+}
+
+.switchMeter {
+  position: relative;
+  display: block;
+  height: 4px;
+  border-radius: 999px;
+  background: var(--cn-border);
+  overflow: hidden;
+}
+
+.switchMeterFill {
+  position: absolute;
+  inset: 0 auto 0 0;
+  border-radius: inherit;
+  background: var(--cn-text-subtle, #6b7280);
+}
+
+.switchMeterFill.buy {
+  background: var(--cn-bullish, #16a34a);
+}
+
+.switchMeterFill.sell {
+  background: var(--cn-bearish, #dc2626);
+}
+
+.switchConf {
+  font-size: 10px;
+  color: var(--cn-text-subtle);
+  font-variant-numeric: tabular-nums;
+}
+
+/* -- Confidence ring + coverage -------------------------------------------- */
+.ringWrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+
+.coverage {
+  font-size: 10px;
+  color: var(--cn-text-subtle);
+  white-space: nowrap;
+  cursor: help;
+  border-bottom: 1px dotted var(--cn-border);
+}
+
+/* -- Probability gauge ----------------------------------------------------- */
+.gauge {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.gaugeHead {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--cn-space-2);
+}
+
+.gaugeHead .panelTitle {
+  margin: 0;
+}
+
+.gaugeTrack {
+  position: relative;
+  height: 12px;
+  border-radius: 999px;
+  overflow: visible;
+  background: var(--cn-border);
+}
+
+.gaugeSell,
+.gaugeBuy {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 50%;
+}
+
+.gaugeSell {
+  left: 0;
+  border-radius: 999px 0 0 999px;
+  background: color-mix(in srgb, var(--cn-bearish, #dc2626) 30%, transparent);
+}
+
+.gaugeBuy {
+  right: 0;
+  border-radius: 0 999px 999px 0;
+  background: color-mix(in srgb, var(--cn-bullish, #16a34a) 30%, transparent);
+}
+
+.gaugeBand {
+  position: absolute;
+  top: -3px;
+  bottom: -3px;
+  border-radius: 4px;
+  background: color-mix(in srgb, var(--cn-text-subtle, #6b7280) 35%, transparent);
+  border: 1px dashed var(--cn-text-subtle, #6b7280);
+}
+
+.gaugeMid {
+  position: absolute;
+  left: 50%;
+  top: -4px;
+  bottom: -4px;
+  width: 1px;
+  background: var(--cn-text-subtle);
+}
+
+.gaugeMarker {
+  position: absolute;
+  top: 50%;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+  background: var(--cn-text-subtle, #6b7280);
+  border: 3px solid var(--cn-surface);
+  box-shadow: 0 0 0 1px var(--cn-border-strong, var(--cn-border));
+  transition: left 500ms cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+.gaugeMarker.buy {
+  background: var(--cn-bullish, #16a34a);
+}
+
+.gaugeMarker.sell {
+  background: var(--cn-bearish, #dc2626);
+}
+
+.gaugeScale {
+  display: flex;
+  justify-content: space-between;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  color: var(--cn-text-subtle);
+}
+
+.gaugeNote {
+  margin: 0;
+  font-size: var(--cn-text-xs);
+  color: var(--cn-text-muted);
+}
+
+/* -- Driver bars ----------------------------------------------------------- */
+.driverLegend {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 10px;
+  color: var(--cn-text-subtle);
+}
+
+.legendUp,
+.legendDown {
+  display: inline-block;
+  width: 10px;
+  height: 6px;
+  border-radius: 2px;
+  margin-left: 4px;
+}
+
+.legendUp {
+  background: var(--cn-bullish, #16a34a);
+}
+
+.legendDown {
+  background: var(--cn-bearish, #dc2626);
+}
+
+.driverList {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.driverRow {
+  display: grid;
+  grid-template-columns: minmax(0, 1.2fr) minmax(90px, 1fr) 3.2rem;
+  align-items: center;
+  gap: var(--cn-space-3);
+}
+
+.driverName {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  font-size: var(--cn-text-sm);
+  font-weight: 600;
+  color: var(--cn-text);
+}
+
+.driverHint {
+  overflow: hidden;
+  font-size: 11px;
+  font-weight: 400;
+  color: var(--cn-text-subtle);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.driverTrack {
+  position: relative;
+  height: 8px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--cn-border) 70%, transparent);
+}
+
+.driverAxis {
+  position: absolute;
+  left: 50%;
+  top: -3px;
+  bottom: -3px;
+  width: 1px;
+  background: var(--cn-text-subtle);
+}
+
+.driverFill {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  border-radius: 999px;
+}
+
+.driverFill.up {
+  background: var(--cn-bullish, #16a34a);
+}
+
+.driverFill.down {
+  background: var(--cn-bearish, #dc2626);
+}
+
+.driverValue {
+  font-size: var(--cn-text-xs);
+  font-weight: 700;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.upText {
+  color: var(--cn-bullish, #16a34a);
+}
+
+.downText {
+  color: var(--cn-bearish, #dc2626);
+}
+
+/* -- Warnings callout ------------------------------------------------------ */
+.callout {
+  position: relative;
+  padding: var(--cn-space-3);
+  border: 1px solid color-mix(in srgb, #f59e0b 45%, var(--cn-border));
+  border-radius: var(--cn-radius);
+  background: color-mix(in srgb, #f59e0b 10%, transparent);
+  font-size: var(--cn-text-xs);
+  color: var(--cn-text);
+}
+
+.calloutTitle {
+  display: block;
+  margin-bottom: 4px;
+  font-weight: 700;
+  color: #d97706;
+}
+
+.callout ul {
+  margin: 0;
+  padding-left: 1.1rem;
+}
+
+/* -- Ask Hella ------------------------------------------------------------- */
+.ask {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: var(--cn-space-2);
+  padding-top: var(--cn-space-3);
+  border-top: 1px solid var(--cn-border);
+  margin-top: auto;
+}
+
+.ask .panelTitle {
+  margin: 0;
+}
+
+.askRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.askChip {
+  padding: 6px 12px;
+  border: 1px solid var(--cn-border);
+  border-radius: 999px;
+  background: var(--cn-surface);
+  font-size: var(--cn-text-xs);
+  color: var(--cn-text-muted);
+  text-decoration: none;
+  transition: border-color var(--dur-xquick) var(--ease-standard);
+}
+
+@media (hover: hover) {
+  .askChip:hover {
+    border-color: var(--cn-accent);
+    color: var(--cn-text);
+  }
+}
+
+/* -- Levels ladder --------------------------------------------------------- */
+.ladder {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--cn-text-sm);
+}
+
+.ladder thead th {
+  padding: 0 8px 6px;
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  text-align: left;
+  color: var(--cn-text-subtle);
+}
+
+.ladder thead th.num {
+  text-align: right;
+}
+
+.ladder tbody th,
+.ladder tbody td {
+  padding: 7px 8px;
+  border-top: 1px solid var(--cn-border);
+  font-weight: 500;
+  color: var(--cn-text);
+}
+
+.ladder tbody th {
+  text-align: left;
+  font-weight: 600;
+}
+
+.ladderAbove td:last-child {
+  color: var(--cn-bearish, #dc2626);
+}
+
+.ladderBelow td:last-child {
+  color: var(--cn-bullish, #16a34a);
+}
+
+.ladderSpot th,
+.ladderSpot td {
+  background: color-mix(in srgb, var(--cn-accent) 10%, transparent);
+  font-weight: 800 !important;
+}
+
+.ladderNearest th,
+.ladderNearest td {
+  background: color-mix(in srgb, #f59e0b 10%, transparent);
+}
+
+.nearestTag {
+  margin-left: 8px;
+  padding: 1px 6px;
+  border-radius: 999px;
+  font-size: 10px;
+  font-weight: 700;
+  color: #d97706;
+  background: color-mix(in srgb, #f59e0b 18%, transparent);
+}
+
+/* -- Scaffold + history ---------------------------------------------------- */
+.statNote {
+  font-size: 10px;
+  color: var(--cn-text-subtle);
+  font-variant-numeric: tabular-nums;
+}
+
+.emptyState {
+  margin: 0;
+  padding: var(--cn-space-3);
+  border: 1px dashed var(--cn-border);
+  border-radius: var(--cn-radius);
+  font-size: var(--cn-text-sm);
+  line-height: 1.5;
+  color: var(--cn-text-muted);
+}
+
+.historyHead {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--cn-space-2);
+}
+
+.historyScope,
+.historyNote {
+  font-size: 10px;
+  color: var(--cn-text-subtle);
+}
+
+.historyNote {
+  margin: var(--cn-space-2) 0 0;
+}
+
+.timeline {
+  display: flex;
+  flex-direction: column;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.timelineRow {
+  display: grid;
+  grid-template-columns: 3.2rem 12px 1fr;
+  align-items: center;
+  gap: var(--cn-space-2);
+  padding: 6px 0;
+  border-top: 1px solid var(--cn-border);
+  font-size: var(--cn-text-sm);
+}
+
+.timelineRow:first-child {
+  border-top: 0;
+}
+
+.timelineTime {
+  font-size: var(--cn-text-xs);
+  color: var(--cn-text-subtle);
+  font-variant-numeric: tabular-nums;
+}
+
+.timelineDot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--cn-text-subtle, #6b7280);
+}
+
+.timelineDot.buy {
+  background: var(--cn-bullish, #16a34a);
+}
+
+.timelineDot.sell {
+  background: var(--cn-bearish, #dc2626);
+}
+
+.timelineText {
+  color: var(--cn-text);
+}
+
+.timelineFrom {
+  color: var(--cn-text-subtle);
+}
+
+.timelineTo.buy {
+  color: var(--cn-bullish, #16a34a);
+}
+
+.timelineTo.sell {
+  color: var(--cn-bearish, #dc2626);
+}
+
+.timelineConf {
+  font-size: var(--cn-text-xs);
+  color: var(--cn-text-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+/* -- Footer ---------------------------------------------------------------- */
+.statusBar {
+  flex-direction: column;
+  align-items: stretch;
+}
+
+.statusBar .disclaimer {
+  padding-top: var(--cn-space-2);
+}
+
+.statusRow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--cn-space-3);
+}
+
+@media (max-width: 640px) {
+  .page {
+    padding: var(--cn-space-4);
+  }
+
+  .switcher {
+    grid-template-columns: 1fr;
+  }
+
+  .driverRow {
+    grid-template-columns: 1fr 3.2rem;
+  }
+
+  .driverTrack {
+    grid-column: 1 / -1;
+    grid-row: 2;
   }
 }

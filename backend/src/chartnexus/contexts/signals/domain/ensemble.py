@@ -26,6 +26,8 @@ from chartnexus.shared_kernel.domain import indicators as ind
 _ARTIFACT_VERSION = 1
 # How many strongest features to surface as the call's drivers.
 _N_DRIVERS = 4
+# How many signed contributions to keep for the driver bars.
+_N_CONTRIBUTIONS = 6
 
 
 @dataclass(frozen=True, slots=True)
@@ -103,16 +105,18 @@ def evaluate(fv: FeatureVector, horizon: Horizon, model: HorizonModel) -> Horizo
     # A thin feature vector is a less trustworthy call — never full confidence.
     confidence = round(100.0 * calibrated * (0.4 + 0.6 * fv.coverage))
 
-    drivers = tuple(
-        name
-        for name, _ in sorted(contributions, key=lambda kv: abs(kv[1]), reverse=True)[:_N_DRIVERS]
-    )
+    ranked = sorted(contributions, key=lambda kv: abs(kv[1]), reverse=True)
+    drivers = tuple(name for name, _ in ranked[:_N_DRIVERS])
     return HorizonCall(
         horizon=horizon,
         decision=decision,
         probability=round(p, 4),
         confidence=int(confidence),
         drivers=drivers,
+        contributions=tuple(
+            (name, round(term, 4)) for name, term in ranked[:_N_CONTRIBUTIONS] if term != 0
+        ),
+        band=model.band,
     )
 
 

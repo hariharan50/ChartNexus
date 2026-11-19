@@ -137,6 +137,12 @@ class HorizonCall:
     probability: float
     confidence: int
     drivers: tuple[str, ...] = ()
+    #: The strongest signed terms (feature, weight * value), strongest first.
+    #: Positive pushes p(up) higher. ``drivers`` is the names of the first few.
+    contributions: tuple[tuple[str, float], ...] = ()
+    #: Half-width of the HOLD band around 0.5: BUY above ``0.5 + band``, SELL
+    #: below ``0.5 - band``. ``None`` when the model did not say.
+    band: float | None = None
 
 
 @dataclass(frozen=True, slots=True)
@@ -175,6 +181,8 @@ class MultiHorizonGuidance:
     expiry_ref: str | None = None
     is_actionable: bool = True
     warnings: tuple[str, ...] = field(default_factory=tuple)
+    #: Share of the model's inputs that had data (0-1). Thin data caps confidence.
+    coverage: float | None = None
 
     def call_for(self, horizon: Horizon) -> HorizonCall | None:
         return next((c for c in self.calls if c.horizon is horizon), None)

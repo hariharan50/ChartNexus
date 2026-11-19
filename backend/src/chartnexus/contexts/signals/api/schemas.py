@@ -27,6 +27,11 @@ class _Schema(BaseModel):
     model_config = ConfigDict(extra="forbid", frozen=True)
 
 
+class FactorResponse(_Schema):
+    name: str
+    impact: float
+
+
 class HorizonCallResponse(_Schema):
     """One horizon's calibrated call — the unit the UI's horizon switcher renders."""
 
@@ -38,6 +43,11 @@ class HorizonCallResponse(_Schema):
     confidence: int
     #: The features that moved this call most, strongest first.
     drivers: list[str]
+    #: Signed impact of the strongest features (positive pushes p(up) higher).
+    #: Defaulted so guidance cached before this field existed still validates.
+    factors: list[FactorResponse] = []
+    #: Half-width of the HOLD band around 0.5 (BUY above 0.5 + band).
+    band: float | None = None
 
     @classmethod
     def of(cls, call: HorizonCall) -> HorizonCallResponse:
@@ -47,6 +57,10 @@ class HorizonCallResponse(_Schema):
             probability=call.probability,
             confidence=call.confidence,
             drivers=list(call.drivers),
+            factors=[
+                FactorResponse(name=name, impact=impact) for name, impact in call.contributions
+            ],
+            band=call.band,
         )
 
 
@@ -135,6 +149,8 @@ class GuidanceResponse(_Schema):
     context: MarketContextResponse
     levels: LevelsResponse
     scaffold: ScaffoldResponse
+    #: Share of model inputs that had data (0-1). Defaulted for cached payloads.
+    coverage: float | None = None
 
     @classmethod
     def of(cls, guidance: MultiHorizonGuidance) -> GuidanceResponse:
@@ -154,6 +170,7 @@ class GuidanceResponse(_Schema):
             context=MarketContextResponse.of(guidance.context),
             levels=LevelsResponse.of(guidance.levels),
             scaffold=ScaffoldResponse.of(guidance.scaffold),
+            coverage=guidance.coverage,
         )
 
 

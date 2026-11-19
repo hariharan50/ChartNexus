@@ -1,6 +1,6 @@
 /** View-model helpers for the AI Console — formatting and small derivations. */
 
-import type { Decision, Horizon } from '$contexts/signals/types';
+import type { Decision, Horizon, Levels, Scaffold } from '$contexts/signals/types';
 
 /** The horizons, in switcher order, with their human labels and time frame. */
 export const HORIZONS: ReadonlyArray<{ key: Horizon; label: string; frame: string }> = [
@@ -181,3 +181,183 @@ export function nowLabelIST(now: Date = new Date()): string {
 
 /** IST is a fixed UTC+5:30; a Date's epoch is UTC, so shift then read getUTC*. */
 const IST_OFFSET_MS = 5.5 * 60 * 60 * 1000;
+
+/* -- Market Analysis view-models ------------------------------------------- */
+
+/** One plain-English line on what each driver measures, for the driver bars. */
+const DRIVER_HINTS: Readonly<Record<string, string>> = {
+  ret_5: 'Price change over the last few bars',
+  ret_20: 'Price change over the last twenty bars',
+  rsi_norm: 'Momentum: overbought above 70, oversold below 30',
+  ema_gap: 'How far price sits from its moving average',
+  vwap_gap: 'Price versus the volume-weighted average',
+  adx: 'How strongly the market is trending',
+  bb_width: 'How wide the Bollinger bands are',
+  realized_vol: 'How much price has actually been moving',
+  range_pos: 'Where price sits in its recent range',
+  daily_ret_3: 'Change over the last three sessions',
+  daily_rsi_norm: 'Daily momentum',
+  pcr_level: 'Put/call open interest balance',
+  pcr_velocity: 'How fast the put/call ratio is changing',
+  buildup_bias: 'Whether puts or calls are being written',
+  gex_sign: 'Dealer gamma: dampens or amplifies moves',
+  dist_max_pain: 'Pull towards the max-pain strike',
+  dist_call_wall: 'Distance to the heaviest call strike',
+  dist_put_wall: 'Distance to the heaviest put strike',
+  dist_gamma_flip: 'Distance to the gamma flip level',
+  iv_pct: 'Implied volatility versus its own history',
+  atm_skew: 'Put versus call implied volatility at the money'
+};
+
+export function driverHint(name: string): string {
+  return DRIVER_HINTS[name] ?? '';
+}
+
+export interface Consensus {
+  /** Every horizon makes the same call. */
+  agree: boolean;
+  /** The call most horizons make, or `null` on a split. */
+  majority: Decision | null;
+  votes: Record<Decision, number>;
+  averageConfidence: number;
+  label: string;
+}
+
+/** How the horizons line up: "All 3 horizons: BUY", "2 of 3: BUY" or a split. */
+export function horizonConsensus(
+  calls: ReadonlyArray<{ decision: Decision; confidence: number }>
+): Consensus {
+  const votes: Record<Decision, number> = { BUY: 0, SELL: 0, HOLD: 0 };
+  for (const call of calls) votes[call.decision] += 1;
+  const ranked = (Object.entries(votes) as [Decision, number][]).sort((a, b) => b[1] - a[1]);
+  const top = ranked[0];
+  const second = ranked[1];
+  const majority = top && top[1] > 0 && (!second || top[1] > second[1]) ? top[0] : null;
+  const agree = calls.length > 0 && top !== undefined && top[1] === calls.length;
+  const averageConfidence = calls.length
+    ? Math.round(calls.reduce((sum, call) => sum + call.confidence, 0) / calls.length)
+    : 0;
+  let label = 'Horizons split';
+  if (!calls.length) label = 'No calls';
+  else if (agree && majority) label = `All ${calls.length} horizons: ${majority}`;
+  else if (majority) label = `${votes[majority]} of ${calls.length}: ${majority}`;
+  return { agree, majority, votes, averageConfidence, label };
+}
+
+/**
+ * The HOLD band in probability terms (0-1). BUY needs p(up) above `high`,
+ * SELL below `low`. `null` when the model did not report its band.
+ */
+export function holdBand(band: number | null | undefined): { low: number; high: number } | null {
+  if (band == null || !Number.isFinite(band) || band <= 0 || band >= 0.5) return null;
+  return { low: 0.5 - band, high: 0.5 + band };
+}
+
+/** What the probability would have to do for the call to change, in words. */
+export function bandExplainer(
+  probability: number,
+  band: { low: number; high: number } | null
+): string {
+  if (!band) return '';
+  const pct = (value: number) => `${Math.round(value * 100)}%`;
+  if (probability > band.high) return `Above ${pct(band.high)}, so the model calls BUY.`;
+  if (probability < band.low) return `Below ${pct(band.low)}, so the model calls SELL.`;
+  return (
+    `Inside the HOLD band (${pct(band.low)}–${pct(band.high)}): needs above ` +
+    `${pct(band.high)} for BUY or below ${pct(band.low)} for SELL.`
+  );
+}
+
+export interface LadderRow {
+  key: string;
+  label: string;
+  price: number;
+  /** Signed distance from spot in points (positive = above spot). */
+  points: number;
+  percent: number;
+  side: 'above' | 'below' | 'spot';
+  nearest: boolean;
+}
+
+const LEVEL_LABELS: ReadonlyArray<[Exclude<keyof Levels, 'spot'>, string]> = [
+  ['resistance', 'Resistance'],
+  ['call_wall', 'Call wall'],
+  ['gamma_flip', 'Gamma flip'],
+  ['max_pain', 'Max pain'],
+  ['put_wall', 'Put wall'],
+  ['support', 'Support']
+];
+
+/**
+ * Every known level plus spot, highest first, with its distance from spot.
+ * The level closest to spot is flagged: it is the one price meets next.
+ */
+export function levelLadder(levels: Levels): LadderRow[] {
+  const spot = levels.spot;
+  const rows: LadderRow[] = [];
+  for (const [key, label] of LEVEL_LABELS) {
+    const price = levels[key];
+    if (price == null || !Number.isFinite(price)) continue;
+    const points = price - spot;
+    rows.push({
+      key,
+      label,
+      price,
+      points,
+      percent: spot ? (points / spot) * 100 : 0,
+      side: points >= 0 ? 'above' : 'below',
+      nearest: false
+    });
+  }
+  let nearest: LadderRow | null = null;
+  for (const row of rows) {
+    if (nearest === null || Math.abs(row.points) < Math.abs(nearest.points)) nearest = row;
+  }
+  if (nearest) nearest.nearest = true;
+  rows.push({
+    key: 'spot',
+    label: 'Spot',
+    price: spot,
+    points: 0,
+    percent: 0,
+    side: 'spot',
+    nearest: false
+  });
+  // Highest first. At an equal price levels keep their listed order (the sort
+  // is stable) and the spot marker goes below them.
+  const isSpot = (row: LadderRow) => (row.side === 'spot' ? 1 : 0);
+  return rows.sort((a, b) => b.price - a.price || isSpot(a) - isSpot(b));
+}
+
+/** Risk and reward of a scaffold in index points, when all three legs exist. */
+export function scaffoldPoints(scaffold: Scaffold): { risk: number; reward: number } | null {
+  const { entry, stop, target } = scaffold;
+  if (entry == null || stop == null || target == null) return null;
+  return { risk: Math.abs(entry - stop), reward: Math.abs(target - entry) };
+}
+
+/** "8s ago", "3m ago" — for the freshness line. */
+export function fmtAgo(atMs: number, now: number): string {
+  if (!atMs) return '—';
+  const seconds = Math.max(0, Math.round((now - atMs) / 1000));
+  if (seconds < 60) return `${seconds}s ago`;
+  if (seconds < 3600) return `${Math.floor(seconds / 60)}m ago`;
+  return `${Math.floor(seconds / 3600)}h ago`;
+}
+
+/** "10:42" in IST, for the call-history timeline. */
+export function timeIST(iso: string): string {
+  const date = new Date(iso);
+  if (Number.isNaN(date.getTime())) return '—';
+  const ist = new Date(date.getTime() + IST_OFFSET_MS);
+  const hours = String(ist.getUTCHours()).padStart(2, '0');
+  const minutes = String(ist.getUTCMinutes()).padStart(2, '0');
+  return `${hours}:${minutes}`;
+}
+
+/** Whether an ISO timestamp falls on today's IST date. */
+export function isTodayIST(iso: string, now: Date = new Date()): boolean {
+  const day = (value: Date) => new Date(value.getTime() + IST_OFFSET_MS).toISOString().slice(0, 10);
+  const date = new Date(iso);
+  return !Number.isNaN(date.getTime()) && day(date) === day(now);
+}

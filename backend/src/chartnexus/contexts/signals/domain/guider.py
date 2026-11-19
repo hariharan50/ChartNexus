@@ -112,6 +112,7 @@ def build_multi_horizon(snap: MarketSnapshot, artifact: ModelArtifact) -> MultiH
         expiry_ref=snap.expiry_date,
         is_actionable=risk.is_actionable,
         warnings=risk.warnings,
+        coverage=fv.coverage,
     )
 
 
