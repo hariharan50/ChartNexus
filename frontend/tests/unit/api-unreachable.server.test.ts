@@ -100,6 +100,18 @@ describe('sign-in messages when the API is unreachable', () => {
     expect(presentAuthError(new TypeError('fetch failed')).message).toMatch(/reach the server/);
   });
 
+  it('an unhandled 500 never shows the raw exception text', () => {
+    const raw =
+      "Error Multiple exceptions: [Errno 10061] Connect call failed ('127.0.0.1', 6381) connecting to localhost:6381.";
+    const presented = presentAuthError(
+      new ApiError({ ...problem('internal_error', 500), detail: raw, request_id: 'req-123' }, 500)
+    );
+    expect(presented.message).toBe(
+      'Something went wrong on our side. Please try again in a moment. (reference req-123)'
+    );
+    expect(presented.message).not.toMatch(/6381|Errno/);
+  });
+
   it('wrong credentials are unaffected', () => {
     const presented = presentAuthError(new ApiError(problem('invalid_credentials', 401), 401));
     expect(presented.message).toBe('Those sign-in details do not match an account.');

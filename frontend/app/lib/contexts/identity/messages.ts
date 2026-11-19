@@ -80,6 +80,17 @@ export function presentAuthError(error: unknown): Presented {
     };
   }
 
+  // An unhandled backend exception. Outside production its detail is the raw
+  // exception text (driver errors, hosts, ports), which means nothing to a
+  // person and should not be on screen anyway. The request id lets support
+  // find the stack trace in the logs.
+  if (error.code === 'internal_error') {
+    const reference = error.requestId ? ` (reference ${error.requestId})` : '';
+    return {
+      message: `Something went wrong on our side. Please try again in a moment.${reference}`
+    };
+  }
+
   const override = OVERRIDES[error.code];
   if (override) return override;
 
