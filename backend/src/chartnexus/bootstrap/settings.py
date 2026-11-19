@@ -152,6 +152,10 @@ class AuthSettings(_Section):
     # window keeps a double-submit from a racing tab from logging the user out.
     refresh_reuse_grace_seconds: int = Field(default=10, ge=0)
     max_active_sessions_per_user: int = Field(default=10, ge=1)
+    # Platform admins are granted only by `chartnexus-admin grant` on the
+    # server, and never more than this many at once. Fewer admin accounts means
+    # fewer accounts worth stealing.
+    admin_max_count: int = Field(default=3, ge=1, le=20)
 
     registration_enabled: bool = True
     require_email_verification: bool = False
@@ -294,6 +298,10 @@ class ObservabilitySettings(_Section):
     metrics_enabled: bool = True
     exporter_endpoint: str = "http://localhost:4317"
     trace_sample_ratio: float = Field(default=0.1, ge=0.0, le=1.0)
+    # Times every outbound HTTP call (brokers, NSE, Yahoo, Telegram, ...) into
+    # Redis for the admin API monitor. Labels and timings only, never URLs'
+    # query strings or credentials. CN_OTEL_API_MONITOR_ENABLED=false turns it off.
+    api_monitor_enabled: bool = True
 
 
 class MarketSettings(_Section):

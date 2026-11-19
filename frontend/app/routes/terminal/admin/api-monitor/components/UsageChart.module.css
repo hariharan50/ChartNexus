@@ -1,0 +1,80 @@
+.figure {
+  position: relative;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--cn-space-2);
+}
+
+.legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--cn-space-4);
+  font-size: var(--cn-text-xs, 0.75rem);
+  color: var(--cn-text-muted);
+}
+
+.legend span {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.keyCalls,
+.keyErrors,
+.keyLatency {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  border-radius: 2px;
+}
+
+.keyCalls {
+  background: var(--cn-accent);
+  opacity: 0.55;
+}
+
+.keyErrors {
+  background: var(--cn-danger);
+}
+
+.keyLatency {
+  height: 2px;
+  background: var(--cn-text);
+}
+
+.svg {
+  display: block;
+  width: 100%;
+}
+
+.axis {
+  stroke: var(--cn-border);
+  stroke-width: 1;
+}
+
+.bar {
+  fill: var(--cn-accent);
+  opacity: 0.55;
+}
+
+.errorBar {
+  fill: var(--cn-danger);
+}
+
+.latency {
+  fill: none;
+  stroke: var(--cn-text);
+  stroke-width: 1.5;
+  stroke-linejoin: round;
+  opacity: 0.85;
+}
+
+.empty {
+  position: absolute;
+  inset: 40% 0 auto;
+  margin: 0;
+  text-align: center;
+  font-size: var(--cn-text-sm);
+  color: var(--cn-text-muted);
+}

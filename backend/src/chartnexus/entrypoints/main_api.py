@@ -36,6 +36,7 @@ from chartnexus.entrypoints.mme100_runtime import run_mme100_loop
 from chartnexus.entrypoints.report_runtime import run_report_loop
 from chartnexus.entrypoints.trade_buddy_runtime import run_trade_buddy_loop
 from chartnexus.infrastructure.cache.redis.client import redis_check
+from chartnexus.infrastructure.observability.api_monitor.origin import reset_origin, set_origin
 from chartnexus.infrastructure.observability.structured_logging import get_logger
 from chartnexus.infrastructure.persistence.postgresql.health import postgres_check
 from chartnexus.infrastructure.transport.http.exception_handlers import (
@@ -74,7 +75,13 @@ def _maybe_start(
     if not enabled:
         return None
     stop = asyncio.Event()
-    task = asyncio.create_task(make_loop(stop), name=name)
+    # The task copies the current context, so this labels every outbound call
+    # the loop makes in the API monitor ("ingest-capture", "futures-oi-sweep").
+    origin = set_origin(name)
+    try:
+        task = asyncio.create_task(make_loop(stop), name=name)
+    finally:
+        reset_origin(origin)
     log.info("api_worker_in_process", worker=name)
     return _LocalWorker(task=task, stop=stop)
 

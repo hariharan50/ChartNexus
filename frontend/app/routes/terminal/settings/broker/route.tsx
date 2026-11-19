@@ -15,6 +15,7 @@ import IconCheck from '$shared/ui/icons/IconCheck';
 import PasswordField from '$shared/ui/PasswordField';
 import TextField from '$shared/ui/TextField';
 import s from './route.module.css';
+import MyBrokerUsage from './MyBrokerUsage';
 import type { Route } from './+types/route';
 
 export const meta: Route.MetaFunction = () => [{ title: 'Broker · ChartNexus' }];
@@ -170,6 +171,7 @@ export default function SettingsBroker() {
             Only one broker can be connected at a time — connecting one disconnects the other. Both
             sets of keys stay saved, so switching back is one click.
           </p>
+          <MyBrokerUsage />
         </>
       )}
     </section>

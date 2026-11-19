@@ -61,6 +61,10 @@ export default [
       route(':tool', 'routes/terminal/tools/tool.tsx')
     ]),
 
+    // Admin — platform pages. The API refuses non-admins on every request; the
+    // header link is only shown to admins as a convenience.
+    ...prefix('admin', [route('api-monitor', 'routes/terminal/admin/api-monitor/route.tsx')]),
+
     // Advance Tools — a main-nav home for power tools, each on its own page.
     ...prefix('advance-tool', [
       index('routes/terminal/advance-tool/route.tsx'),

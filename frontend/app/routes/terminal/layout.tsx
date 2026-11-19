@@ -233,9 +233,9 @@ function TerminalShell({ user }: { user: User }) {
 
   const shortName = (user.display_name || user.email || 'Account').split(/[\s@]/)[0];
 
-  // Admin Page only resolves for admins. There is no admin module yet, so it
-  // points at the account root for now; gating it keeps it hidden from the
-  // accounts that could not use it anyway.
+  // Admin Page is shown only to admins. It opens the API monitor; the server
+  // re-checks the admin role on every request, so hiding the link is a
+  // convenience, not the protection.
   const isAdmin = user.roles.includes('admin');
 
   /** For the top-level tabs, where a section owns everything beneath it. */
@@ -460,7 +460,7 @@ function TerminalShell({ user }: { user: User }) {
                   Profile
                 </Link>
                 {isAdmin ? (
-                  <Link className={s.menuItem} to="/settings">
+                  <Link className={s.menuItem} to="/admin/api-monitor">
                     <span className={s.menuIco} aria-hidden="true">
                       <IconShield />
                     </span>

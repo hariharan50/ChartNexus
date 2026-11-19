@@ -93,6 +93,7 @@ chartnexus-mme100 = "chartnexus.entrypoints.main_mme100:run"
 chartnexus-report = "chartnexus.entrypoints.main_report:run"
 chartnexus-realtime = "chartnexus.entrypoints.main_realtime:run"
 chartnexus-trade-buddy = "chartnexus.entrypoints.main_trade_buddy:run"
+chartnexus-admin = "chartnexus.entrypoints.main_admin:run"
 
 [dependency-groups]
 dev = [
@@ -242,6 +243,11 @@ ignore_imports = [
     # ports. The context owns the level state machine and declares the ports;
     # only the bridge knows which adapter is behind each one.
     "chartnexus.contexts.trade_buddy.api.dependencies -> chartnexus.infrastructure.trade_buddy.build_trade_buddy",
+    # The API monitor uses the same sanctioned-bridge pattern: its API dependency
+    # imports only `build_api_monitor`, which reads the Redis counters and checks
+    # the caller's admin role and own broker app ids. The context owns the
+    # aggregation maths and declares the ports.
+    "chartnexus.contexts.api_monitor.api.dependencies -> chartnexus.infrastructure.api_monitor.build_api_monitor",
 ]
 modules = [
     "chartnexus.contexts.identity",
@@ -270,4 +276,5 @@ modules = [
     "chartnexus.contexts.realtime_delivery",
     "chartnexus.contexts.audit",
     "chartnexus.contexts.trade_buddy",
+    "chartnexus.contexts.api_monitor",
 ]

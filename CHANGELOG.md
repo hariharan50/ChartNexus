@@ -9,6 +9,36 @@ changes are not recorded here.
 
 ## [Unreleased]
 
+### Added
+
+- **API Latency Monitor** (Admin → API Monitor, `/admin/api-monitor`). Every
+  outbound call (Kite, FYERS, NSE, Yahoo, NSE IX, Telegram, WhatsApp, Google)
+  is timed at the shared HTTP client and shown by provider, endpoint and
+  caller (background job or page), with error rates, approximate p50/p95/p99,
+  a traffic chart, today's broker quota and the last 500 calls. Ranges: 1h,
+  6h, 24h, 7d. Also: provider health cards (healthy / degraded / failing /
+  idle over the last 15 min; rejected 4xx requests don't count as failing),
+  change against the previous period, calls per minute now and the busiest
+  minute, a latency distribution, an error breakdown with the latest
+  failures, per-broker-connection usage, filters by provider and caller,
+  click-through endpoint detail, endpoint search and CSV export, and
+  errors-only / slow-only views of recent calls. Stored in Redis only (minute buckets kept 25 h, hourly 8 d); no
+  migration. Query strings, headers and credentials are never recorded.
+- **My broker usage** card in Settings → Broker Integration: each user's own
+  calls, errors, latency and quota, filtered server-side to their own app.
+- **Platform admins.** `chartnexus-admin list | grant | revoke | audit` is the
+  only way to make or remove an admin; there is no web route for it. At most
+  `CN_AUTH_ADMIN_MAX_COUNT` admins (default 3), only active accounts, never
+  the last admin; every change signs the account out and is audited. Admin
+  endpoints re-check the role in the database on every request.
+
+### Upgrading
+
+- Optional settings: `CN_OTEL_API_MONITOR_ENABLED` (default `true`) and
+  `CN_AUTH_ADMIN_MAX_COUNT` (default `3`).
+- After deploying, grant the first admin on the server:
+  `uv run chartnexus-admin grant --email <you>`.
+
 ## [2.1.0] — 2026-11-19
 
 Kite OI change fixes and visual polish. No migration or configuration change.

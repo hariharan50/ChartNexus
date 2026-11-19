@@ -9,6 +9,7 @@ from __future__ import annotations
 from fastapi import APIRouter, FastAPI
 
 from chartnexus.contexts.ai_settings.api.router import router as ai_settings_router
+from chartnexus.contexts.api_monitor.api.router import router as api_monitor_router
 from chartnexus.contexts.broker_connections.api.router import router as broker_router
 from chartnexus.contexts.copilot.api.router import router as copilot_router
 from chartnexus.contexts.futures_analytics.api.router import router as futures_router
@@ -48,6 +49,7 @@ _ROUTERS: tuple[APIRouter, ...] = (
     report_router,
     realtime_router,
     trade_buddy_router,
+    api_monitor_router,
 )
 
 

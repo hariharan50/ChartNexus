@@ -68,6 +68,13 @@ class SqlAlchemyUserRepository:
         record = result.scalar_one_or_none()
         return _to_domain(record) if record else None
 
+    async def list_with_role(self, role: str) -> list[User]:
+        """Every account holding ``role``. Used to list and count platform admins."""
+        result = await self._session.execute(
+            select(UserRecord).where(UserRecord.roles.contains([role])).order_by(UserRecord.email)
+        )
+        return [_to_domain(record) for record in result.scalars().all()]
+
     async def email_exists(self, email: EmailAddress) -> bool:
         result = await self._session.execute(
             select(exists().where(func.lower(UserRecord.email) == email.value))

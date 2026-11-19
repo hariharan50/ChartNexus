@@ -15,6 +15,8 @@ import httpx
 
 from chartnexus.bootstrap.settings import Settings, get_settings
 from chartnexus.infrastructure.cache.redis.client import RedisClient
+from chartnexus.infrastructure.observability.api_monitor.recorder import ApiCallRecorder
+from chartnexus.infrastructure.observability.api_monitor.transport import MonitoredTransport
 from chartnexus.infrastructure.persistence.postgresql.session import Database
 from chartnexus.infrastructure.security.encryption import AesGcmCipher
 from chartnexus.infrastructure.security.google_oauth import GoogleOAuthClient
@@ -52,11 +54,17 @@ class Container:
     # None when no Google credentials are configured; only the two Google
     # routes care, and they fail with a clear message.
     google_oauth: GoogleOAuthClient | None
+    # Times every call made through `http` for the admin API monitor. Last, with
+    # a default, so code that builds a Container by hand keeps working.
+    api_calls: ApiCallRecorder | None = None
 
     @classmethod
     def create(cls, settings: Settings | None = None, *, use_db_pool: bool = True) -> Container:
         resolved = settings or get_settings()
+        redis = RedisClient.create(resolved.redis)
+        api_calls = ApiCallRecorder(redis, enabled=resolved.observability.api_monitor_enabled)
         http = httpx.AsyncClient(
+            transport=MonitoredTransport(httpx.AsyncHTTPTransport(), api_calls),
             timeout=resolved.request_timeout_seconds,
             follow_redirects=False,
             headers={"User-Agent": "ChartNexus/0.1"},
@@ -64,7 +72,7 @@ class Container:
         return cls(
             settings=resolved,
             database=Database.create(resolved.database, use_pool=use_db_pool),
-            redis=RedisClient.create(resolved.redis),
+            redis=redis,
             http=http,
             password_hasher=Argon2Hasher(resolved.security),
             access_tokens=JwtAccessTokenIssuer(resolved.auth, resolved.security),
@@ -86,11 +94,14 @@ class Container:
             google_oauth=(
                 GoogleOAuthClient(resolved.google, http) if resolved.google.enabled else None
             ),
+            api_calls=api_calls,
         )
 
     async def aclose(self) -> None:
         """Release resources in reverse order of acquisition."""
         await self.http.aclose()
+        if self.api_calls is not None:
+            await self.api_calls.aclose()  # last flush, before Redis goes away
         await self.redis.close()
         await self.database.dispose()
 

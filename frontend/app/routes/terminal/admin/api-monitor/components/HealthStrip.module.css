@@ -1,0 +1,112 @@
+.strip {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
+  gap: var(--cn-space-3);
+}
+
+.card {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: var(--cn-space-3) var(--cn-space-4);
+  border: 1px solid var(--cn-border);
+  border-radius: var(--cn-radius-lg);
+  background: var(--cn-surface);
+  font: inherit;
+  text-align: left;
+  color: inherit;
+  cursor: pointer;
+}
+
+.card:focus-visible {
+  outline: 2px solid var(--cn-accent);
+  outline-offset: 2px;
+}
+
+@media (hover: hover) {
+  .card:hover {
+    border-color: var(--cn-border-strong, var(--cn-accent));
+  }
+}
+
+.active {
+  border-color: var(--cn-accent);
+  box-shadow: 0 0 0 1px var(--cn-accent) inset;
+}
+
+.top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--cn-space-2);
+}
+
+.name {
+  font-weight: 700;
+  color: var(--cn-text);
+}
+
+.pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: var(--cn-text-xs, 0.75rem);
+  font-weight: 600;
+}
+
+.pill i {
+  width: 7px;
+  height: 7px;
+  border-radius: 999px;
+  background: currentColor;
+}
+
+.healthy {
+  background: var(--cn-bullish-weak);
+  color: var(--cn-bullish);
+}
+
+.degraded {
+  background: color-mix(in srgb, #f59e0b 18%, transparent);
+  color: #d97706;
+}
+
+.down {
+  background: var(--cn-bearish-weak);
+  color: var(--cn-bearish);
+}
+
+.idle {
+  background: color-mix(in srgb, var(--cn-border) 60%, transparent);
+  color: var(--cn-text-muted);
+}
+
+.metrics {
+  display: flex;
+  gap: var(--cn-space-3);
+  font-size: var(--cn-text-xs, 0.75rem);
+  color: var(--cn-text-muted);
+}
+
+.metrics b {
+  font-size: var(--cn-text-sm);
+  color: var(--cn-text);
+}
+
+.foot {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--cn-space-2);
+  font-size: var(--cn-text-xs, 0.75rem);
+  color: var(--cn-text-muted);
+}
+
+.error {
+  overflow: hidden;
+  font-size: var(--cn-text-xs, 0.75rem);
+  color: var(--cn-danger);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}

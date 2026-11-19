@@ -134,6 +134,25 @@ WhatsApp (CallMeBot), connected in the app.
 - `uv run chartnexus-trade-buddy import-legacy --email <user>` copies old single-operator
   JSON files into one account.
 
+## Admins and the API monitor
+
+- Every sign-up is `owner` of its own workspace (a normal user). **`admin`** is
+  a platform role on top, granted or revoked **only** on the server:
+  `uv run chartnexus-admin list | grant --email X | revoke --email X | audit`.
+  Never add a web route that changes roles. Rules (in
+  `contexts/identity/application/admin_roles.py`): active accounts only, at
+  most `CN_AUTH_ADMIN_MAX_COUNT` (default 3), never the last admin, sign-out on
+  every change, audit in Redis `cn:admin:audit` + a log line.
+- Admin endpoints (`/api/v1/admin/*`) re-read the role from Postgres on every
+  request; the JWT's roles are not trusted for them.
+- The API monitor times every call through `container.http` via
+  `MonitoredTransport` (`infrastructure/observability/api_monitor/`). Calls
+  are labelled by the `api_call_origin` context var: in-process loops by task
+  name, page requests by path, standalone workers by process name. Redis keys
+  `cn:apimon:*` expire on their own (25 h minute, 8 d hourly). Only labels and
+  timings are stored: never a query string, header or token. Keep it that way
+  when adding a provider (`classify.py`).
+
 ## Database and migrations
 
 - Alembic, one folder per context under `backend/migrations/versions/`. **Current head:

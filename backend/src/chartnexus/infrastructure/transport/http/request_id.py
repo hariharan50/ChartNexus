@@ -15,6 +15,8 @@ from starlette.requests import Request
 from starlette.responses import Response
 from starlette.types import ASGIApp
 
+from chartnexus.infrastructure.observability.api_monitor.classify import endpoint_template
+from chartnexus.infrastructure.observability.api_monitor.origin import api_call_origin
 from chartnexus.infrastructure.observability.request_context import bind_request_context
 
 REQUEST_ID_HEADER = "X-Request-ID"
@@ -42,7 +44,10 @@ class RequestIdMiddleware:
                 headers.append((REQUEST_ID_HEADER.lower().encode(), request_id.encode()))
             await send(message)
 
-        with bind_request_context(request_id=request_id):
+        # Outbound calls made while serving this request are labelled with its
+        # path in the API monitor; ids in the path are templated away.
+        origin = "request:" + endpoint_template(str(scope.get("path") or "/"))
+        with bind_request_context(request_id=request_id), api_call_origin(origin):
             await self.app(scope, receive, send_with_header)
 
 
