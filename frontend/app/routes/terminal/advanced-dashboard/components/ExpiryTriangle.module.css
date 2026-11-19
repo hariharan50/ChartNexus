@@ -70,5 +70,5 @@
    `overflow: hidden`, which would clip a glow at the card's corner. The global
    prefers-reduced-motion block in app.css already stops this. */
 .glyph.live {
-  animation: cn-pulse var(--cn-duration-pulse) ease-in-out infinite;
+  animation: global(cn-pulse) var(--cn-duration-pulse) ease-in-out infinite;
 }

@@ -1,4 +1,5 @@
 .btn {
+  position: relative;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -12,22 +13,51 @@
   line-height: 1;
   cursor: pointer;
   transition:
-    background var(--cn-duration-fast) ease,
-    border-color var(--cn-duration-fast) ease,
-    transform var(--cn-duration-fast) ease;
+    background var(--dur-quick) var(--ease-standard),
+    border-color var(--dur-quick) var(--ease-standard),
+    transform var(--dur-quick) var(--ease-standard);
 }
 
 .btn.full {
   width: 100%;
 }
 
-.btn:disabled {
+.btn:disabled:not(.busy) {
   opacity: 0.6;
   cursor: not-allowed;
 }
 
 .btn:not(:disabled):active {
   transform: translateY(1px);
+}
+
+/* Busy: still the same button, just waiting — no dimming, no reflow. */
+.btn.busy {
+  cursor: progress;
+}
+
+.label {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--cn-space-2);
+}
+
+.labelHidden {
+  visibility: hidden;
+}
+
+/* Pressed state lands instantly (80ms) on touch as well as mouse — `:hover`
+   never fires on a tap, so this is the only acknowledgement a phone gets. */
+.primary:not(:disabled):active {
+  background: var(--cn-brand-hover);
+}
+
+.secondary:not(:disabled):active {
+  background: var(--cn-field-bg-hover);
+}
+
+.ghost:not(:disabled):active {
+  color: var(--cn-text);
 }
 
 .primary {
@@ -65,10 +95,13 @@
 }
 
 .spinner {
+  position: absolute;
+  inset: 0;
+  margin: auto;
   width: 0.875rem;
   height: 0.875rem;
   border: 2px solid currentColor;
   border-top-color: transparent;
   border-radius: 50%;
-  animation: cn-spin var(--cn-duration-spin) linear infinite;
+  animation: global(cn-spin) var(--cn-duration-spin) linear infinite;
 }

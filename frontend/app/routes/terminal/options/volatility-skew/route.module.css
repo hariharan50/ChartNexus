@@ -222,7 +222,7 @@
   height: 1.25rem;
   border-radius: 999px;
   background: var(--cn-border-strong);
-  transition: background var(--cn-duration-fast);
+  transition: background var(--dur-xquick) var(--ease-standard);
 }
 
 .switch.on {
@@ -237,7 +237,7 @@
   height: 1rem;
   border-radius: 50%;
   background: #fff;
-  transition: transform var(--cn-duration-fast);
+  transition: transform var(--dur-quick) var(--ease-standard);
 }
 
 .switch.on .knob {
@@ -406,7 +406,7 @@
 }
 
 .dot.pulse {
-  animation: cn-pulse var(--cn-duration-pulse) ease-in-out infinite;
+  animation: global(cn-pulse) var(--cn-duration-pulse) ease-in-out infinite;
 }
 
 @media (prefers-reduced-motion: reduce) {

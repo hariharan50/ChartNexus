@@ -52,7 +52,7 @@
    here that can number in the hundreds, so this is background only — nothing
    that could invalidate layout while a quote board repaints under it. */
 .table tbody td {
-  transition: background var(--cn-duration-fast) var(--cn-ease);
+  transition: background var(--dur-xquick) var(--ease-standard);
 }
 
 @media (hover: hover) {
@@ -77,7 +77,7 @@
   letter-spacing: inherit;
   text-transform: inherit;
   cursor: pointer;
-  transition: color var(--cn-duration-fast) var(--cn-ease);
+  transition: color var(--dur-xquick) var(--ease-standard);
 }
 
 @media (hover: hover) {

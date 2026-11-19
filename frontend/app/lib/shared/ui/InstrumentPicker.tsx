@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useId, useMemo, useRef, useState } from 'react';
+import { useCallback, useDeferredValue, useEffect, useId, useMemo, useRef, useState } from 'react';
 import { useInstruments } from '$contexts/instrument-catalog/queries';
 import { filterInstruments, toPickerEntries } from '$contexts/instrument-catalog/search';
 import type { InstrumentKind } from '$contexts/instrument-catalog/types';
@@ -59,7 +59,12 @@ export default function InstrumentPicker({
   const { instruments, isLoading } = useInstruments(kind ? { kind } : {});
 
   const entries = useMemo(() => toPickerEntries(instruments), [instruments]);
-  const rows = useMemo(() => filterInstruments(entries, query, MAX_ROWS), [entries, query]);
+  // Typing stays instant; the 120-row filter renders behind it at low priority.
+  const deferredQuery = useDeferredValue(query);
+  const rows = useMemo(
+    () => filterInstruments(entries, deferredQuery, MAX_ROWS),
+    [entries, deferredQuery]
+  );
 
   // `kind` off the catalog row, so the group headers do not have to re-derive
   // it from the ticker.

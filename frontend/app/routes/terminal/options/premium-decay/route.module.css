@@ -300,7 +300,7 @@
 }
 
 .dot.pulse {
-  animation: cn-pulse var(--cn-duration-pulse) ease-in-out infinite;
+  animation: global(cn-pulse) var(--cn-duration-pulse) ease-in-out infinite;
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -465,8 +465,8 @@
   background: var(--cn-surface-raised);
   cursor: pointer;
   transition:
-    border-color 0.12s ease,
-    box-shadow 0.12s ease;
+    border-color var(--dur-quick) var(--ease-standard),
+    box-shadow var(--dur-quick) var(--ease-standard);
 }
 
 @media (hover: hover) {
@@ -623,7 +623,7 @@
   white-space: nowrap;
   cursor: pointer;
   user-select: none;
-  transition: color var(--cn-duration-fast) var(--cn-ease);
+  transition: color var(--dur-xquick) var(--ease-standard);
 }
 
 @media (hover: hover) {
@@ -639,7 +639,7 @@
   height: 1.0625rem;
   border-radius: 999px;
   background: var(--cn-border-strong);
-  transition: background var(--cn-duration-fast) var(--cn-ease);
+  transition: background var(--dur-xquick) var(--ease-standard);
   flex: none;
 }
 
@@ -661,7 +661,7 @@
   border-radius: 50%;
   background: #fff;
   box-shadow: 0 1px 2px rgb(0 0 0 / 0.3);
-  transition: transform var(--cn-duration-fast) var(--cn-ease);
+  transition: transform var(--dur-quick) var(--ease-standard);
 }
 
 .switch.on .knob {

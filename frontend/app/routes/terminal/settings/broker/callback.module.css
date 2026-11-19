@@ -33,5 +33,5 @@
   border: 2px solid var(--cn-border);
   border-top-color: var(--cn-brand);
   border-radius: 50%;
-  animation: cn-spin var(--cn-duration-spin) linear infinite;
+  animation: global(cn-spin) var(--cn-duration-spin) linear infinite;
 }

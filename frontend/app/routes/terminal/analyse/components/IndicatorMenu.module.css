@@ -12,6 +12,9 @@
   max-height: 24rem;
   overflow-y: auto;
   overscroll-behavior: contain;
+  /* Mounts on open, so the entrance replays every time it opens. */
+  animation: global(cn-drop) var(--dur-moderate) var(--ease-standard);
+  transform-origin: top center;
 }
 
 .section {

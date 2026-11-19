@@ -265,18 +265,46 @@
      Nothing here exceeds 500ms except the two ambient loops at the bottom,
      which are not transitions: they repeat, so their period is a pulse rate
      rather than a delay anyone waits out. */
-  --cn-duration-fast: 120ms;
-  --cn-duration: 200ms;
-  --cn-duration-slow: 320ms;
+  /* The scale. Every transition and animation in the app resolves to one of
+     these six, chosen by *what* is moving rather than by taste per component:
+
+       xquick   80ms  colour, fill, background-colour, border, focus ring
+       quick   160ms  opacity fades, icons, card hover, small transforms
+       moderate 280ms dropdowns, popovers, menus, tooltips, overlay backdrops
+       gentle  360ms  widths that grow (decelerate easing)
+       slow    480ms  modals, drawers, side sheets
+       xslow   640ms  emphasis pulses only
+
+     Mirrored for TypeScript in `lib/shared/ui/motion.ts` — keep the two in
+     step. */
+  --dur-xquick: 80ms;
+  --dur-quick: 160ms;
+  --dur-moderate: 280ms;
+  --dur-gentle: 360ms;
+  --dur-slow: 480ms;
+  --dur-xslow: 640ms;
+  /* Exits run ~30% faster than their entrance: nobody waits to watch a thing
+     leave. */
+  --dur-exit: 200ms;
+
+  --ease-standard: cubic-bezier(0.3, 0, 0.2, 1);
+  --ease-decelerate: cubic-bezier(0, 0, 0.2, 1);
+  --ease-exit: ease-in;
+
+  /* The original names, kept so nothing that references them breaks, now
+     pointing into the scale above. */
+  --cn-duration-fast: var(--dur-quick);
+  --cn-duration: var(--dur-moderate);
+  --cn-duration-slow: var(--dur-gentle);
 
   /* Entering and exiting are not symmetrical. Something arriving should
      decelerate into place — fast at first, so it feels responsive, then
      settling — which is what ease-out does. Something leaving should
      accelerate away, because nobody needs to watch it go. A move between two
      on-screen positions is eased at both ends. */
-  --cn-ease-out: cubic-bezier(0.22, 0.61, 0.36, 1);
-  --cn-ease-in: cubic-bezier(0.4, 0, 1, 1);
-  --cn-ease: cubic-bezier(0.2, 0.8, 0.2, 1);
+  --cn-ease-out: var(--ease-decelerate);
+  --cn-ease-in: var(--ease-exit);
+  --cn-ease: var(--ease-standard);
   /* Reserved for confirmations — a saved setting, a completed action. The
      overshoot is deliberate and deliberately rare: nothing on a quote board
      should bounce. */
@@ -623,6 +651,38 @@ body {
   }
 }
 
+/* Dropdowns, menus, popovers, listboxes. A shorter travel than `cn-pop`: a
+   menu hangs off the control that opened it and should look attached, not
+   thrown. */
+@keyframes cn-drop {
+  from {
+    opacity: 0;
+    transform: translateY(4px) scale(0.98);
+  }
+}
+
+/* Toasts and confirmations. */
+@keyframes cn-pop-in {
+  from {
+    opacity: 0;
+    transform: scale(0);
+  }
+}
+
+/* Loading placeholders. A pulse of the fill colour rather than a travelling
+   shimmer gradient: nothing moves, so nothing competes with live prices for
+   the eye, and only `background-color` repaints. Neutral grey at low alpha
+   reads on both themes. */
+@keyframes cn-skeleton {
+  0%,
+  25% {
+    background-color: rgb(128 133 137 / 0.12);
+  }
+  100% {
+    background-color: rgb(128 133 137 / 0.32);
+  }
+}
+
 /* A route arriving. Further than a pop travels, because the whole page is
    moving and a short slide at page scale reads as a twitch. */
 @keyframes cn-rise {
@@ -657,6 +717,36 @@ body {
   ):where(:not(:disabled, [aria-disabled='true'])):active {
   transform: translateY(1px);
   opacity: 0.85;
+  /* Press lands immediately; release eases back. */
+  transition-duration: var(--dur-xquick);
+}
+
+/* Motion presets — global utility classes, mirrored as `motionPresets` in
+   `lib/shared/ui/motion.ts`. Use these instead of re-declaring a keyframe in a
+   module. */
+:where(.cn-fade-in) {
+  animation: cn-fade var(--dur-quick) var(--ease-standard) both;
+}
+
+:where(.cn-drop-in) {
+  animation: cn-drop var(--dur-moderate) var(--ease-standard) both;
+  transform-origin: top center;
+}
+
+:where(.cn-pop-in) {
+  animation: cn-pop-in var(--dur-moderate) var(--ease-standard) both;
+}
+
+:where(.cn-skeleton) {
+  display: block;
+  border-radius: var(--cn-radius-sm, 4px);
+  animation: cn-skeleton 1.6s ease-in-out infinite alternate;
+}
+
+/* Never let an iOS/Android tap flash a grey box over a control that already
+   has its own press state. */
+:where(button, a[href], summary, [role='button']) {
+  -webkit-tap-highlight-color: transparent;
 }
 
 /* Validation and failure messages.

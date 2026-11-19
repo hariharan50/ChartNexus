@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useDeferredValue, useEffect, useMemo, useRef, useState } from 'react';
 import type { Instrument } from '$contexts/instrument-catalog/types';
 import { cx } from '$shared/ui/cx';
 import IconSearch from '$shared/ui/icons/IconSearch';
@@ -84,14 +84,17 @@ export default function SymbolPicker({
     return () => document.removeEventListener('keydown', onKey, true);
   }, [onClose]);
 
+  // The input repaints on every keystroke; filtering the full catalogue runs
+  // at a lower priority behind it, so typing never waits on the list.
+  const deferredQuery = useDeferredValue(query);
   const visible = useMemo(() => {
-    const needle = query.trim().toLowerCase();
+    const needle = deferredQuery.trim().toLowerCase();
     if (needle === '') return instruments;
     return instruments.filter(
       (entry) =>
         entry.symbol.toLowerCase().includes(needle) || entry.name.toLowerCase().includes(needle)
     );
-  }, [instruments, query]);
+  }, [instruments, deferredQuery]);
 
   return (
     <div className={s.backdrop} onPointerDown={onClose}>

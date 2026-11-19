@@ -94,8 +94,8 @@
   text-decoration: none;
   white-space: nowrap;
   transition:
-    background var(--cn-duration-fast) ease,
-    color var(--cn-duration-fast) ease;
+    background var(--dur-xquick) var(--ease-standard),
+    color var(--dur-xquick) var(--ease-standard);
 }
 
 @media (hover: hover) {
@@ -153,6 +153,14 @@
   border-radius: var(--cn-radius-lg);
   background: var(--cn-surface);
   box-shadow: var(--cn-shadow-lg, var(--cn-shadow));
+}
+/* Inside a <details>: the closed content is never unmounted (Chromium hides it
+   with content-visibility), so an animation on the panel itself would play
+   once at page load and never again. Keyed on `[open]`, it replays on every
+   open. */
+.nav-menu[open] > .submenu {
+  animation: global(cn-drop) var(--dur-moderate) var(--ease-standard);
+  transform-origin: top center;
 }
 
 .submenu-head {
@@ -258,8 +266,8 @@
   color: var(--cn-text-muted);
   cursor: pointer;
   transition:
-    color var(--cn-duration-fast) ease,
-    border-color var(--cn-duration-fast) ease;
+    color var(--dur-xquick) var(--ease-standard),
+    border-color var(--dur-xquick) var(--ease-standard);
 }
 
 @media (hover: hover) {
@@ -334,6 +342,14 @@
   border-radius: var(--cn-radius-lg);
   background: var(--cn-surface);
   box-shadow: var(--cn-shadow);
+}
+/* Inside a <details>: the closed content is never unmounted (Chromium hides it
+   with content-visibility), so an animation on the panel itself would play
+   once at page load and never again. Keyed on `[open]`, it replays on every
+   open. */
+.account[open] > .menu {
+  animation: global(cn-drop) var(--dur-moderate) var(--ease-standard);
+  transform-origin: top center;
 }
 
 .menu-head {
@@ -526,5 +542,5 @@
    from the wrong origin for the length of the animation. A fade carries the
    route change on its own and costs neither. */
 .page-enter {
-  animation: cn-fade var(--cn-duration-slow) var(--cn-ease-out);
+  animation: global(cn-fade) var(--dur-quick) var(--ease-standard);
 }

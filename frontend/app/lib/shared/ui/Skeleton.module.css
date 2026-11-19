@@ -1,0 +1,32 @@
+/* The pulse itself is the global `.cn-skeleton` (app.css); this file only
+   shapes it. */
+.skeleton {
+  display: block;
+  width: 100%;
+  flex-shrink: 0;
+}
+
+.block {
+  height: 1rem;
+  border-radius: var(--cn-radius);
+}
+
+/* One line of body text: the cap height of the font, not the line box, with
+   the line box kept as vertical margin so a paragraph of these occupies what
+   the paragraph will. */
+.text {
+  height: 0.75em;
+  margin-block: 0.375em;
+  border-radius: var(--cn-radius-sm);
+}
+
+.circle {
+  border-radius: 50%;
+  aspect-ratio: 1;
+  height: auto;
+}
+
+.rows {
+  display: flex;
+  flex-direction: column;
+}

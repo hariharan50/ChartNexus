@@ -702,5 +702,5 @@
 .skeleton-row {
   height: 1.25rem;
   border-radius: var(--cn-radius-sm);
-  background: var(--cn-surface-raised);
+  animation: global(cn-skeleton) 1.6s ease-in-out infinite alternate;
 }

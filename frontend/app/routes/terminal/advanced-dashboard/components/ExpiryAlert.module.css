@@ -8,7 +8,7 @@
   border-radius: var(--cn-radius-lg);
   background: var(--cn-surface);
   box-shadow: var(--cn-shadow);
-  animation: cn-rise var(--cn-duration) var(--cn-ease-out);
+  animation: global(cn-rise) var(--cn-duration) var(--cn-ease-out);
 }
 
 /* The left edge carries the tone. A full-bleed tinted banner competes with the
@@ -80,7 +80,7 @@
   background: transparent;
   color: var(--cn-text-subtle);
   cursor: pointer;
-  transition: background var(--cn-duration-fast) ease;
+  transition: background var(--dur-xquick) var(--ease-standard);
 }
 
 @media (hover: hover) {

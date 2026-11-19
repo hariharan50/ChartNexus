@@ -9,6 +9,7 @@ import {
   useRouteLoaderData
 } from 'react-router';
 import './app.css';
+import { useDetailsEntranceReplay } from '$shared/ui/use-details-entrance';
 import { nonceContext, requestIdContext } from './middleware/context';
 import { requestIdMiddleware } from './middleware/request-id';
 import { securityHeadersMiddleware } from './middleware/security-headers';
@@ -143,6 +144,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
 }
 
 export default function App() {
+  useDetailsEntranceReplay();
   return <Outlet />;
 }
 

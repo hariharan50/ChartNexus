@@ -6,6 +6,7 @@
   place-items: center;
   padding: var(--cn-space-4);
   background: rgb(0 0 0 / 0.55);
+  animation: global(cn-fade) var(--dur-moderate) var(--ease-standard);
 }
 
 .dialog {
@@ -17,6 +18,7 @@
   border-radius: var(--cn-radius-lg);
   background: var(--cn-surface);
   box-shadow: var(--cn-shadow-lg, 0 12px 40px rgb(0 0 0 / 0.4));
+  animation: global(cn-pop) var(--dur-slow) var(--ease-standard);
 }
 
 .head {

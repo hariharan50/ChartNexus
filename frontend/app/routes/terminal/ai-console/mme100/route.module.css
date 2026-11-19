@@ -216,7 +216,7 @@
 
 .bubble.thinking {
   color: var(--cn-text-muted);
-  animation: cn-pulse var(--cn-duration-pulse) ease-in-out infinite;
+  animation: global(cn-pulse) var(--cn-duration-pulse) ease-in-out infinite;
 }
 
 .author {
@@ -363,7 +363,7 @@
 }
 
 .toolChip:not(.done) .toolDot {
-  animation: cn-pulse var(--cn-duration-pulse) ease-in-out infinite;
+  animation: global(cn-pulse) var(--cn-duration-pulse) ease-in-out infinite;
 }
 
 .toolChip.done .toolDot {
@@ -378,7 +378,7 @@
   margin-left: 1px;
   vertical-align: text-bottom;
   background: var(--cn-accent);
-  animation: cn-pulse var(--cn-duration-pulse) ease-in-out infinite;
+  animation: global(cn-pulse) var(--cn-duration-pulse) ease-in-out infinite;
 }
 
 /* -- Daily report download bar --------------------------------------------- */
@@ -421,8 +421,8 @@
   font-size: var(--cn-text-sm);
   cursor: pointer;
   transition:
-    opacity var(--cn-duration-fast) ease,
-    transform var(--cn-duration-fast) ease;
+    opacity var(--dur-quick) var(--ease-standard),
+    transform var(--dur-quick) var(--ease-standard);
 }
 
 @media (hover: hover) {
@@ -456,8 +456,8 @@
   padding: 4px 11px;
   cursor: pointer;
   transition:
-    color var(--cn-duration-fast) ease,
-    border-color var(--cn-duration-fast) ease;
+    color var(--dur-xquick) var(--ease-standard),
+    border-color var(--dur-xquick) var(--ease-standard);
 }
 
 @media (hover: hover) {
@@ -483,8 +483,8 @@
   padding: 6px 12px;
   cursor: pointer;
   transition:
-    color var(--cn-duration-fast) ease,
-    border-color var(--cn-duration-fast) ease;
+    color var(--dur-xquick) var(--ease-standard),
+    border-color var(--dur-xquick) var(--ease-standard);
 }
 
 @media (hover: hover) {
@@ -508,7 +508,7 @@
   background: var(--cn-surface);
   color: var(--cn-text);
   font-size: var(--cn-text-sm);
-  transition: border-color var(--cn-duration-fast, var(--cn-duration-fast)) var(--cn-ease);
+  transition: border-color var(--dur-xquick) var(--ease-standard);
 }
 
 .input:focus {
@@ -527,8 +527,8 @@
   font-size: var(--cn-text-sm);
   cursor: pointer;
   transition:
-    opacity var(--cn-duration-fast) ease,
-    transform var(--cn-duration-fast) ease;
+    opacity var(--dur-quick) var(--ease-standard),
+    transform var(--dur-quick) var(--ease-standard);
 }
 
 @media (hover: hover) {

@@ -144,6 +144,5 @@
   width: 100%;
   height: 2.75rem;
   border-radius: var(--cn-radius);
-  background: var(--cn-surface-raised);
-  animation: cn-pulse var(--cn-duration-pulse) ease-in-out infinite;
+  animation: global(cn-skeleton) 1.6s ease-in-out infinite alternate;
 }

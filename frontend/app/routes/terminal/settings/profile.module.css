@@ -172,8 +172,8 @@
   font-weight: 700;
   cursor: pointer;
   transition:
-    background var(--cn-duration-fast) ease,
-    opacity var(--cn-duration-fast) ease;
+    background var(--dur-xquick) var(--ease-standard),
+    opacity var(--dur-quick) var(--ease-standard);
 }
 
 @media (hover: hover) {

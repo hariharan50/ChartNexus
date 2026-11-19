@@ -14,7 +14,7 @@
   padding: 84px 20px 28px;
   background: color-mix(in srgb, #000 55%, transparent);
   backdrop-filter: blur(3px);
-  animation: cn-fade var(--cn-duration) var(--cn-ease-out);
+  animation: global(cn-fade) var(--dur-moderate) var(--ease-standard);
 }
 
 @media (max-width: 40rem) {
@@ -47,7 +47,7 @@
   background: var(--cn-surface-raised, var(--cn-surface));
   box-shadow: 0 24px 60px -20px rgb(0 0 0 / 60%);
   overflow: hidden;
-  animation: cn-pop var(--cn-duration) var(--cn-ease-out);
+  animation: global(cn-pop) var(--dur-slow) var(--ease-standard);
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -117,8 +117,8 @@
   line-height: 1;
   cursor: pointer;
   transition:
-    color var(--cn-duration-fast) ease,
-    border-color var(--cn-duration-fast) ease;
+    color var(--dur-xquick) var(--ease-standard),
+    border-color var(--dur-xquick) var(--ease-standard);
 }
 
 @media (hover: hover) {
@@ -145,7 +145,7 @@
   font-weight: 700;
   padding: var(--cn-space-2) var(--cn-space-3);
   cursor: pointer;
-  transition: color var(--cn-duration-fast) var(--cn-ease);
+  transition: color var(--dur-xquick) var(--ease-standard);
 }
 
 @media (hover: hover) {

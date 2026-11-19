@@ -14,7 +14,7 @@
   padding: var(--cn-space-6) var(--cn-space-4);
   border-top: 1.5px solid var(--cn-border-strong);
   border-radius: var(--cn-radius);
-  transition: background var(--cn-duration-fast) var(--cn-ease);
+  transition: background var(--dur-xquick) var(--ease-standard);
 }
 
 @media (hover: hover) {

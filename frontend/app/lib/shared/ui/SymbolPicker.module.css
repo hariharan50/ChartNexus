@@ -7,6 +7,7 @@
   justify-content: center;
   padding-top: 12vh;
   background: color-mix(in srgb, black 55%, transparent);
+  animation: global(cn-fade) var(--dur-moderate) var(--ease-standard);
 }
 
 .dialog {
@@ -19,6 +20,7 @@
   background: var(--cn-surface);
   box-shadow: var(--cn-shadow-lg, var(--cn-shadow));
   overflow: hidden;
+  animation: global(cn-pop) var(--dur-slow) var(--ease-standard);
 }
 
 .search-row {
@@ -55,6 +57,17 @@
   padding: var(--cn-space-2);
   list-style: none;
   overflow-y: auto;
+  /* Reaching the end of the list must not start scrolling the page behind
+     the dialog. */
+  overscroll-behavior: contain;
+}
+
+/* The full catalogue renders here, so let the browser skip layout and paint
+   for rows outside the viewport — virtualisation without a library. The
+   intrinsic size keeps the scrollbar honest for rows it has not laid out. */
+.list > li {
+  content-visibility: auto;
+  contain-intrinsic-size: auto var(--cn-control-h);
 }
 
 .row {
@@ -72,7 +85,7 @@
   font-weight: 600;
   cursor: pointer;
   text-align: left;
-  transition: background var(--cn-duration-fast) var(--cn-ease);
+  transition: background var(--dur-xquick) var(--ease-standard);
 }
 
 @media (hover: hover) {

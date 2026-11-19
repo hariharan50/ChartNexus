@@ -89,7 +89,7 @@
   font-size: var(--cn-text-xs);
   opacity: 0;
   box-shadow: var(--cn-shadow);
-  transition: opacity var(--cn-duration-fast) var(--cn-ease);
+  transition: opacity var(--dur-quick) var(--ease-standard);
 }
 
 .btn:hover .tip,
@@ -115,7 +115,7 @@
   line-height: 0;
   cursor: pointer;
   opacity: 0;
-  transition: opacity var(--cn-duration-fast) var(--cn-ease);
+  transition: opacity var(--dur-quick) var(--ease-standard);
 }
 
 .group:hover .caret,

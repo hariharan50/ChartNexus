@@ -20,8 +20,8 @@
   border: 1px solid var(--cn-field-border);
   border-radius: var(--cn-radius);
   transition:
-    border-color var(--cn-duration-fast) ease,
-    background var(--cn-duration-fast) ease;
+    border-color var(--dur-xquick) var(--ease-standard),
+    background var(--dur-xquick) var(--ease-standard);
 }
 
 @media (hover: hover) {

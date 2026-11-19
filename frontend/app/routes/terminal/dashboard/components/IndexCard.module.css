@@ -12,8 +12,8 @@
   box-shadow: var(--cn-shadow);
   cursor: pointer;
   transition:
-    border-color var(--cn-duration-fast) ease,
-    transform var(--cn-duration-fast) ease;
+    border-color var(--dur-quick) var(--ease-standard),
+    transform var(--dur-quick) var(--ease-standard);
 }
 
 @media (hover: hover) {

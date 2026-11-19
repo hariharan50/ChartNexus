@@ -263,10 +263,10 @@
   cursor: pointer;
   border: 1px solid transparent;
   transition:
-    transform 0.15s ease,
-    background 0.15s ease,
-    border-color 0.15s ease,
-    box-shadow 0.15s ease;
+    transform var(--dur-quick) var(--ease-standard),
+    background var(--dur-quick) var(--ease-standard),
+    border-color var(--dur-quick) var(--ease-standard),
+    box-shadow var(--dur-quick) var(--ease-standard);
 }
 
 /* Button-styled links must never pick up the default link underline in any
@@ -372,8 +372,8 @@
   color: var(--cn-text-muted);
   text-decoration: none;
   transition:
-    color 0.15s ease,
-    background 0.15s ease;
+    color var(--dur-xquick) var(--ease-standard),
+    background var(--dur-xquick) var(--ease-standard);
 }
 
 @media (hover: hover) {
@@ -437,9 +437,9 @@
   color: var(--cn-text);
   cursor: pointer;
   transition:
-    color 0.15s ease,
-    border-color 0.15s ease,
-    background 0.15s ease;
+    color var(--dur-xquick) var(--ease-standard),
+    border-color var(--dur-xquick) var(--ease-standard),
+    background var(--dur-xquick) var(--ease-standard);
 }
 
 @media (hover: hover) {
@@ -583,7 +583,7 @@
 
 @media (prefers-reduced-motion: no-preference) {
   .page-enter {
-    animation: cn-rise var(--cn-duration-slow) var(--cn-ease-out) both;
+    animation: global(cn-rise) var(--cn-duration-slow) var(--cn-ease-out) both;
   }
 }
 
@@ -818,9 +818,9 @@
   border-radius: var(--lp-r-card);
   background: var(--cn-surface);
   transition:
-    transform 0.16s ease,
-    border-color 0.16s ease,
-    box-shadow 0.16s ease;
+    transform var(--dur-quick) var(--ease-standard),
+    border-color var(--dur-quick) var(--ease-standard),
+    box-shadow var(--dur-quick) var(--ease-standard);
 }
 
 @media (hover: hover) {
@@ -883,8 +883,8 @@
   border-radius: var(--lp-r-pill);
   background: var(--cn-surface);
   transition:
-    border-color 0.16s ease,
-    transform 0.16s ease;
+    border-color var(--dur-quick) var(--ease-standard),
+    transform var(--dur-quick) var(--ease-standard);
 }
 
 @media (hover: hover) {
@@ -1110,8 +1110,8 @@
   border: 1px solid var(--lp-footer-border);
   color: var(--lp-footer-text);
   transition:
-    color 0.15s ease,
-    border-color 0.15s ease;
+    color var(--dur-xquick) var(--ease-standard),
+    border-color var(--dur-xquick) var(--ease-standard);
 }
 
 @media (hover: hover) {
@@ -1608,7 +1608,7 @@
   border-right: 2px solid var(--lp-primary);
   border-bottom: 2px solid var(--lp-primary);
   transform: rotate(45deg);
-  transition: transform var(--cn-duration) var(--cn-ease);
+  transition: transform var(--dur-quick) var(--ease-standard);
 }
 
 .faq-item[open] .faq-q::after {
