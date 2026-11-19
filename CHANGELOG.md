@@ -9,6 +9,26 @@ changes are not recorded here.
 
 ## [Unreleased]
 
+## [2.1.0] — 2026-11-19
+
+Kite OI change fixes and visual polish. No migration or configuration change.
+
+### Added
+
+- The Tools grid shows a drawn line icon for each tool (Option Greeks,
+  Straddle Chart, Straddle PnL Simulator, Trade Buddy) instead of two-letter
+  monograms.
+- Broker integration settings show the Kite and FYERS logos instead of a
+  single letter.
+
+### Fixed
+
+- Kite: reconnecting before 09:15 now captures the previous-OI baseline, so
+  OI change is no longer zero all day when the 08:35 morning sync found the
+  token expired.
+- Open Interest page: OI change no longer reads +0 all day under Kite without
+  a baseline; the earliest captured frame is used as the session open.
+
 ## [2.0.0] — 2026-11-19
 
 A major release: a second broker, Trade Buddy rebuilt for many users, and the

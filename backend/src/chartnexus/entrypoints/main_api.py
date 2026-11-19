@@ -45,7 +45,7 @@ from chartnexus.infrastructure.transport.http.health import DependencyCheck, bui
 from chartnexus.infrastructure.transport.http.middleware import SecurityHeadersMiddleware
 from chartnexus.infrastructure.transport.http.request_id import RequestIdMiddleware
 
-API_VERSION = "2.0.0"
+API_VERSION = "2.1.0"
 
 log = get_logger(__name__)
 
