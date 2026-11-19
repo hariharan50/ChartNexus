@@ -25,8 +25,6 @@ type Busy = 'save' | 'connect' | 'disconnect' | 'revoke' | null;
 /** What differs between the brokers on this page. Everything else is shared. */
 interface BrokerCopy {
   name: string;
-  /** One letter for the tile's mark. */
-  mark: string;
   tagline: string;
   consoleUrl: string;
   consoleLabel: string;
@@ -42,7 +40,6 @@ interface BrokerCopy {
 const COPY: Record<BrokerName, BrokerCopy> = {
   kite: {
     name: 'Zerodha Kite',
-    mark: 'K',
     tagline: 'Kite Connect · quotes, F&O, option chains, live ticks',
     consoleUrl: 'https://developers.kite.trade/apps',
     consoleLabel: 'developers.kite.trade',
@@ -54,7 +51,6 @@ const COPY: Record<BrokerName, BrokerCopy> = {
   },
   fyers: {
     name: 'FYERS',
-    mark: 'F',
     tagline: 'FYERS API v3 · quotes, F&O, option chains, live ticks',
     consoleUrl: 'https://myapi.fyers.in/dashboard',
     consoleLabel: 'myapi.fyers.in',
@@ -66,6 +62,15 @@ const COPY: Record<BrokerName, BrokerCopy> = {
 };
 
 const ORDER: readonly BrokerName[] = ['kite', 'fyers'];
+
+/** The broker's own logo, served from `public/brokers/`. Decorative: the name sits beside it. */
+function BrokerMark({ name }: { name: BrokerName }) {
+  return (
+    <span className={cx(s.mark, s[name])} aria-hidden="true">
+      <img className={s.markLogo} src={`/brokers/${name}.png`} alt="" width={44} height={44} />
+    </span>
+  );
+}
 
 function isBroker(value: string | null): value is BrokerName {
   return value === 'kite' || value === 'fyers';
@@ -193,9 +198,7 @@ function BrokerTile({ name, connection, active, loading, onOpen }: BrokerTilePro
         onClick={onOpen}
         aria-label={`${copy.name}: ${loading ? 'checking' : headline(connection)}. Open settings`}
       >
-        <span className={cx(s.mark, s[name])} aria-hidden="true">
-          {copy.mark}
-        </span>
+        <BrokerMark name={name} />
         <span className={s.tileBody}>
           <span className={s.tileName}>
             {copy.name}
@@ -313,9 +316,7 @@ function BrokerDetail({
       </button>
 
       <div className={s.detailHead}>
-        <span className={cx(s.mark, s[name])} aria-hidden="true">
-          {copy.mark}
-        </span>
+        <BrokerMark name={name} />
         <div>
           <h2>
             {copy.name}

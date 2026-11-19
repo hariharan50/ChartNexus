@@ -135,6 +135,15 @@
   font-size: var(--cn-text-lg);
   font-weight: 700;
   color: #fff;
+  overflow: hidden;
+  box-shadow: 0 0 0 1px var(--cn-border, rgb(255 255 255 / 0.08));
+}
+
+.markLogo {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
 }
 
 .kite {
