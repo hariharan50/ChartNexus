@@ -80,10 +80,13 @@ class ConnectChannel:
 #: next message from this bot — possibly days later, mid-trade — is expected
 #: rather than a surprise from a sender you have forgotten connecting.
 WELCOME_MESSAGE = (
-    "<b>Trade Buddy is connected</b>\n"
-    "Level alerts arrive here during market hours, 09:15-15:20 IST.\n\n"
-    "<i>You will get approaches, touches, confirmed breaks and reclaims "
-    "for the indices you have marked levels on.</i>"
+    "✅ <b>Trade Buddy connected</b>\n\n"
+    "Level alerts for the indices you have marked will arrive here:\n\n"
+    "👀  Approaches\n"
+    "🎯  Touches\n"
+    "🚀  Confirmed breaks\n"
+    "🔁  Reclaims\n\n"
+    "🕘 <i>Market hours 09:15 - 15:20 IST</i>"
 )
 
 
@@ -258,7 +261,9 @@ class SendChannelTest:
 #: WhatsApp via CallMeBot renders no markup, so it gets the plain version.
 _TEST_MESSAGE = {
     AlertChannel.TELEGRAM: (
-        "<b>Trade Buddy</b> is connected.\n<i>Level alerts will arrive here during market hours.</i>"
+        "✅ <b>Trade Buddy  ·  Test alert</b>\n\n"
+        "This chat is connected. Level alerts will arrive here.\n\n"
+        "🕘 <i>Market hours 09:15 - 15:20 IST</i>"
     ),
     AlertChannel.WHATSAPP: (
         "Trade Buddy is connected. Confirmed level alerts will arrive here during market hours."

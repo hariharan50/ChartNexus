@@ -8,7 +8,7 @@ inverted, so every assertion here names the channel.
 
 from __future__ import annotations
 
-from datetime import timedelta
+from datetime import UTC, datetime, timedelta
 
 import pytest
 
@@ -17,6 +17,7 @@ from chartnexus.contexts.trade_buddy.application.routing import (
     WHATSAPP_KINDS,
     AlertRouter,
     render,
+    render_health_telegram,
 )
 from chartnexus.contexts.trade_buddy.domain.budget import WhatsAppBudget
 from chartnexus.contexts.trade_buddy.domain.events import AlertKind
@@ -262,6 +263,78 @@ class TestRendering:
     def test_direction_is_shown(self):
         up = render(event(AlertKind.TOUCHED), rich=False)
         assert "▲" in up  # price 24715 is above the 24700 level
+
+    def test_the_plain_renderer_is_unchanged(self):
+        """WhatsApp text and the /test-alert response depend on this exact shape."""
+        assert render(event(AlertKind.TOUCHED), rich=False) == (
+            "NSE:NIFTY50-INDEX R1 touched. Level 24,700.00, price 24,715.00 "
+            "(▲ 15.0 pts) at 2026-10-26T10:00:00+05:30"
+        )
+
+
+class TestTelegramCard:
+    @pytest.mark.parametrize(
+        ("kind", "headline"),
+        [
+            (AlertKind.APPROACHING, "👀"),
+            (AlertKind.TOUCHED, "🎯"),
+            (AlertKind.BREAK_CONFIRMED, "🚀"),
+            (AlertKind.WICK_REJECTED, "🕯️"),
+            (AlertKind.RECLAIMED, "🔁"),
+            (AlertKind.GAPPED_THROUGH, "⚡"),
+        ],
+    )
+    def test_every_kind_has_its_own_headline(self, kind, headline):
+        text = render(event(kind), rich=True)
+        assert text.startswith(f"{headline} <b>")
+        assert "💡 <i>" in text
+
+    def test_a_break_is_named_by_its_direction(self):
+        up = render(event(AlertKind.BREAK_CONFIRMED, price=24_742.5), rich=True)
+        down = render(event(AlertKind.BREAK_CONFIRMED, price=24_682.0), rich=True)
+        assert "BREAKOUT" in up
+        assert "broken upward" in up
+        assert "▲ 42.5 pts above" in up
+        assert "BREAKDOWN" in down
+        assert "broken downward" in down
+        assert "▼ 18.0 pts below" in down
+
+    def test_numbers_sit_in_an_aligned_block(self):
+        text = render(event(AlertKind.TOUCHED), rich=True)
+        assert "<pre>Level   24,700.00\nPrice   24,715.00\nMove    ▲ 15.0 pts above</pre>" in text
+
+    def test_the_time_is_shown_in_ist(self):
+        at_utc = datetime(2026, 11, 19, 5, 12, 15, tzinfo=UTC)
+        text = render(event(AlertKind.TOUCHED, at_=at_utc), rich=True)
+        assert "🕒 10:42:15 IST  ·  Thu 19 Nov" in text
+        assert "+00:00" not in text
+
+    def test_user_text_is_escaped(self):
+        """A raw `<` or `&` makes Telegram reject the message: a lost alert."""
+        text = render(
+            event(
+                AlertKind.BREAK_CONFIRMED,
+                label="R<2&",
+                role_before=LevelRole.RESISTANCE,
+                role_after=LevelRole.SUPPORT,
+            ),
+            rich=True,
+        )
+        assert "R<2&" not in text
+        assert "<code>R&lt;2&amp;</code>" in text
+        assert "R&lt;2&amp; is now acting as support" in text
+
+    def test_the_feed_problem_card_escapes_its_detail(self):
+        text = render_health_telegram(
+            FeedHealth(
+                reason="feed_unavailable",
+                detail="Could not open the market feed: <Response 403>.",
+                at=SESSION_START,
+            )
+        )
+        assert text.startswith("⚠️ <b>Trade Buddy  ·  Feed problem</b>")
+        assert "&lt;Response 403&gt;" in text
+        assert "🕒 10:00:00 IST" in text
 
 
 class TestWhatChannelsTookIt:

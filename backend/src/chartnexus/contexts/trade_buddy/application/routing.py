@@ -14,12 +14,15 @@ single shared template would end up written for the weaker channel.
 from __future__ import annotations
 
 import asyncio
+import html
 from dataclasses import dataclass, field
+from datetime import datetime
 
 from chartnexus.contexts.trade_buddy.application.ports import AlertSink, Clock, FeedHealth
 from chartnexus.contexts.trade_buddy.domain.budget import WhatsAppBudget
 from chartnexus.contexts.trade_buddy.domain.events import AlertEvent, AlertKind
 from chartnexus.contexts.trade_buddy.domain.level import LevelRole
+from chartnexus.contexts.trade_buddy.domain.schedule import to_ist
 
 #: The only level events that may spend WhatsApp budget. Feed health is routed
 #: there too, but through its own path — a dead feed is not a level event.
@@ -112,7 +115,7 @@ class AlertRouter(AlertSink):
             f"{health.at.isoformat(timespec='seconds')}"
         )
         if self.telegram is not None:
-            await self._try(self.telegram, f"<b>⚠ Feed problem</b>\n{health.detail}")
+            await self._try(self.telegram, render_health_telegram(health))
         if self.whatsapp is None:
             return
         now = self.clock.now()
@@ -149,15 +152,110 @@ def render(event: AlertEvent, *, rich: bool) -> str:
         flip = f" — now acting as {becomes}"
 
     if rich:
-        return (
-            f"<b>{event.symbol} {event.label} {headline}</b>{flip}\n"
-            f"Level <code>{event.level_price:,.2f}</code> · "
-            f"price <code>{event.price:,.2f}</code> ({arrow} {abs(event.distance):.1f})\n"
-            f"<i>{event.at.isoformat(timespec='seconds')}</i>"
-        )
+        return _render_telegram(event)
     return (
         f"{event.symbol} {event.label} {headline}{flip}. "
         f"Level {event.level_price:,.2f}, price {event.price:,.2f} "
         f"({arrow} {abs(event.distance):.1f} pts) "
         f"at {event.at.isoformat(timespec='seconds')}"
+    )
+
+
+@dataclass(frozen=True, slots=True)
+class _Style:
+    """How one alert kind looks on Telegram.
+
+    ``verb`` completes the line under the headline ("R2 broken upward"); when
+    it is ``None`` that line names the level's role instead ("R2 · resistance").
+    ``directional`` kinds append "upward"/"downward" to the verb.
+    """
+
+    emoji: str
+    title: str
+    verb: str | None
+    meaning: str
+    directional: bool = False
+
+
+_STYLE: dict[AlertKind, _Style] = {
+    AlertKind.APPROACHING: _Style(
+        "👀", "APPROACHING", None, "Price is nearing the level — get ready."
+    ),
+    AlertKind.TOUCHED: _Style("🎯", "TOUCHED", None, "Price is at the level now."),
+    AlertKind.BREAK_CONFIRMED: _Style(
+        "🚀",
+        "BREAKOUT",
+        "broken",
+        "Price held beyond the level — the break is confirmed.",
+        directional=True,
+    ),
+    AlertKind.WICK_REJECTED: _Style(
+        "🕯️", "WICK REJECTED", "held", "Price poked through but closed back — the level held."
+    ),
+    AlertKind.RECLAIMED: _Style(
+        "🔁", "RECLAIMED", "reclaimed", "Price came back across a broken level."
+    ),
+    AlertKind.GAPPED_THROUGH: _Style(
+        "⚡",
+        "GAPPED THROUGH",
+        "gapped",
+        "Price jumped past the level without trading at it.",
+        directional=True,
+    ),
+}
+
+
+def _when(moment: datetime) -> str:
+    """``10:42:15 IST  ·  Thu 19 Nov``: the trader's clock, not UTC."""
+    local = to_ist(moment)
+    return f"{local:%H:%M:%S} IST  ·  {local:%a %d %b}"
+
+
+def _render_telegram(event: AlertEvent) -> str:
+    """One alert as a spaced Telegram card (HTML parse mode).
+
+    Every user- or feed-supplied string is escaped: a ``<`` or ``&`` in a
+    label would otherwise make Telegram reject the whole message, and a
+    rejected alert is a lost alert.
+    """
+    style = _STYLE[event.kind]
+    up = event.distance > 0
+    symbol = html.escape(event.symbol)
+    label = html.escape(event.label)
+
+    emoji, title = style.emoji, style.title
+    if event.kind is AlertKind.BREAK_CONFIRMED and not up:
+        emoji, title = "🔻", "BREAKDOWN"
+
+    if style.verb is None:
+        sub = f"<code>{label}</code>  ·  {event.role_before.value}"
+    else:
+        direction = (" upward" if up else " downward") if style.directional else ""
+        sub = f"<code>{label}</code> {style.verb}{direction}"
+
+    arrow = "▲" if up else "▼"
+    side = "above" if up else "below"
+    lines = [
+        f"{emoji} <b>{symbol}  ·  {title}</b>",
+        sub,
+        "",
+        "<pre>"
+        f"Level   {event.level_price:,.2f}\n"
+        f"Price   {event.price:,.2f}\n"
+        f"Move    {arrow} {abs(event.distance):.1f} pts {side}"
+        "</pre>",
+    ]
+    if event.flipped:
+        becomes = "support" if event.role_after is LevelRole.SUPPORT else "resistance"
+        lines.append(f"🔄 <b>{label} is now acting as {becomes}</b>")
+    lines += ["", f"💡 <i>{style.meaning}</i>", "", f"🕒 {_when(event.at)}"]
+    return "\n".join(lines)
+
+
+def render_health_telegram(health: FeedHealth) -> str:
+    """The feed-problem card. The detail can carry exception text, so it is escaped."""
+    return (
+        "⚠️ <b>Trade Buddy  ·  Feed problem</b>\n\n"
+        f"{html.escape(health.detail)}\n\n"
+        f"🕒 {_when(health.at)}"
     )
