@@ -9,6 +9,75 @@ changes are not recorded here.
 
 ## [Unreleased]
 
+## [2.0.0] — 2026-11-19
+
+A major release: a second broker, Trade Buddy rebuilt for many users, and the
+first version number the app itself reports (it said 0.1.0 until now).
+
+### Upgrading
+
+- Run `alembic upgrade head` (head `d3e8a1f5c9b2`). The Trade Buddy migration
+  moves state and alert channels into Postgres and encrypts them in place, so
+  `CN_SECURITY_ENCRYPTION_KEY` must be set before it runs. Back up first.
+- Trade Buddy no longer reads alert credentials from the environment: the
+  `CN_TRADE_BUDDY_TELEGRAM_*` and `…_WHATSAPP_*` variables are ignored. Each
+  user connects their own Telegram bot and WhatsApp in the app. Existing
+  single-operator JSON state can be copied into one account with
+  `uv run chartnexus-trade-buddy import-legacy --email <user>`.
+- Production needs `CN_KITE_REDIRECT_URI` set, or the API will not start.
+
+### Added
+
+- **Zerodha Kite Connect** as a second market-data broker beside FYERS
+  (read-only; no order, portfolio, margin or GTT path). A user may save keys
+  for both; one connection is active at a time.
+- **Per-user Trade Buddy.** Every user marks their own levels and receives
+  alerts on their own Telegram bot and WhatsApp (CallMeBot). State is one
+  Postgres row per user and index; channel secrets and targets are AES-256-GCM
+  encrypted and only ever shown masked to their last four characters.
+- One shared market feed serves every user's watcher: each tick fans out to
+  every user's engine for that index, with batched state writes and one ATR
+  call per index per day.
+- Telegram alerts are spaced cards: a headline per kind (approaching, touched,
+  breakout/breakdown, wick rejected, reclaimed, gapped through), level, price
+  and move in an aligned block, a one-line meaning, and the time in IST.
+- WhatsApp card in the Trade Buddy Delivery panel; Quick Reset for levels.
+- `import-legacy` command for moving old single-operator Trade Buddy state.
+- A single motion scale for the web app (six durations, three easings) and a
+  `<Skeleton>` loading placeholder.
+
+### Changed
+
+- About fifty component animations that never ran now do: CSS Modules had
+  renamed the shared keyframes they referenced. `check-css-modules` now fails
+  on the pattern.
+- Market-wide jobs pick the feed from any tenant's active, unexpired Kite
+  connection, then FYERS, then mock.
+
+### Fixed
+
+- Sign-in no longer shows raw backend exception text (hosts, ports, errno);
+  an unhandled error reads "Something went wrong on our side" with a request
+  reference. When the API is down, pages say the server cannot be reached
+  instead of a bare 500/502.
+- Every user- or feed-supplied string in a Telegram alert is HTML-escaped; a
+  stray `<` or `&` used to make Telegram reject the alert.
+- An expired Kite connection is skipped when choosing the market feed.
+- The futures OI sweep runs only during market hours.
+- The first live capture of a session purges that day's mock frames, so the
+  option-chain archive never mixes real and simulated data.
+- Production deploy passes Trade Buddy's settings through to the containers.
+- Alert errors never carry a token, chat id or phone number.
+
+### Docs
+
+- Every document in `docs/` brought up to date; `AGENTS.md` and `CLAUDE.md`
+  added as the guide for coding agents.
+
+## [1.10.0] — 2026-11-11
+
+The changelog entry for this release was written after it was tagged.
+
 ### Added
 
 **Trade Buddy**

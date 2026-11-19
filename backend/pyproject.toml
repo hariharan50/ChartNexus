@@ -1,6 +1,6 @@
 [project]
 name = "chartnexus"
-version = "0.1.0"
+version = "2.0.0"
 description = "ChartNexus — options & futures market intelligence terminal"
 # Inlined rather than a path: the project README lives at the repo root
 # (../README.md), which is outside this package directory, so a wheel/sdist
