@@ -9,6 +9,7 @@ today's live chain.
 from __future__ import annotations
 
 import uuid
+from dataclasses import replace
 from datetime import UTC, datetime, timedelta
 
 from chartnexus.contexts.options_analytics.application.max_pain_series_service import (
@@ -196,17 +197,20 @@ class TestReconstructedOpen:
         the whole chart is about movement away from it.
         """
         late = datetime(2026, 8, 4, 6, 0, tzinfo=UTC)  # 11:30 IST, well past the bell
+        # A real day-change: reconstruction needs one (an all-zero change is
+        # "unknown" and keeps the earliest capture as the open instead).
+        ladder = tuple(replace(row, oi_change=50) for row in _ladder(24_700.0))
         snaps = [
             ChainSnapshot(
                 captured_at=late,
-                rows=_ladder(24_700.0),
+                rows=ladder,
                 spot=24_650.0,
                 max_pain=24_650.0,
                 future_price=24_700.0,
             ),
             ChainSnapshot(
                 captured_at=datetime(2026, 8, 4, 6, 30, tzinfo=UTC),
-                rows=_ladder(24_700.0),
+                rows=ladder,
                 spot=24_650.0,
                 max_pain=24_650.0,
                 future_price=24_710.0,

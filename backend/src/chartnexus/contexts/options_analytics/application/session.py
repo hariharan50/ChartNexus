@@ -107,8 +107,16 @@ def session_open_frame(ordered: list[ChainSnapshot]) -> ChainSnapshot | None:
     carries over from the previous session, which is exactly why it is restated
     from ``oi_change`` instead of zeroed.
 
+    Not when the broker gave no day-change at all. Kite publishes no
+    previous-day OI; until the pre-open capture has run, every leg reports an
+    ``oi_change`` of zero meaning *unknown*, not *unchanged*. Reconstructing
+    from that copies the newest frame back to 09:15, and every change on the
+    page then reads zero all day however many frames are archived. An all-zero
+    newest frame never happens in a live session with a real day-change, so it
+    is the signal: fall back to the earliest frame actually captured.
+
     ``ordered`` must be sorted oldest-first. Returns ``None`` when the archive
-    already reaches back to the open.
+    already reaches back to the open, or when the day-change is unknown.
     """
     if not ordered:
         return None
@@ -116,6 +124,8 @@ def session_open_frame(ordered: list[ChainSnapshot]) -> ChainSnapshot | None:
     newest = ordered[-1]
     open_ts = session_open_utc(attach_utc(newest.captured_at))
     if attach_utc(ordered[0].captured_at) <= open_ts + OPEN_TOLERANCE:
+        return None
+    if not any(row.oi_change for row in newest.rows):
         return None
 
     return ChainSnapshot(

@@ -211,6 +211,29 @@ async def test_the_reconstructed_open_never_goes_negative() -> None:
     assert payload["series"][0]["call"][0] == 0
 
 
+async def test_an_unknown_day_change_keeps_the_first_capture_as_the_open() -> None:
+    """Kite with no pre-open baseline: every ``oi_change`` is 0, meaning unknown.
+
+    Reconstructing 09:15 from that copied the newest frame back to the open, so
+    every strike read "OI Chg +0" all session however many frames were stored
+    (seen live on 2026-11-19: first capture 09:15:54, Kite reconnected after the
+    08:35 baseline capture). The earliest real capture is the honest open.
+    """
+    # 09:15:54 and 09:31 IST.
+    first = ChainSnapshot(datetime(2026, 8, 4, 3, 45, 54, tzinfo=UTC), _rows(200, 500))
+    later = ChainSnapshot(datetime(2026, 8, 4, 4, 1, tzinfo=UTC), _rows(300, 450))
+
+    payload = await _view([first, later])(TENANT, "NIFTY")
+
+    assert payload["open_is_estimated"] is False
+    assert payload["open_ts"].startswith("2026-08-04T03:45:54")
+    assert len(payload["series"]) == 2
+    assert payload["series"][0]["call"][0] == 200
+    # 2 strikes x (300 - 200) calls, 2 x (450 - 500) puts.
+    assert payload["total_call_oi_chg"] == 200
+    assert payload["total_put_oi_chg"] == -100
+
+
 # -- historical mode --------------------------------------------------------
 
 # A past trading day; the stub reader ignores the date, so any past instant works.
