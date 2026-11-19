@@ -65,12 +65,21 @@ async def sync_for_connection(container: Any, connection: BrokerConnection) -> i
 
 
 async def sync_after_connect(container: Any, tenant_id: Any) -> None:
-    """Background task run after a successful Kite login."""
+    """Background task run after a successful Kite login.
+
+    Also takes the previous-OI capture when the login lands before the open.
+    Kite tokens expire at 06:00, so the 08:35 morning sync regularly finds no
+    connection; without this a reconnect at, say, 08:46 left the day with no
+    baseline and every OI change read zero until the next morning.
+    """
     async with container.database.read_session() as session:
         repository = SqlAlchemyBrokerConnectionRepository(session, container.token_cipher)
         connection = await repository.find(tenant_id, BrokerName.KITE)
-    if connection is not None and connection.is_connected:
-        await sync_for_connection(container, connection)
+    if connection is None or not connection.is_connected:
+        return
+    if await sync_for_connection(container, connection) is None:
+        return
+    await _capture_if_pre_open(container, connection)
 
 
 async def morning_sync(container: Any) -> None:
@@ -84,7 +93,15 @@ async def morning_sync(container: Any) -> None:
 
     if await sync_for_connection(container, connection) is None:
         return
-    if datetime.now(IST).time() >= MARKET_OPEN:
+    await _capture_if_pre_open(container, connection)
+
+
+async def _capture_if_pre_open(
+    container: Any, connection: BrokerConnection, *, now: datetime | None = None
+) -> None:
+    """Capture yesterday's closing OI, but only while Kite's ``oi`` still is that."""
+    moment = (now or datetime.now(UTC)).astimezone(IST)
+    if moment.time() >= MARKET_OPEN:
         log.info("kite_prev_oi_capture_skipped", reason="market_already_open")
         return
     await capture_previous_oi(container, connection)
