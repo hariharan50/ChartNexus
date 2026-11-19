@@ -39,6 +39,31 @@ changes are not recorded here.
 - After deploying, grant the first admin on the server:
   `uv run chartnexus-admin grant --email <you>`.
 
+### Changed
+
+- **Market Analysis (AI Console)** redesigned:
+  - all three horizons at once, each with its call, confidence and a meter;
+  - a signal-consensus card;
+  - a p(up) gauge with the HOLD band shaded, explaining why a call is HOLD;
+  - signed driver bars with a plain-English hint for each driver;
+  - data coverage shown next to confidence;
+  - a sorted levels ladder with distance from spot and the nearest level marked;
+  - an explained empty trade scaffold, with risk and reward in points;
+  - a call-change timeline;
+  - "updated N s ago" and a refresh button;
+  - "Ask Hella" questions that open the agent with the question typed in;
+  - the real data source in the footer (it used to say "Data by NSE").
+- Guidance responses carry signed driver impacts (`factors`), the HOLD
+  `band` per horizon, and `coverage`. These are additive with defaults, so
+  cached payloads still load.
+
+### Fixed
+
+- AI agents (Hella, STRYX, MME100, HUGIN): the gamma-exposure tool always
+  answered "gamma flip n/a". It read a top-level field that the time-series
+  GEX payload never has. It now reports the latest frame's flip, net GEX with
+  long/short-gamma regime, and the call and put walls.
+
 ## [2.1.0] — 2026-11-19
 
 Kite OI change fixes and visual polish. No migration or configuration change.

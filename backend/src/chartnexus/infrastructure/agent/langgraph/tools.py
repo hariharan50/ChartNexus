@@ -157,9 +157,12 @@ def build_agent_tools(
         )
 
     async def get_gamma_exposure(symbol: str) -> str:
-        """Dealer gamma: the gamma-flip / zero-gamma level. `symbol`: NIFTY, BANKNIFTY, SENSEX."""
+        """Dealer gamma: the gamma-flip / zero-gamma level, net GEX and the gamma walls.
+
+        `symbol`: NIFTY, BANKNIFTY, SENSEX.
+        """
         gex = await options.gex(tenant_id, _instrument(symbol).value)
-        return f"{symbol}: gamma flip {_g(gex, 'gamma_flip')}"
+        return _fmt_gamma(symbol, gex)
 
     async def get_indicators(symbol: str, interval: str = "15m") -> str:
         """Technical indicators computed from candles: RSI(14), EMA20, EMA50, VWAP, ATR(14),
@@ -310,6 +313,43 @@ def _signed(value: Decimal | None) -> str:
 
 def _pct(value: Decimal | None) -> str:
     return "n/a" if value is None else f"{float(value):+.2f}%"
+
+
+def _fmt_gamma(symbol: str, gex: dict[str, Any]) -> str:
+    """The latest GEX frame in one line.
+
+    The GEX payload is a time series: the flip, walls and net total live on each
+    frame, not at the top level. Reading the top level (as this tool once did)
+    returned "n/a" for every instrument on every day, so every agent reasoned
+    without dealer positioning.
+    """
+    frames = gex.get("frames") or []
+    frame = frames[-1] if frames and isinstance(frames[-1], dict) else {}
+    if not frame:
+        return (
+            f"{symbol}: gamma exposure unavailable — fewer than two option-chain captures "
+            "today, so there is no intraday GEX profile yet"
+        )
+    net = frame.get("net_total")
+    if isinstance(net, (int, float)) and net != 0:
+        regime = (
+            "dealers net long gamma (hedging dampens moves)"
+            if net > 0
+            else "dealers net short gamma (hedging amplifies moves)"
+        )
+        net_text = f"net GEX {_num(net)} Cr, {regime}"
+    else:
+        net_text = "net GEX flat (no gamma left — expired or unpriced chain)"
+
+    def level(key: str) -> str:
+        value = frame.get(key)
+        return _num(value) if isinstance(value, (int, float)) else "n/a"
+
+    return (
+        f"{symbol} (expiry {gex.get('expiry_date') or 'n/a'}, as of {frame.get('t') or 'n/a'}): "
+        f"gamma flip {level('gamma_flip')}, spot {level('spot')}; {net_text}; "
+        f"call wall {level('call_wall')}, put wall {level('put_wall')}"
+    )
 
 
 def _g(data: dict[str, Any], key: str) -> str:
